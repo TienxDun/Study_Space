@@ -559,7 +559,7 @@ export const StudyMusicPlayer = ({
                     }`}
                   >
                     <img
-                      src={currentTrack?.cover || "https://assets.beeziee.com/thumbnails/coffee-shop.PNG"}
+                      src={currentTrack?.cover || "/study/thumbnails/coffee-shop.PNG"}
                       alt={currentTrack?.title}
                       className="w-full h-full object-cover"
                     />
