@@ -14,7 +14,10 @@ import {
   Check,
   Play
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { ModalShell } from "../ui/ModalShell";
+import { IconBtn } from "../ui/IconBtn";
+import { PillButton } from "../ui/PillButton";
 import { 
   PomodoroSoundType, 
   POMODORO_SOUND_OPTIONS, 
@@ -145,25 +148,16 @@ export const StudySettingsModal = ({
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <React.Fragment key="settings-modal-fragment">
-          {/* Transparent Backdrop (Không làm mờ nền để người dùng thấy rõ 100% thay đổi trực quan trên màn hình) */}
-          <div
-            key="settings-backdrop"
-            className="fixed inset-0 z-40 cursor-pointer"
-            onClick={onClose}
-          />
-
-          {/* Settings Floating Panel (Neo từ góc trên bên phải) */}
-          <motion.div
-            key="settings-panel"
-            initial={{ opacity: 0, scale: 0.96, y: -6, x: 6 }}
-            animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -6, x: 6 }}
-            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed top-14 right-4 sm:right-6 z-50 w-full max-w-[340px] sm:max-w-[380px] rounded-3xl bg-[#14161b]/98 backdrop-blur-xl border border-white/15 shadow-[0_25px_60px_rgba(0,0,0,0.85)] p-5 space-y-4 text-white select-none max-h-[calc(100vh-80px)] overflow-y-auto custom-study-scroll transform-gpu will-change-transform"
-          >
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      panelKey="settings-modal"
+      backdropClassName="bg-transparent"
+      initial={{ opacity: 0, scale: 0.96, y: -6, x: 6 }}
+      animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+      exit={{ opacity: 0, scale: 0.96, y: -6, x: 6 }}
+      panelClassName="fixed top-14 right-4 sm:right-6 z-50 w-full max-w-[340px] sm:max-w-[380px] rounded-3xl bg-[#14161b]/98 backdrop-blur-xl border border-white/15 shadow-[0_25px_60px_rgba(0,0,0,0.85)] p-5 space-y-4 text-white select-none max-h-[calc(100vh-80px)] overflow-y-auto custom-study-scroll"
+    >
             {/* Header (Đã xóa icon thừa, tinh gọn & thanh lịch) */}
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div>
@@ -171,45 +165,34 @@ export const StudySettingsModal = ({
                 <p className="text-[10px] text-slate-400 font-medium">Tùy biến hiển thị & thời lượng</p>
               </div>
 
-              <button
-                type="button"
+              <IconBtn
                 onClick={onClose}
-                className="p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
                 title="Đóng (Esc)"
-              >
-                <X className="w-4 h-4" />
-              </button>
+                icon={<X className="w-4 h-4" />}
+                className="p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+              />
             </div>
 
             {/* Quick Filter Tabs */}
             <div className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-[11px] font-bold">
-              <button
-                type="button"
+              <PillButton
                 onClick={() => handleSelectTab("clock")}
-                className={`py-1.5 rounded-xl transition-all cursor-pointer text-center ${
-                  activeTab === "clock" ? "bg-white text-black shadow font-extrabold" : "text-slate-400 hover:text-white"
-                }`}
+                active={activeTab === "clock"}
               >
                 Đồng hồ
-              </button>
-              <button
-                type="button"
+              </PillButton>
+              <PillButton
                 onClick={() => handleSelectTab("pomodoro")}
-                className={`py-1.5 rounded-xl transition-all cursor-pointer text-center ${
-                  activeTab === "pomodoro" ? "bg-white text-black shadow font-extrabold" : "text-slate-400 hover:text-white"
-                }`}
+                active={activeTab === "pomodoro"}
               >
                 Pomodoro
-              </button>
-              <button
-                type="button"
+              </PillButton>
+              <PillButton
                 onClick={() => handleSelectTab("stopwatch")}
-                className={`py-1.5 rounded-xl transition-all cursor-pointer text-center ${
-                  activeTab === "stopwatch" ? "bg-white text-black shadow font-extrabold" : "text-slate-400 hover:text-white"
-                }`}
+                active={activeTab === "stopwatch"}
               >
                 Bấm giờ
-              </button>
+              </PillButton>
             </div>
 
             {/* Settings Sections */}
@@ -423,9 +406,6 @@ export const StudySettingsModal = ({
                 </div>
               )}
             </div>
-          </motion.div>
-        </React.Fragment>
-      )}
-    </AnimatePresence>
+    </ModalShell>
   );
 };

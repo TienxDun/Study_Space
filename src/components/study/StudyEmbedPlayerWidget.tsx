@@ -23,6 +23,13 @@ import {
   parseEmbedUrl
 } from "./study-types";
 import { toast } from "sonner";
+import { EmptyState } from "../ui/EmptyState";
+import { Badge } from "../ui/Badge";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
+import {
+  fetchSpotifyMetadata,
+  fetchYoutubeMetadata,
+} from "@/lib/embed-metadata";
 
 interface StudyEmbedPlayerWidgetProps {
   isOpen: boolean;
@@ -34,9 +41,9 @@ interface StudyEmbedPlayerWidgetProps {
   isZenMode?: boolean;
 }
 
-const STORAGE_CUSTOM_EMBEDS_KEY = "huflit_study_custom_embeds";
-const STORAGE_ACTIVE_EMBED_KEY = "huflit_study_active_embed";
-const STORAGE_VIEW_MODE_KEY = "huflit_study_embed_view_mode";
+const STORAGE_CUSTOM_EMBEDS_KEY = STORAGE_KEYS.customEmbeds;
+const STORAGE_ACTIVE_EMBED_KEY = STORAGE_KEYS.activeEmbed;
+const STORAGE_VIEW_MODE_KEY = STORAGE_KEYS.embedViewMode;
 
 export const StudyEmbedPlayerWidget = ({
   isOpen,
@@ -124,35 +131,18 @@ export const StudyEmbedPlayerWidget = ({
     const url = searchOrUrl.trim();
 
     const fetchRealOembed = async () => {
-      try {
-        if (detectedEmbed.platform === "youtube") {
-          const res = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.title && isMounted) {
-              setFetchedMetadata({
-                title: data.title,
-                author: data.author_name,
-                thumbnail: data.thumbnail_url || detectedEmbed.thumbnail
-              });
-              return;
-            }
-          }
-        } else if (detectedEmbed.platform === "spotify") {
-          const res = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.title && isMounted) {
-              setFetchedMetadata({
-                title: data.title,
-                thumbnail: data.thumbnail_url || detectedEmbed.thumbnail
-              });
-              return;
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("[StudyEmbed] Failed to fetch oEmbed:", err);
+      const meta =
+        detectedEmbed.platform === "youtube"
+          ? await fetchYoutubeMetadata(url)
+          : detectedEmbed.platform === "spotify"
+            ? await fetchSpotifyMetadata(url)
+            : null;
+      if (meta && isMounted) {
+        setFetchedMetadata({
+          title: meta.title,
+          author: meta.author,
+          thumbnail: meta.thumbnail || detectedEmbed.thumbnail,
+        });
       }
     };
 
@@ -173,29 +163,23 @@ export const StudyEmbedPlayerWidget = ({
     const resolveTitle = async () => {
       try {
         if (activeItem.platform === "youtube") {
-          const res = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(activeItem.url)}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.title && isMounted) {
-              changeActiveItem({
-                ...activeItem,
-                title: data.title,
-                category: data.author_name || activeItem.category || "YouTube",
-                thumbnail: data.thumbnail_url || activeItem.thumbnail
-              });
-            }
+          const meta = await fetchYoutubeMetadata(activeItem.url);
+          if (meta?.title && isMounted) {
+            changeActiveItem({
+              ...activeItem,
+              title: meta.title,
+              category: meta.author || activeItem.category || "YouTube",
+              thumbnail: meta.thumbnail || activeItem.thumbnail
+            });
           }
         } else if (activeItem.platform === "spotify") {
-          const res = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(activeItem.url)}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.title && isMounted) {
-              changeActiveItem({
-                ...activeItem,
-                title: data.title,
-                thumbnail: data.thumbnail_url || activeItem.thumbnail
-              });
-            }
+          const meta = await fetchSpotifyMetadata(activeItem.url);
+          if (meta?.title && isMounted) {
+            changeActiveItem({
+              ...activeItem,
+              title: meta.title,
+              thumbnail: meta.thumbnail || activeItem.thumbnail
+            });
           }
         }
       } catch {}
@@ -252,18 +236,13 @@ export const StudyEmbedPlayerWidget = ({
     let resolvedThumb = fetchedMetadata?.thumbnail || detectedEmbed.thumbnail;
 
     // If not fetched yet, try a quick 1-second fetch before mounting
-    if (!resolvedTitle) {
+    if (!resolvedTitle && detectedEmbed.platform === "youtube") {
       try {
-        if (detectedEmbed.platform === "youtube") {
-          const res = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(searchOrUrl.trim())}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data?.title) {
-              resolvedTitle = data.title;
-              resolvedAuthor = data.author_name;
-              resolvedThumb = data.thumbnail_url || resolvedThumb;
-            }
-          }
+        const meta = await fetchYoutubeMetadata(searchOrUrl.trim());
+        if (meta?.title) {
+          resolvedTitle = meta.title;
+          resolvedAuthor = meta.author;
+          resolvedThumb = meta.thumbnail || resolvedThumb;
         }
       } catch {}
     }
@@ -685,9 +664,10 @@ export const StudyEmbedPlayerWidget = ({
               {/* Presets Grid/List */}
               <div className="relative z-10 flex-1 overflow-y-auto p-4 sm:p-5 custom-study-scroll">
                 {displayedItems.length === 0 ? (
-                  <div className="text-center py-14 text-slate-400 text-xs">
-                    Không tìm thấy kênh hoặc đài phát phù hợp.
-                  </div>
+                  <EmptyState
+                    className="py-14"
+                    message="Không tìm thấy kênh hoặc đài phát phù hợp."
+                  />
                 ) : viewMode === "grid" ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {displayedItems.map((item) => {
@@ -738,15 +718,23 @@ export const StudyEmbedPlayerWidget = ({
                                   <span className="w-0.5 h-1.5 bg-[#1DB954] rounded-full" />
                                 </div>
                               ) : item.isLive ? (
-                                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-red-500/30 shadow-lg">
+                                <Badge
+                                  tone="red"
+                                  shape="full"
+                                  className="px-2 shadow-lg"
+                                >
                                   <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                  <span className="text-[9px] font-bold text-red-300 tracking-wider">LIVE</span>
-                                </div>
+                                  <span className="text-red-300 tracking-wider">LIVE</span>
+                                </Badge>
                               ) : (
-                                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-red-500/30 shadow-lg">
+                                <Badge
+                                  tone="red"
+                                  shape="full"
+                                  className="px-2 shadow-lg"
+                                >
                                   <Play className="w-2.5 h-2.5 text-red-400 fill-current" />
-                                  <span className="text-[9px] font-bold text-red-300 tracking-wider">VIDEO</span>
-                                </div>
+                                  <span className="text-red-300 tracking-wider">VIDEO</span>
+                                </Badge>
                               )}
                             </div>
                             <div className="absolute inset-0 flex items-center justify-center">

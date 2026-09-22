@@ -23,15 +23,16 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PomodoroSoundType, playPomodoroSound } from "./study-sound";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 export type TimerTab = "clock" | "pomodoro" | "stopwatch";
 export type PomodoroMode = "focus" | "short_break" | "long_break";
 
-const CLOCK_SECONDS_KEY = "study_clock_show_seconds";
-const CLOCK_12HOUR_KEY = "study_clock_12hour";
-const STOPWATCH_MS_KEY = "study_stopwatch_show_ms";
-const POMO_DURATIONS_KEY = "study_pomodoro_durations";
-const SOUND_KEY = "study_sound_enabled";
+const CLOCK_SECONDS_KEY = STORAGE_KEYS.clockSeconds;
+const CLOCK_12HOUR_KEY = STORAGE_KEYS.clock12Hour;
+const STOPWATCH_MS_KEY = STORAGE_KEYS.stopwatchMs;
+const POMO_DURATIONS_KEY = STORAGE_KEYS.pomoDurations;
+const SOUND_KEY = STORAGE_KEYS.soundEnabled;
 
 interface StudyPomodoroWidgetProps {
   isVisible: boolean;
@@ -106,7 +107,7 @@ export const StudyPomodoroWidget = ({
   // Load saved preferences on mount if not provided externally
   useEffect(() => {
     try {
-      const savedCount = localStorage.getItem("huflit_study_pomo_count");
+      const savedCount = localStorage.getItem(STORAGE_KEYS.pomoCount);
       if (savedCount) setCompletedSessions(parseInt(savedCount, 10) || 0);
 
       const savedDurations = localStorage.getItem(POMO_DURATIONS_KEY);
@@ -197,7 +198,7 @@ export const StudyPomodoroWidget = ({
       const nextCount = completedSessions + 1;
       setCompletedSessions(nextCount);
       try {
-        localStorage.setItem("huflit_study_pomo_count", String(nextCount));
+        localStorage.setItem(STORAGE_KEYS.pomoCount, String(nextCount));
       } catch {}
       if (onSessionComplete) onSessionComplete("focus");
 

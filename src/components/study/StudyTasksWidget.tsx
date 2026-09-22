@@ -30,14 +30,15 @@ import { KanbanBoard, KanbanCard, KanbanColumn, KanbanChecklistItem } from "./st
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { ConfirmDeleteModal } from "../ui/ConfirmDeleteModal";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 interface StudyTasksWidgetProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const STORAGE_KEY = "huflit_study_kanban_boards_v3";
-const ACTIVE_BOARD_KEY = "huflit_study_active_board_id_v3";
+const STORAGE_KEY = STORAGE_KEYS.kanbanBoards;
+const ACTIVE_BOARD_KEY = STORAGE_KEYS.activeBoard;
 
 const DEFAULT_BOARDS: KanbanBoard[] = [
   {

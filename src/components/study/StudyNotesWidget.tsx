@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 export interface StudyNote {
   id: string;
@@ -51,9 +52,9 @@ interface StudyNotesWidgetProps {
   onClose: () => void;
 }
 
-const STORAGE_MULTI_KEY = "huflit_study_multi_notes";
-const STORAGE_OLD_KEY = "huflit_study_notes";
-const STORAGE_THEME_KEY = "huflit_study_notes_theme";
+const STORAGE_MULTI_KEY = STORAGE_KEYS.multiNotes;
+const STORAGE_OLD_KEY = STORAGE_KEYS.oldNotes;
+const STORAGE_THEME_KEY = STORAGE_KEYS.notesTheme;
 
 const NOTE_CATEGORIES = ["Tất cả", "Học tập", "Dự án", "Công thức", "Cá nhân"];
 
@@ -80,7 +81,7 @@ const CATEGORY_COLORS: Record<string, { bgDark: string; textDark: string; border
 function markdownToHtml(md: string): string {
   if (!md) return "<p><br></p>";
   
-  let cleaned = md.replace(/#fef08a/g, "rgba(251, 191, 36, 0.25)").replace(/#ffff00/g, "rgba(251, 191, 36, 0.25)");
+  const cleaned = md.replace(/#fef08a/g, "rgba(251, 191, 36, 0.25)").replace(/#ffff00/g, "rgba(251, 191, 36, 0.25)");
 
   // If it already looks like HTML, return cleaned
   if (/<[a-z][\s\S]*>/i.test(cleaned)) return cleaned;

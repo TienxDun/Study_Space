@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { Track, MoodType, STUDY_TRACKS_BY_MOOD, StudyEmbedItem } from "./study-types";
 import { SoundMixerWidget } from "./SoundMixerWidget";
+import { RangeSlider } from "../ui/RangeSlider";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 interface StudyMusicPlayerProps {
   isGlobalMuted?: boolean;
@@ -115,7 +117,7 @@ export const StudyMusicPlayer = ({
   // Phục hồi cài đặt Nhạc từ LocalStorage khi vào lại trang
   useEffect(() => {
     try {
-      const savedMood = localStorage.getItem("huflit_study_mood") as MoodType;
+      const savedMood = localStorage.getItem(STORAGE_KEYS.mood) as MoodType;
       const validMoods: MoodType[] = ["lofi", "jazz", "relax"];
       const moodToUse = validMoods.includes(savedMood) ? savedMood : "lofi";
       
@@ -125,7 +127,7 @@ export const StudyMusicPlayer = ({
         setTracks(moodTracks);
       }
 
-      const savedTrackId = localStorage.getItem("huflit_study_track_id");
+      const savedTrackId = localStorage.getItem(STORAGE_KEYS.trackId);
       if (savedTrackId) {
         const trackIdx = moodTracks.findIndex((t) => t.id === savedTrackId);
         if (trackIdx !== -1) {
@@ -133,17 +135,17 @@ export const StudyMusicPlayer = ({
         }
       }
 
-      const savedVol = localStorage.getItem("huflit_study_volume");
+      const savedVol = localStorage.getItem(STORAGE_KEYS.volume);
       if (savedVol !== null && !isNaN(parseFloat(savedVol))) {
         setVolume(parseFloat(savedVol));
       }
 
-      const savedShuffle = localStorage.getItem("huflit_study_shuffle");
+      const savedShuffle = localStorage.getItem(STORAGE_KEYS.shuffle);
       if (savedShuffle !== null) {
         setIsShuffle(savedShuffle === "true");
       }
 
-      const savedLoop = localStorage.getItem("huflit_study_loop");
+      const savedLoop = localStorage.getItem(STORAGE_KEYS.loop);
       if (savedLoop !== null) {
         setIsLooping(savedLoop === "true");
       }
@@ -159,9 +161,9 @@ export const StudyMusicPlayer = ({
     setCurrentTime(0);
     setIsPlaying(true);
     try {
-      localStorage.setItem("huflit_study_mood", mood);
+      localStorage.setItem(STORAGE_KEYS.mood, mood);
       if (newTracks[0]) {
-        localStorage.setItem("huflit_study_track_id", newTracks[0].id);
+        localStorage.setItem(STORAGE_KEYS.trackId, newTracks[0].id);
       }
     } catch {}
   };
@@ -170,7 +172,7 @@ export const StudyMusicPlayer = ({
     setVolume(newVol);
     setIsLocalMuted(false);
     try {
-      localStorage.setItem("huflit_study_volume", String(newVol));
+      localStorage.setItem(STORAGE_KEYS.volume, String(newVol));
     } catch {}
   };
 
@@ -178,7 +180,7 @@ export const StudyMusicPlayer = ({
     setIsShuffle((prev) => {
       const next = !prev;
       try {
-        localStorage.setItem("huflit_study_shuffle", String(next));
+        localStorage.setItem(STORAGE_KEYS.shuffle, String(next));
       } catch {}
       return next;
     });
@@ -188,15 +190,17 @@ export const StudyMusicPlayer = ({
     setIsLooping((prev) => {
       const next = !prev;
       try {
-        localStorage.setItem("huflit_study_loop", String(next));
+        localStorage.setItem(STORAGE_KEYS.loop, String(next));
       } catch {}
       return next;
     });
   };
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = effectiveVolume;
+    const audio = audioRef.current;
+    if (audio) {
+      // eslint-disable-next-line react-hooks/immutability -- sync DOM media prop, khong phai React state
+      audio.volume = effectiveVolume;
     }
   }, [effectiveVolume]);
 
@@ -251,7 +255,7 @@ export const StudyMusicPlayer = ({
     setIsPlaying(true);
     try {
       if (tracks[nextIdx]) {
-        localStorage.setItem("huflit_study_track_id", tracks[nextIdx].id);
+        localStorage.setItem(STORAGE_KEYS.trackId, tracks[nextIdx].id);
       }
     } catch {}
   }, [currentTrackIndex, isShuffle, tracks]);
@@ -262,7 +266,7 @@ export const StudyMusicPlayer = ({
     setIsPlaying(true);
     try {
       if (tracks[prevIdx]) {
-        localStorage.setItem("huflit_study_track_id", tracks[prevIdx].id);
+        localStorage.setItem(STORAGE_KEYS.trackId, tracks[prevIdx].id);
       }
     } catch {}
   };
@@ -326,13 +330,13 @@ export const StudyMusicPlayer = ({
         const newIdx = newTracks.findIndex((t) => t.id === track.id);
         setCurrentTrackIndex(newIdx !== -1 ? newIdx : 0);
         try {
-          localStorage.setItem("huflit_study_mood", foundMood);
+          localStorage.setItem(STORAGE_KEYS.mood, foundMood);
         } catch {}
       }
     }
     setIsPlaying(true);
     try {
-      localStorage.setItem("huflit_study_track_id", track.id);
+      localStorage.setItem(STORAGE_KEYS.trackId, track.id);
     } catch {}
   };
 
@@ -368,8 +372,10 @@ export const StudyMusicPlayer = ({
 
   const handleSeek = (time: number) => {
     setCurrentTime(time);
-    if (audioRef.current && isFinite(audioRef.current.duration)) {
-      audioRef.current.currentTime = time;
+    const audio = audioRef.current;
+    if (audio && isFinite(audio.duration)) {
+      // eslint-disable-next-line react-hooks/immutability -- sync DOM media prop, khong phai React state
+      audio.currentTime = time;
     }
   };
 
@@ -417,7 +423,7 @@ export const StudyMusicPlayer = ({
           }
           setIsPlaying(true);
           try {
-            localStorage.setItem("huflit_study_track_id", track.id);
+            localStorage.setItem(STORAGE_KEYS.trackId, track.id);
           } catch {}
         }}
         volume={volume}
@@ -442,15 +448,15 @@ export const StudyMusicPlayer = ({
           className={`absolute -inset-1 rounded-full blur-xl pointer-events-none transition-all duration-700 ${
             isExternalStreamActive && externalStreamItem
               ? externalStreamItem.platform === "spotify"
-                ? "bg-gradient-to-r from-emerald-500/40 via-[#1DB954]/30 to-emerald-400/40 opacity-90 animate-pulse"
-                : "bg-gradient-to-r from-red-600/40 via-rose-500/30 to-red-500/40 opacity-90 animate-pulse"
+                ? "bg-gradient-to-r from-accent-music/40 via-[#1DB954]/30 to-accent-music-glow/40 opacity-90 animate-pulse"
+                : "bg-gradient-to-r from-accent-stream-deep/40 via-accent-stream-rose/30 to-accent-stream/40 opacity-90 animate-pulse"
               : isPlaying 
-              ? "bg-gradient-to-r from-emerald-500/25 via-sky-500/25 to-indigo-500/25 opacity-90 animate-pulse" 
-              : "bg-gradient-to-r from-white/10 via-white/5 to-white/10 opacity-30"
+              ? "bg-gradient-to-r from-accent-music/25 via-accent-scene/25 to-accent-dream/25 opacity-90 animate-pulse" 
+              : "bg-gradient-to-r from-wash/10 via-wash/5 to-wash/10 opacity-30"
           }`} 
         />
 
-        <div className="relative flex items-center justify-between gap-3 sm:gap-4 pl-3 pr-3 sm:pl-3.5 sm:pr-3.5 py-2 rounded-full bg-slate-950/90 hover:bg-slate-950/95 backdrop-blur-2xl border border-white/20 shadow-[0_15px_45px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.06)_inset] transition-all duration-300 text-white w-full">
+        <div className="relative flex items-center justify-between gap-3 sm:gap-4 pl-3 pr-3 sm:pl-3.5 sm:pr-3.5 py-2 rounded-full bg-panel/90 hover:bg-panel/95 backdrop-blur-2xl border border-line/20 shadow-[0_15px_45px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.06)_inset] transition-all duration-300 text-white w-full">
           {isExternalStreamActive && externalStreamItem ? (
             /* HYBRID EXTERNAL STREAM MODE (Compact Dynamic Capsule) */
             <>
@@ -462,7 +468,7 @@ export const StudyMusicPlayer = ({
               >
                 {/* Platform Geometric Shape (1:1 Spotify vs 16:9 YouTube) */}
                 {externalStreamItem.platform === "spotify" ? (
-                  <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden bg-emerald-950/90 border border-emerald-500/40 shadow-md shadow-emerald-950/60 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
+                  <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden bg-accent-music-ink/90 border border-accent-music/40 shadow-md shadow-accent-music-ink/60 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
                     {externalStreamItem.thumbnail && (
                       <img
                         src={externalStreamItem.thumbnail}
@@ -472,7 +478,7 @@ export const StudyMusicPlayer = ({
                     )}
                   </div>
                 ) : (
-                  <div className="relative w-13 h-9 sm:w-14 sm:h-10 rounded-lg overflow-hidden bg-red-950/90 border border-red-500/40 shadow-md shadow-red-950/60 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
+                  <div className="relative w-13 h-9 sm:w-14 sm:h-10 rounded-lg overflow-hidden bg-accent-stream-ink/90 border border-accent-stream/40 shadow-md shadow-accent-stream-ink/60 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
                     {externalStreamItem.thumbnail && (
                       <img
                         src={externalStreamItem.thumbnail}
@@ -480,33 +486,33 @@ export const StudyMusicPlayer = ({
                         className="w-full h-full object-cover"
                       />
                     )}
-                    <div className="absolute bottom-0 inset-x-0 h-1 bg-gradient-to-r from-red-600 via-rose-500 to-red-500" />
+                    <div className="absolute bottom-0 inset-x-0 h-1 bg-gradient-to-r from-accent-stream-deep via-accent-stream-rose to-accent-stream" />
                   </div>
                 )}
 
                 {/* Title & Live Status */}
                 <div className="min-w-0 flex-1 space-y-0.5 pr-2">
-                  <h4 className="text-xs sm:text-sm font-extrabold text-slate-100 truncate leading-tight group-hover/art:text-emerald-300 transition-colors">
+                  <h4 className="text-xs sm:text-sm font-extrabold text-slate-100 truncate leading-tight group-hover/art:text-accent-music-bright transition-colors">
                     {externalStreamItem.title}
                   </h4>
                   <div className="flex items-center gap-1.5 text-[10px] sm:text-xs">
                     {externalStreamItem.platform === "spotify" ? (
-                      <div className="flex items-end gap-0.5 h-2.5 px-1.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30">
+                      <div className="flex items-end gap-0.5 h-2.5 px-1.5 py-0.5 rounded-full bg-accent-music/20 border border-accent-music/30">
                         <span className="w-0.5 h-1.5 bg-[#1DB954] rounded-full animate-pulse" />
-                        <span className="w-0.5 h-2.5 bg-emerald-300 rounded-full animate-pulse" style={{ animationDelay: "120ms" }} />
+                        <span className="w-0.5 h-2.5 bg-accent-music-bright rounded-full animate-pulse" style={{ animationDelay: "120ms" }} />
                         <span className="w-0.5 h-2 bg-[#1DB954] rounded-full animate-pulse" style={{ animationDelay: "240ms" }} />
                       </div>
                     ) : externalStreamItem.isLive ? (
-                      <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/30">
+                      <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-accent-stream/20 border border-accent-stream/30">
                         <span className="relative flex h-1.5 w-1.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-stream-glow opacity-75" />
+                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent-stream" />
                         </span>
-                        <span className="text-[9px] font-bold text-red-300 tracking-wider">LIVE</span>
+                        <span className="text-[9px] font-bold text-accent-stream-bright tracking-wider">LIVE</span>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/15 border border-red-500/25 text-red-300 text-[9px] font-bold tracking-wider">
-                        <span className="w-1 h-1 rounded-full bg-red-400" />
+                      <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-accent-stream/15 border border-accent-stream/25 text-accent-stream-bright text-[9px] font-bold tracking-wider">
+                        <span className="w-1 h-1 rounded-full bg-accent-stream-glow" />
                         <span>VIDEO</span>
                       </div>
                     )}
@@ -524,8 +530,8 @@ export const StudyMusicPlayer = ({
                   onClick={onExpandExternalStream}
                   className={`p-2 rounded-full font-bold transition-all active:scale-95 cursor-pointer shadow-sm border ${
                     externalStreamItem.platform === "spotify"
-                      ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 hover:text-emerald-200 border-emerald-500/40 shadow-[0_0_15px_rgba(52,211,153,0.3)]"
-                      : "bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 border-red-500/40 shadow-[0_0_15px_rgba(239,68,68,0.3)]"
+                      ? "bg-accent-music/20 hover:bg-accent-music/30 text-accent-music-bright hover:text-accent-music-pale border-accent-music/40 shadow-[0_0_15px_rgba(52,211,153,0.3)]"
+                      : "bg-accent-stream/20 hover:bg-accent-stream/30 text-accent-stream-bright hover:text-accent-stream-pale border-accent-stream/40 shadow-[0_0_15px_rgba(239,68,68,0.3)]"
                   }`}
                   title="Mở rộng đài phát (E)"
                 >
@@ -535,7 +541,7 @@ export const StudyMusicPlayer = ({
                 {/* Stop Stream Button */}
                 <button
                   onClick={onStopExternalStream}
-                  className="p-2 rounded-full bg-red-500/15 hover:bg-red-500/30 text-slate-300 hover:text-red-200 border border-red-500/30 transition-all active:scale-90 cursor-pointer shadow-sm"
+                  className="p-2 rounded-full bg-accent-stream/15 hover:bg-accent-stream/30 text-slate-300 hover:text-accent-stream-pale border border-accent-stream/30 transition-all active:scale-90 cursor-pointer shadow-sm"
                   title="Dừng phát đài ngoài"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -552,7 +558,7 @@ export const StudyMusicPlayer = ({
                 title="Mở Sound Mixer & Danh sách nhạc"
               >
                 {/* Spinning Vinyl Record Disk */}
-                <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full p-[2px] bg-gradient-to-tr from-white/30 via-slate-700 to-white/20 shadow-lg shadow-black/60 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
+                <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full p-[2px] bg-gradient-to-tr from-wash/30 via-panel-edge to-wash/20 shadow-lg shadow-black/60 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
                   <div 
                     className={`w-full h-full rounded-full overflow-hidden relative shadow-inner ${
                       isPlaying ? "animate-[spin_10s_linear_infinite]" : ""
@@ -564,23 +570,23 @@ export const StudyMusicPlayer = ({
                       className="w-full h-full object-cover"
                     />
                     {/* Vinyl Grooves & Center Spindle Ring */}
-                    <div className="absolute inset-0 rounded-full border border-white/20 pointer-events-none" />
-                    <div className="absolute inset-0 m-auto w-3 h-3 rounded-full bg-slate-950 border border-white/50 shadow-sm z-10 flex items-center justify-center">
-                      <div className="w-1 h-1 rounded-full bg-emerald-400" />
+                    <div className="absolute inset-0 rounded-full border border-line/20 pointer-events-none" />
+                    <div className="absolute inset-0 m-auto w-3 h-3 rounded-full bg-panel border border-line/50 shadow-sm z-10 flex items-center justify-center">
+                      <div className="w-1 h-1 rounded-full bg-accent-music-glow" />
                     </div>
                   </div>
                 </div>
 
                 {/* Title, Artist */}
                 <div className="min-w-0 flex-1 space-y-0.5">
-                  <h4 className="text-xs sm:text-sm font-extrabold text-slate-100 truncate leading-tight group-hover/art:text-emerald-300 transition-colors">
+                  <h4 className="text-xs sm:text-sm font-extrabold text-slate-100 truncate leading-tight group-hover/art:text-accent-music-bright transition-colors">
                     {currentTrack?.title}
                   </h4>
 
                   <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-slate-400 truncate">
                     <span className="truncate">{currentTrack?.artist}</span>
                     <span>•</span>
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-white/10 text-emerald-300 font-bold border border-white/10 text-[10px]">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-wash/10 text-accent-music-bright font-bold border border-line/10 text-[10px]">
                       {currentTrack?.genre}
                     </span>
                   </div>
@@ -611,8 +617,8 @@ export const StudyMusicPlayer = ({
                           }}
                           className={`w-full max-w-[3.5px] rounded-full transition-all duration-75 ${
                             isPlayed
-                              ? "bg-gradient-to-t from-emerald-500 to-emerald-300 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
-                              : "bg-white/20 group-hover/waveform:bg-white/35"
+                              ? "bg-gradient-to-t from-accent-music to-accent-music-bright shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+                              : "bg-wash/20 group-hover/waveform:bg-wash/35"
                           }`}
                         />
                       </div>
@@ -643,8 +649,8 @@ export const StudyMusicPlayer = ({
                   onClick={handleToggleShuffle}
                   className={`p-1.5 rounded-full transition-all active:scale-90 cursor-pointer ${
                     isShuffle 
-                      ? "text-emerald-400 bg-emerald-500/20 shadow-sm border border-emerald-400/30" 
-                      : "text-slate-400 hover:text-white hover:bg-white/10"
+                      ? "text-accent-music-glow bg-accent-music/20 shadow-sm border border-accent-music-glow/30" 
+                      : "text-slate-400 hover:text-white hover:bg-wash/10"
                   }`}
                   title="Xáo trộn bài hát"
                 >
@@ -654,7 +660,7 @@ export const StudyMusicPlayer = ({
                 {/* Previous */}
                 <button
                   onClick={handlePrevTrack}
-                  className="p-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer"
+                  className="p-1.5 rounded-full text-slate-300 hover:text-white hover:bg-wash/10 transition-all active:scale-90 cursor-pointer"
                   title="Bài trước đó"
                 >
                   <SkipBack className="w-4 h-4 fill-current" />
@@ -663,20 +669,20 @@ export const StudyMusicPlayer = ({
                 {/* Play/Pause Main Glowing Pearl Button */}
                 <button
                   onClick={togglePlay}
-                  className="relative p-2.5 sm:p-3 rounded-full bg-gradient-to-tr from-emerald-500 to-emerald-300 hover:from-emerald-400 hover:to-emerald-200 text-slate-950 font-black shadow-[0_0_20px_rgba(52,211,153,0.7)] hover:shadow-[0_0_28px_rgba(52,211,153,0.9)] transition-all active:scale-90 cursor-pointer shrink-0"
+                  className="relative p-2.5 sm:p-3 rounded-full bg-gradient-to-tr from-accent-music to-accent-music-bright hover:from-accent-music-glow hover:to-accent-music-pale text-panel font-black shadow-[0_0_20px_rgba(52,211,153,0.7)] hover:shadow-[0_0_28px_rgba(52,211,153,0.9)] transition-all active:scale-90 cursor-pointer shrink-0"
                   title={isPlaying ? "Tạm dừng (Space)" : "Phát nhạc (Space)"}
                 >
                   {isPlaying ? (
-                    <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-slate-950" />
+                    <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-panel" />
                   ) : (
-                    <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-slate-950 translate-x-0.5" />
+                    <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-panel translate-x-0.5" />
                   )}
                 </button>
 
                 {/* Next */}
                 <button
                   onClick={handleNextTrack}
-                  className="p-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer"
+                  className="p-1.5 rounded-full text-slate-300 hover:text-white hover:bg-wash/10 transition-all active:scale-90 cursor-pointer"
                   title="Bài tiếp theo"
                 >
                   <SkipForward className="w-4 h-4 fill-current" />
@@ -687,8 +693,8 @@ export const StudyMusicPlayer = ({
                   onClick={handleToggleLoop}
                   className={`p-1.5 rounded-full transition-all active:scale-90 cursor-pointer ${
                     isLooping 
-                      ? "text-emerald-400 bg-emerald-500/20 shadow-sm border border-emerald-400/30" 
-                      : "text-slate-400 hover:text-white hover:bg-white/10"
+                      ? "text-accent-music-glow bg-accent-music/20 shadow-sm border border-accent-music-glow/30" 
+                      : "text-slate-400 hover:text-white hover:bg-wash/10"
                   }`}
                   title="Lặp lại danh sách"
                 >
@@ -696,25 +702,24 @@ export const StudyMusicPlayer = ({
                 </button>
 
                 {/* Volume Control */}
-                <div className="hidden lg:flex items-center gap-1.5 pl-1.5 pr-1 border-l border-white/15">
+                <div className="hidden lg:flex items-center gap-1.5 pl-1.5 pr-1 border-l border-line/15">
                   <button
                     onClick={() => setIsLocalMuted(!isLocalMuted)}
-                    className="text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+                    className="text-slate-400 hover:text-white p-1 rounded-full hover:bg-wash/10 transition-colors cursor-pointer"
                   >
                     {effectiveVolume === 0 ? (
-                      <VolumeX className="w-3.5 h-3.5 text-rose-400" />
+                      <VolumeX className="w-3.5 h-3.5 text-accent-stream-rose-bright" />
                     ) : (
                       <Volume2 className="w-3.5 h-3.5" />
                     )}
                   </button>
-                  <input
-                    type="range"
+                  <RangeSlider
                     min={0}
                     max={1}
                     step={0.05}
                     value={effectiveVolume}
                     onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                    className="w-12 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-emerald-400"
+                    className="w-12 h-1 bg-wash/20 rounded-lg accent-accent-music-glow"
                   />
                 </div>
 
@@ -723,8 +728,8 @@ export const StudyMusicPlayer = ({
                   onClick={toggleMixer}
                   className={`p-2 rounded-full transition-all active:scale-95 cursor-pointer border shrink-0 ${
                     isMixerOpen 
-                      ? "bg-emerald-500 text-slate-950 font-bold border-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.6)]" 
-                      : "bg-white/10 text-slate-200 hover:text-white hover:bg-white/20 border-white/15 shadow-sm"
+                      ? "bg-accent-music text-panel font-bold border-accent-music-bright shadow-[0_0_15px_rgba(52,211,153,0.6)]" 
+                      : "bg-wash/10 text-slate-200 hover:text-white hover:bg-wash/20 border-line/15 shadow-sm"
                   }`}
                   title="Mở Sound Mixer (Lo-fi / Jazz / Relax & Âm thanh nền)"
                 >

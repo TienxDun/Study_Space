@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { 
   X, 
   Headphones, 
@@ -39,7 +39,11 @@ import {
   STUDY_TRACKS_BY_MOOD, 
   AMBIENT_SOUNDS 
 } from "./study-types";
-import { motion, AnimatePresence } from "framer-motion";
+import { ModalShell } from "../ui/ModalShell";
+import { IconBtn } from "../ui/IconBtn";
+import { PillButton } from "../ui/PillButton";
+import { RangeSlider } from "../ui/RangeSlider";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 interface SoundMixerWidgetProps {
   isOpen: boolean;
@@ -118,7 +122,7 @@ export const SoundMixerWidget = ({
   // Phục hồi cài đặt phối âm môi trường từ LocalStorage
   useEffect(() => {
     try {
-      const savedVolsStr = localStorage.getItem("huflit_study_ambient_vols");
+      const savedVolsStr = localStorage.getItem(STORAGE_KEYS.ambientVols);
       if (savedVolsStr) {
         const parsed = JSON.parse(savedVolsStr);
         if (parsed && typeof parsed === "object") {
@@ -132,7 +136,7 @@ export const SoundMixerWidget = ({
     setAmbientVolumes((prev) => {
       const next = typeof updater === "function" ? updater(prev) : updater;
       try {
-        localStorage.setItem("huflit_study_ambient_vols", JSON.stringify(next));
+        localStorage.setItem(STORAGE_KEYS.ambientVols, JSON.stringify(next));
       } catch {}
       return next;
     });
@@ -229,66 +233,50 @@ export const SoundMixerWidget = ({
   const currentMoodTracks = STUDY_TRACKS_BY_MOOD[currentMood] || [];
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <React.Fragment key="sound-mixer-fragment">
-          {/* Fullscreen transparent backdrop capturing clicks anywhere outside the mixer */}
-          <motion.div
-            key="sound-mixer-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/10 cursor-default"
-            onClick={onClose}
-          />
-
-          <motion.div
-            key="sound-mixer-panel"
-            ref={popupRef}
-            initial={{ opacity: 0, x: 20, scale: 0.97 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 16, scale: 0.97 }}
-            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed top-16 bottom-3 sm:bottom-4 right-4 sm:right-6 z-50 w-[390px] sm:w-[420px] max-w-[calc(100vw-24px)] flex flex-col rounded-3xl bg-[#0b0f17]/95 backdrop-blur-xl border border-white/15 shadow-[0_25px_60px_rgba(0,0,0,0.7)] text-white overflow-hidden transform-gpu will-change-transform"
-          >
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      panelKey="sound-mixer"
+      panelRef={popupRef}
+      initial={{ opacity: 0, x: 20, scale: 0.97 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 16, scale: 0.97 }}
+      panelClassName="fixed top-16 bottom-3 sm:bottom-4 right-4 sm:right-6 z-50 w-[390px] sm:w-[420px] max-w-[calc(100vw-24px)] flex flex-col rounded-3xl bg-[#0b0f17]/95 backdrop-blur-xl border border-white/15 shadow-[0_25px_60px_rgba(0,0,0,0.7)] text-white overflow-hidden"
+    >
         {/* Header */}
         <div className="flex items-center justify-between p-4 pb-3 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-2">
             <Sliders className="w-4 h-4 text-emerald-400" />
             <h3 className="text-base font-bold tracking-tight">Sound Mixer</h3>
           </div>
-          <button
+          <IconBtn
             onClick={onClose}
-            className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors active:scale-95 cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+            title="Đóng"
+            icon={<X className="w-4 h-4" />}
+            className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+          />
         </div>
 
         {/* View Tabs: Nhạc nền (Music) vs Âm thanh môi trường (Ambience) */}
         <div className="flex items-center gap-1.5 p-1 mx-4 mt-3 bg-black/40 rounded-2xl border border-white/10 shrink-0">
-          <button
+          <PillButton
             onClick={() => setActiveTab("music")}
-            className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              activeTab === "music"
-                ? "bg-emerald-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white"
-            }`}
+            active={activeTab === "music"}
+            activeClassName="bg-emerald-600 text-white shadow-md"
+            className="flex-1 text-xs font-bold flex items-center justify-center gap-1.5"
           >
             <Music2 className="w-3.5 h-3.5" />
             Nhạc Chill ({currentMoodTracks.length})
-          </button>
-          <button
+          </PillButton>
+          <PillButton
             onClick={() => setActiveTab("ambience")}
-            className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              activeTab === "ambience"
-                ? "bg-emerald-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white"
-            }`}
+            active={activeTab === "ambience"}
+            activeClassName="bg-emerald-600 text-white shadow-md"
+            className="flex-1 text-xs font-bold flex items-center justify-center gap-1.5"
           >
             <CloudRain className="w-3.5 h-3.5" />
             Âm thanh nền ({AMBIENT_SOUNDS.length})
-          </button>
+          </PillButton>
         </div>
 
         {/* Tab Content */}
@@ -366,13 +354,12 @@ export const SoundMixerWidget = ({
                 {/* Modern Progress Bar with Time Display */}
                 <div className="relative z-10 space-y-1.5 my-3">
                   <div className="relative group flex items-center">
-                    <input
-                      type="range"
+                    <RangeSlider
                       min={0}
                       max={duration > 0 ? duration : 100}
                       value={currentTime}
                       onChange={(e) => onSeek(parseFloat(e.target.value))}
-                      className="w-full h-1.5 bg-white/15 hover:bg-white/25 rounded-full appearance-none cursor-pointer accent-emerald-400 transition-all"
+                      className="w-full bg-white/15 hover:bg-white/25 rounded-full accent-emerald-400"
                     />
                   </div>
                   <div className="flex justify-between text-[11px] font-mono font-medium text-slate-400 px-0.5">
@@ -703,14 +690,13 @@ export const SoundMixerWidget = ({
 
                       {/* Bottom row: Mini Slider & Volume Percent */}
                       <div className="flex items-center gap-2 pt-1 border-t border-white/5">
-                        <input
-                          type="range"
+                        <RangeSlider
                           min={0}
                           max={1}
                           step={0.05}
                           value={vol}
                           onChange={(e) => handleSoundVolume(sound.id, parseFloat(e.target.value))}
-                          className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer transition-all ${
+                          className={`w-full ${
                             isActive ? `bg-white/20 hover:bg-white/30 ${accentColor}` : "bg-white/10 hover:bg-white/20 accent-slate-500 opacity-50"
                           }`}
                         />
@@ -725,9 +711,6 @@ export const SoundMixerWidget = ({
             </div>
           )}
         </div>
-      </motion.div>
-        </React.Fragment>
-      )}
-    </AnimatePresence>
+    </ModalShell>
   );
 };
