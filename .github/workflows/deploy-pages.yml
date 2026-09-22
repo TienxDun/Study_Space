@@ -1,0 +1,53 @@
+# Deploy static export (out/) lên GitHub Pages project:
+# https://tienxdun.github.io/Study_Space
+# Trước khi chạy: repo Settings → Pages → Source: GitHub Actions.
+# Asset đọc từ R2 qua repo Variable NEXT_PUBLIC_STUDY_CDN_URL
+# (Settings → Variables → Actions). Để trống = dùng kèm basePath local.
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_STUDY_CDN_URL: ${{ vars.NEXT_PUBLIC_STUDY_CDN_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # Tuỳ chọn: asset đã có trên R2 thì xóa public/study TRƯỚC build
+      # cho nhẹ gói deploy (~479MB). Mở comment 2 dòng dưới nếu muốn
+      # deploy nhanh (fallback local sẽ mất).
+      # - run: rm -rf ./public/study
+      #   if: env.NEXT_PUBLIC_STUDY_CDN_URL != ''
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v2

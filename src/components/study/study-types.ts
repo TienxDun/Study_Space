@@ -1,11 +1,13 @@
-export const STUDY_CDN_URL = "/study";
-// Offline-first: asset nội bộ trong public/study (musics/sounds/scenes/thumbnails/authors).
-// Giữ STUDY_CDN_URL để tương thích ngược; code mới dùng các hằng STUDY_*_URL dưới đây.
-export const STUDY_MUSIC_URL = "/study/musics";
-export const STUDY_SOUND_URL = "/study/sounds";
-export const STUDY_SCENE_URL = "/study/scenes";
-export const STUDY_THUMB_URL = "/study/thumbnails";
-export const STUDY_AUTHOR_URL = "/study/authors";
+// Base URL của asset: R2 custom domain khi deploy (NEXT_PUBLIC_STUDY_CDN_URL).
+// Fallback local phải kèm basePath vì thẻ audio/video/img không tự prefix
+// (VD Pages project: /Study_Space/study/...). 177 ref bên dưới giữ nguyên.
+export const STUDY_CDN_URL =
+  process.env.NEXT_PUBLIC_STUDY_CDN_URL || "/Study_Space/study";
+export const STUDY_MUSIC_URL = `${STUDY_CDN_URL}/musics`;
+export const STUDY_SOUND_URL = `${STUDY_CDN_URL}/sounds`;
+export const STUDY_SCENE_URL = `${STUDY_CDN_URL}/scenes`;
+export const STUDY_THUMB_URL = `${STUDY_CDN_URL}/thumbnails`;
+export const STUDY_AUTHOR_URL = `${STUDY_CDN_URL}/authors`;
 
 export type MoodType = "lofi" | "jazz" | "relax";
 
