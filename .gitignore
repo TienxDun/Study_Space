@@ -1,7 +1,11 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ==============================================================================
+# Git Ignore - Next.js & Study Space Project
+# ==============================================================================
 
-# dependencies
-/node_modules
+# ------------------------------------------------------------------------------
+# Dependencies
+# ------------------------------------------------------------------------------
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -10,45 +14,124 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
+# ------------------------------------------------------------------------------
+# Next.js & Build Outputs
+# ------------------------------------------------------------------------------
+.next/
+out/
+build/
+dist/
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
+# ------------------------------------------------------------------------------
+# Environment Variables & Secrets (NEVER COMMIT SENSITIVE DATA)
+# ------------------------------------------------------------------------------
+.env
+.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 *.pem
-.eslintcache
-.cache
-.turbo
-/.swc/
-/.nyc_output
-*.local
+*.key
+*.cert
+*.crt
 
-# editor
-.vscode/
-.idea/
+# Allow committing example environment file if present
+!.env.example
 
-# debug
+# ------------------------------------------------------------------------------
+# Logs & Debugging
+# ------------------------------------------------------------------------------
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# ------------------------------------------------------------------------------
+# Testing & Code Coverage
+# ------------------------------------------------------------------------------
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
 
-# vercel
-.vercel
-
-# typescript
+# ------------------------------------------------------------------------------
+# Caches & Build Tools
+# ------------------------------------------------------------------------------
+.cache/
+.eslintcache
+.turbo/
+.swc/
+.parcel-cache/
 *.tsbuildinfo
 next-env.d.ts
 
-# agent
-.agent
+# ------------------------------------------------------------------------------
+# Python (AG Kit Scripts & Virtual Environments)
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# ------------------------------------------------------------------------------
+# IDEs & Text Editors
+# ------------------------------------------------------------------------------
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw[po]
+*~
+
+# ------------------------------------------------------------------------------
+# Operating System Files
+# ------------------------------------------------------------------------------
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ------------------------------------------------------------------------------
+# AI & Tooling Session Caches / Local Overrides
+# ------------------------------------------------------------------------------
+.agent/
+.gemini/
+.claude/
+.antigravity/
+*.local
+*.tmp
+*.temp
+
+# ------------------------------------------------------------------------------
+# Hosting & Deployment
+# ------------------------------------------------------------------------------
+.vercel
+
+.agents
