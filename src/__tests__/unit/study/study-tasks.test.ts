@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getDeadlineStatus } from "../../../components/study/StudyTasksWidget";
+import { getDeadlineStatus } from "@/components/study/tasks/utils/task-deadline";
 
 describe("StudyTasksWidget Deadline Logic", () => {
   it("should return null when no dueDate is provided", () => {

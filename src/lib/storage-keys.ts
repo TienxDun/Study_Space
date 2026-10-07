@@ -34,10 +34,10 @@ export const STORAGE_KEYS = {
   multiNotes: "huflit_study_multi_notes",
   oldNotes: "huflit_study_notes",
   notesTheme: "huflit_study_notes_theme",
-  // Admin staging (trang /admin/scenes)
-  adminCustomScenes: "huflit_admin_custom_scenes_v1",
-  adminEditedScenes: "huflit_admin_edited_scenes_v1",
-  adminDeletedScenes: "huflit_admin_deleted_scenes_v1",
+  notesCompactMode: "huflit_study_notes_compact_mode",
+  // Favorites
+  favoriteScenes: "huflit_study_favorite_scenes",
+  favoriteTracks: "huflit_study_favorite_tracks",
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

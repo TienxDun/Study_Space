@@ -4,8 +4,13 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Scene } from "./study-types";
 
-/** Nền nhập vai: crossfade video/ảnh + fallback thumbnail khi lỗi. */
-export const StudyBackground = ({ scene }: { scene: Scene }) => {
+export interface StudyBackgroundProps {
+  scene: Scene;
+  isBlurActive?: boolean;
+}
+
+/** Nền nhập vai: crossfade video/ảnh + fallback thumbnail + Spatial Vignette & GPU-accelerated Depth Blur. */
+export const StudyBackground = ({ scene, isBlurActive = false }: StudyBackgroundProps) => {
   const [hasVideoError, setHasVideoError] = useState(false);
 
   useEffect(() => {
@@ -13,15 +18,16 @@ export const StudyBackground = ({ scene }: { scene: Scene }) => {
   }, [scene.id]);
 
   return (
-    <div className="absolute inset-0 bg-slate-950 overflow-hidden pointer-events-none">
+    <div className="absolute inset-0 bg-slate-950 overflow-hidden pointer-events-none select-none">
+      {/* Dynamic Background Media with Clean Opacity Crossfade */}
       <AnimatePresence mode="sync">
         <motion.div
           key={scene.id}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1] }}
-          className="absolute inset-0 w-full h-full"
+          transition={{ duration: 0.8, ease: "easeInOut" }}
+          className="absolute inset-0 w-full h-full will-change-[opacity]"
         >
           {scene.type === "VIDEO" && !hasVideoError ? (
             <video
@@ -47,6 +53,23 @@ export const StudyBackground = ({ scene }: { scene: Scene }) => {
           )}
         </motion.div>
       </AnimatePresence>
+
+      {/* GPU-Accelerated Spatial Depth Blur Overlay (Sử dụng Opacity để 60fps mượt mà, không giật lag video) */}
+      <motion.div
+        initial={false}
+        animate={{ opacity: isBlurActive ? 1 : 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="absolute inset-0 bg-slate-950/45 backdrop-blur-md pointer-events-none will-change-[opacity]"
+      />
+
+      {/* Cinematic Contrast Shield: Top Scrim Gradient (bảo vệ thanh TopBar) */}
+      <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/75 via-black/30 to-transparent pointer-events-none" />
+
+      {/* Cinematic Contrast Shield: Bottom Scrim Gradient (bảo vệ MusicPlayer) */}
+      <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/80 via-black/35 to-transparent pointer-events-none" />
+
+      {/* Spatial Radial Vignette (làm tối dịu 4 góc màn hình để tập trung vào trung tâm) */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(2,6,23,0.55)_100%)] pointer-events-none" />
     </div>
   );
 };

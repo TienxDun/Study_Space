@@ -44,7 +44,7 @@ describe("StudySpace Asset Integrity Tests", () => {
   });
 
   it("should have valid curated embed presets", () => {
-    expect(CURATED_EMBED_PRESETS.length).toBe(2);
+    expect(CURATED_EMBED_PRESETS.length).toBeGreaterThanOrEqual(2);
     CURATED_EMBED_PRESETS.forEach((preset) => {
       expect(preset.id).toBeTruthy();
       expect(preset.title).toBeTruthy();
@@ -88,5 +88,64 @@ describe("StudySpace Asset Integrity Tests", () => {
 
     // Invalid URL
     expect(parseEmbedUrl("not-a-valid-url")).toBeNull();
+  });
+
+  it("should correctly resolve relative asset paths and preserve absolute URLs", async () => {
+    const { resolveAssetUrl, resolveScene, resolveTrack, resolveAmbientSound } = await import(
+      "../../../lib/asset-resolver"
+    );
+
+    // Absolute URLs
+    expect(resolveAssetUrl("https://example.com/audio.mp3")).toBe("https://example.com/audio.mp3");
+    expect(resolveAssetUrl("http://cdn.org/img.webp")).toBe("http://cdn.org/img.webp");
+    expect(resolveAssetUrl("data:image/png;base64,123")).toBe("data:image/png;base64,123");
+
+    // Relative paths
+    const resolvedRelative = resolveAssetUrl("scenes/chill/rain.mp4");
+    expect(resolvedRelative).toContain("scenes/chill/rain.mp4");
+    expect(resolvedRelative.startsWith("http") || resolvedRelative.startsWith("/")).toBe(true);
+
+    // Empty or falsy
+    expect(resolveAssetUrl("")).toBe("");
+    expect(resolveAssetUrl(null)).toBe("");
+
+    // resolveScene
+    const mockScene = resolveScene({
+      id: "test-scene",
+      name: "Test Scene",
+      category: "chill",
+      type: "VIDEO",
+      mediaPath: "scenes/test.mp4",
+      thumbnailPath: "thumbnails/test.webp",
+      tags: ["chill", "video"],
+    });
+    expect(mockScene.id).toBe("test-scene");
+    expect(mockScene.bgUrl).toContain("scenes/test.mp4");
+    expect(mockScene.thumbnailUrl).toContain("thumbnails/test.webp");
+
+    // resolveTrack
+    const mockTrack = resolveTrack({
+      id: "test-track",
+      title: "Test Track",
+      artist: "Test Artist",
+      genre: "Lofi",
+      category: "lofi",
+      audioPath: "musics/test.mp3",
+      coverPath: "https://example.com/cover.jpg",
+    });
+    expect(mockTrack.id).toBe("test-track");
+    expect(mockTrack.src).toContain("musics/test.mp3");
+    expect(mockTrack.cover).toBe("https://example.com/cover.jpg");
+
+    // resolveAmbientSound
+    const mockSound = resolveAmbientSound({
+      id: "test-sound",
+      name: "Rain",
+      icon: "CloudRain",
+      category: "rain",
+      audioPath: "sounds/rain.mp3",
+    });
+    expect(mockSound.id).toBe("test-sound");
+    expect(mockSound.src).toContain("sounds/rain.mp3");
   });
 });

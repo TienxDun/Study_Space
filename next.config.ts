@@ -1,10 +1,13 @@
 import type { NextConfig } from "next";
 
+// Chỉ bật basePath khi build tự động trên GitHub Actions cho GitHub Pages.
+// Khi chạy ở Local (npm run dev) hoặc deploy Vercel / Custom domain sẽ chạy trực tiếp tại root "/".
+const isGithubPages = process.env.GITHUB_ACTIONS === "true" && !process.env.VERCEL;
+const basePath = isGithubPages ? "/Study_Space" : "";
+
 const nextConfig: NextConfig = {
   output: "export",
-  // Project pages: https://tienxdun.github.io/Study_Space
-  // Bỏ basePath nếu chuyển sang custom domain / Vercel.
-  basePath: "/Study_Space",
+  ...(basePath ? { basePath } : {}),
   images: {
     unoptimized: true,
   },

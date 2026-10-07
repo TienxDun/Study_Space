@@ -1,0 +1,449 @@
+{
+  "lofi": [
+    {
+      "id": "69120cb7fcf70a70a9c9c71d",
+      "title": "Good Night - Lofi Cozy Chill Music",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/good-night-lofi-cozy-chill-music-160166.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "6912147dd25e72c5f292c4f4",
+      "title": "Take A Break - Cozy Ambient Lofi",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/take-a-break-cozy-ambient-lofi-199738.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "691214c3d25e72c5f292c4f6",
+      "title": "Winter - Holiday Chill Hop",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/winter-holiday-chill-hop-179283.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "691214edd25e72c5f292c4f8",
+      "title": "Sunset",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/sunset-154292.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "6912151ad25e72c5f292c4fa",
+      "title": "Passionate - Mediation Ambient Yoga Lofi",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/passionate-mediation-ambient-yoga-lofi-199739.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "6912153cd25e72c5f292c4fc",
+      "title": "Tasty - Chill Lofi Vibe",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/tasty-chill-lofi-vibe-242105.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "6912158fd25e72c5f292c502",
+      "title": "Romantic Dinner - Lofi Relax Beat",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/romantic-dinner-lofi-relax-beat-112192.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "691215dbd25e72c5f292c506",
+      "title": "Hot Coffee - Lofi Vlog Chill Hop",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/hot-coffee-lofi-vlog-chill-hop-179282.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "691215f9d25e72c5f292c508",
+      "title": "Lofi Mood",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/lofi-mood-193721.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "6912161ad25e72c5f292c50a",
+      "title": "Focus",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/focus-154291.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "6912163fd25e72c5f292c50c",
+      "title": "Cooking Beats",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/cooking-beats-154289.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "6912165bd25e72c5f292c50e",
+      "title": "Lazy Time - Summer Relax Lofi",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/lazy-time-summer-relax-lofi-199737.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "6912168fd25e72c5f292c510",
+      "title": "Fireplace",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/fireplace-179281.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "691216bbd25e72c5f292c514",
+      "title": "Chill Night",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/chill-night-154287.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "691216d7d25e72c5f292c516",
+      "title": "Blizzard",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/blizzard-179280.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "69121733d25e72c5f292c518",
+      "title": "November - Chill Fall Autumn Lofi Hip-Hop",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/november-chill-fall-autumn-lofi-hip-hop-253484.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "6912a1d6b3db845e87111e3e",
+      "title": "Lofi Chill Jazz",
+      "artist": "SigmaMusicArt",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/lofi-chill-jazz-272869.mp3",
+      "coverPath": "https://res.cloudinary.com/dwycykmig/image/upload/v1762828425/chillax/authors/SigmaMusicArt.jpg"
+    },
+    {
+      "id": "6975a7aa2b15ba426d339a7a",
+      "title": "Lofi Background Music 2",
+      "artist": "DELOSound",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/lofi-background-music-2-337568.mp3",
+      "coverPath": "authors/delosound.webp"
+    },
+    {
+      "id": "6975a8242b15ba426d339a7b",
+      "title": "Lofi Background Music 4",
+      "artist": "DELOSound",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/lofi-background-music-4-309039.mp3",
+      "coverPath": "authors/delosound.webp"
+    },
+    {
+      "id": "6975a8872b15ba426d339a7c",
+      "title": "Lofi Background Music Lo-Fi",
+      "artist": "DELOSound",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/lofi-background-music-lo-fi-309034.mp3",
+      "coverPath": "authors/delosound.webp"
+    },
+    {
+      "id": "6975a9922b15ba426d339a7d",
+      "title": "Lofi Chill - Commercial Fashion Vlog",
+      "artist": "FASSounds",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/lofi-chill-commercial-fashion-vlog-140858.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/07/30/13-02-32-179_200x200.jpg"
+    },
+    {
+      "id": "6975aa262b15ba426d339a7e",
+      "title": "Lofi Cafe",
+      "artist": "lofidreams",
+      "genre": "Lo-fi",
+      "category": "lofi",
+      "audioPath": "musics/lofi/lofi-cafe-427593.mp3",
+      "coverPath": "authors/lofidreams.webp"
+    }
+  ],
+  "jazz": [
+    {
+      "id": "6975b3062b15ba426d339a7f",
+      "title": "Coffee Jazz Podcast Music",
+      "artist": "Denis-Pavlov-Music",
+      "genre": "Jazz",
+      "category": "jazz",
+      "audioPath": "musics/jazz/coffee-jazz-podcast-music-256133.mp3",
+      "coverPath": "authors/Denis-Pavlov-Music.jpg"
+    },
+    {
+      "id": "6975b7062b15ba426d339a82",
+      "title": "Coffee with jazz",
+      "artist": "Playlistsons",
+      "genre": "Jazz",
+      "category": "jazz",
+      "audioPath": "musics/jazz/coffee-with-jazz-327479.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/04/14/22-15-39-553_200x200.png"
+    },
+    {
+      "id": "6975b7692b15ba426d339a83",
+      "title": "Good Morning Café Jazz",
+      "artist": "sleepvolume",
+      "genre": "Jazz",
+      "category": "jazz",
+      "audioPath": "musics/jazz/good-morning-cafe-jazz-227888.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/06/12/18-43-29-670_200x200.jpg"
+    },
+    {
+      "id": "6975b7c12b15ba426d339a84",
+      "title": "Jazz Cafe Background",
+      "artist": "Tunetank",
+      "genre": "Jazz",
+      "category": "jazz",
+      "audioPath": "musics/jazz/jazz-cafe-background-348913.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/05/29/22-47-49-487_200x200.jpg"
+    },
+    {
+      "id": "6975b8402b15ba426d339a85",
+      "title": "Jazz Night at the Coffee House",
+      "artist": "TokyoRifft",
+      "genre": "Jazz",
+      "category": "jazz",
+      "audioPath": "musics/jazz/jazz-night-at-the-coffee-house-410241.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/09/25/03-30-45-14_200x200.jpg"
+    },
+    {
+      "id": "6975b8962b15ba426d339a86",
+      "title": "Royalty Free JAZZ - Velvet Steps",
+      "artist": "Free_Audio_Library",
+      "genre": "Jazz",
+      "category": "jazz",
+      "audioPath": "musics/jazz/royalty-free-jazz-velvet-steps-355581.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/06/05/17-34-32-884_200x200.png"
+    },
+    {
+      "id": "6975b8e82b15ba426d339a87",
+      "title": "Smooth Coffee",
+      "artist": "DJARTMUSIC",
+      "genre": "Jazz",
+      "category": "jazz",
+      "audioPath": "musics/jazz/smooth-coffee-254076.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2024/10/23/08-31-46-872_200x200.jpg"
+    },
+    {
+      "id": "6975b9322b15ba426d339a88",
+      "title": "Smooth Jazz Cafe Session 1",
+      "artist": "sleepvolume",
+      "genre": "Jazz",
+      "category": "jazz",
+      "audioPath": "musics/jazz/smooth-jazz-cafe-session-1-306314.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/06/12/18-39-24-241_200x200.jpg"
+    },
+    {
+      "id": "6975c0a02b15ba426d339a89",
+      "title": "Fruity Jazz Session 2",
+      "artist": "sleepvolume",
+      "genre": "Jazz",
+      "category": "jazz",
+      "audioPath": "musics/jazz/fruity-jazz-session-2-283529.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/06/12/18-39-24-241_200x200.jpg"
+    },
+    {
+      "id": "6975c1312b15ba426d339a8a",
+      "title": "Street Corner Jazz Cafe",
+      "artist": "HarumachiMusic",
+      "genre": "Jazz",
+      "category": "jazz",
+      "audioPath": "musics/jazz/street-corner-jazz-cafe-338559.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/05/08/12-15-50-920_200x200.png"
+    },
+    {
+      "id": "6975c1722b15ba426d339a8b",
+      "title": "Jazz in a gentle coffee shop",
+      "artist": "ONION_ALL_STARS",
+      "genre": "Jazz",
+      "category": "jazz",
+      "audioPath": "musics/jazz/jazz-in-a-gentle-coffee-shop-137710.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2023/02/07/03-22-03-984_200x200.png"
+    },
+    {
+      "id": "6975c1d22b15ba426d339a8c",
+      "title": "lazy afternoon Jazz",
+      "artist": "InhalingInfinity",
+      "genre": "Jazz",
+      "category": "jazz",
+      "audioPath": "musics/jazz/lazy-afternoon-jazz-chilled-relaxing-saxophone-lounge-morning-303202.mp3",
+      "coverPath": "thumbnails/coffee-shop.PNG"
+    },
+    {
+      "id": "6975c2232b15ba426d339a8d",
+      "title": "Smooth Jazz Cafe Session 5",
+      "artist": "sleepvolume",
+      "genre": "Jazz",
+      "category": "jazz",
+      "audioPath": "musics/jazz/smooth-jazz-cafe-session-5-306319.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/06/12/14-47-52-63_200x200.jpg"
+    },
+    {
+      "id": "6975c2592b15ba426d339a8e",
+      "title": "Cotton Candy Jazz Session 1",
+      "artist": "sleepvolume",
+      "genre": "Jazz",
+      "category": "jazz",
+      "audioPath": "musics/jazz/cotton-candy-jazz-session-1-283530.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/06/12/14-47-52-63_200x200.jpg"
+    },
+    {
+      "id": "6975c2972b15ba426d339a8f",
+      "title": "Smooth Jazz Cafe Session 2",
+      "artist": "sleepvolume",
+      "genre": "Jazz",
+      "category": "jazz",
+      "audioPath": "musics/jazz/smooth-jazz-cafe-session-2-306315.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/06/12/14-47-52-63_200x200.jpg"
+    }
+  ],
+  "relax": [
+    {
+      "id": "6975c5112b15ba426d339a90",
+      "title": "relaxing piano music",
+      "artist": "Clavier-Music",
+      "genre": "Relax",
+      "category": "relax",
+      "audioPath": "musics/relax/soft-piano-music-312509.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2024/12/12/10-25-26-543_200x200.jpg"
+    },
+    {
+      "id": "6975c57c2b15ba426d339a91",
+      "title": "relaxing piano music",
+      "artist": "Clavier-Music",
+      "genre": "Relax",
+      "category": "relax",
+      "audioPath": "musics/relax/relaxing-piano-music-376369.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2024/12/05/13-47-53-576_200x200.jpg"
+    },
+    {
+      "id": "6975c5ff2b15ba426d339a92",
+      "title": "relaxing piano music",
+      "artist": "Clavier-Music",
+      "genre": "Relax",
+      "category": "relax",
+      "audioPath": "musics/relax/relaxing-piano-music-293690.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2024/12/05/13-47-53-576_200x200.jpg"
+    },
+    {
+      "id": "6975c6652b15ba426d339a93",
+      "title": "Emotional Piano Music",
+      "artist": "SigmaMusicArt",
+      "genre": "Relax",
+      "category": "relax",
+      "audioPath": "musics/relax/emotional-piano-music-256262.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2024/10/29/08-32-50-109_200x200.jpg"
+    },
+    {
+      "id": "6975c6c12b15ba426d339a94",
+      "title": "serene locations - relaxing piano music",
+      "artist": "RibhavAgrawal",
+      "genre": "Relax",
+      "category": "relax",
+      "audioPath": "musics/relax/serene-locations-relaxing-piano-music-311526.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/03/10/05-15-47-945_200x200.jpg"
+    },
+    {
+      "id": "6975c7132b15ba426d339a95",
+      "title": "soft memories - relaxing piano music",
+      "artist": "Clavier-Music",
+      "genre": "Relax",
+      "category": "relax",
+      "audioPath": "musics/relax/soft-memories-relaxing-piano-music-351872.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/05/30/10-09-07-282_200x200.jpg"
+    },
+    {
+      "id": "6975c7912b15ba426d339a96",
+      "title": "Emotional Piano Music",
+      "artist": "DELOSound",
+      "genre": "Relax",
+      "category": "relax",
+      "audioPath": "musics/relax/emotional-piano-music-471129.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2026/01/22/11-37-10-469_200x200.png"
+    },
+    {
+      "id": "6975c8af2b15ba426d339a97",
+      "title": "relaxing piano music",
+      "artist": "Clavier-Music",
+      "genre": "Relax",
+      "category": "relax",
+      "audioPath": "musics/relax/relaxing-piano-music-286434.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/01/10/11-57-39-29_200x200.jpg"
+    },
+    {
+      "id": "6975c9042b15ba426d339a98",
+      "title": "Soft Piano Music",
+      "artist": "Sakartvelo",
+      "genre": "Relax",
+      "category": "relax",
+      "audioPath": "musics/relax/soft-piano-music-368174.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/06/30/21-45-03-322_200x200.jpg"
+    },
+    {
+      "id": "6975c98f2b15ba426d339a99",
+      "title": "Calm Piano Music",
+      "artist": "Clavier-Music",
+      "genre": "Relax",
+      "category": "relax",
+      "audioPath": "musics/relax/calm-piano-music-351839.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/05/30/09-32-12-451_200x200.jpg"
+    },
+    {
+      "id": "6975c9ed2b15ba426d339a9a",
+      "title": "Piano Background Music",
+      "artist": "SigmaMusicArt",
+      "genre": "Relax",
+      "category": "relax",
+      "audioPath": "musics/relax/piano-background-music-462076.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2026/01/09/16-27-48-222_200x200.jpg"
+    },
+    {
+      "id": "6975ca472b15ba426d339a9b",
+      "title": "Piano Relaxing Ambient Music",
+      "artist": "Surprising_Media",
+      "genre": "Relax",
+      "category": "relax",
+      "audioPath": "musics/relax/piano-relaxing-ambient-music-405363.mp3",
+      "coverPath": "https://cdn.pixabay.com/audio/2025/09/16/11-26-54-970_200x200.jpg"
+    }
+  ]
+}

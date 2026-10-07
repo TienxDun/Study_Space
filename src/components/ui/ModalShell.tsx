@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import type { TargetAndTransition, Transition } from "framer-motion";
 import type { ReactNode, Ref } from "react";
@@ -26,6 +28,7 @@ const DEFAULT_TRANSITION: Transition = {
 };
 
 /** Khung modal/popout dung chung: backdrop + panel + AnimatePresence.
+ *  Portal truc tiep vao document.body de thoat khoi containing block cua cac the cha co transform.
  *  Quy uoc: backdrop click = dong. Esc do page.tsx quan ly tap trung. */
 export const ModalShell = ({
   isOpen,
@@ -39,34 +42,45 @@ export const ModalShell = ({
   animate = { opacity: 1 },
   exit = { opacity: 0 },
   transition = DEFAULT_TRANSITION,
-}: ModalShellProps) => (
-  <AnimatePresence>
-    {isOpen && (
-      <>
-        <motion.div
-          key={`${panelKey}-backdrop`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
-          className={cn(
-            "fixed inset-0 z-40 bg-black/10 cursor-default",
-            backdropClassName
-          )}
-          onClick={onClose}
-        />
-        <motion.div
-          key={panelKey}
-          ref={panelRef}
-          initial={initial}
-          animate={animate}
-          exit={exit}
-          transition={transition}
-          className={cn(panelClassName, "transform-gpu will-change-transform")}
-        >
-          {children}
-        </motion.div>
-      </>
-    )}
-  </AnimatePresence>
-);
+}: ModalShellProps) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const content = (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            key={`${panelKey}-backdrop`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className={cn(
+              "fixed inset-0 z-40 bg-black/10 cursor-default",
+              backdropClassName
+            )}
+            onClick={onClose}
+          />
+          <motion.div
+            key={panelKey}
+            ref={panelRef}
+            initial={initial}
+            animate={animate}
+            exit={exit}
+            transition={transition}
+            className={cn(panelClassName, "will-change-transform")}
+          >
+            {children}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+
+  if (!mounted) return null;
+  return createPortal(content, document.body);
+};

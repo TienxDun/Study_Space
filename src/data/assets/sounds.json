@@ -1,0 +1,142 @@
+[
+  {
+    "id": "690a1ec2be9fba0e783fc5c8",
+    "name": "Forest Rain",
+    "icon": "CloudRain",
+    "category": "rain",
+    "audioPath": "sounds/rain_forest.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5d1",
+    "name": "Summer Storm",
+    "icon": "CloudRain",
+    "category": "rain",
+    "audioPath": "sounds/summer_storm.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5d7",
+    "name": "Deep Space",
+    "icon": "Orbit",
+    "category": "indoor",
+    "audioPath": "sounds/deepspace.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5cc",
+    "name": "City Traffic",
+    "icon": "Car",
+    "category": "indoor",
+    "audioPath": "sounds/city_traffic.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5ce",
+    "name": "Forest",
+    "icon": "Trees",
+    "category": "nature",
+    "audioPath": "sounds/forest_night.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5d3",
+    "name": "People Talking",
+    "icon": "Coffee",
+    "category": "indoor",
+    "audioPath": "sounds/people_talk_inside.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5d8",
+    "name": "Window Rain",
+    "icon": "CloudRain",
+    "category": "rain",
+    "audioPath": "sounds/window_rain.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5d5",
+    "name": "Wind",
+    "icon": "Wind",
+    "category": "nature",
+    "audioPath": "sounds/wind.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5cb",
+    "name": "City Rain",
+    "icon": "CloudRain",
+    "category": "rain",
+    "audioPath": "sounds/rain_city.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5cf",
+    "name": "Waves",
+    "icon": "Waves",
+    "category": "nature",
+    "audioPath": "sounds/waves.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5d9",
+    "name": "Train",
+    "icon": "CloudRain",
+    "category": "rain",
+    "audioPath": "sounds/train.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5cd",
+    "name": "Campfire",
+    "icon": "Flame",
+    "category": "indoor",
+    "audioPath": "sounds/campfire.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5d0",
+    "name": "Fan",
+    "icon": "Fan",
+    "category": "indoor",
+    "audioPath": "sounds/fan.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5d6",
+    "name": "Fireplace",
+    "icon": "Flame",
+    "category": "indoor",
+    "audioPath": "sounds/fireplace.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5db",
+    "name": "Thunders",
+    "icon": "Zap",
+    "category": "rain",
+    "audioPath": "sounds/thunders.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5ca",
+    "name": "Keyboard",
+    "icon": "Keyboard",
+    "category": "indoor",
+    "audioPath": "sounds/keyboard.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5c9",
+    "name": "Bird Chirping",
+    "icon": "Bird",
+    "category": "nature",
+    "audioPath": "sounds/birds.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5d2",
+    "name": "River",
+    "icon": "Droplets",
+    "category": "nature",
+    "audioPath": "sounds/river.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5d4",
+    "name": "Underwater",
+    "icon": "Droplets",
+    "category": "indoor",
+    "audioPath": "sounds/underwater.mp3"
+  },
+  {
+    "id": "690a1ec2be9fba0e783fc5da",
+    "name": "Plane",
+    "icon": "Plane",
+    "category": "indoor",
+    "audioPath": "sounds/airplane.mp3"
+  }
+]

@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { Scene, STUDY_SCENES, StudyEmbedItem } from "@/components/study/study-types";
-import { PomodoroSoundType } from "@/components/study/study-sound";
-import { StudyMusicPlayer } from "@/components/study/StudyMusicPlayer";
-import { StudyPomodoroWidget, TimerTab } from "@/components/study/StudyPomodoroWidget";
+import { StudyMusicPlayer } from "@/components/study/music/StudyMusicPlayer";
+import { StudyPomodoroWidget } from "@/components/study/pomodoro/StudyPomodoroWidget";
+import type { TimerTab } from "@/components/study/pomodoro/types";
 import { StudySettingsModal } from "@/components/study/StudySettingsModal";
 import { StudyBackground } from "@/components/study/StudyBackground";
 import { useStudyKeyboard } from "@/lib/use-study-keyboard";
@@ -15,15 +15,16 @@ import { StudyLeftDock } from "@/components/study/StudyLeftDock";
 import { StudyShortcutsModal } from "@/components/study/StudyShortcutsModal";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useStudySettings } from "@/lib/use-study-settings";
+import { useGlobalHorizontalScroll } from "@/lib/use-horizontal-scroll";
 
 // Lazy Load heavy widgets with code-splitting to optimize First Contentful Paint & bundle size
 const StudyTasksWidget = dynamic(
-  () => import("@/components/study/StudyTasksWidget").then((mod) => mod.StudyTasksWidget),
+  () => import("@/components/study/tasks/StudyTasksWidget").then((mod) => mod.StudyTasksWidget),
   { ssr: false }
 );
 
 const StudyNotesWidget = dynamic(
-  () => import("@/components/study/StudyNotesWidget").then((mod) => mod.StudyNotesWidget),
+  () => import("@/components/study/notes/StudyNotesWidget").then((mod) => mod.StudyNotesWidget),
   { ssr: false }
 );
 
@@ -33,11 +34,12 @@ const SceneSelectorWidget = dynamic(
 );
 
 const StudyEmbedPlayerWidget = dynamic(
-  () => import("@/components/study/StudyEmbedPlayerWidget").then((mod) => mod.StudyEmbedPlayerWidget),
+  () => import("@/components/study/embed/StudyEmbedPlayerWidget").then((mod) => mod.StudyEmbedPlayerWidget),
   { ssr: false }
 );
 
 export default function StudySpacePage() {
+  useGlobalHorizontalScroll();
   const [currentScene, setCurrentScene] = useState<Scene>(STUDY_SCENES[0]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isGlobalMuted, setIsGlobalMuted] = useState(false);
@@ -49,11 +51,13 @@ export default function StudySpacePage() {
   const [centerTab, setCenterTab] = useState<TimerTab>("pomodoro");
   const [isTasksOpen, setIsTasksOpen] = useState(false);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [isNotesCompact, setIsNotesCompact] = useState(false);
   const [isScenesOpen, setIsScenesOpen] = useState(false);
   const [isMixerOpen, setIsMixerOpen] = useState(false);
   const [isEmbedPlayerOpen, setIsEmbedPlayerOpen] = useState(false);
   const [isExternalStreamActive, setIsExternalStreamActive] = useState(false);
   const [externalActiveItem, setExternalActiveItem] = useState<StudyEmbedItem | null>(null);
+  const [isPipActive, setIsPipActive] = useState(false);
   const [isShortcutsHelpOpen, setIsShortcutsHelpOpen] = useState(false);
 
   // Unified Settings Modal State (Default: Tắt giây đồng hồ, Tắt .00 stopwatch, Bật chuông Pomodoro 25-5-15)
@@ -174,7 +178,12 @@ export default function StudySpacePage() {
   };
 
   const handleToggleEmbed = () => {
-    setIsEmbedPlayerOpen(!isEmbedPlayerOpen);
+    if (isPipActive) {
+      setIsEmbedPlayerOpen(true);
+      setIsPipActive(false);
+    } else {
+      setIsEmbedPlayerOpen(!isEmbedPlayerOpen);
+    }
     if (!isEmbedPlayerOpen) handleCloseSettings();
     setIsTasksOpen(false);
     setIsNotesOpen(false);
@@ -202,6 +211,13 @@ export default function StudySpacePage() {
       } catch {}
       return next;
     });
+  };
+
+  const setGlobalMute = (muted: boolean) => {
+    setIsGlobalMuted(muted);
+    try {
+      localStorage.setItem(STORAGE_KEYS.globalMute, String(muted));
+    } catch {}
   };
 
   // Fullscreen toggle
@@ -232,9 +248,18 @@ export default function StudySpacePage() {
     setZenMode: setIsZenMode,
   });
 
+  const isAnyModalOpen =
+    isSettingsOpen ||
+    isTasksOpen ||
+    (isNotesOpen && !isNotesCompact) ||
+    isScenesOpen ||
+    (isEmbedPlayerOpen && !isPipActive) ||
+    isMixerOpen ||
+    isShortcutsHelpOpen;
+
   return (
     <div className="relative w-screen h-dvh overflow-hidden bg-slate-950 text-white select-none font-sans">
-      <StudyBackground scene={currentScene} />
+      <StudyBackground scene={currentScene} isBlurActive={isAnyModalOpen} />
 
       {/* Top Navigation Bar */}
       <StudyTopBar
@@ -260,7 +285,7 @@ export default function StudySpacePage() {
         isTasksOpen={isTasksOpen}
         isNotesOpen={isNotesOpen}
         isScenesOpen={isScenesOpen}
-        isEmbedPlayerOpen={isEmbedPlayerOpen}
+        isEmbedPlayerOpen={isEmbedPlayerOpen && !isPipActive}
         isExternalStreamActive={isExternalStreamActive}
         onTogglePomodoro={handleTogglePomodoroVisibility}
         onToggleTasks={handleToggleTasks}
@@ -271,7 +296,11 @@ export default function StudySpacePage() {
 
       {/* Popout Widgets */}
       <StudyTasksWidget isOpen={isTasksOpen} onClose={() => setIsTasksOpen(false)} />
-      <StudyNotesWidget isOpen={isNotesOpen} onClose={() => setIsNotesOpen(false)} />
+      <StudyNotesWidget 
+        isOpen={isNotesOpen} 
+        onClose={() => setIsNotesOpen(false)} 
+        onCompactModeChange={setIsNotesCompact}
+      />
       <SceneSelectorWidget 
         isOpen={isScenesOpen} 
         onClose={() => setIsScenesOpen(false)} 
@@ -288,7 +317,9 @@ export default function StudySpacePage() {
           setIsScenesOpen(false);
           setIsMixerOpen(false);
           setIsEmbedPlayerOpen(true);
+          setIsPipActive(false);
         }}
+        onPipModeChange={setIsPipActive}
         activeItem={externalActiveItem}
         onStreamActiveChange={setIsExternalStreamActive}
         onActiveItemChange={setExternalActiveItem}
@@ -334,15 +365,17 @@ export default function StudySpacePage() {
       <motion.div 
         animate={{ 
           opacity: isZenMode ? 0 : 1, 
-          y: isZenMode ? 40 : 0,
+          y: isZenMode ? 32 : 0,
           pointerEvents: isZenMode ? "none" : "auto" 
         }}
-        transition={{ duration: 0.3 }}
-        className="absolute bottom-4 left-4 right-4 z-40 flex justify-center"
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="absolute bottom-4 left-4 right-4 z-40 flex justify-center will-change-transform"
       >
         <div className="w-full flex justify-center">
           <StudyMusicPlayer 
             isGlobalMuted={isGlobalMuted} 
+            onToggleMute={toggleGlobalMute}
+            onMuteChange={setGlobalMute}
             isMixerOpen={isMixerOpen}
             isExternalStreamActive={isExternalStreamActive}
             externalStreamItem={externalActiveItem}
@@ -353,6 +386,7 @@ export default function StudySpacePage() {
               setIsScenesOpen(false);
               setIsMixerOpen(false);
               setIsEmbedPlayerOpen(true);
+              setIsPipActive(false);
             }}
             onStopExternalStream={() => {
               setIsExternalStreamActive(false);
