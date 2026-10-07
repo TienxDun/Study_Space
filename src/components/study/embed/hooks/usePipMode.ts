@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useDragControls, useMotionValue } from "framer-motion";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
+
+const STORAGE_PIP_POS_KEY = STORAGE_KEYS.embedPipPos;
 
 interface UsePipModeOptions {
   isOpen: boolean;
@@ -21,14 +24,32 @@ export function usePipMode({ isOpen, onPipModeChange, onOpen }: UsePipModeOption
     bottom: 16,
   });
 
+  // Khôi phục vị trí PiP đã lưu trong LocalStorage
+  const restorePipPos = useCallback(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_PIP_POS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
+          const clampedX = Math.max(dragBounds.left, Math.min(dragBounds.right, parsed.x));
+          const clampedY = Math.max(dragBounds.top, Math.min(dragBounds.bottom, parsed.y));
+          pipX.set(clampedX);
+          pipY.set(clampedY);
+        }
+      }
+    } catch {}
+  }, [dragBounds, pipX, pipY]);
+
   // Cập nhật ranh giới kéo thả PiP động theo kích thước màn hình
   useEffect(() => {
     const updateBounds = () => {
       if (typeof window !== "undefined") {
+        const leftLimit = -(window.innerWidth - 380);
+        const topLimit = -(window.innerHeight - 260);
         setDragBounds({
-          left: -(window.innerWidth - 380),
+          left: leftLimit,
           right: 16,
-          top: -(window.innerHeight - 260),
+          top: topLimit,
           bottom: 16,
         });
       }
@@ -42,38 +63,29 @@ export function usePipMode({ isOpen, onPipModeChange, onOpen }: UsePipModeOption
   useEffect(() => {
     if (isOpen) {
       setIsPipMode(false);
-      pipX.set(0);
-      pipY.set(0);
     }
-  }, [isOpen, pipX, pipY]);
+  }, [isOpen]);
 
   // Thông báo thay đổi trạng thái PiP cho parent
   useEffect(() => {
-    if (!isPipMode) {
-      pipX.set(0);
-      pipY.set(0);
-    }
     if (onPipModeChange) {
       onPipModeChange(isPipMode);
     }
-  }, [isPipMode, pipX, pipY, onPipModeChange]);
+  }, [isPipMode, onPipModeChange]);
 
   const enterPip = useCallback(() => {
-    pipX.set(0);
-    pipY.set(0);
+    restorePipPos();
     setIsPipMode(true);
-  }, [pipX, pipY]);
+  }, [restorePipPos]);
 
   const exitPip = useCallback(
     (openStudioModal: boolean = false) => {
-      pipX.set(0);
-      pipY.set(0);
       setIsPipMode(false);
       if (openStudioModal && onOpen) {
         onOpen();
       }
     },
-    [pipX, pipY, onOpen]
+    [onOpen]
   );
 
   return {

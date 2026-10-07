@@ -113,7 +113,7 @@ export const StudyLeftDock = ({
           animate={{ opacity: 1, x: 0, y: "-50%" }}
           exit={{ opacity: 0, x: -28, y: "-50%" }}
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute left-4 top-1/2 z-40 flex flex-col gap-1.5 p-1.5 rounded-3xl bg-panel/80 hover:bg-panel/90 backdrop-blur-2xl border border-line/15 shadow-[0_16px_48px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.12)] select-none will-change-transform"
+          className="absolute left-4 top-1/2 z-40 flex flex-col gap-1.5 p-1.5 rounded-3xl bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] select-none will-change-transform transition-colors"
         >
           {dockItems.map((item) => (
             <button
@@ -154,7 +154,7 @@ export const StudyLeftDock = ({
               )}
 
               {/* Spatial Glass Flyout Tooltip */}
-              <div className="absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-panel/95 text-xs text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-line/15 flex items-center gap-2 z-50">
+              <div className="absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-black/85 backdrop-blur-xl text-xs text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none shadow-[0_10px_30px_rgba(0,0,0,0.6)] border border-white/15 flex items-center gap-2 z-50">
                 <span className="font-medium text-slate-200">{item.title}</span>
                 <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-mono text-slate-300 font-semibold border border-line/10">
                   {item.shortcut}

@@ -85,10 +85,10 @@ export const StudyTopBar = ({
               layout
               transition={{ layout: { type: "spring", stiffness: 400, damping: 30 } }}
               onClick={onToggleClock}
-              className={`hidden sm:inline-flex absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 items-center gap-3 px-4 py-1.5 rounded-full backdrop-blur-2xl border pointer-events-auto shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.14)] group cursor-pointer active:scale-95 will-change-transform ${
+              className={`hidden sm:inline-flex absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 items-center gap-3 px-4 py-1.5 rounded-full backdrop-blur-2xl border pointer-events-auto shadow-[0_20px_50px_rgba(0,0,0,0.6)] group cursor-pointer active:scale-95 will-change-transform ${
                 isPomodoroVisible && centerTab === "clock"
-                  ? "bg-panel/95 border-accent-music-glow/40 ring-1 ring-accent-music-glow/30 shadow-[0_0_24px_rgba(52,211,153,0.25)] text-white"
-                  : "bg-panel/80 hover:bg-panel/95 border-line/15 hover:border-line/30 text-slate-200"
+                  ? "bg-black/75 border-accent-music-glow/40 ring-1 ring-accent-music-glow/30 shadow-[0_0_24px_rgba(52,211,153,0.25)] text-white"
+                  : "bg-black/60 hover:bg-black/65 border-white/15 hover:border-white/25 text-slate-200"
               }`}
               title={
                 isPomodoroVisible && centerTab === "clock"
@@ -121,7 +121,7 @@ export const StudyTopBar = ({
             </motion.button>
 
             {/* Right Action Icons (Unified Spatial Toolbar) */}
-            <div className="flex items-center gap-1 p-1 rounded-full bg-panel/75 backdrop-blur-2xl border border-line/15 shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.12)] pointer-events-auto">
+            <div className="flex items-center gap-1 p-1 rounded-full bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] pointer-events-auto transition-colors">
               {/* Keyboard Shortcuts Cheat Sheet Button */}
               <button
                 onClick={onToggleShortcuts}
@@ -187,7 +187,7 @@ export const StudyTopBar = ({
           exit={{ opacity: 0, y: -20, scale: 0.9 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
           onClick={onExitZen}
-          className="absolute top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-panel/85 hover:bg-panel backdrop-blur-2xl border border-accent-music-glow/30 text-white text-xs font-semibold shadow-[0_12px_40px_rgba(0,0,0,0.6),0_0_20px_rgba(52,211,153,0.25)] transition-colors active:scale-95 cursor-pointer group"
+          className="absolute top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 text-white text-xs font-semibold shadow-[0_20px_50px_rgba(0,0,0,0.6)] transition-colors active:scale-95 cursor-pointer group"
           title="Bấm để hiện lại giao diện điều khiển (Z)"
         >
           <Eye className="w-3.5 h-3.5 text-accent-music-bright group-hover:scale-110 transition-transform" />

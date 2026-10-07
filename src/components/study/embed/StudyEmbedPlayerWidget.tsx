@@ -7,6 +7,7 @@ import { usePipMode } from "./hooks/usePipMode";
 import { useEmbedSplitPane } from "./hooks/useEmbedSplitPane";
 import { useEmbedManager } from "./hooks/useEmbedManager";
 import { useYouTubeRemote, ensureYouTubeJsApi } from "@/lib/youtube-remote";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { PipHeader } from "./components/PipHeader";
 import { StudioHeader } from "./components/StudioHeader";
 import { StagePlayer } from "./components/StagePlayer";
@@ -120,18 +121,24 @@ export const StudyEmbedPlayerWidget = ({
           dragListener={false}
           dragMomentum={false}
           dragElastic={0.08}
+          onDragEnd={() => {
+            try {
+              localStorage.setItem(
+                STORAGE_KEYS.embedPipPos,
+                JSON.stringify({ x: pipX.get(), y: pipY.get() })
+              );
+            } catch {}
+          }}
           animate={isPipMode ? undefined : { x: 0, y: 0 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
           className={
             isPipMode
-              ? "pointer-events-auto fixed bottom-24 right-6 w-[340px] sm:w-[420px] rounded-2xl bg-black/60 backdrop-blur-xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] overflow-hidden group/pip touch-none select-none"
-              : "pointer-events-auto relative w-full max-w-5xl h-[88vh] max-h-[820px] flex flex-col rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-slate-100 overflow-hidden transform-gpu will-change-transform"
+              ? "pointer-events-auto fixed bottom-24 right-6 w-[340px] sm:w-[420px] rounded-3xl bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] overflow-hidden group/pip touch-none select-none transition-colors"
+              : "pointer-events-auto relative w-full max-w-5xl h-[88vh] max-h-[820px] flex flex-col rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-slate-100 overflow-hidden transform-gpu will-change-transform"
           }
         >
           {/* Top Edge Brushed Metallic Reflection */}
-          {!isPipMode && (
-            <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
-          )}
+          <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
 
           {/* 1. Header Logic */}
           {isPipMode ? (

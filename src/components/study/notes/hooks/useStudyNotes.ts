@@ -134,7 +134,7 @@ export function useStudyNotes() {
     );
     const total = checkboxes.length;
     const completed = checkboxes.filter(
-      (cb) => cb.checked || cb.getAttribute("checked") === "true"
+      (cb) => cb.checked || cb.getAttribute("checked") === "true" || cb.hasAttribute("checked")
     ).length;
     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { total, completed, percent };

@@ -1,8 +1,6 @@
 "use client";
 
-import { Heart } from "lucide-react";
 import { Track } from "../types";
-import { useFavoriteTracks } from "@/lib/use-favorites";
 
 interface VinylArtworkBadgeProps {
   currentTrack?: Track;
@@ -15,10 +13,6 @@ export function VinylArtworkBadge({
   isPlaying,
   onOpenMixer,
 }: VinylArtworkBadgeProps) {
-  const { isFavorite: isFavoriteTrack, toggleFavorite: toggleFavoriteTrack } = useFavoriteTracks();
-  const trackId = currentTrack?.id || "";
-  const isFav = isFavoriteTrack(trackId);
-
   return (
     <div
       onClick={onOpenMixer}
@@ -49,30 +43,11 @@ export function VinylArtworkBadge({
         </div>
       </div>
 
-      {/* Title, Artist, Genre & Favorite */}
+      {/* Title, Artist & Genre */}
       <div className="min-w-0 flex-1 space-y-0.5">
-        <div className="flex items-center gap-1.5">
-          <h4 className="text-xs sm:text-sm font-bold text-slate-100 truncate leading-tight group-hover/art:text-accent-music-bright transition-colors">
-            {currentTrack?.title}
-          </h4>
-          {Boolean(trackId) && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleFavoriteTrack(trackId);
-              }}
-              className={`p-0.5 rounded-full transition-all active:scale-90 cursor-pointer shrink-0 ${
-                isFav
-                  ? "text-rose-400 hover:text-rose-300"
-                  : "text-slate-500 hover:text-slate-300"
-              }`}
-              title={isFav ? "Bỏ thích bài hát" : "Yêu thích bài hát"}
-            >
-              <Heart className={`w-3 h-3 ${isFav ? "fill-rose-400" : ""}`} />
-            </button>
-          )}
-        </div>
+        <h4 className="text-xs sm:text-sm font-bold text-slate-100 truncate leading-tight group-hover/art:text-accent-music-bright transition-colors">
+          {currentTrack?.title}
+        </h4>
 
         <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-slate-400 truncate">
           <span className="truncate">{currentTrack?.artist}</span>

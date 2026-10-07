@@ -18,6 +18,8 @@ import {
 
 const STORAGE_THEME_KEY = STORAGE_KEYS.notesTheme;
 const STORAGE_COMPACT_KEY = STORAGE_KEYS.notesCompactMode;
+const STORAGE_COMPACT_POS_KEY = STORAGE_KEYS.notesCompactPos;
+const STORAGE_COMPACT_SIZE_KEY = STORAGE_KEYS.notesCompactSize;
 
 export const StudyNotesWidget = ({
   isOpen,
@@ -61,7 +63,28 @@ export const StudyNotesWidget = ({
     width: 380,
     height: 420,
   });
+  const [compactPos, setCompactPos] = useState<{ x: number; y: number }>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(STORAGE_COMPACT_POS_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
+            const clampedX = Math.max(16, Math.min(window.innerWidth - 300, parsed.x));
+            const clampedY = Math.max(16, Math.min(window.innerHeight - 240, parsed.y));
+            return { x: clampedX, y: clampedY };
+          }
+        }
+      } catch {}
+      return {
+        x: Math.max(16, window.innerWidth - 380 - 24),
+        y: Math.max(16, window.innerHeight - 420 - 96),
+      };
+    }
+    return { x: 100, y: 100 };
+  });
 
+  const compactPanelRef = useRef<HTMLDivElement>(null);
   const noteDragControls = useDragControls();
   const dragContainerRef = useRef<HTMLDivElement>(null);
   const quickNoteListRef = useRef<HTMLDivElement>(null);
@@ -69,6 +92,7 @@ export const StudyNotesWidget = ({
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const prevActiveNoteIdRef = useRef<string>("");
+  const prevCompactModeRef = useRef<boolean>(isCompactMode);
 
   const isLight = theme === "light";
 
@@ -82,6 +106,19 @@ export const StudyNotesWidget = ({
 
   const toggleCompactMode = useCallback((compact: boolean) => {
     setIsCompactMode(compact);
+    if (compact) {
+      try {
+        const saved = localStorage.getItem(STORAGE_COMPACT_POS_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
+            const clampedX = Math.max(16, Math.min(window.innerWidth - 300, parsed.x));
+            const clampedY = Math.max(16, Math.min(window.innerHeight - 240, parsed.y));
+            setCompactPos({ x: clampedX, y: clampedY });
+          }
+        }
+      } catch {}
+    }
     try {
       localStorage.setItem(STORAGE_COMPACT_KEY, String(compact));
     } catch {}
@@ -105,23 +142,54 @@ export const StudyNotesWidget = ({
       if (savedCompact === "true") {
         setIsCompactMode(true);
       }
-      const savedSize = localStorage.getItem("study_space_notes_compact_size");
+      const savedSize = localStorage.getItem(STORAGE_COMPACT_SIZE_KEY);
       if (savedSize) {
         const parsed = JSON.parse(savedSize);
         if (parsed?.width && parsed?.height) {
           const maxAllowedW = typeof window !== "undefined" ? Math.max(320, window.innerWidth - 48) : 500;
           const maxAllowedH = typeof window !== "undefined" ? Math.max(260, window.innerHeight - 130) : 550;
+          const nextW = Math.max(300, Math.min(parsed.width, maxAllowedW));
+          const nextH = Math.max(240, Math.min(parsed.height, maxAllowedH));
           setCompactSize({
-            width: Math.max(300, Math.min(parsed.width, maxAllowedW)),
-            height: Math.max(240, Math.min(parsed.height, maxAllowedH)),
+            width: nextW,
+            height: nextH,
           });
+        }
+      }
+      const savedPos = localStorage.getItem(STORAGE_COMPACT_POS_KEY);
+      if (savedPos) {
+        const parsed = JSON.parse(savedPos);
+        if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
+          const clampedX = Math.max(16, Math.min(window.innerWidth - 300, parsed.x));
+          const clampedY = Math.max(16, Math.min(window.innerHeight - 240, parsed.y));
+          setCompactPos({ x: clampedX, y: clampedY });
         }
       }
     } catch {}
   }, []);
 
-  // Resize handler for Compact Sticky Note
-  const handleResizePointerDown = (e: React.PointerEvent) => {
+  // Update position on mount/re-open if stored (never depend on compactSize to prevent resize loop)
+  useEffect(() => {
+    if (isOpen && isCompactMode) {
+      try {
+        const savedPos = localStorage.getItem(STORAGE_COMPACT_POS_KEY);
+        if (savedPos) {
+          const parsed = JSON.parse(savedPos);
+          if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
+            const clampedX = Math.max(16, Math.min(window.innerWidth - 300, parsed.x));
+            const clampedY = Math.max(16, Math.min(window.innerHeight - 240, parsed.y));
+            setCompactPos((prev) => {
+              if (prev.x === clampedX && prev.y === clampedY) return prev;
+              return { x: clampedX, y: clampedY };
+            });
+          }
+        }
+      } catch {}
+    }
+  }, [isOpen, isCompactMode]);
+
+  // Resize handler for Compact Sticky Note with requestAnimationFrame
+  const handleResizePointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const startX = e.clientX;
@@ -129,29 +197,52 @@ export const StudyNotesWidget = ({
     const startW = compactSize.width;
     const startH = compactSize.height;
 
+    // Đo tọa độ hiển thị góc trên-trái thực tế của card trên viewport
+    const cardEl = compactPanelRef.current;
+    const rect = cardEl?.getBoundingClientRect();
+    const cardScreenLeft = rect ? rect.left : compactPos.x;
+    const cardScreenTop = rect ? rect.top : compactPos.y;
+
     let latestSize = { width: startW, height: startH };
+    let rafId: number | null = null;
 
     const onPointerMove = (moveEv: PointerEvent) => {
-      const maxW = typeof window !== "undefined" ? Math.max(300, window.innerWidth - 48) : 700;
-      const maxH = typeof window !== "undefined" ? Math.max(240, window.innerHeight - 120) : 700;
+      // Giới hạn max để kích thước không tràn ra khỏi mép phải hoặc mép dưới màn hình
+      const maxW = typeof window !== "undefined" ? Math.max(300, window.innerWidth - cardScreenLeft - 16) : 700;
+      const maxH = typeof window !== "undefined" ? Math.max(240, window.innerHeight - cardScreenTop - 16) : 700;
 
-      const nextW = Math.max(300, Math.min(maxW, startW + (moveEv.clientX - startX)));
-      const nextH = Math.max(240, Math.min(maxH, startH + (moveEv.clientY - startY)));
-      latestSize = { width: Math.round(nextW), height: Math.round(nextH) };
-      setCompactSize(latestSize);
+      const nextW = Math.round(Math.max(300, Math.min(maxW, startW + (moveEv.clientX - startX))));
+      const nextH = Math.round(Math.max(240, Math.min(maxH, startH + (moveEv.clientY - startY))));
+      latestSize = { width: nextW, height: nextH };
+
+      if (!rafId) {
+        rafId = requestAnimationFrame(() => {
+          setCompactSize(latestSize);
+          rafId = null;
+        });
+      }
     };
 
     const onPointerUp = () => {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      setCompactSize(latestSize);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
       try {
-        localStorage.setItem("study_space_notes_compact_size", JSON.stringify(latestSize));
+        localStorage.setItem(STORAGE_COMPACT_SIZE_KEY, JSON.stringify(latestSize));
+        localStorage.setItem(
+          STORAGE_COMPACT_POS_KEY,
+          JSON.stringify({ x: Math.round(cardScreenLeft), y: Math.round(cardScreenTop) })
+        );
       } catch {}
     };
 
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
-  };
+  }, [compactSize.width, compactSize.height, compactPos.x, compactPos.y]);
 
   // Close menus on outside click
   useEffect(() => {
@@ -206,20 +297,32 @@ export const StudyNotesWidget = ({
     }
 
     if (activeNote) {
-      const syncDom = () => {
-        if (editorRef.current) {
-          prevActiveNoteIdRef.current = activeNote.id;
-          const initialHtml = activeNote.content || "<p><br></p>";
-          editorRef.current.innerHTML = initialHtml;
-          undoStackRef.current = [initialHtml];
-          redoStackRef.current = [];
-        }
-        updateCountsFromDom(activeNote.content);
-      };
+      const isNoteChanged = prevActiveNoteIdRef.current !== activeNote.id;
+      const isModeChanged = prevCompactModeRef.current !== isCompactMode;
 
-      syncDom();
-      const timer = setTimeout(syncDom, 25);
-      return () => clearTimeout(timer);
+      if (isNoteChanged || isModeChanged) {
+        prevActiveNoteIdRef.current = activeNote.id;
+        prevCompactModeRef.current = isCompactMode;
+
+        const syncDom = () => {
+          if (editorRef.current) {
+            const initialHtml = activeNote.content || "<p><br></p>";
+            editorRef.current.innerHTML = initialHtml;
+            if (isNoteChanged) {
+              undoStackRef.current = [initialHtml];
+              redoStackRef.current = [];
+            }
+          }
+          updateCountsFromDom(activeNote.content);
+        };
+
+        if (editorRef.current) {
+          syncDom();
+        } else {
+          const timer = setTimeout(syncDom, 25);
+          return () => clearTimeout(timer);
+        }
+      }
     }
   }, [isOpen, activeNoteId, isCompactMode, activeNote, editorRef, undoStackRef, redoStackRef, updateCountsFromDom]);
 
@@ -294,6 +397,7 @@ export const StudyNotesWidget = ({
 
             {/* Window Container */}
             <motion.div
+              ref={compactPanelRef}
               key={isCompactMode ? "notes-compact-panel" : "notes-studio-panel"}
               drag={isCompactMode}
               dragConstraints={isCompactMode ? dragContainerRef : undefined}
@@ -302,7 +406,25 @@ export const StudyNotesWidget = ({
               dragMomentum={false}
               dragElastic={0}
               onDragStart={() => setIsDragging(true)}
-              onDragEnd={() => setIsDragging(false)}
+              onDragEnd={() => {
+                setIsDragging(false);
+                const cardEl = compactPanelRef.current;
+                if (cardEl && typeof window !== "undefined") {
+                  const rect = cardEl.getBoundingClientRect();
+                  const clampedX = Math.round(
+                    Math.max(16, Math.min(window.innerWidth - compactSize.width - 16, rect.left))
+                  );
+                  const clampedY = Math.round(
+                    Math.max(16, Math.min(window.innerHeight - compactSize.height - 16, rect.top))
+                  );
+                  try {
+                    localStorage.setItem(
+                      STORAGE_COMPACT_POS_KEY,
+                      JSON.stringify({ x: clampedX, y: clampedY })
+                    );
+                  } catch {}
+                }
+              }}
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.97 }}
@@ -310,10 +432,19 @@ export const StudyNotesWidget = ({
                 opacity: { duration: 0.16, ease: "easeOut" },
                 scale: { duration: 0.16, ease: "easeOut" },
               }}
-              style={isCompactMode ? { width: compactSize.width, height: compactSize.height } : undefined}
+              style={
+                isCompactMode
+                  ? {
+                      top: compactPos.y,
+                      left: compactPos.x,
+                      width: compactSize.width,
+                      height: compactSize.height,
+                    }
+                  : undefined
+              }
               className={
                 isCompactMode
-                  ? `pointer-events-auto fixed bottom-24 right-6 min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] flex flex-col rounded-3xl backdrop-blur-2xl border overflow-hidden select-none transform-gpu will-change-transform z-50 group/compact ${
+                  ? `pointer-events-auto fixed min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] flex flex-col rounded-3xl backdrop-blur-2xl border overflow-hidden select-none transform-gpu will-change-transform z-50 group/compact ${
                       isDragging
                         ? "shadow-[0_30px_80px_rgba(0,0,0,0.65)] ring-2 ring-emerald-500/40 cursor-grabbing"
                         : "transition-colors duration-150"

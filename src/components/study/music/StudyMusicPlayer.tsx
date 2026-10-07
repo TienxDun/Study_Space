@@ -155,15 +155,15 @@ export const StudyMusicPlayer = ({
           className={`absolute -inset-1 rounded-full blur-xl pointer-events-none transition-all duration-700 ${
             isExternalStreamActive && externalStreamItem
               ? externalStreamItem.platform === "spotify"
-                ? "bg-gradient-to-r from-accent-music/40 via-[#1DB954]/30 to-accent-music-glow/40 opacity-90 animate-pulse"
-                : "bg-gradient-to-r from-accent-stream-deep/40 via-accent-stream-rose/30 to-accent-stream/40 opacity-90 animate-pulse"
+                ? "bg-gradient-to-r from-accent-music/40 via-[#1DB954]/30 to-accent-music-glow/40 opacity-40 animate-pulse"
+                : "bg-gradient-to-r from-accent-stream-deep/40 via-accent-stream-rose/30 to-accent-stream/40 opacity-40 animate-pulse"
               : isPlaying
-              ? "bg-gradient-to-r from-accent-music/25 via-accent-scene/25 to-accent-dream/25 opacity-90 animate-pulse"
-              : "bg-gradient-to-r from-wash/10 via-wash/5 to-wash/10 opacity-30"
+              ? "bg-gradient-to-r from-accent-music/25 via-accent-scene/25 to-accent-dream/25 opacity-40 animate-pulse"
+              : "bg-gradient-to-r from-wash/10 via-wash/5 to-wash/10 opacity-20"
           }`}
         />
 
-        <div className="relative flex items-center justify-between gap-3 sm:gap-4 pl-3 pr-3 sm:pl-3.5 sm:pr-3.5 py-2 rounded-full bg-panel/85 hover:bg-panel/95 backdrop-blur-2xl border border-line/20 shadow-[0_16px_48px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.08)_inset] transition-colors text-white w-full">
+        <div className="relative flex items-center justify-between gap-3 sm:gap-4 pl-3 pr-3 sm:pl-3.5 sm:pr-3.5 py-2 rounded-full bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] transition-colors text-white w-full">
           {isExternalStreamActive && externalStreamItem ? (
             <ExternalStreamBanner
               externalStreamItem={externalStreamItem}

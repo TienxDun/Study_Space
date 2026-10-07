@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, Pause, Maximize2, X, GripHorizontal } from "lucide-react";
+import { Play, Pause, Maximize2, X } from "lucide-react";
 import { StudyEmbedItem } from "../types";
 import { DragControls } from "framer-motion";
 
@@ -23,12 +23,16 @@ export function PipHeader({
 }: PipHeaderProps) {
   return (
     <div
-      onPointerDown={(e) => pipDragControls.start(e)}
-      className="flex items-center justify-between px-3.5 py-2 bg-slate-900/95 hover:bg-slate-900 border-b border-white/10 text-white cursor-grab active:cursor-grabbing transition-colors"
+      onPointerDown={(e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest("button") || target.closest("[role='button']")) return;
+        pipDragControls.start(e, { snapToCursor: false });
+      }}
+      className="relative flex items-center justify-between px-3.5 py-2 border-b border-white/10 bg-white/[0.03] text-white cursor-grab active:cursor-grabbing transition-colors select-none"
       title="Nhấn giữ & kéo thả để di chuyển vị trí khắp màn hình"
     >
-      <div className="flex items-center gap-2 min-w-0 pr-2 pointer-events-none">
-        <GripHorizontal className="w-4 h-4 text-slate-500 group-hover/pip:text-slate-300 transition-colors shrink-0" />
+      {/* Left: Badge & Truncated Title */}
+      <div className="flex items-center gap-2 min-w-0 pr-2 pointer-events-none max-w-[40%]">
         {activeItem?.isLive ? (
           <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 font-bold text-[9px] shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> LIVE
@@ -43,7 +47,20 @@ export function PipHeader({
         </span>
       </div>
 
-      <div className="flex items-center gap-1 shrink-0">
+      {/* Center: Apple-style Grab Bar */}
+      <div
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          pipDragControls.start(e, { snapToCursor: false });
+        }}
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 py-2 px-3 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none group/grab pointer-events-auto"
+        title="Nhấn giữ & kéo thả để di chuyển cửa sổ nổi"
+      >
+        <div className="w-7 h-1 rounded-full bg-white/20 group-hover/grab:bg-white/50 group-hover/grab:w-9 transition-all duration-200" />
+      </div>
+
+      {/* Right: Window Controls */}
+      <div className="flex items-center gap-1 shrink-0 z-10">
         {activeItem?.platform === "youtube" && (
           <button
             onPointerDown={(e) => e.stopPropagation()}

@@ -43,8 +43,9 @@ export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
       cleanText = fallbackContent.replace(/<[^>]*>/g, " ").trim();
     }
     const words = cleanText ? cleanText.split(/\s+/).filter(Boolean).length : 0;
-    setWordCount(words);
-    setCharCount(cleanText.length);
+    const len = cleanText.length;
+    setWordCount((prev) => (prev === words ? prev : words));
+    setCharCount((prev) => (prev === len ? prev : len));
   }, []);
 
   const pushExplicitSnapshot = useCallback(() => {
@@ -131,19 +132,38 @@ export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
         }
       }
 
-      setActiveFormats({
-        bold: document.queryCommandState("bold"),
-        italic: document.queryCommandState("italic"),
-        underline: document.queryCommandState("underline"),
-        strikethrough: document.queryCommandState("strikeThrough"),
-        highlight: isSelectionHighlighted(),
-        h1: block === "h1",
-        h2: block === "h2",
-        quote: block === "blockquote",
-        code: isInsideCode,
-        todo: isInsideTodo,
-        unorderedList: document.queryCommandState("insertUnorderedList"),
-        orderedList: document.queryCommandState("insertOrderedList"),
+      setActiveFormats((prev) => {
+        const next = {
+          bold: document.queryCommandState("bold"),
+          italic: document.queryCommandState("italic"),
+          underline: document.queryCommandState("underline"),
+          strikethrough: document.queryCommandState("strikeThrough"),
+          highlight: isSelectionHighlighted(),
+          h1: block === "h1",
+          h2: block === "h2",
+          quote: block === "blockquote",
+          code: isInsideCode,
+          todo: isInsideTodo,
+          unorderedList: document.queryCommandState("insertUnorderedList"),
+          orderedList: document.queryCommandState("insertOrderedList"),
+        };
+        if (
+          prev.bold === next.bold &&
+          prev.italic === next.italic &&
+          prev.underline === next.underline &&
+          prev.strikethrough === next.strikethrough &&
+          prev.highlight === next.highlight &&
+          prev.h1 === next.h1 &&
+          prev.h2 === next.h2 &&
+          prev.quote === next.quote &&
+          prev.code === next.code &&
+          prev.todo === next.todo &&
+          prev.unorderedList === next.unorderedList &&
+          prev.orderedList === next.orderedList
+        ) {
+          return prev;
+        }
+        return next;
       });
     } catch {}
   }, [isSelectionHighlighted]);
@@ -507,6 +527,12 @@ export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
         "mark, .study-highlight"
       );
       marks.forEach((mark) => {
+        if (!range.collapsed && selection.containsNode && !selection.containsNode(mark, true)) {
+          return;
+        }
+        if (range.collapsed && !mark.contains(range.startContainer)) {
+          return;
+        }
         const parent = mark.parentNode;
         if (parent) {
           while (mark.firstChild) {
