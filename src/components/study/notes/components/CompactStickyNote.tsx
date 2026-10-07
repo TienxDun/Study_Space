@@ -8,14 +8,13 @@ import {
   Pin,
   Moon,
   Sun,
-  Maximize2,
+  Trash2,
   X,
   Bold,
   Italic,
   CheckSquare,
   Highlighter,
   Undo2,
-  RemoveFormatting,
 } from "lucide-react";
 import { motion, AnimatePresence, DragControls } from "framer-motion";
 import { StudyNote, ActiveFormats } from "../types";
@@ -37,14 +36,13 @@ interface CompactStickyNoteProps {
   handleCreateNote: () => void;
   handleTogglePin: (id: string) => void;
   toggleTheme: () => void;
-  toggleCompactMode: (compact: boolean) => void;
+  onPromptDelete: (note: StudyNote) => void;
   onClose: () => void;
   handleResizePointerDown: (e: React.PointerEvent) => void;
   execFormat: (command: string, value?: string) => void;
   insertChecklist: () => void;
   toggleHighlight: () => void;
   handleUndo: () => void;
-  handleClearFormat: () => void;
   handleUpdateTitle: (title: string) => void;
   handleEditorInput: () => void;
   handleEditorClick: (e: React.MouseEvent) => void;
@@ -69,14 +67,13 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
   handleCreateNote,
   handleTogglePin,
   toggleTheme,
-  toggleCompactMode,
+  onPromptDelete,
   onClose,
   handleResizePointerDown,
   execFormat,
   insertChecklist,
   toggleHighlight,
   handleUndo,
-  handleClearFormat,
   handleUpdateTitle,
   handleEditorInput,
   handleEditorClick,
@@ -214,17 +211,19 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
             {isLight ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
           </button>
 
-          <button
-            onClick={() => toggleCompactMode(false)}
-            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
-              isLight
-                ? "hover:bg-slate-200/80 border-slate-200 text-slate-600 hover:text-slate-900"
-                : "hover:bg-white/10 border-white/10 text-slate-300 hover:text-white"
-            }`}
-            title="Phóng to ra Studio đầy đủ"
-          >
-            <Maximize2 className="w-3.5 h-3.5" />
-          </button>
+          {activeNote && (
+            <button
+              onClick={() => onPromptDelete(activeNote)}
+              className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                isLight
+                  ? "hover:bg-red-50 border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200"
+                  : "hover:bg-red-500/15 border-white/10 text-slate-400 hover:text-red-400 hover:border-red-500/30"
+              }`}
+              title="Xóa ghi chú này"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
 
           <button
             onClick={onClose}
@@ -331,18 +330,6 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                 title="Hoàn tác (Ctrl+Z)"
               >
                 <Undo2 className="w-3.5 h-3.5" />
-              </button>
-
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={handleClearFormat}
-                className={`p-1.5 rounded-lg text-xs transition-all cursor-pointer ml-1 ${
-                  isLight ? "text-slate-400 hover:text-slate-700" : "text-slate-400 hover:text-white"
-                }`}
-                title="Xóa định dạng"
-              >
-                <RemoveFormatting className="w-3 h-3" />
               </button>
             </div>
           </div>

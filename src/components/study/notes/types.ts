@@ -10,7 +10,6 @@ export interface StudyNote {
 export interface StudyNotesWidgetProps {
   isOpen: boolean;
   onClose: () => void;
-  onCompactModeChange?: (isCompact: boolean) => void;
 }
 
 export interface ActiveFormats {

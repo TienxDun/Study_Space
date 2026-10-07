@@ -7,57 +7,36 @@ import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { StudyNotesWidgetProps } from "./types";
 import { useStudyNotes } from "./hooks/useStudyNotes";
 import { useRichTextEditor } from "./hooks/useRichTextEditor";
-import { NotesSidebar } from "./components/NotesSidebar";
-import { NoteEditorContent } from "./components/NoteEditorContent";
 import { CompactStickyNote } from "./components/CompactStickyNote";
-import {
-  getCleanExportText,
-  downloadNoteAsTxt,
-  downloadNoteAsMd,
-} from "./utils/note-export";
 
 const STORAGE_THEME_KEY = STORAGE_KEYS.notesTheme;
-const STORAGE_COMPACT_KEY = STORAGE_KEYS.notesCompactMode;
 const STORAGE_COMPACT_POS_KEY = STORAGE_KEYS.notesCompactPos;
 const STORAGE_COMPACT_SIZE_KEY = STORAGE_KEYS.notesCompactSize;
 
 export const StudyNotesWidget = ({
   isOpen,
   onClose,
-  onCompactModeChange,
 }: StudyNotesWidgetProps) => {
   const {
     notes,
     activeNoteId,
     setActiveNoteId,
     activeNote,
-    searchQuery,
-    setSearchQuery,
-    selectedCategory,
-    setSelectedCategory,
     lastSavedTime,
     noteToDelete,
     setNoteToDelete,
     checklistStats,
-    filteredNotes,
     handleCreateNote,
-    handleResetDefaultNotes,
     handleUpdateTitle,
     handleTogglePin,
-    handleUpdateCategory,
     updateNoteContent,
     promptDeleteNote,
     handleConfirmDeleteNote,
   } = useStudyNotes();
 
-  // Theme & Compact state
+  // Theme state
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
-  const [isCompactMode, setIsCompactMode] = useState<boolean>(false);
-  const [isCopied, setIsCopied] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [showCategoryMenu, setShowCategoryMenu] = useState<boolean>(false);
-  const [showMoreMenu, setShowMoreMenu] = useState<boolean>(false);
   const [showQuickNoteList, setShowQuickNoteList] = useState<boolean>(false);
   const [compactSize, setCompactSize] = useState<{ width: number; height: number }>({
     width: 380,
@@ -88,11 +67,7 @@ export const StudyNotesWidget = ({
   const noteDragControls = useDragControls();
   const dragContainerRef = useRef<HTMLDivElement>(null);
   const quickNoteListRef = useRef<HTMLDivElement>(null);
-  const categoryMenuRef = useRef<HTMLDivElement>(null);
-  const moreMenuRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const prevActiveNoteIdRef = useRef<string>("");
-  const prevCompactModeRef = useRef<boolean>(isCompactMode);
 
   const isLight = theme === "light";
 
@@ -104,32 +79,6 @@ export const StudyNotesWidget = ({
     } catch {}
   }, [theme]);
 
-  const toggleCompactMode = useCallback((compact: boolean) => {
-    setIsCompactMode(compact);
-    if (compact) {
-      try {
-        const saved = localStorage.getItem(STORAGE_COMPACT_POS_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
-            const clampedX = Math.max(16, Math.min(window.innerWidth - 300, parsed.x));
-            const clampedY = Math.max(16, Math.min(window.innerHeight - 240, parsed.y));
-            setCompactPos({ x: clampedX, y: clampedY });
-          }
-        }
-      } catch {}
-    }
-    try {
-      localStorage.setItem(STORAGE_COMPACT_KEY, String(compact));
-    } catch {}
-  }, []);
-
-  // Inform parent page.tsx
-  useEffect(() => {
-    if (onCompactModeChange) {
-      onCompactModeChange(isCompactMode);
-    }
-  }, [isCompactMode, onCompactModeChange]);
 
   // Load preferences from localStorage on mount
   useEffect(() => {
@@ -137,10 +86,6 @@ export const StudyNotesWidget = ({
       const savedTheme = localStorage.getItem(STORAGE_THEME_KEY);
       if (savedTheme === "light" || savedTheme === "dark") {
         setTheme(savedTheme);
-      }
-      const savedCompact = localStorage.getItem(STORAGE_COMPACT_KEY);
-      if (savedCompact === "true") {
-        setIsCompactMode(true);
       }
       const savedSize = localStorage.getItem(STORAGE_COMPACT_SIZE_KEY);
       if (savedSize) {
@@ -168,9 +113,9 @@ export const StudyNotesWidget = ({
     } catch {}
   }, []);
 
-  // Update position on mount/re-open if stored (never depend on compactSize to prevent resize loop)
+  // Update position on mount/re-open if stored
   useEffect(() => {
-    if (isOpen && isCompactMode) {
+    if (isOpen) {
       try {
         const savedPos = localStorage.getItem(STORAGE_COMPACT_POS_KEY);
         if (savedPos) {
@@ -186,7 +131,7 @@ export const StudyNotesWidget = ({
         }
       } catch {}
     }
-  }, [isOpen, isCompactMode]);
+  }, [isOpen]);
 
   // Resize handler for Compact Sticky Note with requestAnimationFrame
   const handleResizePointerDown = useCallback((e: React.PointerEvent) => {
@@ -207,7 +152,6 @@ export const StudyNotesWidget = ({
     let rafId: number | null = null;
 
     const onPointerMove = (moveEv: PointerEvent) => {
-      // Giới hạn max để kích thước không tràn ra khỏi mép phải hoặc mép dưới màn hình
       const maxW = typeof window !== "undefined" ? Math.max(300, window.innerWidth - cardScreenLeft - 16) : 700;
       const maxH = typeof window !== "undefined" ? Math.max(240, window.innerHeight - cardScreenTop - 16) : 700;
 
@@ -244,15 +188,9 @@ export const StudyNotesWidget = ({
     window.addEventListener("pointerup", onPointerUp);
   }, [compactSize.width, compactSize.height, compactPos.x, compactPos.y]);
 
-  // Close menus on outside click
+  // Close quick note list on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (categoryMenuRef.current && !categoryMenuRef.current.contains(e.target as Node)) {
-        setShowCategoryMenu(false);
-      }
-      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
-        setShowMoreMenu(false);
-      }
       if (quickNoteListRef.current && !quickNoteListRef.current.contains(e.target as Node)) {
         setShowQuickNoteList(false);
       }
@@ -271,12 +209,8 @@ export const StudyNotesWidget = ({
     updateCountsFromDom,
     handleUndo,
     execFormat,
-    toggleHeading,
     insertChecklist,
-    insertCodeSnippet,
     toggleHighlight,
-    toggleQuote,
-    handleClearFormat,
     handleEditorClick,
     handleEditorKeyDown,
     handleSelectionOrFormatChange,
@@ -298,20 +232,16 @@ export const StudyNotesWidget = ({
 
     if (activeNote) {
       const isNoteChanged = prevActiveNoteIdRef.current !== activeNote.id;
-      const isModeChanged = prevCompactModeRef.current !== isCompactMode;
 
-      if (isNoteChanged || isModeChanged) {
+      if (isNoteChanged) {
         prevActiveNoteIdRef.current = activeNote.id;
-        prevCompactModeRef.current = isCompactMode;
 
         const syncDom = () => {
           if (editorRef.current) {
             const initialHtml = activeNote.content || "<p><br></p>";
             editorRef.current.innerHTML = initialHtml;
-            if (isNoteChanged) {
-              undoStackRef.current = [initialHtml];
-              redoStackRef.current = [];
-            }
+            undoStackRef.current = [initialHtml];
+            redoStackRef.current = [];
           }
           updateCountsFromDom(activeNote.content);
         };
@@ -324,9 +254,9 @@ export const StudyNotesWidget = ({
         }
       }
     }
-  }, [isOpen, activeNoteId, isCompactMode, activeNote, editorRef, undoStackRef, redoStackRef, updateCountsFromDom]);
+  }, [isOpen, activeNoteId, activeNote, editorRef, undoStackRef, redoStackRef, updateCountsFromDom]);
 
-  // Global Escape & Ctrl+K key listener
+  // Global Escape key listener
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -334,41 +264,10 @@ export const StudyNotesWidget = ({
         e.preventDefault();
         onClose();
       }
-      if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
-        e.preventDefault();
-        setIsSidebarOpen(true);
-        setTimeout(() => {
-          searchInputRef.current?.focus();
-        }, 50);
-      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
-
-  // Export actions
-  const handleCopy = useCallback(() => {
-    if (!editorRef.current) return;
-    const text = getCleanExportText(editorRef.current);
-    navigator.clipboard.writeText(text);
-    setIsCopied(true);
-    setShowMoreMenu(false);
-    setTimeout(() => setIsCopied(false), 2000);
-  }, [editorRef]);
-
-  const handleDownloadTxt = useCallback(() => {
-    if (!activeNote || !editorRef.current) return;
-    const rawText = getCleanExportText(editorRef.current);
-    downloadNoteAsTxt(activeNote.title, rawText);
-    setShowMoreMenu(false);
-  }, [activeNote, editorRef]);
-
-  const handleDownloadMd = useCallback(() => {
-    if (!activeNote || !editorRef.current) return;
-    const rawText = getCleanExportText(editorRef.current);
-    downloadNoteAsMd(activeNote.title, rawText);
-    setShowMoreMenu(false);
-  }, [activeNote, editorRef]);
 
   return (
     <>
@@ -376,31 +275,14 @@ export const StudyNotesWidget = ({
         {isOpen && (
           <div
             ref={dragContainerRef}
-            className={
-              isCompactMode
-                ? "fixed inset-0 z-50 pointer-events-none overflow-hidden"
-                : "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 pointer-events-none"
-            }
+            className="fixed inset-0 z-50 pointer-events-none overflow-hidden"
           >
-            {/* Backdrop: Only in Studio Mode */}
-            {!isCompactMode && (
-              <motion.div
-                key="notes-modal-backdrop"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
-                className="fixed inset-0 bg-black/40 backdrop-blur-xs pointer-events-auto cursor-pointer"
-                onClick={onClose}
-              />
-            )}
-
             {/* Window Container */}
             <motion.div
               ref={compactPanelRef}
-              key={isCompactMode ? "notes-compact-panel" : "notes-studio-panel"}
-              drag={isCompactMode}
-              dragConstraints={isCompactMode ? dragContainerRef : undefined}
+              key="notes-compact-panel"
+              drag
+              dragConstraints={dragContainerRef}
               dragControls={noteDragControls}
               dragListener={false}
               dragMomentum={false}
@@ -432,128 +314,52 @@ export const StudyNotesWidget = ({
                 opacity: { duration: 0.16, ease: "easeOut" },
                 scale: { duration: 0.16, ease: "easeOut" },
               }}
-              style={
-                isCompactMode
-                  ? {
-                      top: compactPos.y,
-                      left: compactPos.x,
-                      width: compactSize.width,
-                      height: compactSize.height,
-                    }
-                  : undefined
-              }
-              className={
-                isCompactMode
-                  ? `pointer-events-auto fixed min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] flex flex-col rounded-3xl backdrop-blur-2xl border overflow-hidden select-none transform-gpu will-change-transform z-50 group/compact ${
-                      isDragging
-                        ? "shadow-[0_30px_80px_rgba(0,0,0,0.65)] ring-2 ring-emerald-500/40 cursor-grabbing"
-                        : "transition-colors duration-150"
-                    } ${
-                      isLight
-                        ? "bg-white/80 hover:bg-white/85 border-white/60 text-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.12)] ring-1 ring-black/5"
-                        : "bg-black/60 hover:bg-black/65 border-white/15 text-white shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
-                    }`
-                  : `relative z-10 w-[96vw] max-w-5xl h-[700px] max-h-[92vh] flex rounded-3xl backdrop-blur-2xl overflow-hidden select-none transition-colors duration-200 pointer-events-auto transform-gpu will-change-transform ${
-                      isLight
-                        ? "bg-[#fafafc] border border-slate-200/90 shadow-[0_25px_80px_rgba(0,0,0,0.18)] text-slate-800"
-                        : "bg-black/40 hover:bg-black/45 border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-white"
-                    }`
-              }
+              style={{
+                top: compactPos.y,
+                left: compactPos.x,
+                width: compactSize.width,
+                height: compactSize.height,
+              }}
+              className={`pointer-events-auto fixed min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] flex flex-col rounded-3xl backdrop-blur-2xl border overflow-hidden select-none transform-gpu will-change-transform z-50 group/compact ${
+                isDragging
+                  ? "shadow-[0_30px_80px_rgba(0,0,0,0.65)] ring-2 ring-emerald-500/40 cursor-grabbing"
+                  : "transition-colors duration-150"
+              } ${
+                isLight
+                  ? "bg-white/80 hover:bg-white/85 border-white/60 text-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.12)] ring-1 ring-black/5"
+                  : "bg-black/60 hover:bg-black/65 border-white/15 text-white shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
+              }`}
             >
-              {isCompactMode ? (
-                <CompactStickyNote
-                  notes={notes}
-                  activeNote={activeNote}
-                  isLight={isLight}
-                  activeFormats={activeFormats}
-                  wordCount={wordCount}
-                  checklistStats={checklistStats}
-                  lastSavedTime={lastSavedTime}
-                  noteDragControls={noteDragControls}
-                  editorRef={editorRef}
-                  showQuickNoteList={showQuickNoteList}
-                  quickNoteListRef={quickNoteListRef}
-                  setShowQuickNoteList={setShowQuickNoteList}
-                  setActiveNoteId={setActiveNoteId}
-                  handleCreateNote={handleCreateNote}
-                  handleTogglePin={(id) => handleTogglePin(id)}
-                  toggleTheme={toggleTheme}
-                  toggleCompactMode={toggleCompactMode}
-                  onClose={onClose}
-                  handleResizePointerDown={handleResizePointerDown}
-                  execFormat={execFormat}
-                  insertChecklist={insertChecklist}
-                  toggleHighlight={toggleHighlight}
-                  handleUndo={handleUndo}
-                  handleClearFormat={handleClearFormat}
-                  handleUpdateTitle={handleUpdateTitle}
-                  handleEditorInput={triggerInputSave}
-                  handleEditorClick={handleEditorClick}
-                  handleEditorKeyDown={handleEditorKeyDown}
-                  handleSelectionOrFormatChange={handleSelectionOrFormatChange}
-                />
-              ) : (
-                <>
-                  <NotesSidebar
-                    isOpen={isSidebarOpen}
-                    isLight={isLight}
-                    notes={notes}
-                    filteredNotes={filteredNotes}
-                    activeNoteId={activeNoteId}
-                    searchQuery={searchQuery}
-                    selectedCategory={selectedCategory}
-                    searchInputRef={searchInputRef}
-                    onSearchChange={setSearchQuery}
-                    onClearSearch={() => setSearchQuery("")}
-                    onSelectCategory={setSelectedCategory}
-                    onCreateNote={handleCreateNote}
-                    onSelectNote={setActiveNoteId}
-                    onTogglePin={handleTogglePin}
-                    onPromptDelete={promptDeleteNote}
-                  />
-
-                  <NoteEditorContent
-                    activeNote={activeNote}
-                    isLight={isLight}
-                    isSidebarOpen={isSidebarOpen}
-                    setIsSidebarOpen={setIsSidebarOpen}
-                    lastSavedTime={lastSavedTime}
-                    categoryMenuRef={categoryMenuRef}
-                    showCategoryMenu={showCategoryMenu}
-                    setShowCategoryMenu={setShowCategoryMenu}
-                    handleUpdateCategory={handleUpdateCategory}
-                    handleTogglePin={(id) => handleTogglePin(id)}
-                    toggleTheme={toggleTheme}
-                    moreMenuRef={moreMenuRef}
-                    showMoreMenu={showMoreMenu}
-                    setShowMoreMenu={setShowMoreMenu}
-                    handleCopy={handleCopy}
-                    isCopied={isCopied}
-                    handleDownloadMd={handleDownloadMd}
-                    handleDownloadTxt={handleDownloadTxt}
-                    handleResetDefaultNotes={handleResetDefaultNotes}
-                    promptDeleteNote={promptDeleteNote}
-                    toggleCompactMode={toggleCompactMode}
-                    onClose={onClose}
-                    activeFormats={activeFormats}
-                    toggleHeading={toggleHeading}
-                    insertChecklist={insertChecklist}
-                    execFormat={execFormat}
-                    toggleHighlight={toggleHighlight}
-                    toggleQuote={toggleQuote}
-                    insertCodeSnippet={insertCodeSnippet}
-                    handleClearFormat={handleClearFormat}
-                    handleUpdateTitle={handleUpdateTitle}
-                    editorRef={editorRef}
-                    handleEditorInput={triggerInputSave}
-                    handleEditorClick={handleEditorClick}
-                    handleEditorKeyDown={handleEditorKeyDown}
-                    handleSelectionOrFormatChange={handleSelectionOrFormatChange}
-                    wordCount={wordCount}
-                    handleCreateNote={handleCreateNote}
-                  />
-                </>
-              )}
+              <CompactStickyNote
+                notes={notes}
+                activeNote={activeNote}
+                isLight={isLight}
+                activeFormats={activeFormats}
+                wordCount={wordCount}
+                checklistStats={checklistStats}
+                lastSavedTime={lastSavedTime}
+                noteDragControls={noteDragControls}
+                editorRef={editorRef}
+                showQuickNoteList={showQuickNoteList}
+                quickNoteListRef={quickNoteListRef}
+                setShowQuickNoteList={setShowQuickNoteList}
+                setActiveNoteId={setActiveNoteId}
+                handleCreateNote={handleCreateNote}
+                handleTogglePin={(id) => handleTogglePin(id)}
+                toggleTheme={toggleTheme}
+                onPromptDelete={promptDeleteNote}
+                onClose={onClose}
+                handleResizePointerDown={handleResizePointerDown}
+                execFormat={execFormat}
+                insertChecklist={insertChecklist}
+                toggleHighlight={toggleHighlight}
+                handleUndo={handleUndo}
+                handleUpdateTitle={handleUpdateTitle}
+                handleEditorInput={triggerInputSave}
+                handleEditorClick={handleEditorClick}
+                handleEditorKeyDown={handleEditorKeyDown}
+                handleSelectionOrFormatChange={handleSelectionOrFormatChange}
+              />
             </motion.div>
           </div>
         )}

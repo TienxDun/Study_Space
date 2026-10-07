@@ -51,7 +51,6 @@ export default function StudySpacePage() {
   const [centerTab, setCenterTab] = useState<TimerTab>("pomodoro");
   const [isTasksOpen, setIsTasksOpen] = useState(false);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
-  const [isNotesCompact, setIsNotesCompact] = useState(false);
   const [isScenesOpen, setIsScenesOpen] = useState(false);
   const [isMixerOpen, setIsMixerOpen] = useState(false);
   const [isEmbedPlayerOpen, setIsEmbedPlayerOpen] = useState(false);
@@ -251,7 +250,6 @@ export default function StudySpacePage() {
   const isAnyModalOpen =
     isSettingsOpen ||
     isTasksOpen ||
-    (isNotesOpen && !isNotesCompact) ||
     isScenesOpen ||
     (isEmbedPlayerOpen && !isPipActive) ||
     isMixerOpen ||
@@ -299,7 +297,6 @@ export default function StudySpacePage() {
       <StudyNotesWidget 
         isOpen={isNotesOpen} 
         onClose={() => setIsNotesOpen(false)} 
-        onCompactModeChange={setIsNotesCompact}
       />
       <SceneSelectorWidget 
         isOpen={isScenesOpen} 

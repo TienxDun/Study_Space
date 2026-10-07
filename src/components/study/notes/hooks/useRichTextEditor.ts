@@ -503,49 +503,6 @@ export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
     triggerInputSave();
   }, [pushExplicitSnapshot, activeFormats.quote, checkActiveFormats, triggerInputSave]);
 
-  const handleClearFormat = useCallback(() => {
-    if (!editorRef.current) return;
-    pushExplicitSnapshot();
-    editorRef.current.focus();
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
-
-    try {
-      document.execCommand("removeFormat", false, undefined);
-      document.execCommand("formatBlock", false, "<p>");
-      document.execCommand("justifyLeft", false, undefined);
-    } catch {}
-
-    const range = selection.getRangeAt(0);
-    let containerNode: Node | null = range.commonAncestorContainer;
-    if (containerNode.nodeType === Node.TEXT_NODE) {
-      containerNode = containerNode.parentNode;
-    }
-
-    if (containerNode && editorRef.current.contains(containerNode)) {
-      const marks = (containerNode instanceof HTMLElement ? containerNode : editorRef.current).querySelectorAll(
-        "mark, .study-highlight"
-      );
-      marks.forEach((mark) => {
-        if (!range.collapsed && selection.containsNode && !selection.containsNode(mark, true)) {
-          return;
-        }
-        if (range.collapsed && !mark.contains(range.startContainer)) {
-          return;
-        }
-        const parent = mark.parentNode;
-        if (parent) {
-          while (mark.firstChild) {
-            parent.insertBefore(mark.firstChild, mark);
-          }
-          parent.removeChild(mark);
-        }
-      });
-    }
-
-    checkActiveFormats();
-    triggerInputSave();
-  }, [pushExplicitSnapshot, checkActiveFormats, triggerInputSave]);
 
   const handleEditorClick = useCallback(
     (e: React.MouseEvent) => {
@@ -729,7 +686,6 @@ export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
     insertCodeSnippet,
     toggleHighlight,
     toggleQuote,
-    handleClearFormat,
     handleEditorClick,
     handleEditorKeyDown,
     handleSelectionOrFormatChange,
