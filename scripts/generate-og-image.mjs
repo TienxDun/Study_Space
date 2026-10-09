@@ -1,0 +1,138 @@
+import fs from "node:fs";
+import path from "node:path";
+import sharp from "sharp";
+
+const width = 1200;
+const height = 630;
+
+const svg = `
+<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070a12"/>
+      <stop offset="50%" stop-color="#0c1122"/>
+      <stop offset="100%" stop-color="#060913"/>
+    </linearGradient>
+    
+    <radialGradient id="glowViolet" cx="20%" cy="25%" r="45%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="glowCyan" cx="80%" cy="75%" r="50%">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="glowPink" cx="85%" cy="20%" r="40%">
+      <stop offset="0%" stop-color="#ec4899" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#ec4899" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f293d" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#111827" stop-opacity="0.6"/>
+    </linearGradient>
+
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#e0e7ff"/>
+      <stop offset="100%" stop-color="#a5b4fc"/>
+    </linearGradient>
+
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="${width}" height="${height}" fill="url(#bgGrad)"/>
+  <rect width="${width}" height="${height}" fill="url(#glowViolet)"/>
+  <rect width="${width}" height="${height}" fill="url(#glowCyan)"/>
+  <rect width="${width}" height="${height}" fill="url(#glowPink)"/>
+
+  <!-- Border Frame -->
+  <rect x="36" y="36" width="${width - 72}" height="${height - 72}" rx="28" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/>
+
+  <!-- Center Card -->
+  <rect x="72" y="72" width="${width - 144}" height="${height - 144}" rx="24" fill="url(#cardGrad)" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1" filter="url(#cardShadow)"/>
+
+  <!-- Brand Tag / Badge -->
+  <g transform="translate(112, 114)">
+    <rect width="240" height="40" rx="20" fill="#4f46e5" fill-opacity="0.25" stroke="#818cf8" stroke-opacity="0.4" stroke-width="1"/>
+    <circle cx="22" cy="20" r="6" fill="#38bdf8"/>
+    <text x="38" y="25" fill="#c7d2fe" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700" letter-spacing="1">ZENSTUDY SPACE</text>
+  </g>
+
+  <!-- Live Status Badge -->
+  <g transform="translate(900, 114)">
+    <rect width="180" height="40" rx="20" fill="#10b981" fill-opacity="0.18" stroke="#34d399" stroke-opacity="0.3" stroke-width="1"/>
+    <circle cx="24" cy="20" r="5" fill="#34d399"/>
+    <text x="40" y="25" fill="#a7f3d0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600">4K IMMERSIVE</text>
+  </g>
+
+  <!-- Main Headline -->
+  <text x="112" y="235" fill="url(#textGrad)" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="52" font-weight="800" letter-spacing="-0.5">
+    Không Gian Học Tập Tương Tác
+  </text>
+  
+  <text x="112" y="295" fill="#93c5fd" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="34" font-weight="600">
+    &amp; Tập Trung Tối Đa Tại zenstudy.space
+  </text>
+
+  <!-- Subtitle Description -->
+  <text x="112" y="355" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="19" font-weight="400">
+    Tích hợp 50+ bối cảnh 4K, 20 âm thanh môi trường thư giãn, Pomodoro thông minh,
+  </text>
+  <text x="112" y="385" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="19" font-weight="400">
+    nhạc Lo-fi tuyển chọn, bảng quản lý Kanban Tasks và ghi chú Markdown nhanh.
+  </text>
+
+  <!-- Feature Badges -->
+  <g transform="translate(112, 435)">
+    <!-- Feature 1 -->
+    <rect x="0" y="0" width="180" height="44" rx="12" fill="#1e293b" fill-opacity="0.8" stroke="#334155" stroke-width="1"/>
+    <text x="16" y="27" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="600">🎬 50+ Bối Cảnh 4K</text>
+
+    <!-- Feature 2 -->
+    <rect x="195" y="0" width="195" height="44" rx="12" fill="#1e293b" fill-opacity="0.8" stroke="#334155" stroke-width="1"/>
+    <text x="211" y="27" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="600">🌧️ 20 Âm Thanh Mưa</text>
+
+    <!-- Feature 3 -->
+    <rect x="405" y="0" width="180" height="44" rx="12" fill="#1e293b" fill-opacity="0.8" stroke="#334155" stroke-width="1"/>
+    <text x="421" y="27" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="600">⏱️ Pomodoro Timer</text>
+
+    <!-- Feature 4 -->
+    <rect x="600" y="0" width="185" height="44" rx="12" fill="#1e293b" fill-opacity="0.8" stroke="#334155" stroke-width="1"/>
+    <text x="616" y="27" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="600">🎵 Lo-fi &amp; Chill Music</text>
+
+    <!-- Feature 5 -->
+    <rect x="800" y="0" width="176" height="44" rx="12" fill="#1e293b" fill-opacity="0.8" stroke="#334155" stroke-width="1"/>
+    <text x="816" y="27" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="600">📝 Kanban &amp; Notes</text>
+  </g>
+
+  <!-- Bottom Bar Info -->
+  <g transform="translate(112, 518)">
+    <text x="0" y="0" fill="#64748b" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="500">
+      🌐 https://zenstudy.space • Hoàn toàn miễn phí &amp; Không quảng cáo
+    </text>
+  </g>
+</svg>
+`;
+
+async function main() {
+  const publicDir = path.resolve("public");
+  const svgPath = path.join(publicDir, "og-image.svg");
+  const pngPath = path.join(publicDir, "og-image.png");
+
+  fs.writeFileSync(svgPath, svg.trim(), "utf8");
+  console.log("Wrote og-image.svg");
+
+  await sharp(Buffer.from(svg))
+    .png({ quality: 95, compressionLevel: 8 })
+    .toFile(pngPath);
+
+  console.log("Generated og-image.png (1200x630) successfully!");
+}
+
+main().catch(console.error);

@@ -99,10 +99,10 @@ export const StudyTopBar = ({
               {/* Brand Typography */}
               <div className="flex items-center gap-1.5 text-xs">
                 <span className="font-bold tracking-wide text-white group-hover:text-accent-music-bright transition-colors">
-                  HUFLIT
+                  ZenStudy
                 </span>
                 <span className="font-normal text-slate-300 group-hover:text-white transition-colors">
-                  StudySpace
+                  Space
                 </span>
               </div>
 

@@ -9,7 +9,7 @@ const isCloudflarePages =
   process.env.CF_PAGES === "true" ||
   typeof process.env.CF_PAGES_BRANCH !== "undefined";
 const isStaticExport = isGithubPages || isCloudflarePages;
-const basePath = isGithubPages ? "/Study_Space" : "";
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 const nextConfig: NextConfig = {
   ...(isStaticExport ? { output: "export" } : {}),

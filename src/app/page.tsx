@@ -13,6 +13,7 @@ import { useStudyKeyboard } from "@/lib/use-study-keyboard";
 import { StudyTopBar } from "@/components/study/StudyTopBar";
 import { StudyLeftDock } from "@/components/study/StudyLeftDock";
 import { StudyShortcutsModal } from "@/components/study/StudyShortcutsModal";
+import { StudySeoSemanticContent } from "@/components/study/seo/StudySeoSemanticContent";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useStudySettings } from "@/lib/use-study-settings";
 import { useGlobalHorizontalScroll } from "@/lib/use-horizontal-scroll";
@@ -358,6 +359,7 @@ export default function StudySpacePage() {
 
       {/* Main Center Area: Ambient Centerpiece Pomodoro & Stopwatch hòa vào background */}
       <main className="relative z-10 w-full h-full flex flex-col items-center justify-center pointer-events-none px-4 pb-14">
+        <StudySeoSemanticContent />
         <StudyPomodoroWidget 
           isVisible={isPomodoroVisible}
           activeTab={centerTab}
