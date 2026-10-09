@@ -7,12 +7,14 @@ import { IconBtn } from "../ui/IconBtn";
 export interface StudyShortcutsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenTour?: () => void;
 }
 
 /** Modal tra cuu phim tat. */
 export const StudyShortcutsModal = ({
   isOpen,
   onClose,
+  onOpenTour,
 }: StudyShortcutsModalProps) => (
   <AnimatePresence>
     {isOpen && (
@@ -140,9 +142,21 @@ export const StudyShortcutsModal = ({
           </div>
         </div>
 
-        {/* Tip footer */}
-        <div className="text-[11px] text-slate-400 text-center pt-1 border-t border-white/10">
-          💡 <span className="text-slate-300">Mẹo:</span> Phím tắt sẽ tự động tạm ngưng khi bạn đang nhập nội dung vào ô ghi chú hoặc tạo thẻ.
+        {/* Tip footer & Tour re-trigger */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400 pt-2 border-t border-white/10">
+          <span>💡 <span className="text-slate-300">Mẹo:</span> Phím tắt sẽ tạm ngưng khi bạn nhập nội dung.</span>
+          {onOpenTour && (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenTour();
+              }}
+              className="text-accent-music-glow hover:underline cursor-pointer flex items-center gap-1 font-medium shrink-0"
+              title="Xem lại tour hướng dẫn sử dụng"
+            >
+              <span>🧭 Xem lại tour hướng dẫn</span>
+            </button>
+          )}
         </div>
       </motion.div>
     </motion.div>

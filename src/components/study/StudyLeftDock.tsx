@@ -118,6 +118,7 @@ export const StudyLeftDock = ({
           {dockItems.map((item) => (
             <button
               key={item.id}
+              id={`tour-dock-${item.id}`}
               onClick={item.onClick}
               className="relative w-11 h-11 rounded-2xl flex items-center justify-center cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-music-glow/50"
               title={`${item.title} (${item.shortcut})`}

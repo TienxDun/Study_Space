@@ -7,7 +7,8 @@ import {
   Timer, 
   Flame, 
   Volume2, 
-  Play
+  Play,
+  Compass
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { ModalShell } from "../ui/ModalShell";
@@ -24,6 +25,8 @@ export interface StudySettingsProps {
   onClose: () => void;
   // Live preview mode switcher
   onActiveSectionChange?: (section: "clock" | "pomodoro" | "stopwatch") => void;
+  // Tour walkthrough
+  onOpenTour?: () => void;
   // Clock settings
   showClockSeconds: boolean;
   onToggleClockSeconds: () => void;
@@ -74,6 +77,7 @@ export const StudySettingsModal = ({
   isOpen,
   onClose,
   onActiveSectionChange,
+  onOpenTour,
   showClockSeconds,
   onToggleClockSeconds,
   isClock12Hour,
@@ -401,6 +405,32 @@ export const StudySettingsModal = ({
                 </div>
               )}
             </div>
+
+            {/* SECTION 4: HƯỚNG DẪN & TOUR (Onboarding Tour) */}
+            {onOpenTour && (
+              <div className="pt-2 border-t border-white/10">
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] transition-colors">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
+                      <Compass className="w-3.5 h-3.5 text-accent-music-glow" />
+                      <span>Tour hướng dẫn sử dụng</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400">Xem lại hướng dẫn tương tác các tính năng</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onOpenTour();
+                    }}
+                    className="px-3 py-1.5 rounded-full text-[11px] font-semibold bg-accent-music/20 hover:bg-accent-music/30 text-accent-music-bright border border-accent-music-glow/30 transition-all active:scale-95 cursor-pointer flex items-center gap-1 shadow-sm shrink-0"
+                    title="Mở lại Onboarding Tour"
+                  >
+                    <span>Xem lại</span>
+                  </button>
+                </div>
+              </div>
+            )}
     </ModalShell>
   );
 };

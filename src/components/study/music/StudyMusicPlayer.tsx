@@ -140,6 +140,7 @@ export const StudyMusicPlayer = ({
 
       {/* Morphing Capsule Player Container */}
       <motion.div
+        id="tour-music-player"
         layout
         transition={{ type: "spring", stiffness: 380, damping: 32 }}
         className={`relative w-full px-2 sm:px-4 group select-none will-change-transform ${

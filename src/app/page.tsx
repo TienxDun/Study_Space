@@ -13,6 +13,7 @@ import { useStudyKeyboard } from "@/lib/use-study-keyboard";
 import { StudyTopBar } from "@/components/study/StudyTopBar";
 import { StudyLeftDock } from "@/components/study/StudyLeftDock";
 import { StudyShortcutsModal } from "@/components/study/StudyShortcutsModal";
+import { StudyOnboardingTour } from "@/components/study/tour/StudyOnboardingTour";
 import { StudySeoSemanticContent } from "@/components/study/seo/StudySeoSemanticContent";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useStudySettings } from "@/lib/use-study-settings";
@@ -59,6 +60,7 @@ export default function StudySpacePage() {
   const [externalActiveItem, setExternalActiveItem] = useState<StudyEmbedItem | null>(null);
   const [isPipActive, setIsPipActive] = useState(false);
   const [isShortcutsHelpOpen, setIsShortcutsHelpOpen] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
 
   // Unified Settings Modal State (Default: Tắt giây đồng hồ, Tắt .00 stopwatch, Bật chuông Pomodoro 25-5-15)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -343,6 +345,7 @@ export default function StudySpacePage() {
         isOpen={isSettingsOpen}
         onClose={handleCloseSettings}
         onActiveSectionChange={handleActiveSectionChange}
+        onOpenTour={() => setIsTourOpen(true)}
         showClockSeconds={showClockSeconds}
         onToggleClockSeconds={handleToggleClockSeconds}
         isClock12Hour={isClock12Hour}
@@ -428,6 +431,13 @@ export default function StudySpacePage() {
       <StudyShortcutsModal
         isOpen={isShortcutsHelpOpen}
         onClose={() => setIsShortcutsHelpOpen(false)}
+        onOpenTour={() => setIsTourOpen(true)}
+      />
+
+      {/* First-time Onboarding Tour & Interactive Spotlight Walkthrough */}
+      <StudyOnboardingTour
+        isOpen={isTourOpen ? true : undefined}
+        onClose={() => setIsTourOpen(false)}
       />
     </div>
   );

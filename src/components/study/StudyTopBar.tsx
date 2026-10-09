@@ -77,15 +77,24 @@ export const StudyTopBar = ({
             transition={{ duration: 0.28, ease: "easeOut" }}
             className="absolute top-4 left-4 right-4 z-40 flex items-center justify-between pointer-events-none select-none will-change-transform"
           >
-            {/* Left Spacer */}
-            <div className="w-8 hidden sm:block" />
+            {/* Left Brand Capsule */}
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] pointer-events-auto transition-colors">
+              <div className="flex items-center gap-1.5 text-xs select-none">
+                <span className="font-bold tracking-wide text-white">
+                  ZenStudy
+                </span>
+                <span className="hidden sm:inline font-normal text-slate-300">
+                  Space
+                </span>
+              </div>
+            </div>
 
-            {/* Dynamic Island Center Capsule (Framer Motion spring layout không bị xung đột CSS transition) */}
+            {/* Dynamic Island Center Capsule - Realtime Clock */}
             <motion.button
               layout
               transition={{ layout: { type: "spring", stiffness: 400, damping: 30 } }}
               onClick={onToggleClock}
-              className={`hidden sm:inline-flex absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 items-center gap-3 px-4 py-1.5 rounded-full backdrop-blur-2xl border pointer-events-auto shadow-[0_20px_50px_rgba(0,0,0,0.6)] group cursor-pointer active:scale-95 will-change-transform ${
+              className={`absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 inline-flex items-center px-4 py-1.5 rounded-full backdrop-blur-2xl border pointer-events-auto shadow-[0_20px_50px_rgba(0,0,0,0.6)] group cursor-pointer active:scale-95 will-change-transform ${
                 isPomodoroVisible && centerTab === "clock"
                   ? "bg-black/75 border-accent-music-glow/40 ring-1 ring-accent-music-glow/30 shadow-[0_0_24px_rgba(52,211,153,0.25)] text-white"
                   : "bg-black/60 hover:bg-black/65 border-white/15 hover:border-white/25 text-slate-200"
@@ -96,21 +105,8 @@ export const StudyTopBar = ({
                   : "Bấm để mở Đồng hồ lớn (C)"
               }
             >
-              {/* Brand Typography */}
-              <div className="flex items-center gap-1.5 text-xs">
-                <span className="font-bold tracking-wide text-white group-hover:text-accent-music-bright transition-colors">
-                  ZenStudy
-                </span>
-                <span className="font-normal text-slate-300 group-hover:text-white transition-colors">
-                  Space
-                </span>
-              </div>
-
-              {/* Hairline Divider */}
-              <span className="h-3.5 w-px bg-white/20" />
-
               {/* Realtime Monospace Clock */}
-              <span className="font-mono text-xs font-semibold text-slate-200 tracking-wider tabular-nums group-hover:text-white transition-colors">
+              <span className="font-mono text-xs font-semibold text-slate-100 tracking-wider tabular-nums group-hover:text-white transition-colors">
                 {currentTime || "00:00:00"}
               </span>
 
@@ -121,7 +117,10 @@ export const StudyTopBar = ({
             </motion.button>
 
             {/* Right Action Icons (Unified Spatial Toolbar) */}
-            <div className="flex items-center gap-1 p-1 rounded-full bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] pointer-events-auto transition-colors">
+            <div
+              id="tour-topbar-actions"
+              className="flex items-center gap-1 p-1 rounded-full bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] pointer-events-auto transition-colors"
+            >
               {/* Keyboard Shortcuts Cheat Sheet Button */}
               <button
                 onClick={onToggleShortcuts}

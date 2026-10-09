@@ -152,7 +152,10 @@ export const StudyPomodoroWidget = ({
   if (!isVisible) return null;
 
   return (
-    <div className="group relative flex flex-col items-center justify-start text-white select-none pointer-events-auto w-full max-w-xl h-[300px] sm:h-[320px]">
+    <div
+      id="tour-pomodoro-widget"
+      className="group relative flex flex-col items-center justify-start text-white select-none pointer-events-auto w-full max-w-xl h-[300px] sm:h-[320px]"
+    >
       {/* 1. Sleek Floating Mode Pill Bar */}
       <TimerTabPillBar currentTab={currentTab} onSelectTab={switchTab} />
 

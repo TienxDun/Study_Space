@@ -135,6 +135,7 @@ export function PlayerControls({
 
       {/* Sound Mixer Open Button */}
       <button
+        id="tour-music-mixer-btn"
         onClick={onToggleMixer}
         className={`p-2 rounded-full transition-all active:scale-95 cursor-pointer border shrink-0 ${
           isMixerOpen
