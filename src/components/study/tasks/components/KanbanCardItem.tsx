@@ -9,9 +9,11 @@ import {
   ArrowLeft,
   ArrowRight,
   GripVertical,
+  Timer,
 } from "lucide-react";
 import { KanbanCard, KanbanColumn } from "../types";
 import { getDeadlineStatus } from "../utils/task-deadline";
+import { startFocusTask } from "@/lib/use-focus-task";
 
 interface KanbanCardItemProps {
   card: KanbanCard;
@@ -147,10 +149,10 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
         </div>
       )}
 
-      {/* Card Footer: Deadline Badge */}
+      {/* Card Footer: Deadline & Pomodoro Badges */}
       <div
         className={`flex items-center justify-between text-[10px] text-slate-400 ${
-          card.dueDate ? "pt-1.5 border-t border-white/5" : "pt-0"
+          card.dueDate || (card.pomodoros && card.pomodoros > 0) ? "pt-1.5 border-t border-white/5" : "pt-0"
         }`}
       >
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -167,13 +169,31 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
                 </span>
               );
             })()}
+
+          {card.pomodoros !== undefined && card.pomodoros > 0 && (
+            <span
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono"
+              title={`Đã tích lũy ${card.pomodoros} phiên Pomodoro (${card.pomodoros * 25} phút)`}
+            >
+              <span>🍅</span>
+              <span>{card.pomodoros}</span>
+            </span>
+          )}
         </div>
 
-        {/* Quick Move Column Buttons */}
+        {/* Quick Actions (Focus Pomodoro & Move Column) */}
         <div
           className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
           onClick={(e) => e.stopPropagation()}
         >
+          <button
+            type="button"
+            onClick={() => startFocusTask({ id: card.id, title: card.title })}
+            className="p-1 rounded-md hover:bg-amber-500/20 text-white/50 hover:text-amber-300 transition-colors cursor-pointer"
+            title="Tập trung vào nhiệm vụ này với Pomodoro"
+          >
+            <Timer className="w-3 h-3" />
+          </button>
           {prevColumn && (
             <button
               onClick={() => onMoveCard(prevColumn.id)}

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { getDeadlineStatus } from "@/components/study/tasks/utils/task-deadline";
 
 describe("StudyTasksWidget Deadline Logic", () => {
@@ -150,3 +150,74 @@ describe("Task In-Place Reorder Logic", () => {
     expect(displayCards.map((c) => c.id)).toEqual(["c1", "c2", "c3"]);
   });
 });
+
+describe("Focus Task & Pomodoro Integration Logic", () => {
+  beforeEach(() => {
+    const store: Record<string, string> = {};
+    const mockStorage = {
+      getItem: (k: string) => store[k] ?? null,
+      setItem: (k: string, v: string) => {
+        store[k] = String(v);
+      },
+      removeItem: (k: string) => {
+        delete store[k];
+      },
+      clear: () => {
+        for (const k in store) delete store[k];
+      },
+    };
+
+    // @ts-expect-error test mock
+    globalThis.localStorage = mockStorage;
+    // @ts-expect-error test mock
+    globalThis.window = {
+      dispatchEvent: () => true,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    };
+  });
+
+  it("should start, retrieve and clear active focus task", async () => {
+    const { getStoredFocusTask, startFocusTask, clearFocusTask } = await import("@/lib/use-focus-task");
+
+    expect(getStoredFocusTask()).toBeNull();
+
+    startFocusTask({ id: "task-1", title: "Làm bài tập Toán" });
+    expect(getStoredFocusTask()).toEqual({ id: "task-1", title: "Làm bài tập Toán" });
+
+    clearFocusTask();
+    expect(getStoredFocusTask()).toBeNull();
+  });
+
+  it("should increment pomodoro count for target task in local storage", async () => {
+    const { incrementTaskPomodoroInStorage } = await import("@/lib/use-focus-task");
+    const { STORAGE_KEYS } = await import("@/lib/storage-keys");
+
+    const mockBoards = [
+      {
+        id: "board-1",
+        title: "Kế hoạch",
+        columns: [],
+        cards: [
+          { id: "task-1", columnId: "col-1", title: "Nhiệm vụ 1", checklist: [] },
+          { id: "task-2", columnId: "col-1", title: "Nhiệm vụ 2", checklist: [], pomodoros: 2 },
+        ],
+      },
+    ];
+
+    localStorage.setItem(STORAGE_KEYS.kanbanBoards, JSON.stringify(mockBoards));
+
+    // Increment task-1 from 0 to 1
+    const count1 = incrementTaskPomodoroInStorage("task-1");
+    expect(count1).toBe(1);
+
+    // Increment task-2 from 2 to 3
+    const count2 = incrementTaskPomodoroInStorage("task-2");
+    expect(count2).toBe(3);
+
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.kanbanBoards) || "[]");
+    expect(saved[0].cards[0].pomodoros).toBe(1);
+    expect(saved[0].cards[1].pomodoros).toBe(3);
+  });
+});
+

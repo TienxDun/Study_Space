@@ -101,13 +101,14 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
         {/* Left: Quick Note Selector Dropdown */}
         <div className="relative min-w-0" ref={quickNoteListRef}>
           <button
+            type="button"
             onClick={() => setShowQuickNoteList(!showQuickNoteList)}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
               isLight
                 ? "bg-white/80 hover:bg-white border-slate-200/90 text-slate-700 shadow-2xs"
                 : "bg-white/10 hover:bg-white/15 border-white/10 text-slate-200"
             }`}
-            title="Đổi ghi chú hoặc tạo mới"
+            title="Xem danh sách ghi chú"
           >
             <List className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
             <span className="font-semibold text-[11px] truncate">Danh sách ({notes.length})</span>
@@ -120,7 +121,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                 initial={{ opacity: 0, scale: 0.95, y: 4 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 4 }}
-                className={`absolute left-0 top-full mt-1.5 w-64 max-h-72 overflow-y-auto custom-study-scroll p-1.5 rounded-2xl border shadow-2xl z-50 ${
+                className={`absolute left-0 top-full mt-1.5 w-72 max-h-72 overflow-y-auto custom-study-scroll p-1.5 rounded-2xl border shadow-2xl z-50 ${
                   isLight
                     ? "bg-white/95 border-slate-200 text-slate-800 shadow-slate-400/40 backdrop-blur-xl"
                     : "bg-slate-900/95 border-white/20 text-white shadow-black/90 backdrop-blur-xl"
@@ -163,22 +164,39 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                           : "hover:bg-white/10 text-slate-200"
                       }`}
                     >
-                      <span className="truncate flex-1 mr-2">{n.title || "Ghi chú không tên"}</span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleTogglePin(n.id);
-                        }}
-                        className={`p-1 rounded-md transition-all shrink-0 cursor-pointer ${
-                          n.isPinned
-                            ? "text-amber-400 hover:text-amber-300"
-                            : "opacity-0 group-hover:opacity-100 text-slate-400 hover:text-amber-400"
-                        }`}
-                        title={n.isPinned ? "Bỏ ghim khỏi đầu danh sách" : "Ghim lên đầu danh sách"}
-                      >
-                        <Pin className={`w-3 h-3 ${n.isPinned ? "fill-current text-amber-400" : ""}`} />
-                      </button>
+                      <span className="truncate flex-1 mr-1">{n.title || "Ghi chú không tên"}</span>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        {/* Nút Ghim */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTogglePin(n.id);
+                          }}
+                          className={`p-1 rounded-md transition-all cursor-pointer ${
+                            n.isPinned
+                              ? "text-amber-400 hover:text-amber-300"
+                              : "opacity-0 group-hover:opacity-100 text-slate-400 hover:text-amber-400"
+                          }`}
+                          title={n.isPinned ? "Bỏ ghim khỏi đầu danh sách" : "Ghim lên đầu danh sách"}
+                        >
+                          <Pin className={`w-3 h-3 ${n.isPinned ? "fill-current text-amber-400" : ""}`} />
+                        </button>
+
+                        {/* Nút Xóa ghi chú */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowQuickNoteList(false);
+                            onPromptDelete(n);
+                          }}
+                          className="p-1 rounded-md transition-all cursor-pointer opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+                          title="Xóa ghi chú này"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -205,8 +223,24 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
           />
         </div>
 
-        {/* Right: Window Actions */}
+        {/* Right: Window Actions & Quick New Note */}
         <div className="flex items-center gap-1 shrink-0">
+          {/* Nút Tạo nhanh ghi chú mới 1-Click */}
+          <button
+            onClick={() => {
+              handleCreateNote();
+              setShowQuickNoteList(false);
+            }}
+            className={`p-1.5 rounded-lg border transition-colors cursor-pointer flex items-center justify-center active:scale-90 ${
+              isLight
+                ? "bg-white/80 hover:bg-emerald-50 border-slate-200 text-slate-700 hover:text-emerald-600 hover:border-emerald-300 shadow-2xs"
+                : "bg-white/5 hover:bg-emerald-500/20 border-white/10 text-emerald-400 hover:border-emerald-500/30"
+            }`}
+            title="Tạo nhanh ghi chú mới (1-Click)"
+          >
+            <Plus className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 stroke-[2.5]" />
+          </button>
+
           <button
             onClick={() => handleTogglePin(activeNote?.id || "")}
             className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${

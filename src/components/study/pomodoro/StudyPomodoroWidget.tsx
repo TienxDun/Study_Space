@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { X, Target } from "lucide-react";
+import { useFocusTask, EVENT_START_FOCUS } from "@/lib/use-focus-task";
 import {
   TimerTab,
   StudyPomodoroWidgetProps,
   PomodoroDurations,
+  PomodoroMode,
 } from "./types";
 import {
   DEFAULT_DURATIONS,
@@ -28,7 +31,7 @@ export const StudyPomodoroWidget = ({
   isVisible,
   activeTab: externalTab,
   onTabChange,
-  onSessionComplete,
+  onSessionComplete: externalOnSessionComplete,
   showClockSeconds: externalShowSeconds,
   isClock12Hour: external12Hour,
   durations: externalDurations,
@@ -38,6 +41,30 @@ export const StudyPomodoroWidget = ({
 }: StudyPomodoroWidgetProps) => {
   const [internalTab, setInternalTab] = useState<TimerTab>("clock");
   const currentTab = externalTab !== undefined ? externalTab : internalTab;
+  const { focusTask, clearFocus, completeSession } = useFocusTask();
+
+  // Đồng bộ tab sang Pomodoro khi có sự kiện Bắt đầu tập trung
+  useEffect(() => {
+    const handleStartFocus = () => {
+      setInternalTab("pomodoro");
+    };
+    window.addEventListener(EVENT_START_FOCUS, handleStartFocus);
+    return () => {
+      window.removeEventListener(EVENT_START_FOCUS, handleStartFocus);
+    };
+  }, []);
+
+  const handleSessionComplete = useCallback(
+    (mode: PomodoroMode) => {
+      if (mode === "focus" && focusTask) {
+        completeSession(focusTask);
+      }
+      if (externalOnSessionComplete) {
+        externalOnSessionComplete(mode);
+      }
+    },
+    [focusTask, completeSession, externalOnSessionComplete]
+  );
 
   const switchTab = (tab: TimerTab) => {
     if (onTabChange) onTabChange(tab);
@@ -105,7 +132,7 @@ export const StudyPomodoroWidget = ({
     durations,
     soundEnabled,
     soundType: externalSoundType,
-    onSessionComplete,
+    onSessionComplete: handleSessionComplete,
   });
 
   // Stopwatch hook
@@ -149,6 +176,23 @@ export const StudyPomodoroWidget = ({
         isLapsOpen={isLapsOpen}
         onToggleLaps={toggleLapsDrawer}
       />
+
+      {/* Focus Task Pill (when a task is linked to Pomodoro) */}
+      {currentTab === "pomodoro" && focusTask && (
+        <div className="mt-2.5 flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs shadow-sm backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
+          <Target className="w-3.5 h-3.5 text-amber-400 shrink-0 animate-pulse" />
+          <span className="truncate max-w-[200px] sm:max-w-[280px] font-medium">
+            Mục tiêu: {focusTask.title}
+          </span>
+          <button
+            onClick={clearFocus}
+            className="ml-1 p-0.5 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors cursor-pointer"
+            title="Hủy liên kết nhiệm vụ này"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
 
       {/* 4. Minimalist Floating Controls */}
       <TimerActionControls

@@ -96,6 +96,20 @@ export default function StudySpacePage() {
     } catch {}
   }, []);
 
+  // Lắng nghe sự kiện Bắt đầu tập trung vào Task (tự động bật Pomodoro & đóng modal Tasks)
+  useEffect(() => {
+    const handleStartFocus = () => {
+      setIsPomodoroVisible(true);
+      setCenterTab("pomodoro");
+      setIsTasksOpen(false);
+    };
+
+    window.addEventListener("study_space_start_focus", handleStartFocus);
+    return () => {
+      window.removeEventListener("study_space_start_focus", handleStartFocus);
+    };
+  }, []);
+
   const handleOpenSettings = () => {
     setSavedTabBeforeSettings(centerTab);
     setIsSettingsOpen(true);

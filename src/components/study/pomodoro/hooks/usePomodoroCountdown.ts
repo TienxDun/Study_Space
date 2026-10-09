@@ -5,6 +5,7 @@ import { PomodoroMode, PomodoroDurations, PomodoroSoundType } from "../types";
 import { playPomodoroSound } from "../../study-sound";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { getNextBreakType } from "../utils/timer-formatters";
+import { EVENT_START_FOCUS } from "@/lib/use-focus-task";
 
 interface UsePomodoroCountdownOptions {
   durations: PomodoroDurations;
@@ -23,6 +24,20 @@ export function usePomodoroCountdown({
   const [timeLeft, setTimeLeft] = useState(durations.focus * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [completedSessions, setCompletedSessions] = useState(0);
+
+  // Tự động kích hoạt đếm ngược chế độ Focus khi người dùng bấm Bắt đầu tập trung vào Task
+  useEffect(() => {
+    const handleStartFocus = () => {
+      setPomoMode("focus");
+      setTimeLeft(durations.focus * 60);
+      setIsRunning(true);
+    };
+
+    window.addEventListener(EVENT_START_FOCUS, handleStartFocus);
+    return () => {
+      window.removeEventListener(EVENT_START_FOCUS, handleStartFocus);
+    };
+  }, [durations.focus]);
 
   // Khôi phục số phiên hoàn thành từ LocalStorage
   useEffect(() => {

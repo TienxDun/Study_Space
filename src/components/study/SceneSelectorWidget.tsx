@@ -108,23 +108,21 @@ const SceneCardItem = React.memo<SceneCardItemProps>(
             )}
           </div>
 
-          {/* Right: Nút Thả tim / Yêu thích */}
+          {/* Right: Nút Thả tim (Chỉ hiển thị khi hover vào thẻ card) */}
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               onToggleFavorite(scene.id);
             }}
-            className={`p-1.5 rounded-full backdrop-blur-md transition-all duration-200 cursor-pointer active:scale-90 ${
-              isFav
-                ? "bg-rose-500/25 text-rose-400 border border-rose-500/40 hover:bg-rose-500/35"
-                : "bg-black/40 text-slate-400 hover:text-white hover:bg-black/60 border border-white/10 opacity-70 group-hover:opacity-100"
-            }`}
+            className="p-1 -mr-1 -mt-1 rounded-full cursor-pointer transition-all duration-200 active:scale-75 hover:scale-125 focus:outline-none opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
             title={isFav ? "Bỏ yêu thích" : "Lưu vào yêu thích"}
           >
             <Heart
-              className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                isFav ? "fill-rose-400 scale-105" : ""
+              className={`w-4 h-4 transition-all duration-200 ${
+                isFav
+                  ? "fill-rose-500 text-rose-500 drop-shadow-[0_2px_8px_rgba(244,63,94,0.7)] scale-105"
+                  : "text-white/80 hover:text-rose-400 stroke-[2.2] drop-shadow-[0_2px_5px_rgba(0,0,0,0.85)]"
               }`}
             />
           </button>
@@ -160,53 +158,59 @@ export const SceneSelectorWidget = ({
 }: SceneSelectorWidgetProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [renderLimit, setRenderLimit] = useState<number>(8); // Progressive render: 8 cards đầu tiên cho frame mở siêu mượt
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const gridScrollRef = useRef<HTMLDivElement>(null);
   const lastScrollTopRef = useRef<number>(0);
   const lastCategoryScrollLeftRef = useRef<number>(0);
+  const isRestoringScrollRef = useRef<boolean>(false);
 
   const scenes = STUDY_SCENES;
   const { isFavorite, toggleFavorite, count: favoriteCount } = useFavoriteScenes();
 
-  // Khôi phục giá trị cuộn từ sessionStorage khi component mount
+  // Khôi phục toàn bộ trạng thái (category, search, scroll) từ sessionStorage khi component mount
   useEffect(() => {
     try {
+      const savedCategory = sessionStorage.getItem("study_scene_category");
+      if (savedCategory) setSelectedCategory(savedCategory);
+
+      const savedSearch = sessionStorage.getItem("study_scene_search");
+      if (savedSearch) setSearchQuery(savedSearch);
+
       const savedTop = sessionStorage.getItem("study_scene_scroll_top");
       if (savedTop) lastScrollTopRef.current = Number(savedTop) || 0;
+
       const savedLeft = sessionStorage.getItem("study_scene_category_scroll_left");
       if (savedLeft) lastCategoryScrollLeftRef.current = Number(savedLeft) || 0;
     } catch { }
   }, []);
 
-  // Progressive Rendering: Khi modal mở, nạp 8 card đầu tiên ngay lập tức, sau 60ms nạp toàn bộ
+  // Khôi phục chính xác vị trí cuộn mỗi khi mở lại modal (dùng flag isRestoringScrollRef chống ghi đè 0)
   useEffect(() => {
     if (isOpen) {
-      setRenderLimit(8);
-      const timer = setTimeout(() => {
-        setRenderLimit(999);
-      }, 60);
-
-      // Khôi phục vị trí cuộn một lần duy nhất mượt mà, tránh layout thrashing
-      const scrollTimer = setTimeout(() => {
+      isRestoringScrollRef.current = true;
+      const frameId = requestAnimationFrame(() => {
         if (gridScrollRef.current && lastScrollTopRef.current > 0) {
           gridScrollRef.current.scrollTop = lastScrollTopRef.current;
         }
         if (scrollContainerRef.current && lastCategoryScrollLeftRef.current > 0) {
           scrollContainerRef.current.scrollLeft = lastCategoryScrollLeftRef.current;
         }
-      }, 50);
+
+        // Sau khi browser hoàn tất dựng hình và áp dụng scrollTop, mở lại lắng nghe scroll event
+        setTimeout(() => {
+          isRestoringScrollRef.current = false;
+        }, 120);
+      });
 
       return () => {
-        clearTimeout(timer);
-        clearTimeout(scrollTimer);
+        cancelAnimationFrame(frameId);
+        isRestoringScrollRef.current = false;
       };
-    } else {
-      setRenderLimit(8);
     }
   }, [isOpen]);
 
   const handleGridScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (isRestoringScrollRef.current) return;
     const top = e.currentTarget.scrollTop;
     lastScrollTopRef.current = top;
     try {
@@ -215,6 +219,7 @@ export const SceneSelectorWidget = ({
   };
 
   const handleCategoryScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (isRestoringScrollRef.current) return;
     const left = e.currentTarget.scrollLeft;
     lastCategoryScrollLeftRef.current = left;
     try {
@@ -227,6 +232,7 @@ export const SceneSelectorWidget = ({
       setSelectedCategory(catKey);
       lastScrollTopRef.current = 0;
       try {
+        sessionStorage.setItem("study_scene_category", catKey);
         sessionStorage.setItem("study_scene_scroll_top", "0");
       } catch { }
       if (gridScrollRef.current) gridScrollRef.current.scrollTop = 0;
@@ -237,6 +243,7 @@ export const SceneSelectorWidget = ({
     setSearchQuery(val);
     lastScrollTopRef.current = 0;
     try {
+      sessionStorage.setItem("study_scene_search", val);
       sessionStorage.setItem("study_scene_scroll_top", "0");
     } catch { }
     if (gridScrollRef.current) gridScrollRef.current.scrollTop = 0;
@@ -446,7 +453,7 @@ export const SceneSelectorWidget = ({
             }
           />
         ) : (
-          filteredScenes.slice(0, renderLimit).map((scene) => (
+          filteredScenes.map((scene) => (
             <SceneCardItem
               key={scene.id}
               scene={scene}

@@ -62,8 +62,18 @@ export default function RootLayout({
         <Toaster
           theme="dark"
           position="top-right"
-          duration={3000}
-          offset={24}
+          duration={3500}
+          offset={{ top: 72, right: 24 }}
+          style={{ "--width": "390px" } as React.CSSProperties}
+          toastOptions={{
+            className:
+              "!items-start bg-[#14161f]/95 backdrop-blur-2xl border border-white/12 shadow-[0_20px_50px_rgba(0,0,0,0.7)] text-white rounded-2xl p-4 gap-3",
+            descriptionClassName: "text-slate-300 text-xs mt-1 leading-relaxed",
+            classNames: {
+              icon: "mt-0.5 shrink-0",
+              title: "font-semibold text-sm",
+            },
+          }}
         />
       </body>
     </html>

@@ -41,6 +41,8 @@ export const STORAGE_KEYS = {
   // Favorites
   favoriteScenes: "huflit_study_favorite_scenes",
   favoriteTracks: "huflit_study_favorite_tracks",
+  // Focus Mode Integration
+  activeFocusTask: "study_space_active_focus_task",
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

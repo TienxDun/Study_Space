@@ -1,12 +1,18 @@
 import type { NextConfig } from "next";
 
-// Chỉ bật basePath khi build tự động trên GitHub Actions cho GitHub Pages.
-// Khi chạy ở Local (npm run dev) hoặc deploy Vercel / Custom domain sẽ chạy trực tiếp tại root "/".
+// Static site: assets on R2, admin/api local only (git-ignored).
+// Export to out/ only on deploy servers (GitHub Pages, Cloudflare Pages).
+// Local dev/build keeps server mode so /admin + /api still run.
 const isGithubPages = process.env.GITHUB_ACTIONS === "true" && !process.env.VERCEL;
+const isCloudflarePages =
+  process.env.CF_PAGES === "1" ||
+  process.env.CF_PAGES === "true" ||
+  typeof process.env.CF_PAGES_BRANCH !== "undefined";
+const isStaticExport = isGithubPages || isCloudflarePages;
 const basePath = isGithubPages ? "/Study_Space" : "";
 
 const nextConfig: NextConfig = {
-  ...(isGithubPages ? { output: "export" } : {}),
+  ...(isStaticExport ? { output: "export" } : {}),
   ...(basePath ? { basePath } : {}),
   images: {
     unoptimized: true,

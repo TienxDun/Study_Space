@@ -75,6 +75,35 @@ export function useKanbanBoards() {
     } catch {}
   }, []);
 
+  // Listen to Pomodoro completion events to synchronize task pomodoros in real time
+  useEffect(() => {
+    const handlePomoCompleted = (e: Event) => {
+      try {
+        const custom = e as CustomEvent<{ taskId: string; newCount: number }>;
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setBoards(parsed);
+          }
+        }
+        if (custom.detail?.taskId) {
+          setSelectedCard((prev) => {
+            if (prev && prev.id === custom.detail.taskId) {
+              return { ...prev, pomodoros: custom.detail.newCount };
+            }
+            return prev;
+          });
+        }
+      } catch {}
+    };
+
+    window.addEventListener("study_space_pomo_completed", handlePomoCompleted);
+    return () => {
+      window.removeEventListener("study_space_pomo_completed", handlePomoCompleted);
+    };
+  }, []);
+
   // Save to localStorage
   const saveBoards = useCallback((updated: KanbanBoard[]) => {
     setBoards(updated);

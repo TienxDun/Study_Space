@@ -50,6 +50,7 @@ export interface KanbanCard {
   checklist: KanbanChecklistItem[];
   dueDate?: string;
   completed?: boolean;
+  pomodoros?: number;
   createdAt: number;
 }
 
