@@ -138,3 +138,11 @@ $RECYCLE.BIN/
 .vercel
 
 .agents
+
+# ------------------------------------------------------------------------------
+# Local Admin Studio & Local Backups (Offline Development Only)
+# ------------------------------------------------------------------------------
+src/app/admin/
+src/app/api/
+src/data/assets/backups/
+bg-asset-studio-plan.md

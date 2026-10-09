@@ -8,8 +8,8 @@ import {
 } from "../../../components/study/study-types";
 
 describe("StudySpace Asset Integrity Tests", () => {
-  it("should have valid non-empty URLs for all 50 scenes", () => {
-    expect(STUDY_SCENES.length).toBeGreaterThanOrEqual(50);
+  it("should have valid non-empty URLs for all curated scenes", () => {
+    expect(STUDY_SCENES.length).toBeGreaterThan(0);
     STUDY_SCENES.forEach((scene) => {
       expect(scene.id).toBeTruthy();
       expect(scene.name).toBeTruthy();

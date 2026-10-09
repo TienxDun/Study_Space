@@ -14,20 +14,6 @@
     ]
   },
   {
-    "id": "scene-4k-rainy-sunset",
-    "name": "Rainy Sunset",
-    "category": "chill",
-    "type": "VIDEO",
-    "mediaPath": "scenes/rainy-sunset.3840x2160.mp4",
-    "thumbnailPath": "thumbnails/rainy-sunset.webp",
-    "badge": "4K",
-    "tags": [
-      "chill",
-      "video",
-      "4k"
-    ]
-  },
-  {
     "id": "scene-4k-rainy-valley",
     "name": "Rainy Valley",
     "category": "chill",
@@ -104,18 +90,6 @@
     ]
   },
   {
-    "id": "6961314b19d32e345c5bce73",
-    "name": "Night Sky",
-    "category": "chill",
-    "type": "IMAGE",
-    "mediaPath": "scenes/3d-cartoon-night-sky.avif",
-    "thumbnailPath": "scenes/3d-cartoon-night-sky.avif",
-    "tags": [
-      "chill",
-      "image"
-    ]
-  },
-  {
     "id": "6961319719d32e345c5bce74",
     "name": "Botanic Garden",
     "category": "chill",
@@ -188,18 +162,6 @@
     ]
   },
   {
-    "id": "6961334419d32e345c5bce7a",
-    "name": "Cityspace",
-    "category": "chill",
-    "type": "IMAGE",
-    "mediaPath": "scenes/cityscape-anime-inspired-urban-area.avif",
-    "thumbnailPath": "scenes/cityscape-anime-inspired-urban-area.avif",
-    "tags": [
-      "chill",
-      "image"
-    ]
-  },
-  {
     "id": "6961336a19d32e345c5bce7b",
     "name": "Cozy Home",
     "category": "chill",
@@ -236,18 +198,6 @@
     ]
   },
   {
-    "id": "6961341419d32e345c5bce7e",
-    "name": "Nature Hawaii",
-    "category": "chill",
-    "type": "IMAGE",
-    "mediaPath": "scenes/nature-landscape-hawaii-with-digital-art-style.avif",
-    "thumbnailPath": "scenes/nature-landscape-hawaii-with-digital-art-style.avif",
-    "tags": [
-      "chill",
-      "image"
-    ]
-  },
-  {
     "id": "69637c0ac638c10eee8c62fc",
     "name": "Tokyo City Scape Night Japan",
     "category": "chill",
@@ -272,48 +222,12 @@
     ]
   },
   {
-    "id": "69637c7ac638c10eee8c62fe",
-    "name": "Anime City",
-    "category": "chill",
-    "type": "IMAGE",
-    "mediaPath": "scenes/illustration-anime-city.avif",
-    "thumbnailPath": "scenes/illustration-anime-city.avif",
-    "tags": [
-      "chill",
-      "image"
-    ]
-  },
-  {
-    "id": "69637c98c638c10eee8c62ff",
-    "name": "River Nature",
-    "category": "chill",
-    "type": "IMAGE",
-    "mediaPath": "scenes/digital-art-style-river-nature-landscape.avif",
-    "thumbnailPath": "scenes/digital-art-style-river-nature-landscape.avif",
-    "tags": [
-      "chill",
-      "image"
-    ]
-  },
-  {
     "id": "69637cb4c638c10eee8c6300",
     "name": "Isolated House",
     "category": "chill",
     "type": "IMAGE",
     "mediaPath": "scenes/digital-art-isolated-house.avif",
     "thumbnailPath": "scenes/digital-art-isolated-house.avif",
-    "tags": [
-      "chill",
-      "image"
-    ]
-  },
-  {
-    "id": "69637ccfc638c10eee8c6301",
-    "name": "City Architecture",
-    "category": "chill",
-    "type": "IMAGE",
-    "mediaPath": "scenes/city-architecture-landscape-digital-art-2.avif",
-    "thumbnailPath": "scenes/city-architecture-landscape-digital-art-2.avif",
     "tags": [
       "chill",
       "image"
@@ -392,30 +306,6 @@
     ]
   },
   {
-    "id": "69637dd0c638c10eee8c6308",
-    "name": "American Village",
-    "category": "chill",
-    "type": "IMAGE",
-    "mediaPath": "scenes/3d-cartoon-latin-american-village-scenery.avif",
-    "thumbnailPath": "scenes/3d-cartoon-latin-american-village-scenery.avif",
-    "tags": [
-      "chill",
-      "image"
-    ]
-  },
-  {
-    "id": "6969d8e4f5373372f117a107",
-    "name": "Yoga & Chill",
-    "category": "chill",
-    "type": "IMAGE",
-    "mediaPath": "scenes/still-life-yoga-equipment.avif",
-    "thumbnailPath": "scenes/still-life-yoga-equipment.avif",
-    "tags": [
-      "chill",
-      "image"
-    ]
-  },
-  {
     "id": "6969d8e4f5373372f117a10a",
     "name": "Foggy Dark City II",
     "category": "dark",
@@ -448,18 +338,6 @@
     "thumbnailPath": "scenes/anime-style-cozy-home-interior-with-furnishings.avif",
     "tags": [
       "anime",
-      "image"
-    ]
-  },
-  {
-    "id": "6969d8e4f5373372f117a105",
-    "name": "Cyberpunk City",
-    "category": "cyberpunk",
-    "type": "IMAGE",
-    "mediaPath": "scenes/cyberpunk-urban-scenery.avif",
-    "thumbnailPath": "scenes/cyberpunk-urban-scenery.avif",
-    "tags": [
-      "cyberpunk",
       "image"
     ]
   },

@@ -24,7 +24,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      NEXT_PUBLIC_STUDY_CDN_URL: ${{ vars.NEXT_PUBLIC_STUDY_CDN_URL }}
+      NEXT_PUBLIC_STUDY_CDN_URL: ${{ vars.NEXT_PUBLIC_STUDY_CDN_URL || 'https://study-space-shield.leutiendung-hht.workers.dev' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

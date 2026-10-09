@@ -6,7 +6,7 @@ const isGithubPages = process.env.GITHUB_ACTIONS === "true" && !process.env.VERC
 const basePath = isGithubPages ? "/Study_Space" : "";
 
 const nextConfig: NextConfig = {
-  output: "export",
+  ...(isGithubPages ? { output: "export" } : {}),
   ...(basePath ? { basePath } : {}),
   images: {
     unoptimized: true,

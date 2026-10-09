@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useMemo, useEffect } from "react";
+import Link from "next/link";
 import {
   X,
   Sparkles,
@@ -232,6 +233,19 @@ export const SceneSelectorWidget = ({
               <Shuffle className="w-3.5 h-3.5 text-emerald-400" />
               <span className="hidden sm:inline text-[11px] font-medium">Ngẫu nhiên</span>
             </button>
+
+            {/* Nút Mở Studio Quản lý Background (Chỉ hiện ở môi trường Local Development) */}
+            {process.env.NODE_ENV === "development" && (
+              <Link
+                href="/admin/scenes/"
+                target="_blank"
+                className="p-1.5 px-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex items-center gap-1.5 text-xs active:scale-95"
+                title="Mở Background Asset Studio để quản lý/lọc ảnh"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                <span className="hidden sm:inline text-[11px] font-medium">Studio</span>
+              </Link>
+            )}
 
             {/* Nút Đóng */}
             <button
