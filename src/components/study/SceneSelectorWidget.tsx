@@ -30,7 +30,7 @@ interface SceneSelectorWidgetProps {
   onSelectScene: (scene: Scene) => void;
 }
 
-const SceneThumbnail: React.FC<{ scene: Scene }> = ({ scene }) => {
+const SceneThumbnail = React.memo<{ scene: Scene }>(({ scene }) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (
@@ -41,15 +41,110 @@ const SceneThumbnail: React.FC<{ scene: Scene }> = ({ scene }) => {
       <img
         src={scene.thumbnailUrl}
         alt={scene.name}
-        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out ${isLoaded ? "opacity-100" : "opacity-0"
-          }`}
+        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out ${
+          isLoaded ? "opacity-100" : "opacity-0"
+        }`}
         loading="lazy"
         decoding="async"
         onLoad={() => setIsLoaded(true)}
       />
     </div>
   );
-};
+});
+SceneThumbnail.displayName = "SceneThumbnail";
+
+interface SceneCardItemProps {
+  scene: Scene;
+  isSelected: boolean;
+  isFav: boolean;
+  onSelect: (scene: Scene) => void;
+  onToggleFavorite: (id: string) => void;
+}
+
+const SceneCardItem = React.memo<SceneCardItemProps>(
+  ({ scene, isSelected, isFav, onSelect, onToggleFavorite }) => {
+    const isVideo = scene.type === "VIDEO";
+
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => onSelect(scene)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect(scene);
+          }
+        }}
+        style={{
+          contentVisibility: "auto",
+          containIntrinsicSize: "200px 125px",
+        }}
+        className={`group relative aspect-[16/10] w-full rounded-2xl overflow-hidden border transition-all duration-300 text-left cursor-pointer shrink-0 shadow-sm hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-emerald-400/50 ${
+          isSelected
+            ? "border-emerald-400/90 ring-2 ring-emerald-400/40 shadow-[0_0_20px_rgba(52,211,153,0.3)] scale-[1.01]"
+            : "border-white/10 hover:border-white/30"
+        }`}
+      >
+        {/* Thumbnail Image tràn viền */}
+        <SceneThumbnail scene={scene} />
+
+        {/* Gradient bóng đổ nhẹ nhàng ở đáy */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
+
+        {/* Top Actions & Badges Area */}
+        <div className="absolute top-2 left-2 right-2 flex items-center justify-between z-10">
+          {/* Left Badges */}
+          <div className="flex items-center gap-1.5 pointer-events-none">
+            {isSelected && (
+              <div className="w-5 h-5 rounded-full bg-emerald-400 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-400/40 font-bold animate-in zoom-in-75 duration-200">
+                <Check className="w-3 h-3 stroke-[3]" />
+              </div>
+            )}
+            {isVideo && (
+              <Badge tone="amber" className="shadow-md">
+                <Video className="w-2.5 h-2.5" /> 4K Động
+              </Badge>
+            )}
+          </div>
+
+          {/* Right: Nút Thả tim / Yêu thích */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite(scene.id);
+            }}
+            className={`p-1.5 rounded-full backdrop-blur-md transition-all duration-200 cursor-pointer active:scale-90 ${
+              isFav
+                ? "bg-rose-500/25 text-rose-400 border border-rose-500/40 hover:bg-rose-500/35"
+                : "bg-black/40 text-slate-400 hover:text-white hover:bg-black/60 border border-white/10 opacity-70 group-hover:opacity-100"
+            }`}
+            title={isFav ? "Bỏ yêu thích" : "Lưu vào yêu thích"}
+          >
+            <Heart
+              className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                isFav ? "fill-rose-400 scale-105" : ""
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* Scene Title at Bottom */}
+        <div className="absolute bottom-0 inset-x-0 p-2.5 pointer-events-none">
+          <p className="text-xs font-semibold text-white leading-snug truncate drop-shadow group-hover:text-emerald-300 transition-colors">
+            {scene.name}
+          </p>
+        </div>
+      </div>
+    );
+  },
+  (prev, next) =>
+    prev.scene.id === next.scene.id &&
+    prev.isSelected === next.isSelected &&
+    prev.isFav === next.isFav
+);
+SceneCardItem.displayName = "SceneCardItem";
 
 interface CategoryItem {
   key: string;
@@ -65,6 +160,7 @@ export const SceneSelectorWidget = ({
 }: SceneSelectorWidgetProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [renderLimit, setRenderLimit] = useState<number>(8); // Progressive render: 8 cards đầu tiên cho frame mở siêu mượt
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const gridScrollRef = useRef<HTMLDivElement>(null);
   const lastScrollTopRef = useRef<number>(0);
@@ -83,28 +179,30 @@ export const SceneSelectorWidget = ({
     } catch { }
   }, []);
 
-  // Khôi phục vị trí cuộn mỗi khi mở lại modal
+  // Progressive Rendering: Khi modal mở, nạp 8 card đầu tiên ngay lập tức, sau 60ms nạp toàn bộ
   useEffect(() => {
     if (isOpen) {
-      const restoreScroll = () => {
+      setRenderLimit(8);
+      const timer = setTimeout(() => {
+        setRenderLimit(999);
+      }, 60);
+
+      // Khôi phục vị trí cuộn một lần duy nhất mượt mà, tránh layout thrashing
+      const scrollTimer = setTimeout(() => {
         if (gridScrollRef.current && lastScrollTopRef.current > 0) {
           gridScrollRef.current.scrollTop = lastScrollTopRef.current;
         }
         if (scrollContainerRef.current && lastCategoryScrollLeftRef.current > 0) {
           scrollContainerRef.current.scrollLeft = lastCategoryScrollLeftRef.current;
         }
-      };
-
-      restoreScroll();
-      const frameId = requestAnimationFrame(restoreScroll);
-      const timer1 = setTimeout(restoreScroll, 50);
-      const timer2 = setTimeout(restoreScroll, 160);
+      }, 50);
 
       return () => {
-        cancelAnimationFrame(frameId);
-        clearTimeout(timer1);
-        clearTimeout(timer2);
+        clearTimeout(timer);
+        clearTimeout(scrollTimer);
       };
+    } else {
+      setRenderLimit(8);
     }
   }, [isOpen]);
 
@@ -209,7 +307,7 @@ export const SceneSelectorWidget = ({
       initial={{ opacity: 0, x: -20, scale: 0.97 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
       exit={{ opacity: 0, x: -16, scale: 0.97 }}
-      panelClassName="fixed top-16 bottom-20 left-20 sm:left-24 z-50 w-[410px] sm:w-[450px] max-w-[calc(100vw-96px)] flex flex-col rounded-3xl bg-[#0b0f17]/92 backdrop-blur-2xl border border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.85)] text-white overflow-hidden"
+      panelClassName="fixed top-16 bottom-20 left-20 sm:left-24 z-50 w-[410px] sm:w-[450px] max-w-[calc(100vw-96px)] flex flex-col rounded-3xl bg-[#0b0f17]/92 backdrop-blur-2xl border border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.85)] text-white overflow-hidden transform-gpu will-change-[transform,opacity]"
     >
       {/* Header & Search Bar gọn gàng, tinh tế */}
       <div className="p-4 pb-3 border-b border-white/10 shrink-0 space-y-3">
@@ -299,10 +397,11 @@ export const SceneSelectorWidget = ({
               <button
                 key={cat.key || `cat-scene-${idx}`}
                 onClick={() => handleSelectCategory(cat.key)}
-                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-200 shrink-0 cursor-pointer active:scale-95 ${isSelected
+                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-200 shrink-0 cursor-pointer active:scale-95 ${
+                  isSelected
                     ? "text-white"
                     : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
-                  }`}
+                }`}
               >
                 {/* Active Pill Background */}
                 {isSelected && (
@@ -347,76 +446,16 @@ export const SceneSelectorWidget = ({
             }
           />
         ) : (
-          filteredScenes.map((scene, idx) => {
-            const isSelected = currentScene.id === scene.id;
-            const isVideo = scene.type === "VIDEO";
-            const isFav = isFavorite(scene.id);
-
-            return (
-              <div
-                key={scene.id || `scene-${idx}`}
-                role="button"
-                tabIndex={0}
-                onClick={() => onSelectScene(scene)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onSelectScene(scene);
-                  }
-                }}
-                className={`group relative aspect-[16/10] w-full rounded-2xl overflow-hidden border transition-all duration-300 text-left cursor-pointer shrink-0 shadow-sm hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-emerald-400/50 ${isSelected
-                    ? "border-emerald-400/90 ring-2 ring-emerald-400/40 shadow-[0_0_20px_rgba(52,211,153,0.3)] scale-[1.01]"
-                    : "border-white/10 hover:border-white/30"
-                  }`}
-              >
-                {/* Thumbnail Image tràn viền */}
-                <SceneThumbnail scene={scene} />
-
-                {/* Gradient bóng đổ nhẹ nhàng ở đáy */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
-
-                {/* Top Actions & Badges Area */}
-                <div className="absolute top-2 left-2 right-2 flex items-center justify-between z-10">
-                  {/* Left Badges */}
-                  <div className="flex items-center gap-1.5 pointer-events-none">
-                    {isSelected && (
-                      <div className="w-5 h-5 rounded-full bg-emerald-400 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-400/40 font-bold animate-in zoom-in-75 duration-200">
-                        <Check className="w-3 h-3 stroke-[3]" />
-                      </div>
-                    )}
-                    {isVideo && (
-                      <Badge tone="amber" className="shadow-md">
-                        <Video className="w-2.5 h-2.5" /> 4K Động
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Right: Nút Thả tim / Yêu thích */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavorite(scene.id);
-                    }}
-                    className={`p-1.5 rounded-full backdrop-blur-md transition-all duration-200 cursor-pointer active:scale-90 ${isFav
-                        ? "bg-rose-500/25 text-rose-400 border border-rose-500/40 hover:bg-rose-500/35"
-                        : "bg-black/40 text-slate-400 hover:text-white hover:bg-black/60 border border-white/10 opacity-70 group-hover:opacity-100"
-                      }`}
-                    title={isFav ? "Bỏ yêu thích" : "Lưu vào yêu thích"}
-                  >
-                    <Heart className={`w-3.5 h-3.5 transition-transform duration-200 ${isFav ? "fill-rose-400 scale-105" : ""}`} />
-                  </button>
-                </div>
-
-                {/* Scene Title at Bottom */}
-                <div className="absolute bottom-0 inset-x-0 p-2.5 pointer-events-none">
-                  <p className="text-xs font-semibold text-white leading-snug truncate drop-shadow group-hover:text-emerald-300 transition-colors">
-                    {scene.name}
-                  </p>
-                </div>
-              </div>
-            );
-          })
+          filteredScenes.slice(0, renderLimit).map((scene) => (
+            <SceneCardItem
+              key={scene.id}
+              scene={scene}
+              isSelected={currentScene.id === scene.id}
+              isFav={isFavorite(scene.id)}
+              onSelect={onSelectScene}
+              onToggleFavorite={toggleFavorite}
+            />
+          ))
         )}
       </div>
     </ModalShell>
