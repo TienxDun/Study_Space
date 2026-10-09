@@ -154,23 +154,30 @@ export function useKanbanBoards() {
       e.dataTransfer.dropEffect = "move";
       if (dragOverColId !== colId) {
         setDragOverColId(colId);
+        setDragOverCardId(null);
+        setDragOverCardPosition(null);
       }
     },
     [dragOverColId]
   );
 
-  const handleCardDragOverCard = useCallback((e: React.DragEvent, targetCardId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = "move";
+  const handleCardDragOverCard = useCallback(
+    (e: React.DragEvent, targetCardId: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = "move";
 
-    const targetRect = e.currentTarget.getBoundingClientRect();
-    const offsetY = e.clientY - targetRect.top;
-    const position = offsetY < targetRect.height / 2 ? "before" : "after";
+      if (draggingCardId === targetCardId) return;
 
-    setDragOverCardId(targetCardId);
-    setDragOverCardPosition(position);
-  }, []);
+      const targetRect = e.currentTarget.getBoundingClientRect();
+      const offsetY = e.clientY - targetRect.top;
+      const position = offsetY < targetRect.height / 2 ? "before" : "after";
+
+      setDragOverCardId(targetCardId);
+      setDragOverCardPosition(position);
+    },
+    [draggingCardId]
+  );
 
   const handleCardDrop = useCallback(
     (
@@ -182,6 +189,7 @@ export function useKanbanBoards() {
       e.preventDefault();
       e.stopPropagation();
       const position = overridePosition || dragOverCardPosition || "after";
+      const cachedDragOverCardId = dragOverCardId;
       setDragOverColId(null);
       setDragOverCardId(null);
       setDragOverCardPosition(null);
@@ -201,8 +209,15 @@ export function useKanbanBoards() {
             const movedCard = { ...board.cards[cardIndex], columnId: targetColId };
             const remainingCards = board.cards.filter((c) => c.id !== cardId);
 
-            if (targetCardId && targetCardId !== cardId) {
-              const targetIndex = remainingCards.findIndex((c) => c.id === targetCardId);
+            const effectiveTargetCardId =
+              targetCardId && targetCardId !== cardId
+                ? targetCardId
+                : cachedDragOverCardId && cachedDragOverCardId !== cardId
+                ? cachedDragOverCardId
+                : null;
+
+            if (effectiveTargetCardId) {
+              const targetIndex = remainingCards.findIndex((c) => c.id === effectiveTargetCardId);
               if (targetIndex !== -1) {
                 const insertIndex = position === "after" ? targetIndex + 1 : targetIndex;
                 remainingCards.splice(insertIndex, 0, movedCard);
@@ -210,12 +225,17 @@ export function useKanbanBoards() {
               }
             }
 
+            // Nếu thả vào chính cột cũ mà không có vị trí thẻ đích cụ thể: GIỮ NGUYÊN VỊ TRÍ, KHÔNG ĐỔI!
+            if (board.cards[cardIndex].columnId === targetColId) {
+              return board;
+            }
+
             return { ...board, cards: [...remainingCards, movedCard] };
           });
         }
       } catch {}
     },
-    [dragOverCardPosition, updateCurrentBoard]
+    [dragOverCardId, dragOverCardPosition, updateCurrentBoard]
   );
 
   // Column Drag Handlers

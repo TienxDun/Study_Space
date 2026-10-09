@@ -26,6 +26,7 @@ export const useStudyKeyboard = (api: StudyKeyboardApi) => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
       const a = apiRef.current;
       // Bỏ qua khi người dùng đang nhập văn bản
       const activeEl = document.activeElement;

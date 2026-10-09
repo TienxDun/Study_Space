@@ -81,6 +81,17 @@ describe("Study Notes Markdown & Excerpt Utilities", () => {
       expect(html).toContain("Nhiệm vụ chưa xong");
     });
 
+    it("should convert indented markdown checklists into 1-level flat interactive checkboxes", () => {
+      const md = "- [ ] Việc 1\n  - [ ] Việc 2 con\n    - [ ] Việc 3 cháu";
+      const html = markdownToHtml(md);
+      expect(html).toContain("Việc 1");
+      expect(html).toContain("Việc 2 con");
+      expect(html).toContain("Việc 3 cháu");
+      // All 3 should be converted to .todo-item
+      const matches = html.match(/class="todo-item"/g);
+      expect(matches?.length).toBe(3);
+    });
+
     it("should wrap code fences in pre and code tags", () => {
       const md = "```\nconst x = 42;\n```";
       const html = markdownToHtml(md);

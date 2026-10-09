@@ -90,13 +90,13 @@ export function markdownToHtml(md: string): string {
   text = text.replace(/^## (.*$)/gim, "<h2>$1</h2>");
   text = text.replace(/^# (.*$)/gim, "<h1>$1</h1>");
 
-  // Checklists
+  // Checklists (Strictly 1-level flat)
   text = text.replace(
-    /^- \[x\] (.*$)/gim,
+    /^\s*- \[x\] (.*$)/gim,
     '<div class="todo-item"><input type="checkbox" checked="true" class="todo-checkbox" /><span class="todo-checked-text">$1</span></div>'
   );
   text = text.replace(
-    /^- \[ \] (.*$)/gim,
+    /^\s*- \[ \] (.*$)/gim,
     '<div class="todo-item"><input type="checkbox" class="todo-checkbox" /><span>$1</span></div>'
   );
 

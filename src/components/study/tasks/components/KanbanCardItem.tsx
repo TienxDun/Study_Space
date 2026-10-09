@@ -55,16 +55,18 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
 
   return (
     <div
-      draggable
+      draggable={!isCardDragging}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      onClick={onCardClick}
-      className={`group p-3 rounded-2xl backdrop-blur-md border shadow-sm transition-all cursor-grab active:cursor-grabbing space-y-2 relative select-none ${
+      onClick={() => {
+        if (!isCardDragging) onCardClick();
+      }}
+      className={`group p-3 rounded-2xl backdrop-blur-md border shadow-sm transition-all select-none space-y-2 relative ${
         isCardDragging
-          ? "opacity-25 border-dashed border-white/20 bg-white/[0.02] shadow-none"
-          : "bg-white/[0.08] hover:bg-white/[0.14] border-white/12 hover:border-white/25"
+          ? "cursor-grabbing opacity-90 ring-1 ring-white/20 bg-white/[0.08] border-white/12"
+          : "bg-white/[0.08] hover:bg-white/[0.14] border-white/12 hover:border-white/25 cursor-grab active:cursor-grabbing"
       }`}
     >
       {/* Title, Quick Checkbox, Priority Micro-Dot & Grip */}
@@ -77,13 +79,17 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
               e.stopPropagation();
               onToggleComplete();
             }}
-            className="p-0.5 rounded-md hover:bg-white/10 text-white/40 hover:text-emerald-400 transition-colors flex-shrink-0 cursor-pointer flex items-center justify-center"
+            className={`rounded-md hover:bg-white/10 text-white/40 hover:text-emerald-400 transition-all duration-200 flex-shrink-0 cursor-pointer flex items-center justify-center overflow-hidden ${
+              isCardCompleted
+                ? "w-5 h-5 p-0.5 opacity-100"
+                : "w-0 h-5 p-0 opacity-0 -mr-2 group-hover:w-5 group-hover:p-0.5 group-hover:opacity-100 group-hover:mr-0 focus-visible:w-5 focus-visible:p-0.5 focus-visible:opacity-100 focus-visible:mr-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400"
+            }`}
             title={isCardCompleted ? "Đánh dấu chưa hoàn thành" : "Hoàn thành nhiệm vụ"}
           >
             {isCardCompleted ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20 shrink-0" />
             ) : (
-              <Circle className="w-4 h-4 text-white/30 hover:text-emerald-400 transition-colors" />
+              <Circle className="w-4 h-4 text-white/30 hover:text-emerald-400 transition-colors shrink-0" />
             )}
           </button>
 

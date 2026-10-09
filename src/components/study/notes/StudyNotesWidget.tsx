@@ -6,7 +6,7 @@ import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { StudyNotesWidgetProps } from "./types";
 import { useStudyNotes } from "./hooks/useStudyNotes";
-import { useRichTextEditor } from "./hooks/useRichTextEditor";
+import { useRichTextEditor, flattenNestedTodos } from "./hooks/useRichTextEditor";
 import { CompactStickyNote } from "./components/CompactStickyNote";
 
 const STORAGE_THEME_KEY = STORAGE_KEYS.notesTheme;
@@ -18,7 +18,7 @@ export const StudyNotesWidget = ({
   onClose,
 }: StudyNotesWidgetProps) => {
   const {
-    notes,
+    sortedNotes,
     activeNoteId,
     setActiveNoteId,
     activeNote,
@@ -240,8 +240,13 @@ export const StudyNotesWidget = ({
           if (editorRef.current) {
             const initialHtml = activeNote.content || "<p><br></p>";
             editorRef.current.innerHTML = initialHtml;
-            undoStackRef.current = [initialHtml];
+            const changed = flattenNestedTodos(editorRef.current);
+            const finalHtml = editorRef.current.innerHTML;
+            undoStackRef.current = [finalHtml];
             redoStackRef.current = [];
+            if (changed) {
+              updateNoteContent(activeNote.id, finalHtml);
+            }
           }
           updateCountsFromDom(activeNote.content);
         };
@@ -254,7 +259,7 @@ export const StudyNotesWidget = ({
         }
       }
     }
-  }, [isOpen, activeNoteId, activeNote, editorRef, undoStackRef, redoStackRef, updateCountsFromDom]);
+  }, [isOpen, activeNoteId, activeNote, editorRef, undoStackRef, redoStackRef, updateCountsFromDom, updateNoteContent]);
 
   // Global Escape key listener
   useEffect(() => {
@@ -331,7 +336,7 @@ export const StudyNotesWidget = ({
               }`}
             >
               <CompactStickyNote
-                notes={notes}
+                notes={sortedNotes}
                 activeNote={activeNote}
                 isLight={isLight}
                 activeFormats={activeFormats}

@@ -140,6 +140,15 @@ export function useStudyNotes() {
     return { total, completed, percent };
   }, [activeNote]);
 
+  // Sorted notes (Pinned first, then latest updated)
+  const sortedNotes = useMemo(() => {
+    return [...notes].sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return b.updatedAt - a.updatedAt;
+    });
+  }, [notes]);
+
   // Filtered and Sorted notes (Pinned first, then latest updated)
   const filteredNotes = useMemo(() => {
     return notes
@@ -255,6 +264,7 @@ export function useStudyNotes() {
     noteToDelete,
     setNoteToDelete,
     checklistStats,
+    sortedNotes,
     filteredNotes,
     handleCreateNote,
     handleResetDefaultNotes,

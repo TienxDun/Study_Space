@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Plus, X, GripVertical } from "lucide-react";
+import { Plus } from "lucide-react";
 import { KanbanBoard, KanbanCard, KanbanColumn, CardPriority } from "../types";
 import { KanbanColumnItem } from "./KanbanColumnItem";
 
@@ -168,6 +168,8 @@ export const TaskBoardView = React.memo(function TaskBoardView({
               setNewCardDueDate={setNewCardDueDate}
               handleAddCard={handleAddCard}
               draggingColId={draggingColId}
+              dragOverColId={dragOverColId}
+              draggingCard={draggingCard}
             />
           </div>
         );

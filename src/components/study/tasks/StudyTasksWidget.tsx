@@ -3,7 +3,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
-import { StudyTasksWidgetProps, KanbanCard } from "./types";
+import { StudyTasksWidgetProps } from "./types";
 import { getDeadlineStatus } from "./utils/task-deadline";
 import { useKanbanBoards } from "./hooks/useKanbanBoards";
 import { TaskHeader } from "./components/TaskHeader";
@@ -78,7 +78,6 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
     handleColumnDragEnd,
     handleColumnDragOver,
     handleColumnDrop,
-    handleQuickMoveColumn,
     handleMoveCard,
     promptDeleteCard,
     handleConfirmDeleteCard,
@@ -306,6 +305,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                     currentBoard={currentBoard}
                     filterCards={filterCards}
                     draggingCardId={draggingCardId}
+                    dragOverColId={dragOverColId}
                     dragOverCardId={dragOverCardId}
                     dragOverCardPosition={dragOverCardPosition}
                     isMeaningfulCardMove={isMeaningfulCardMove}

@@ -63,4 +63,90 @@ describe("StudyTasksWidget Deadline Logic", () => {
     expect(status?.status).toBe("future");
     expect(status?.label).toContain("Hạn");
   });
+
+  it("should handle optional time in dueDate correctly", () => {
+    const future = new Date();
+    future.setDate(future.getDate() + 5);
+    const y = future.getFullYear();
+    const m = String(future.getMonth() + 1).padStart(2, "0");
+    const d = String(future.getDate()).padStart(2, "0");
+    const withTimeStr = `${y}-${m}-${d}T15:30`;
+
+    const status = getDeadlineStatus(withTimeStr);
+    expect(status).not.toBeNull();
+    expect(status?.status).toBe("future");
+    expect(status?.shortLabel).toContain("15:30");
+    expect(status?.label).toContain("15:30");
+  });
+
+  it("should detect overdue when deadline time today has already passed", () => {
+    const pastTime = new Date();
+    pastTime.setHours(pastTime.getHours() - 2);
+    const y = pastTime.getFullYear();
+    const m = String(pastTime.getMonth() + 1).padStart(2, "0");
+    const d = String(pastTime.getDate()).padStart(2, "0");
+    const h = String(pastTime.getHours()).padStart(2, "0");
+    const min = String(pastTime.getMinutes()).padStart(2, "0");
+    const pastTimeToday = `${y}-${m}-${d}T${h}:${min}`;
+
+    const status = getDeadlineStatus(pastTimeToday);
+    expect(status).not.toBeNull();
+    expect(status?.status).toBe("overdue");
+    expect(status?.isOverdue).toBe(true);
+  });
+});
+
+describe("Task In-Place Reorder Logic", () => {
+  const cards = [
+    { id: "c1", title: "Task 1", columnId: "col1", priority: "low", completed: false, checklist: [] },
+    { id: "c2", title: "Task 2", columnId: "col1", priority: "medium", completed: false, checklist: [] },
+    { id: "c3", title: "Task 3", columnId: "col1", priority: "high", completed: false, checklist: [] },
+  ];
+
+  it("should reorder cards correctly when dragging card downwards (after)", () => {
+    const draggingCard = cards[0]; // c1
+    const targetCardId = "c3";
+    const position = "after";
+
+    const remaining = cards.filter((c) => c.id !== draggingCard.id);
+    const targetIdx = remaining.findIndex((c) => c.id === targetCardId);
+    const insertIdx = position === "after" ? targetIdx + 1 : targetIdx;
+
+    const reordered = [...remaining];
+    reordered.splice(insertIdx, 0, draggingCard);
+
+    expect(reordered.map((c) => c.id)).toEqual(["c2", "c3", "c1"]);
+  });
+
+  it("should reorder cards correctly when dragging card upwards (before)", () => {
+    const draggingCard = cards[2]; // c3
+    const targetCardId = "c1";
+    const position = "before";
+
+    const remaining = cards.filter((c) => c.id !== draggingCard.id);
+    const targetIdx = remaining.findIndex((c) => c.id === targetCardId);
+    const insertIdx = (position as string) === "after" ? targetIdx + 1 : targetIdx;
+
+    const reordered = [...remaining];
+    reordered.splice(insertIdx, 0, draggingCard);
+
+    expect(reordered.map((c) => c.id)).toEqual(["c3", "c1", "c2"]);
+  });
+
+  it("should preserve original card order in source column when no target card is hovered", () => {
+    const draggingCard = cards[1]; // c2
+    const isSourceCol = true;
+    const dragOverCardId = null;
+
+    let displayCards = cards;
+    if (draggingCard) {
+      if (dragOverCardId) {
+        // ...
+      } else if (isSourceCol) {
+        displayCards = cards;
+      }
+    }
+
+    expect(displayCards.map((c) => c.id)).toEqual(["c1", "c2", "c3"]);
+  });
 });

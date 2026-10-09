@@ -471,6 +471,8 @@ summary {
   align-items: flex-start;
   gap: 0.6rem;
   margin: 0.35rem 0;
+  margin-left: 0;
+  padding-left: 0;
   line-height: 1.5;
 }
 
@@ -629,6 +631,8 @@ summary {
   align-items: flex-start;
   gap: 0.6rem;
   margin: 0.35rem 0;
+  margin-left: 0;
+  padding-left: 0;
   line-height: 1.5;
   color: #1e293b;
 }
@@ -716,4 +720,18 @@ summary {
   color: #fbbf24 !important;
 }
 /* IMPORTANT-ALLOWED-END */
+
+/* Native Date & Time picker indicators cursor pointer */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  transition: opacity 0.15s ease, filter 0.15s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.8;
+  filter: brightness(1.2);
+}
+
 

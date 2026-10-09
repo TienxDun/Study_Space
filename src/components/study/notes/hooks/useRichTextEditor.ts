@@ -7,6 +7,29 @@ interface UseRichTextEditorProps {
   onContentChange: (newHtml: string) => void;
 }
 
+/**
+ * Đảm bảo mọi mục checklist (.todo-item) luôn ở đúng 1 cấp phẳng (1-level flat),
+ * tự động tách và xếp thẳng hàng nếu có bất kỳ mục nào bị lồng vào nhau.
+ */
+export function flattenNestedTodos(root: HTMLElement): boolean {
+  let changed = false;
+  let nested = root.querySelector(".todo-item .todo-item") as HTMLElement | null;
+  while (nested) {
+    changed = true;
+    let parentTodo: HTMLElement | null = nested.parentElement;
+    while (parentTodo && !parentTodo.classList.contains("todo-item") && parentTodo !== root) {
+      parentTodo = parentTodo.parentElement;
+    }
+    if (parentTodo && parentTodo.parentNode) {
+      parentTodo.parentNode.insertBefore(nested, parentTodo.nextSibling);
+    } else {
+      break;
+    }
+    nested = root.querySelector(".todo-item .todo-item") as HTMLElement | null;
+  }
+  return changed;
+}
+
 export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const undoStackRef = useRef<string[]>([]);
@@ -321,6 +344,17 @@ export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
 
     const range = selection.getRangeAt(0);
 
+    // Kiểm tra xem con trỏ có đang nằm trong một todo-item có sẵn không
+    let existingTodo: HTMLElement | null = null;
+    let currNode: Node | null = selection.anchorNode;
+    while (currNode && currNode !== editorRef.current) {
+      if (currNode instanceof HTMLElement && currNode.classList.contains("todo-item")) {
+        existingTodo = currNode;
+        break;
+      }
+      currNode = currNode.parentNode;
+    }
+
     if (!selection.isCollapsed) {
       const selectedText = selection.toString();
       const lines = selectedText
@@ -347,12 +381,17 @@ export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
       todoDiv.className = "todo-item";
       todoDiv.innerHTML = '<input type="checkbox" class="todo-checkbox" /><span>Việc cần làm...</span>';
 
-      const nextP = document.createElement("p");
-      nextP.innerHTML = "<br>";
+      if (existingTodo && existingTodo.parentNode) {
+        // Nếu đang ở trong một todo-item, luôn chèn ngang hàng (sibling) ngay bên dưới, không lồng vào trong
+        existingTodo.parentNode.insertBefore(todoDiv, existingTodo.nextSibling);
+      } else {
+        const nextP = document.createElement("p");
+        nextP.innerHTML = "<br>";
 
-      range.deleteContents();
-      range.insertNode(nextP);
-      range.insertNode(todoDiv);
+        range.deleteContents();
+        range.insertNode(nextP);
+        range.insertNode(todoDiv);
+      }
 
       const span = todoDiv.querySelector("span");
       if (span) {
@@ -361,6 +400,10 @@ export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
         selection.removeAllRanges();
         selection.addRange(newRange);
       }
+    }
+
+    if (editorRef.current) {
+      flattenNestedTodos(editorRef.current);
     }
 
     checkActiveFormats();
@@ -565,6 +608,10 @@ export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
 
       if (e.key === "Tab") {
         e.preventDefault();
+        // Checklist luôn ở 1 cấp phẳng duy nhất: chặn phím Tab làm thụt lề lệch hàng
+        if (todoItem) {
+          return;
+        }
         pushExplicitSnapshot();
         let isInsideList = false;
         let checkNode: Node | null = selection.anchorNode;
@@ -630,7 +677,13 @@ export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
             const nextTodo = document.createElement("div");
             nextTodo.className = "todo-item";
             nextTodo.innerHTML = '<input type="checkbox" class="todo-checkbox" /><span>&nbsp;</span>';
-            todoItem.parentNode?.insertBefore(nextTodo, todoItem.nextSibling);
+
+            // Tìm node ngoài cùng nếu có lồng thẻ để luôn chèn ngang hàng 1 level
+            let insertTarget: HTMLElement = todoItem;
+            while (insertTarget.parentElement && insertTarget.parentElement.classList.contains("todo-item")) {
+              insertTarget = insertTarget.parentElement;
+            }
+            insertTarget.parentNode?.insertBefore(nextTodo, insertTarget.nextSibling);
 
             const span = nextTodo.querySelector("span");
             if (span) {
@@ -639,6 +692,9 @@ export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
               range.collapse(false);
               selection.removeAllRanges();
               selection.addRange(range);
+            }
+            if (editorRef.current) {
+              flattenNestedTodos(editorRef.current);
             }
             triggerInputSave();
             return;

@@ -141,13 +141,21 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                 </div>
                 <div className="space-y-0.5 mt-1">
                   {notes.map((n) => (
-                    <button
+                    <div
                       key={n.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => {
                         setActiveNoteId(n.id);
                         setShowQuickNoteList(false);
                       }}
-                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs text-left truncate transition-colors cursor-pointer ${
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          setActiveNoteId(n.id);
+                          setShowQuickNoteList(false);
+                        }
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs text-left truncate transition-colors cursor-pointer group ${
                         n.id === activeNote?.id
                           ? "bg-emerald-500/20 text-emerald-500 dark:text-emerald-400 font-bold"
                           : isLight
@@ -156,8 +164,22 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                       }`}
                     >
                       <span className="truncate flex-1 mr-2">{n.title || "Ghi chú không tên"}</span>
-                      {n.isPinned && <Pin className="w-2.5 h-2.5 fill-current text-amber-400 shrink-0" />}
-                    </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTogglePin(n.id);
+                        }}
+                        className={`p-1 rounded-md transition-all shrink-0 cursor-pointer ${
+                          n.isPinned
+                            ? "text-amber-400 hover:text-amber-300"
+                            : "opacity-0 group-hover:opacity-100 text-slate-400 hover:text-amber-400"
+                        }`}
+                        title={n.isPinned ? "Bỏ ghim khỏi đầu danh sách" : "Ghim lên đầu danh sách"}
+                      >
+                        <Pin className={`w-3 h-3 ${n.isPinned ? "fill-current text-amber-400" : ""}`} />
+                      </button>
+                    </div>
                   ))}
                 </div>
               </motion.div>
@@ -194,7 +216,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                 ? "hover:bg-slate-200/80 border-slate-200 text-slate-400"
                 : "hover:bg-white/10 border-white/10 text-slate-400 hover:text-white"
             }`}
-            title={activeNote?.isPinned ? "Bỏ ghim" : "Ghim lên đầu"}
+            title={activeNote?.isPinned ? "Bỏ ghim khỏi đầu danh sách" : "Ghim lên đầu danh sách"}
           >
             <Pin className={`w-3.5 h-3.5 ${activeNote?.isPinned ? "fill-current" : ""}`} />
           </button>

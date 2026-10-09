@@ -39,7 +39,7 @@ interface TaskHeaderProps {
 
 export const TaskHeader = React.memo(function TaskHeader({
   boards,
-  activeBoardId,
+  activeBoardId: _activeBoardId,
   currentBoard,
   isBoardDropdownOpen,
   setIsBoardDropdownOpen,
