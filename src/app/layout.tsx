@@ -16,6 +16,9 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
+const isGithubPages = process.env.GITHUB_ACTIONS === "true" && !process.env.VERCEL;
+const basePath = isGithubPages ? "/Study_Space" : "";
+
 export const metadata: Metadata = {
   title: "HUFLIT StudySpace - Không Gian Học Tập Tương Tác & Tập Trung",
   description:
@@ -37,8 +40,8 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/icon.svg", type: "image/svg+xml" }
+      { url: `${basePath}/favicon.ico`, sizes: "any" },
+      { url: `${basePath}/icon.svg`, type: "image/svg+xml" }
     ],
   },
 };

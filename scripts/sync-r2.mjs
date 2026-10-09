@@ -97,19 +97,24 @@ async function main() {
 
   const localBase = path.join(process.cwd(), "public/study");
 
-  // Thu thập danh sách file duy nhất từ scenes.json
-  const fileKeysSet = new Set();
-  for (const scene of scenes) {
-    if (scene.mediaPath && !scene.mediaPath.startsWith("http")) {
-      fileKeysSet.add(scene.mediaPath.replace(/^\/+/, ""));
+  // Hàm quét đệ quy toàn bộ thư mục public/study (scenes, musics, sounds, authors, thumbnails)
+  async function walkDir(dir) {
+    let files = [];
+    const items = await fs.readdir(dir, { withFileTypes: true });
+    for (const item of items) {
+      const fullPath = path.join(dir, item.name);
+      if (item.isDirectory()) {
+        files = files.concat(await walkDir(fullPath));
+      } else if (item.isFile()) {
+        const relKey = path.relative(localBase, fullPath).replace(/\\/g, "/");
+        files.push(relKey);
+      }
     }
-    if (scene.thumbnailPath && !scene.thumbnailPath.startsWith("http")) {
-      fileKeysSet.add(scene.thumbnailPath.replace(/^\/+/, ""));
-    }
+    return files;
   }
 
-  const allKeys = Array.from(fileKeysSet);
-  console.log(`🔍 Tìm thấy ${allKeys.length} file asset cần đồng bộ từ ${scenes.length} background đã lọc.\n`);
+  const allKeys = await walkDir(localBase);
+  console.log(`🔍 Tìm thấy tổng cộng ${allKeys.length} file asset trong thư mục public/study/ để đồng bộ.\n`);
 
   let uploadedCount = 0;
   let skippedCount = 0;
