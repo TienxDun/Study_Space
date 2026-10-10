@@ -4,6 +4,9 @@ import { LucideIcon } from "lucide-react";
 export interface SoundMixerWidgetProps {
   isOpen: boolean;
   onClose: () => void;
+  activeTab?: MixerTab;
+  onTabChange?: (tab: MixerTab) => void;
+  onAmbientActiveCountChange?: (count: number) => void;
   currentMood: MoodType;
   onSelectMood: (mood: MoodType) => void;
   currentTrack: Track;

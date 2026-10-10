@@ -1,6 +1,5 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Tv,
   Music2,
@@ -43,41 +42,39 @@ export function StagePlayer({
             }`}
           >
             {/* Loading Skeleton */}
-            <AnimatePresence>
-              {isIframeLoading && (
-                <motion.div
-                  initial={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950 gap-2.5 pointer-events-none"
-                >
-                  <div className="flex items-end gap-1 h-5">
-                    <span className="w-1 h-3 bg-slate-400 rounded-full animate-pulse" />
-                    <span
-                      className="w-1 h-5 bg-accent-music-glow rounded-full animate-pulse"
-                      style={{ animationDelay: "150ms" }}
-                    />
-                    <span
-                      className="w-1 h-4 bg-accent-stream-glow rounded-full animate-pulse"
-                      style={{ animationDelay: "300ms" }}
-                    />
-                  </div>
-                  <span className="text-[11px] font-medium text-slate-300">
-                    Đang tải luồng phát...
-                  </span>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div
+              className={`absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950 gap-2.5 pointer-events-none transition-opacity duration-300 ${
+                isIframeLoading ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <div className="flex items-end gap-1 h-5">
+                <span className="w-1 h-3 bg-slate-400 rounded-full animate-pulse" />
+                <span
+                  className="w-1 h-5 bg-accent-music-glow rounded-full animate-pulse"
+                  style={{ animationDelay: "150ms" }}
+                />
+                <span
+                  className="w-1 h-4 bg-accent-stream-glow rounded-full animate-pulse"
+                  style={{ animationDelay: "300ms" }}
+                />
+              </div>
+              <span className="text-[11px] font-medium text-slate-300">
+                Đang tải luồng phát...
+              </span>
+            </div>
 
-            <iframe
-              key={activeItem.id}
-              src={ensureYouTubeJsApi(activeItem.embedUrl)}
-              title={activeItem.title}
-              className="w-full h-full border-0"
-              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-              loading="lazy"
-              onLoad={() => setIsIframeLoading(false)}
-            />
+            {/* Isolated iframe container */}
+            <div className="w-full h-full">
+              <iframe
+                key={activeItem.id}
+                src={ensureYouTubeJsApi(activeItem.embedUrl)}
+                title={activeItem.title}
+                className="w-full h-full border-0"
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                loading="lazy"
+                onLoad={() => setIsIframeLoading(false)}
+              />
+            </div>
           </div>
 
           {/* Seamless Single-line Media Bar */}

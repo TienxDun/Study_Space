@@ -10,6 +10,7 @@ import { TaskHeader } from "./components/TaskHeader";
 import { TaskBoardView } from "./components/TaskBoardView";
 import { TaskListView } from "./components/TaskListView";
 import { CardDetailModal } from "./components/CardDetailModal";
+import { PrioritySignalIcon } from "./components/PrioritySignalIcon";
 import { GripVertical } from "lucide-react";
 
 export { getDeadlineStatus };
@@ -17,7 +18,6 @@ export { getDeadlineStatus };
 export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => {
   const {
     boards,
-    activeBoardId,
     setActiveBoardId,
     currentBoard,
     updateCurrentBoard,
@@ -124,7 +124,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
         </span>
         {Boolean(draggingCard?.priority) && (
           <span
-            className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+            className={`px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 ${
               draggingCard?.priority === "high"
                 ? "bg-rose-500/30 text-rose-200 border border-rose-400/40"
                 : draggingCard?.priority === "medium"
@@ -132,11 +132,14 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                 : "bg-emerald-500/30 text-emerald-200 border border-emerald-400/40"
             }`}
           >
-            {draggingCard?.priority === "high"
-              ? "Cao"
-              : draggingCard?.priority === "medium"
-              ? "Vừa"
-              : "Thấp"}
+            <PrioritySignalIcon priority={draggingCard!.priority} className="w-2.5 h-2.5" />
+            <span>
+              {draggingCard?.priority === "high"
+                ? "Cao"
+                : draggingCard?.priority === "medium"
+                ? "Vừa"
+                : "Thấp"}
+            </span>
           </span>
         )}
       </div>
@@ -211,7 +214,6 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
               {/* Header Bar */}
               <TaskHeader
                 boards={boards}
-                activeBoardId={activeBoardId}
                 currentBoard={currentBoard}
                 isBoardDropdownOpen={isBoardDropdownOpen}
                 setIsBoardDropdownOpen={setIsBoardDropdownOpen}

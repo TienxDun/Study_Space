@@ -14,7 +14,8 @@ import {
   Tv,
   Check,
   Shuffle,
-  Smile
+  Smile,
+  Loader2,
 } from "lucide-react";
 import { Scene, STUDY_SCENES } from "./study-types";
 import { useFavoriteScenes } from "@/lib/use-favorites";
@@ -27,6 +28,8 @@ interface SceneSelectorWidgetProps {
   isOpen: boolean;
   onClose: () => void;
   currentScene: Scene;
+  pendingScene?: Scene | null;
+  isPreloading?: boolean;
   onSelectScene: (scene: Scene) => void;
 }
 
@@ -56,13 +59,14 @@ SceneThumbnail.displayName = "SceneThumbnail";
 interface SceneCardItemProps {
   scene: Scene;
   isSelected: boolean;
+  isPending?: boolean;
   isFav: boolean;
   onSelect: (scene: Scene) => void;
   onToggleFavorite: (id: string) => void;
 }
 
 const SceneCardItem = React.memo<SceneCardItemProps>(
-  ({ scene, isSelected, isFav, onSelect, onToggleFavorite }) => {
+  ({ scene, isSelected, isPending, isFav, onSelect, onToggleFavorite }) => {
     const isVideo = scene.type === "VIDEO";
 
     return (
@@ -81,7 +85,9 @@ const SceneCardItem = React.memo<SceneCardItemProps>(
           containIntrinsicSize: "200px 125px",
         }}
         className={`group relative aspect-[16/10] w-full rounded-2xl overflow-hidden border transition-all duration-300 text-left cursor-pointer shrink-0 shadow-sm hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-emerald-400/50 ${
-          isSelected
+          isPending
+            ? "border-amber-400/90 ring-2 ring-amber-400/40 shadow-[0_0_20px_rgba(251,191,36,0.3)] scale-[1.01] animate-pulse"
+            : isSelected
             ? "border-emerald-400/90 ring-2 ring-emerald-400/40 shadow-[0_0_20px_rgba(52,211,153,0.3)] scale-[1.01]"
             : "border-white/10 hover:border-white/30"
         }`}
@@ -96,12 +102,17 @@ const SceneCardItem = React.memo<SceneCardItemProps>(
         <div className="absolute top-2 left-2 right-2 flex items-center justify-between z-10">
           {/* Left Badges */}
           <div className="flex items-center gap-1.5 pointer-events-none">
-            {isSelected && (
+            {isPending ? (
+              <Badge tone="amber" className="shadow-md flex items-center gap-1">
+                <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                <span>Đang nạp...</span>
+              </Badge>
+            ) : isSelected ? (
               <div className="w-5 h-5 rounded-full bg-emerald-400 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-400/40 font-bold animate-in zoom-in-75 duration-200">
                 <Check className="w-3 h-3 stroke-[3]" />
               </div>
-            )}
-            {isVideo && (
+            ) : null}
+            {isVideo && !isPending && (
               <Badge tone="amber" className="shadow-md">
                 <Video className="w-2.5 h-2.5" /> 4K Động
               </Badge>
@@ -140,6 +151,7 @@ const SceneCardItem = React.memo<SceneCardItemProps>(
   (prev, next) =>
     prev.scene.id === next.scene.id &&
     prev.isSelected === next.isSelected &&
+    prev.isPending === next.isPending &&
     prev.isFav === next.isFav
 );
 SceneCardItem.displayName = "SceneCardItem";
@@ -154,6 +166,7 @@ export const SceneSelectorWidget = ({
   isOpen,
   onClose,
   currentScene,
+  pendingScene,
   onSelectScene,
 }: SceneSelectorWidgetProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -458,6 +471,7 @@ export const SceneSelectorWidget = ({
               key={scene.id}
               scene={scene}
               isSelected={currentScene.id === scene.id}
+              isPending={pendingScene?.id === scene.id}
               isFav={isFavorite(scene.id)}
               onSelect={onSelectScene}
               onToggleFavorite={toggleFavorite}

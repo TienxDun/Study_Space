@@ -258,18 +258,6 @@
     ]
   },
   {
-    "id": "69637d37c638c10eee8c6304",
-    "name": "Cozy Home",
-    "category": "chill",
-    "type": "IMAGE",
-    "mediaPath": "scenes/anime-style-cozy-home-interior-with-furnishings.avif",
-    "thumbnailPath": "scenes/anime-style-cozy-home-interior-with-furnishings.avif",
-    "tags": [
-      "chill",
-      "image"
-    ]
-  },
-  {
     "id": "69637d56c638c10eee8c6305",
     "name": "Night Sky",
     "category": "chill",
@@ -482,18 +470,6 @@
     "thumbnailPath": "scenes/urban-view-with-people-street.avif",
     "tags": [
       "urban",
-      "image"
-    ]
-  },
-  {
-    "id": "696e6122b00567589a636a37",
-    "name": "Green Palm Foliage",
-    "category": "nature",
-    "type": "IMAGE",
-    "mediaPath": "scenes/view-green-palm-tree-species-with-beautiful-foliage.avif",
-    "thumbnailPath": "scenes/view-green-palm-tree-species-with-beautiful-foliage.avif",
-    "tags": [
-      "nature",
       "image"
     ]
   }

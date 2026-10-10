@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { motion } from "framer-motion";
-import { Scene, STUDY_SCENES, StudyEmbedItem } from "@/components/study/study-types";
+import { motion, AnimatePresence } from "framer-motion";
+import { Loader2 } from "lucide-react";
+import { STUDY_SCENES, StudyEmbedItem } from "@/components/study/study-types";
+import { useScenePreloader } from "@/lib/use-scene-preloader";
 import { StudyMusicPlayer } from "@/components/study/music/StudyMusicPlayer";
 import { StudyPomodoroWidget } from "@/components/study/pomodoro/StudyPomodoroWidget";
 import type { TimerTab } from "@/components/study/pomodoro/types";
@@ -18,6 +20,7 @@ import { StudySeoSemanticContent } from "@/components/study/seo/StudySeoSemantic
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useStudySettings } from "@/lib/use-study-settings";
 import { useGlobalHorizontalScroll } from "@/lib/use-horizontal-scroll";
+import { sendYouTubeCommand } from "@/lib/youtube-remote";
 
 // Lazy Load heavy widgets with code-splitting to optimize First Contentful Paint & bundle size
 const StudyTasksWidget = dynamic(
@@ -42,7 +45,15 @@ const StudyEmbedPlayerWidget = dynamic(
 
 export default function StudySpacePage() {
   useGlobalHorizontalScroll();
-  const [currentScene, setCurrentScene] = useState<Scene>(STUDY_SCENES[0]);
+  const {
+    currentScene,
+    pendingScene,
+    isPreloading: isPreloadingScene,
+    selectScene: handleSelectScene,
+    setCurrentSceneDirectly,
+  } = useScenePreloader({
+    initialScene: STUDY_SCENES[0],
+  });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isGlobalMuted, setIsGlobalMuted] = useState(false);
 
@@ -86,7 +97,7 @@ export default function StudySpacePage() {
       const savedSceneId = localStorage.getItem(STORAGE_KEYS.sceneId);
       if (savedSceneId) {
         const found = STUDY_SCENES.find((s) => s.id === savedSceneId);
-        if (found) setCurrentScene(found);
+        if (found) setCurrentSceneDirectly(found);
       }
       const savedMute = localStorage.getItem(STORAGE_KEYS.globalMute);
       if (savedMute !== null) {
@@ -212,13 +223,6 @@ export default function StudySpacePage() {
     setCenterTab(section);
   };
 
-  const handleSelectScene = (scene: Scene) => {
-    setCurrentScene(scene);
-    try {
-      localStorage.setItem(STORAGE_KEYS.sceneId, scene.id);
-    } catch {}
-  };
-
   const toggleGlobalMute = () => {
     setIsGlobalMuted((prev) => {
       const next = !prev;
@@ -319,8 +323,31 @@ export default function StudySpacePage() {
         isOpen={isScenesOpen} 
         onClose={() => setIsScenesOpen(false)} 
         currentScene={currentScene}
+        pendingScene={pendingScene}
+        isPreloading={isPreloadingScene}
         onSelectScene={handleSelectScene}
       />
+
+      {/* Floating Scene Preload Status Capsule (Hiển thị khi nạp bối cảnh mới lúc mạng yếu) */}
+      <AnimatePresence>
+        {isPreloadingScene && pendingScene && (
+          <motion.div
+            initial={{ opacity: 0, y: 15, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, scale: 0.95 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 px-4 py-2 rounded-full bg-black/85 backdrop-blur-2xl border border-white/20 text-white text-xs shadow-[0_12px_40px_rgba(0,0,0,0.8)] pointer-events-none select-none"
+          >
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-music-glow shrink-0" />
+            <span className="text-slate-200">
+              Đang tải bối cảnh <strong className="text-white font-semibold">{pendingScene.name}</strong>...
+            </span>
+            <span className="text-[10px] text-accent-music-bright font-mono bg-white/10 px-1.5 py-0.5 rounded border border-white/10">
+              {pendingScene.type === "VIDEO" ? "Video" : "Ảnh"}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <StudyEmbedPlayerWidget 
         isOpen={isEmbedPlayerOpen} 
         onClose={() => setIsEmbedPlayerOpen(false)} 
@@ -377,55 +404,48 @@ export default function StudySpacePage() {
         />
       </main>
 
-      {/* Bottom Floating Music Player (Giữ luôn mounted để nhạc không bao giờ bị dừng khi Ẩn UI) */}
-      <motion.div 
-        animate={{ 
-          opacity: isZenMode ? 0 : 1, 
-          y: isZenMode ? 32 : 0,
-          pointerEvents: isZenMode ? "none" : "auto" 
+      {/* Bottom Floating Music Player & Controls (Giữ luôn mounted để nhạc không bao giờ bị dừng khi Ẩn UI) */}
+      <StudyMusicPlayer 
+        isGlobalMuted={isGlobalMuted} 
+        onToggleMute={toggleGlobalMute}
+        onMuteChange={setGlobalMute}
+        isZenMode={isZenMode}
+        isMixerOpen={isMixerOpen}
+        isExternalStreamActive={isExternalStreamActive}
+        externalStreamItem={externalActiveItem}
+        onExpandExternalStream={() => {
+          handleCloseSettings();
+          setIsTasksOpen(false);
+          setIsNotesOpen(false);
+          setIsScenesOpen(false);
+          setIsMixerOpen(false);
+          setIsEmbedPlayerOpen(true);
+          setIsPipActive(false);
         }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="absolute bottom-4 left-4 right-4 z-40 flex justify-center will-change-transform"
-      >
-        <div className="w-full flex justify-center">
-          <StudyMusicPlayer 
-            isGlobalMuted={isGlobalMuted} 
-            onToggleMute={toggleGlobalMute}
-            onMuteChange={setGlobalMute}
-            isMixerOpen={isMixerOpen}
-            isExternalStreamActive={isExternalStreamActive}
-            externalStreamItem={externalActiveItem}
-            onExpandExternalStream={() => {
+        onStopExternalStream={() => {
+          setIsExternalStreamActive(false);
+          setExternalActiveItem(null);
+          sendYouTubeCommand("pauseVideo");
+          try {
+            localStorage.removeItem(STORAGE_KEYS.activeEmbed);
+          } catch {}
+        }}
+        onToggleMixer={() => {
+          setIsMixerOpen((prev) => {
+            const next = !prev;
+            if (next) {
               handleCloseSettings();
               setIsTasksOpen(false);
               setIsNotesOpen(false);
               setIsScenesOpen(false);
-              setIsMixerOpen(false);
-              setIsEmbedPlayerOpen(true);
-              setIsPipActive(false);
-            }}
-            onStopExternalStream={() => {
-              setIsExternalStreamActive(false);
-              setExternalActiveItem(null);
-            }}
-            onToggleMixer={() => {
-              setIsMixerOpen((prev) => {
-                const next = !prev;
-                if (next) {
-                  handleCloseSettings();
-                  setIsTasksOpen(false);
-                  setIsNotesOpen(false);
-                  setIsScenesOpen(false);
-                  setIsEmbedPlayerOpen(false);
-                  setIsShortcutsHelpOpen(false);
-                }
-                return next;
-              });
-            }}
-            onCloseMixer={() => setIsMixerOpen(false)}
-          />
-        </div>
-      </motion.div>
+              setIsEmbedPlayerOpen(false);
+              setIsShortcutsHelpOpen(false);
+            }
+            return next;
+          });
+        }}
+        onCloseMixer={() => setIsMixerOpen(false)}
+      />
 
       {/* Keyboard Shortcuts Cheat Sheet Modal */}
       <StudyShortcutsModal

@@ -107,7 +107,7 @@ export const CURATED_EMBED_PRESETS: StudyEmbedItem[] = [
     embedUrl: "https://www.youtube-nocookie.com/embed/7NOSDKb0HlU?autoplay=1&rel=0&enablejsapi=1",
     platform: "youtube",
     category: "Jazz Lofi",
-    thumbnail: "https://img.youtube.com/vi/7NOSDKb0HlU/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/7NOSDKb0HlU/mqdefault.jpg",
     isLive: true
   },
   {
@@ -117,7 +117,7 @@ export const CURATED_EMBED_PRESETS: StudyEmbedItem[] = [
     embedUrl: "https://www.youtube-nocookie.com/embed/4xDzrJKXOOY?autoplay=1&rel=0&enablejsapi=1",
     platform: "youtube",
     category: "Synthwave",
-    thumbnail: "https://img.youtube.com/vi/4xDzrJKXOOY/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/4xDzrJKXOOY/mqdefault.jpg",
     isLive: true
   },
   {
@@ -127,7 +127,7 @@ export const CURATED_EMBED_PRESETS: StudyEmbedItem[] = [
     embedUrl: "https://www.youtube-nocookie.com/embed/Dx5qFachd3A?autoplay=1&rel=0&enablejsapi=1",
     platform: "youtube",
     category: "Coffee Jazz",
-    thumbnail: "https://img.youtube.com/vi/Dx5qFachd3A/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/Dx5qFachd3A/mqdefault.jpg",
     isLive: true
   },
   {

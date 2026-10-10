@@ -18,7 +18,6 @@ import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 interface TaskHeaderProps {
   boards: KanbanBoard[];
-  activeBoardId: string;
   currentBoard: KanbanBoard;
   isBoardDropdownOpen: boolean;
   setIsBoardDropdownOpen: (open: boolean) => void;
@@ -39,7 +38,6 @@ interface TaskHeaderProps {
 
 export const TaskHeader = React.memo(function TaskHeader({
   boards,
-  activeBoardId: _activeBoardId,
   currentBoard,
   isBoardDropdownOpen,
   setIsBoardDropdownOpen,

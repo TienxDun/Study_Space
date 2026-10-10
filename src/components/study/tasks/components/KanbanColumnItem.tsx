@@ -6,12 +6,12 @@ import {
   Trash2,
   Plus,
   Calendar,
-  Flag,
   Clock,
   X,
 } from "lucide-react";
 import { KanbanCard, KanbanColumn, CardPriority } from "../types";
 import { KanbanCardItem } from "./KanbanCardItem";
+import { PrioritySignalIcon } from "./PrioritySignalIcon";
 
 interface KanbanColumnItemProps {
   column: KanbanColumn;
@@ -488,7 +488,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                     onClick={() => {
                       setIsPriorityOpen(!isPriorityOpen);
                     }}
-                    className={`h-6 px-2 rounded-lg border text-[11px] font-medium flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                    className={`h-6 px-2 rounded-lg border text-[11px] font-medium flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                       newCardPriority === "high"
                         ? "bg-rose-500/10 border-rose-500/30 text-rose-300"
                         : newCardPriority === "medium"
@@ -497,7 +497,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                     }`}
                     title="Mức độ ưu tiên"
                   >
-                    <Flag className="w-3 h-3 shrink-0" />
+                    <PrioritySignalIcon priority={newCardPriority} className="w-3 h-3 shrink-0" />
                     <span>
                       {newCardPriority === "high" ? "Cao" : newCardPriority === "medium" ? "Vừa" : "Thấp"}
                     </span>
@@ -507,9 +507,9 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                   {isPriorityOpen && (
                     <div className="absolute top-full mt-1.5 left-0 w-28 p-1 rounded-xl bg-[#1a1d24] border border-white/15 shadow-xl z-50 space-y-0.5">
                       {[
-                        { value: "low", label: "Thấp", color: "bg-emerald-400" },
-                        { value: "medium", label: "Vừa", color: "bg-amber-400" },
-                        { value: "high", label: "Cao", color: "bg-rose-400" },
+                        { value: "low", label: "Thấp" },
+                        { value: "medium", label: "Vừa" },
+                        { value: "high", label: "Cao" },
                       ].map((item) => (
                         <button
                           key={item.value}
@@ -524,7 +524,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                               : "text-slate-300 hover:bg-white/10 hover:text-white"
                           }`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full ${item.color}`} />
+                          <PrioritySignalIcon priority={item.value as CardPriority} className="w-3 h-3 shrink-0" />
                           <span>{item.label}</span>
                         </button>
                       ))}

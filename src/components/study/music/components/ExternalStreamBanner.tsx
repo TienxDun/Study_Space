@@ -20,46 +20,50 @@ export function ExternalStreamBanner({
 }: ExternalStreamBannerProps) {
   return (
     <>
-      {/* Left: Artwork & Metadata */}
+      {/* Left: Artwork & Metadata (Thuần túy không viền không hộp) */}
       <div
         onClick={onExpandExternalStream}
         className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 shrink-0 cursor-pointer group/art"
         title="Mở rộng đài phát (E)"
       >
-        {externalStreamItem.platform === "spotify" ? (
-          <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden bg-accent-music-ink/90 border border-accent-music/40 shadow-md shadow-accent-music-ink/60 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
-            {externalStreamItem.thumbnail && (
+        {/* Vinyl Record / Thumbnail Disc (Hiển thị full 100% nền đĩa, không bị lẹm viền) */}
+        <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full ring-1 ring-white/25 shadow-xl shadow-black/80 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
+          <div
+            className={`w-full h-full rounded-full overflow-hidden relative shadow-inner ${
+              !isExternalPaused ? "animate-[spin_10s_linear_infinite]" : ""
+            }`}
+          >
+            {externalStreamItem.thumbnail ? (
               <img
-                src={externalStreamItem.thumbnail}
+                src={externalStreamItem.thumbnail.replace("/hqdefault.jpg", "/mqdefault.jpg")}
                 alt={externalStreamItem.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover scale-[1.38]"
               />
+            ) : (
+              <div className="w-full h-full bg-slate-800 flex items-center justify-center" />
             )}
+            {/* Subtle Vinyl Grooves Rings */}
+            <div className="absolute inset-0 rounded-full border border-white/15 pointer-events-none" />
+            <div className="absolute inset-1.5 rounded-full border border-white/10 pointer-events-none" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.12)_0%,transparent_65%)] pointer-events-none" />
+            {/* Compact Center Spindle Hole */}
+            <div className="absolute inset-0 m-auto w-2 h-2 rounded-full bg-slate-950 border border-white/40 shadow-sm z-10 flex items-center justify-center">
+              <div className="w-0.5 h-0.5 rounded-full bg-white/70" />
+            </div>
           </div>
-        ) : (
-          <div className="relative w-13 h-9 sm:w-14 sm:h-10 rounded-lg overflow-hidden bg-accent-stream-ink/90 border border-accent-stream/40 shadow-md shadow-accent-stream-ink/60 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
-            {externalStreamItem.thumbnail && (
-              <img
-                src={externalStreamItem.thumbnail}
-                alt={externalStreamItem.title}
-                className="w-full h-full object-cover"
-              />
-            )}
-            <div className="absolute bottom-0 inset-x-0 h-1 bg-gradient-to-r from-accent-stream-deep via-accent-stream-rose to-accent-stream" />
-          </div>
-        )}
+        </div>
 
-        {/* Title & Live Status */}
-        <div className="min-w-0 flex-1 space-y-0.5 pr-2">
-          <h4 className="text-xs sm:text-sm font-bold text-slate-100 truncate leading-tight group-hover/art:text-accent-music-bright transition-colors">
+        {/* Title & Live Status (Nổi với drop-shadow sắc nét) */}
+        <div className="min-w-0 flex-1 space-y-0.5 pr-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
+          <h4 className="text-xs sm:text-sm font-bold text-white truncate leading-tight group-hover/art:text-accent-stream-bright transition-colors">
             {externalStreamItem.title}
           </h4>
           <div className="flex items-center gap-1.5 text-[10px] sm:text-xs">
             {externalStreamItem.platform === "spotify" ? (
-              <div className="flex items-end gap-0.5 h-2.5 px-1.5 py-0.5 rounded-full bg-accent-music/20 border border-accent-music/30">
+              <div className="flex items-end gap-0.5 h-2.5 px-1.5 py-0.5 rounded-full bg-[#1DB954]/20 border border-[#1DB954]/30">
                 <span className="w-0.5 h-1.5 bg-[#1DB954] rounded-full animate-pulse" />
                 <span
-                  className="w-0.5 h-2.5 bg-accent-music-bright rounded-full animate-pulse"
+                  className="w-0.5 h-2.5 bg-[#1DB954] rounded-full animate-pulse"
                   style={{ animationDelay: "120ms" }}
                 />
                 <span
@@ -68,34 +72,32 @@ export function ExternalStreamBanner({
                 />
               </div>
             ) : externalStreamItem.isLive ? (
-              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-accent-stream/20 border border-accent-stream/30">
+              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/30 text-red-400">
                 <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-stream-glow opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent-stream" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
                 </span>
-                <span className="text-[9px] font-bold text-accent-stream-bright tracking-wider">
-                  LIVE
-                </span>
+                <span className="text-[9px] font-bold tracking-wider leading-none">LIVE</span>
               </div>
             ) : (
-              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-accent-stream/15 border border-accent-stream/25 text-accent-stream-bright text-[9px] font-bold tracking-wider">
-                <span className="w-1 h-1 rounded-full bg-accent-stream-glow" />
+              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/10 border border-white/15 text-slate-200 text-[9px] font-bold tracking-wider">
+                <span className="w-1 h-1 rounded-full bg-white/60" />
                 <span>VIDEO</span>
               </div>
             )}
-            <span className="text-slate-400 truncate text-[10px] sm:text-xs">
+            <span className="text-slate-300/90 truncate text-[10px] sm:text-xs">
               {externalStreamItem.category || "Study Stream"}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Right: Controls [Play/Pause if YouTube] [Expand] [Stop] */}
-      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      {/* Right: Modern Glassmorphic Controls [Play/Pause] [Expand] [Stop] */}
+      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
         {externalStreamItem.platform === "youtube" && (
           <button
             onClick={toggleExternalPlay}
-            className="p-2 rounded-full bg-accent-stream/20 hover:bg-accent-stream/30 text-accent-stream-bright border border-accent-stream/40 transition-all active:scale-95 cursor-pointer shadow-sm flex items-center justify-center"
+            className="w-9 h-9 sm:w-9.5 sm:h-9.5 rounded-full bg-white/15 hover:bg-white/25 text-white backdrop-blur-md transition-all active:scale-95 cursor-pointer shadow-lg shadow-black/50 hover:shadow-[0_0_15px_rgba(255,255,255,0.25)] flex items-center justify-center group"
             title={
               isExternalPaused
                 ? "Tiếp tục phát YouTube (Space)"
@@ -103,20 +105,16 @@ export function ExternalStreamBanner({
             }
           >
             {isExternalPaused ? (
-              <Play className="w-3.5 h-3.5 fill-current" />
+              <Play className="w-4 h-4 fill-white text-white transition-transform group-hover:scale-110" />
             ) : (
-              <Pause className="w-3.5 h-3.5 fill-current" />
+              <Pause className="w-4 h-4 fill-white text-white transition-transform group-hover:scale-110" />
             )}
           </button>
         )}
 
         <button
           onClick={onExpandExternalStream}
-          className={`p-2 rounded-full font-bold transition-all active:scale-95 cursor-pointer shadow-sm border ${
-            externalStreamItem.platform === "spotify"
-              ? "bg-accent-music/20 hover:bg-accent-music/30 text-accent-music-bright border-accent-music/40 shadow-[0_0_15px_rgba(52,211,153,0.3)]"
-              : "bg-accent-stream/20 hover:bg-accent-stream/30 text-accent-stream-bright border-accent-stream/40 shadow-[0_0_15px_rgba(239,68,68,0.3)]"
-          }`}
+          className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-95 cursor-pointer"
           title="Mở rộng đài phát (E)"
         >
           <Maximize2 className="w-3.5 h-3.5" />
@@ -124,10 +122,10 @@ export function ExternalStreamBanner({
 
         <button
           onClick={onStopExternalStream}
-          className="p-2 rounded-full bg-accent-stream/15 hover:bg-accent-stream/30 text-slate-300 hover:text-accent-stream-pale border border-accent-stream/30 transition-all active:scale-90 cursor-pointer shadow-sm"
+          className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-rose-300 hover:bg-rose-500/15 transition-all active:scale-90 cursor-pointer"
           title="Dừng phát đài ngoài"
         >
-          <X className="w-3.5 h-3.5" />
+          <X className="w-4 h-4" />
         </button>
       </div>
     </>

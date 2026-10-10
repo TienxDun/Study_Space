@@ -190,7 +190,7 @@ export function MusicTabContent({
       </div>
 
       {/* UP NEXT PLAYLIST */}
-      <div className="space-y-2 pb-2">
+      <div className="space-y-2 pb-6">
         <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
           Up Next ({currentMoodTracks.length} bài)
         </h4>

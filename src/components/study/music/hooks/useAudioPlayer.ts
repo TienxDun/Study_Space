@@ -13,6 +13,7 @@ interface UseAudioPlayerOptions {
   isExternalStreamActive?: boolean;
   externalStreamItem?: StudyEmbedItem | null;
   toggleExternalPlay?: () => void;
+  onStopExternalStream?: () => void;
 }
 
 export function useAudioPlayer({
@@ -22,6 +23,7 @@ export function useAudioPlayer({
   isExternalStreamActive = false,
   externalStreamItem = null,
   toggleExternalPlay,
+  onStopExternalStream,
 }: UseAudioPlayerOptions) {
   const [currentMood, setCurrentMood] = useState<MoodType>("lofi");
   const [tracks, setTracks] = useState<Track[]>(STUDY_TRACKS_BY_MOOD.lofi);
@@ -38,15 +40,17 @@ export function useAudioPlayer({
   const currentTrack = tracks[currentTrackIndex] || tracks[0];
   const effectiveVolume = isGlobalMuted ? 0 : volume;
 
-  // Auto-pause internal music when external stream becomes active
+  // Auto-pause internal music ONLY when external stream transitions from inactive to active
+  const prevExternalStreamActiveRef = useRef(isExternalStreamActive);
   useEffect(() => {
-    if (isExternalStreamActive && isPlaying) {
+    if (!prevExternalStreamActiveRef.current && isExternalStreamActive) {
       setIsPlaying(false);
       if (audioRef.current) {
         audioRef.current.pause();
       }
     }
-  }, [isExternalStreamActive, isPlaying]);
+    prevExternalStreamActiveRef.current = isExternalStreamActive;
+  }, [isExternalStreamActive]);
 
   // Phục hồi cài đặt Nhạc từ LocalStorage khi mount
   useEffect(() => {
@@ -90,7 +94,6 @@ export function useAudioPlayer({
   useEffect(() => {
     const audio = audioRef.current;
     if (audio) {
-      // eslint-disable-next-line react-hooks/immutability -- sync DOM media prop
       audio.volume = effectiveVolume;
     }
   }, [effectiveVolume]);
@@ -124,7 +127,24 @@ export function useAudioPlayer({
     attemptAutoplay();
   }, []);
 
+  const stopExternalStreamIfActive = useCallback(() => {
+    if (onStopExternalStream) {
+      onStopExternalStream();
+    }
+  }, [onStopExternalStream]);
+
   const togglePlay = useCallback(() => {
+    if (isExternalStreamActive || externalStreamItem) {
+      stopExternalStreamIfActive();
+      if (audioRef.current) {
+        audioRef.current
+          .play()
+          .then(() => setIsPlaying(true))
+          .catch(() => setIsPlaying(false));
+      }
+      return;
+    }
+
     if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.pause();
@@ -135,55 +155,78 @@ export function useAudioPlayer({
         .then(() => setIsPlaying(true))
         .catch(() => setIsPlaying(false));
     }
-  }, [isPlaying]);
+  }, [isPlaying, isExternalStreamActive, externalStreamItem, stopExternalStreamIfActive]);
 
   const handleNextTrack = useCallback(() => {
+    stopExternalStreamIfActive();
     const nextIdx = getNextTrackIndex(currentTrackIndex, tracks.length, isShuffle);
     setCurrentTrackIndex(nextIdx);
     setIsPlaying(true);
+    if (audioRef.current) {
+      audioRef.current.play().catch(() => {});
+    }
     try {
       if (tracks[nextIdx]) {
         localStorage.setItem(STORAGE_KEYS.trackId, tracks[nextIdx].id);
       }
     } catch {}
-  }, [currentTrackIndex, isShuffle, tracks]);
+  }, [currentTrackIndex, isShuffle, tracks, stopExternalStreamIfActive]);
 
   const handlePrevTrack = useCallback(() => {
+    stopExternalStreamIfActive();
     const prevIdx = getPrevTrackIndex(currentTrackIndex, tracks.length);
     setCurrentTrackIndex(prevIdx);
     setIsPlaying(true);
+    if (audioRef.current) {
+      audioRef.current.play().catch(() => {});
+    }
     try {
       if (tracks[prevIdx]) {
         localStorage.setItem(STORAGE_KEYS.trackId, tracks[prevIdx].id);
       }
     } catch {}
-  }, [currentTrackIndex, tracks]);
+  }, [currentTrackIndex, tracks, stopExternalStreamIfActive]);
 
   const handleSelectMood = useCallback((mood: MoodType) => {
+    stopExternalStreamIfActive();
     setCurrentMood(mood);
     const newTracks = STUDY_TRACKS_BY_MOOD[mood] || [];
     setTracks(newTracks);
     setCurrentTrackIndex(0);
     setCurrentTime(0);
     setIsPlaying(true);
+    if (audioRef.current) {
+      audioRef.current.play().catch(() => {});
+    }
     try {
       localStorage.setItem(STORAGE_KEYS.mood, mood);
       if (newTracks[0]) {
         localStorage.setItem(STORAGE_KEYS.trackId, newTracks[0].id);
       }
     } catch {}
-  }, []);
+  }, [stopExternalStreamIfActive]);
 
   const handleSelectTrack = useCallback((track: Track) => {
+    const wasExternalActive = isExternalStreamActive;
+    stopExternalStreamIfActive();
     const idx = tracks.findIndex((t) => t.id === track.id);
     if (idx !== -1) {
       setCurrentTrackIndex(idx);
     }
     setIsPlaying(true);
+    if (audioRef.current) {
+      audioRef.current.play().catch(() => {});
+    }
     try {
       localStorage.setItem(STORAGE_KEYS.trackId, track.id);
     } catch {}
-  }, [tracks]);
+
+    if (wasExternalActive) {
+      toast.success(`Đang phát: ${track.title}`, {
+        description: "Đã dừng luồng ngoài để chuyển sang nhạc playlist",
+      });
+    }
+  }, [tracks, isExternalStreamActive, stopExternalStreamIfActive]);
 
   const handleVolumeChange = useCallback((newVol: number) => {
     const clamped = clampVolume(newVol);
@@ -240,7 +283,6 @@ export function useAudioPlayer({
     setCurrentTime(time);
     const audio = audioRef.current;
     if (audio && isFinite(audio.duration)) {
-      // eslint-disable-next-line react-hooks/immutability -- sync DOM media prop
       audio.currentTime = time;
     }
   }, []);

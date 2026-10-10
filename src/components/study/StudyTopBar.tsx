@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Maximize2,
@@ -12,6 +13,7 @@ import {
   Sliders,
   HelpCircle,
 } from "lucide-react";
+import { ZenStudyLogo } from "./brand/ZenStudyLogo";
 import type { TimerTab } from "./pomodoro/types";
 
 export interface StudyTopBarProps {
@@ -78,26 +80,37 @@ export const StudyTopBar = ({
             className="absolute top-4 left-4 right-4 z-40 flex items-center justify-between pointer-events-none select-none will-change-transform"
           >
             {/* Left Brand Capsule */}
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] pointer-events-auto transition-colors">
-              <div className="flex items-center gap-1.5 text-xs select-none">
-                <span className="font-bold tracking-wide text-white">
-                  ZenStudy
-                </span>
-                <span className="hidden sm:inline font-normal text-slate-300">
-                  Space
-                </span>
-              </div>
-            </div>
+            {/* Left Brand Logo - Đứng tự do không viền, to rõ theo phong cách Beeziee */}
+            <Link
+              href="/"
+              onClick={(e) => {
+                if (typeof window !== "undefined" && window.location.pathname === "/") {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
+              className="flex items-center pointer-events-auto transition-transform group cursor-pointer hover:opacity-95 active:scale-95 shrink-0 select-none drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]"
+              title="ZenStudy - Không gian học tập tương tác & tập trung"
+            >
+              {/* Mobile (< 640px): Hiển thị mascot icon to rõ */}
+              <span className="sm:hidden flex items-center justify-center">
+                <ZenStudyLogo variant="icon" className="h-9 w-9 transition-transform duration-200 group-hover:scale-105" priority />
+              </span>
+              {/* Desktop & Tablet: Hiển thị full mascot & brand text to đẹp */}
+              <span className="hidden sm:flex items-center">
+                <ZenStudyLogo variant="full" className="h-10 sm:h-11 w-auto transition-transform duration-200 group-hover:scale-[1.03]" priority />
+              </span>
+            </Link>
 
-            {/* Dynamic Island Center Capsule - Realtime Clock */}
+            {/* Dynamic Island Center Capsule - Realtime Clock (Thuần túy không viền không hộp, hiển thị thẳng lên bg) */}
             <motion.button
               layout
               transition={{ layout: { type: "spring", stiffness: 400, damping: 30 } }}
               onClick={onToggleClock}
-              className={`absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 inline-flex items-center px-4 py-1.5 rounded-full backdrop-blur-2xl border pointer-events-auto shadow-[0_20px_50px_rgba(0,0,0,0.6)] group cursor-pointer active:scale-95 will-change-transform ${
+              className={`absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 h-9 inline-flex items-center justify-center px-2.5 sm:px-3 rounded-xl pointer-events-auto group cursor-pointer active:scale-95 will-change-transform transition-all duration-200 select-none ${
                 isPomodoroVisible && centerTab === "clock"
-                  ? "bg-black/75 border-accent-music-glow/40 ring-1 ring-accent-music-glow/30 shadow-[0_0_24px_rgba(52,211,153,0.25)] text-white"
-                  : "bg-black/60 hover:bg-black/65 border-white/15 hover:border-white/25 text-slate-200"
+                  ? "text-accent-music-bright drop-shadow-[0_0_14px_rgba(52,211,153,0.7)] hover:bg-white/10"
+                  : "text-slate-100 hover:text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] hover:bg-white/10"
               }`}
               title={
                 isPomodoroVisible && centerTab === "clock"
@@ -106,25 +119,25 @@ export const StudyTopBar = ({
               }
             >
               {/* Realtime Monospace Clock */}
-              <span className="font-mono text-xs font-semibold text-slate-100 tracking-wider tabular-nums group-hover:text-white transition-colors">
+              <span className="font-mono text-xs sm:text-sm font-semibold tracking-wider tabular-nums transition-colors">
                 {currentTime || "00:00:00"}
               </span>
 
-              {/* Subtle Status Hint without layout-thrashing reflows */}
-              <span className="max-w-0 group-hover:max-w-20 overflow-hidden whitespace-nowrap text-[10px] text-accent-music-bright font-medium opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out">
+              {/* Subtle Status Hint without layout-thrashing reflows (chỉ mở rộng trên desktop/hover) */}
+              <span className="hidden sm:inline max-w-0 group-hover:max-w-20 overflow-hidden whitespace-nowrap text-[10px] text-accent-music-bright font-medium opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out pl-0 group-hover:pl-1.5">
                 • {isPomodoroVisible && centerTab === "clock" ? "Ẩn giờ" : "Hiện giờ"}
               </span>
             </motion.button>
 
-            {/* Right Action Icons (Unified Spatial Toolbar) */}
+            {/* Right Action Icons (Chuẩn hóa h-10) */}
             <div
               id="tour-topbar-actions"
-              className="flex items-center gap-1 p-1 rounded-full bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] pointer-events-auto transition-colors"
+              className="flex items-center h-10 gap-1 px-1.5 rounded-full bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] pointer-events-auto transition-colors shrink-0"
             >
-              {/* Keyboard Shortcuts Cheat Sheet Button */}
+              {/* Keyboard Shortcuts Cheat Sheet Button (Ẩn trên mobile không có bàn phím cứng) */}
               <button
                 onClick={onToggleShortcuts}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-colors active:scale-90 cursor-pointer"
+                className="hidden sm:flex w-8 h-8 rounded-full items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-colors active:scale-90 cursor-pointer"
                 title="Bảng tra cứu phím tắt (?)"
               >
                 <HelpCircle className="w-4 h-4" />
@@ -186,7 +199,7 @@ export const StudyTopBar = ({
           exit={{ opacity: 0, y: -20, scale: 0.9 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
           onClick={onExitZen}
-          className="absolute top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 text-white text-xs font-semibold shadow-[0_20px_50px_rgba(0,0,0,0.6)] transition-colors active:scale-95 cursor-pointer group"
+          className="absolute top-4 right-4 z-50 flex items-center gap-2 h-10 px-4 rounded-full bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 text-white text-xs font-semibold shadow-[0_20px_50px_rgba(0,0,0,0.6)] transition-colors active:scale-95 cursor-pointer group"
           title="Bấm để hiện lại giao diện điều khiển (Z)"
         >
           <Eye className="w-3.5 h-3.5 text-accent-music-bright group-hover:scale-110 transition-transform" />

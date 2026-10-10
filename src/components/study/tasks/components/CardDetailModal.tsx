@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   X,
   ChevronDown,
@@ -13,6 +13,7 @@ import {
   Edit3,
   Trash2,
   Plus,
+  Minus,
   Clock,
   Timer,
   Play,
@@ -21,6 +22,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { KanbanBoard, KanbanCard, CardPriority } from "../types";
 import { getDeadlineStatus } from "../utils/task-deadline";
 import { startFocusTask } from "@/lib/use-focus-task";
+import { PrioritySignalIcon } from "./PrioritySignalIcon";
 
 interface CardDetailModalProps {
   selectedCard: KanbanCard | null;
@@ -58,12 +60,46 @@ export const CardDetailModal = React.memo(function CardDetailModal({
   const [editingChecklistText, setEditingChecklistText] = useState("");
   const [isPriorityPopoverOpen, setIsPriorityPopoverOpen] = useState(false);
   const [isDueDatePopoverOpen, setIsDueDatePopoverOpen] = useState(false);
+  const [isPomodoroPopoverOpen, setIsPomodoroPopoverOpen] = useState(false);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   const closeAllPopovers = useCallback(() => {
     setIsStatusDropdownOpen(false);
     setIsPriorityPopoverOpen(false);
     setIsDueDatePopoverOpen(false);
+    setIsPomodoroPopoverOpen(false);
   }, [setIsStatusDropdownOpen]);
+
+  const handleUpdatePomodoros = useCallback(
+    (delta: number) => {
+      if (!selectedCard) return;
+      const currentVal = selectedCard.pomodoros || 0;
+      const nextVal = Math.max(0, currentVal + delta);
+      setSelectedCard({ ...selectedCard, pomodoros: nextVal });
+      updateCurrentBoard((b) => ({
+        ...b,
+        cards: b.cards.map((c) =>
+          c.id === selectedCard.id ? { ...c, pomodoros: nextVal } : c
+        ),
+      }));
+    },
+    [selectedCard, setSelectedCard, updateCurrentBoard]
+  );
+
+  const handleSetPomodoros = useCallback(
+    (val: number) => {
+      if (!selectedCard) return;
+      const nextVal = Math.max(0, val);
+      setSelectedCard({ ...selectedCard, pomodoros: nextVal });
+      updateCurrentBoard((b) => ({
+        ...b,
+        cards: b.cards.map((c) =>
+          c.id === selectedCard.id ? { ...c, pomodoros: nextVal } : c
+        ),
+      }));
+    },
+    [selectedCard, setSelectedCard, updateCurrentBoard]
+  );
 
   // Intercept Escape key to close popover or detail modal without closing parent tasks widget
   useEffect(() => {
@@ -75,7 +111,12 @@ export const CardDetailModal = React.memo(function CardDetailModal({
         e.stopPropagation();
         e.stopImmediatePropagation();
 
-        if (isPriorityPopoverOpen || isDueDatePopoverOpen || isStatusDropdownOpen) {
+        if (
+          isPriorityPopoverOpen ||
+          isDueDatePopoverOpen ||
+          isStatusDropdownOpen ||
+          isPomodoroPopoverOpen
+        ) {
           closeAllPopovers();
         } else {
           setSelectedCard(null);
@@ -124,38 +165,64 @@ export const CardDetailModal = React.memo(function CardDetailModal({
           exit={{ scale: 0.96, y: 12, opacity: 0 }}
           transition={{ type: "spring", stiffness: 360, damping: 28 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-xl max-h-[88vh] flex flex-col rounded-3xl bg-[#14161b]/98 backdrop-blur-2xl border border-white/12 shadow-[0_30px_70px_rgba(0,0,0,0.85),0_0_1px_1px_rgba(255,255,255,0.08)] text-white overflow-hidden"
+          className="w-full max-w-[660px] max-h-[88vh] flex flex-col rounded-3xl bg-[#14161b]/98 backdrop-blur-2xl border border-white/12 shadow-[0_30px_70px_rgba(0,0,0,0.85),0_0_1px_1px_rgba(255,255,255,0.08)] text-white overflow-hidden"
         >
           {/* Header: Title, Board Info & Action Bar */}
           <div className="px-5 sm:px-6 pt-5 pb-3.5 border-b border-white/10 space-y-3 bg-white/[0.01]">
             <div className="flex items-start justify-between gap-3">
-              {/* Task Title */}
+              {/* Task Title with intuitive inline editing affordance (Icon bám sát đuôi chữ) */}
               <div className="flex-1 min-w-0">
-                <input
-                  type="text"
-                  value={selectedCard.title}
-                  onChange={(e) => {
-                    const updatedTitle = e.target.value;
-                    setSelectedCard({ ...selectedCard, title: updatedTitle });
-                    updateCurrentBoard((b) => ({
-                      ...b,
-                      cards: b.cards.map((c) =>
-                        c.id === selectedCard.id ? { ...c, title: updatedTitle } : c
-                      ),
-                    }));
-                  }}
-                  className="w-full text-base sm:text-lg font-bold bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-white/30 text-white focus:text-emerald-100 transition-colors"
-                  placeholder="Tiêu đề nhiệm vụ..."
-                />
-                <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-                  <span>
-                    Bảng: <strong className="text-slate-300 font-medium">{currentBoard.title}</strong>
-                  </span>
+                <div
+                  onClick={() => titleInputRef.current?.focus()}
+                  className="group/title relative inline-flex items-center gap-1.5 max-w-full -ml-2 px-2 py-0.5 rounded-xl border border-transparent hover:border-white/15 hover:bg-white/[0.04] focus-within:border-white/25 focus-within:bg-white/[0.06] transition-all cursor-text"
+                  title="Nhấp để chỉnh sửa tiêu đề nhiệm vụ"
+                >
+                  <div className="relative inline-flex items-center max-w-[320px] sm:max-w-[420px] min-w-[24px]">
+                    {/* Thẻ đệm đo chính xác từng pixel chiều rộng của chữ */}
+                    <span
+                      aria-hidden="true"
+                      className="invisible text-lg sm:text-xl font-bold tracking-tight whitespace-pre select-none pointer-events-none px-0.5 truncate max-w-full"
+                    >
+                      {selectedCard.title || "Tiêu đề nhiệm vụ..."}
+                    </span>
+                    {/* Input phủ tuyệt đối 100% khớp chuẩn theo kích thước thẻ đệm */}
+                    <input
+                      ref={titleInputRef}
+                      type="text"
+                      value={selectedCard.title}
+                      onChange={(e) => {
+                        const updatedTitle = e.target.value;
+                        setSelectedCard({ ...selectedCard, title: updatedTitle });
+                        updateCurrentBoard((b) => ({
+                          ...b,
+                          cards: b.cards.map((c) =>
+                            c.id === selectedCard.id ? { ...c, title: updatedTitle } : c
+                          ),
+                        }));
+                      }}
+                      className="absolute inset-0 w-full h-full text-lg sm:text-xl font-bold bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-white/25 text-white tracking-tight cursor-text px-0.5"
+                      placeholder="Tiêu đề nhiệm vụ..."
+                    />
+                  </div>
+                  <div
+                    className="shrink-0 flex items-center text-slate-500 group-hover/title:text-amber-400 group-focus-within/title:text-sky-400 transition-colors pointer-events-none"
+                    title="Chỉnh sửa nhanh"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+
+                <div className="text-[11px] text-slate-400 flex items-center mt-1 px-0.5">
+                  <span className="text-slate-400 font-medium">{currentBoard.title}</span>
                 </div>
               </div>
 
-              {/* Quick Actions (Delete & Close) */}
-              <div className="flex items-center gap-1 shrink-0">
+              {/* Quick Actions (Auto-save, Delete & Close) */}
+              <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+                <span className="text-[11px] text-emerald-400/90 flex items-center gap-1 font-medium mr-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                  Tự động lưu
+                </span>
                 <button
                   type="button"
                   onClick={() => promptDeleteCard(selectedCard)}
@@ -178,8 +245,8 @@ export const CardDetailModal = React.memo(function CardDetailModal({
               </div>
             </div>
 
-            {/* Compact Property Chips Bar (Linear / Notion Style) */}
-            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+            {/* Compact Property Chips Bar (Dàn đều 4 thẻ) */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full pt-0.5">
               {/* 1. Status Chip */}
               <div className="relative">
                 <button
@@ -187,17 +254,20 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   onClick={() => {
                     setIsPriorityPopoverOpen(false);
                     setIsDueDatePopoverOpen(false);
+                    setIsPomodoroPopoverOpen(false);
                     setIsStatusDropdownOpen(!isStatusDropdownOpen);
                   }}
-                  className="h-7 px-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 hover:border-white/20 text-xs font-medium text-slate-200 flex items-center gap-1.5 transition-all cursor-pointer"
+                  className="w-full h-8 px-2 sm:px-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-xs font-medium text-slate-200 flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs"
+                  title="Cột trạng thái"
                 >
-                  <span className="w-2 h-2 rounded-full bg-sky-400 shrink-0" />
-                  <span className="text-slate-400 text-[11px]">Cột:</span>
-                  <span className="font-semibold text-slate-100 max-w-[120px] truncate">
-                    {currentColumn?.title || "Chọn cột"}
+                  <span className="truncate flex items-center gap-1">
+                    <span className="text-slate-400 font-normal shrink-0">Cột:</span>
+                    <span className="font-semibold text-slate-100 truncate">
+                      {currentColumn?.title || "Chọn cột"}
+                    </span>
                   </span>
                   <ChevronDown
-                    className={`w-3 h-3 text-slate-400 transition-transform ${
+                    className={`w-3 h-3 text-slate-400 shrink-0 transition-transform ${
                       isStatusDropdownOpen ? "rotate-180" : ""
                     }`}
                   />
@@ -245,42 +315,40 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                 </AnimatePresence>
               </div>
 
-              {/* 2. Priority Chip */}
+              {/* 2. Priority Chip - Hiển thị đầy đủ nhãn & mức độ ưu tiên */}
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => {
                     setIsStatusDropdownOpen(false);
                     setIsDueDatePopoverOpen(false);
+                    setIsPomodoroPopoverOpen(false);
                     setIsPriorityPopoverOpen(!isPriorityPopoverOpen);
                   }}
-                  className={`h-7 px-2.5 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                  className={`w-full h-8 px-2 sm:px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${
                     selectedCard.priority === "high"
                       ? "bg-rose-500/10 border-rose-500/30 text-rose-300 hover:bg-rose-500/20"
                       : selectedCard.priority === "medium"
                       ? "bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20"
                       : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20"
                   }`}
+                  title="Mức độ ưu tiên"
                 >
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                      selectedCard.priority === "high"
-                        ? "bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.8)]"
-                        : selectedCard.priority === "medium"
-                        ? "bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.7)]"
-                        : "bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.7)]"
-                    }`}
-                  />
-                  <span className="text-[11px] opacity-75">Ưu tiên:</span>
-                  <span className="font-semibold">
-                    {selectedCard.priority === "high"
-                      ? "Cao"
-                      : selectedCard.priority === "medium"
-                      ? "Vừa"
-                      : "Thấp"}
-                  </span>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <PrioritySignalIcon priority={selectedCard.priority || "medium"} className="w-3.5 h-3.5 shrink-0" />
+                    <span className="flex items-center gap-1 min-w-0">
+                      <span className="opacity-75 text-[11px] sm:text-xs font-normal shrink-0">Ưu tiên:</span>
+                      <span className="font-semibold text-xs whitespace-nowrap">
+                        {selectedCard.priority === "high"
+                          ? "Cao"
+                          : selectedCard.priority === "medium"
+                          ? "Vừa"
+                          : "Thấp"}
+                      </span>
+                    </span>
+                  </div>
                   <ChevronDown
-                    className={`w-3 h-3 opacity-60 transition-transform ${
+                    className={`w-3 h-3 opacity-60 shrink-0 transition-transform ${
                       isPriorityPopoverOpen ? "rotate-180" : ""
                     }`}
                   />
@@ -302,9 +370,9 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                         className="absolute top-full mt-1.5 left-0 w-36 p-1.5 rounded-2xl bg-[#181b22] backdrop-blur-2xl border border-white/15 shadow-2xl z-50 space-y-0.5"
                       >
                         {[
-                          { value: "low", label: "Thấp", color: "bg-emerald-400" },
-                          { value: "medium", label: "Vừa", color: "bg-amber-400" },
-                          { value: "high", label: "Cao", color: "bg-rose-400" },
+                          { value: "low", label: "Thấp" },
+                          { value: "medium", label: "Vừa" },
+                          { value: "high", label: "Cao" },
                         ].map((item) => {
                           const isSelected = selectedCard.priority === item.value;
                           return (
@@ -329,7 +397,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                               }`}
                             >
                               <div className="flex items-center gap-2">
-                                <span className={`w-1.5 h-1.5 rounded-full ${item.color}`} />
+                                <PrioritySignalIcon priority={item.value as CardPriority} className="w-3.5 h-3.5" />
                                 <span>{item.label}</span>
                               </div>
                               {isSelected && <Check className="w-3.5 h-3.5 text-white shrink-0" />}
@@ -350,14 +418,18 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                     onClick={() => {
                       setIsStatusDropdownOpen(false);
                       setIsPriorityPopoverOpen(false);
+                      setIsPomodoroPopoverOpen(false);
                       setIsDueDatePopoverOpen(!isDueDatePopoverOpen);
                     }}
-                    className={`h-7 px-2.5 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${deadlineInfo.badgeClass}`}
+                    className={`w-full h-8 px-2 sm:px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${deadlineInfo.badgeClass}`}
+                    title="Hạn chót"
                   >
-                    <Calendar className="w-3 h-3 shrink-0" />
-                    <span className="font-semibold">{deadlineInfo.shortLabel}</span>
+                    <div className="flex items-center gap-1.5 min-w-0 truncate">
+                      <Calendar className="w-3 h-3 shrink-0" />
+                      <span className="font-semibold truncate">{deadlineInfo.shortLabel}</span>
+                    </div>
                     <ChevronDown
-                      className={`w-3 h-3 opacity-60 transition-transform ${
+                      className={`w-3 h-3 opacity-60 shrink-0 transition-transform ${
                         isDueDatePopoverOpen ? "rotate-180" : ""
                       }`}
                     />
@@ -368,12 +440,17 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                     onClick={() => {
                       setIsStatusDropdownOpen(false);
                       setIsPriorityPopoverOpen(false);
+                      setIsPomodoroPopoverOpen(false);
                       setIsDueDatePopoverOpen(!isDueDatePopoverOpen);
                     }}
-                    className="h-7 px-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-dashed border-white/20 hover:border-white/40 text-xs font-medium text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition-all cursor-pointer"
+                    className="w-full h-8 px-2 sm:px-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-xs font-medium text-slate-300 hover:text-white flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs"
+                    title="Thêm hạn chót"
                   >
-                    <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
-                    <span>+ Hạn chót</span>
+                    <div className="flex items-center gap-1.5 min-w-0 truncate">
+                      <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                      <span className="truncate">+ Hạn chót</span>
+                    </div>
+                    <ChevronDown className="w-3 h-3 opacity-60 shrink-0" />
                   </button>
                 )}
 
@@ -551,51 +628,158 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   )}
                 </AnimatePresence>
               </div>
+
+              {/* 4. Pomodoro Chip with Popover */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsStatusDropdownOpen(false);
+                    setIsPriorityPopoverOpen(false);
+                    setIsDueDatePopoverOpen(false);
+                    setIsPomodoroPopoverOpen(!isPomodoroPopoverOpen);
+                  }}
+                  className={`w-full h-8 px-2 sm:px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${
+                    (selectedCard.pomodoros || 0) > 0
+                      ? "bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20"
+                      : "bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-slate-300 hover:text-white"
+                  }`}
+                  title="Cài đặt phiên Pomodoro"
+                >
+                  <div className="flex items-center gap-1.5 min-w-0 truncate">
+                    <Timer className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span className="font-semibold truncate">
+                      {selectedCard.pomodoros || 0} phiên
+                    </span>
+                  </div>
+                  <ChevronDown
+                    className={`w-3 h-3 opacity-60 shrink-0 transition-transform ${
+                      isPomodoroPopoverOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {/* Pomodoro Popover */}
+                <AnimatePresence>
+                  {isPomodoroPopoverOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsPomodoroPopoverOpen(false)}
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, y: 4, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                        transition={{ duration: 0.12 }}
+                        className="absolute top-full mt-1.5 left-0 sm:left-auto sm:right-0 w-72 p-3.5 rounded-2xl bg-[#181b22] backdrop-blur-2xl border border-white/15 shadow-2xl z-50 space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <Timer className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Phiên Pomodoro</span>
+                          </span>
+                          {(selectedCard.pomodoros || 0) > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleSetPomodoros(0)}
+                              className="text-[10px] text-rose-400 hover:text-rose-300 font-semibold transition-colors cursor-pointer"
+                            >
+                              Đặt về 0
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Stepper Display */}
+                        <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.04] border border-white/10">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdatePomodoros(-1)}
+                            disabled={(selectedCard.pomodoros || 0) <= 0}
+                            className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 disabled:opacity-20 flex items-center justify-center text-white transition-all cursor-pointer disabled:cursor-not-allowed"
+                            title="Giảm 1 phiên"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+
+                          <div className="text-center font-mono">
+                            <div className="text-sm font-bold text-amber-300 flex items-center justify-center gap-1">
+                              <span>🍅</span>
+                              <span>{selectedCard.pomodoros || 0} phiên</span>
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              ~{(selectedCard.pomodoros || 0) * 25} phút tập trung
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleUpdatePomodoros(1)}
+                            className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-white transition-all cursor-pointer"
+                            title="Tăng 1 phiên"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        {/* Quick Presets */}
+                        <div className="grid grid-cols-4 gap-1.5 pt-1 border-t border-white/10">
+                          {[
+                            { label: "1 (25p)", val: 1 },
+                            { label: "2 (50p)", val: 2 },
+                            { label: "3 (75p)", val: 3 },
+                            { label: "4 (100p)", val: 4 },
+                          ].map((p) => {
+                            const isSelected = (selectedCard.pomodoros || 0) === p.val;
+                            return (
+                              <button
+                                key={p.val}
+                                type="button"
+                                onClick={() => handleSetPomodoros(p.val)}
+                                className={`py-1 rounded-lg text-[10px] font-medium font-mono transition-all cursor-pointer ${
+                                  isSelected
+                                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold"
+                                    : "bg-white/[0.04] text-slate-300 hover:bg-white/10 hover:text-white"
+                                }`}
+                              >
+                                {p.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Start Focus Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            startFocusTask({ id: selectedCard.id, title: selectedCard.title });
+                            setSelectedCard(null);
+                            closeAllPopovers();
+                          }}
+                          className="w-full h-8 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-98 text-slate-950 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-slate-950" />
+                          <span>Bắt đầu học ngay</span>
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
 
           {/* Scrollable Content Body */}
-          <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-5 custom-study-scroll">
-            {/* Slim Deep Work & Pomodoro Focus Bar */}
-            <div className="px-3.5 py-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-amber-500/30 transition-all flex items-center justify-between gap-3 shadow-sm group/pomo-bar">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400 shrink-0">
-                  <Timer className="w-3.5 h-3.5" />
-                </div>
-                <div className="min-w-0 flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                  <span className="text-xs font-semibold text-slate-200 whitespace-nowrap">
-                    Pomodoro
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-300 text-[11px] font-mono whitespace-nowrap">
-                    <span>🍅</span>
-                    <span>{selectedCard.pomodoros || 0} phiên (~{(selectedCard.pomodoros || 0) * 25}p)</span>
-                  </span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  startFocusTask({ id: selectedCard.id, title: selectedCard.title });
-                  setSelectedCard(null);
-                  closeAllPopovers();
-                }}
-                className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 active:scale-95 border border-amber-500/30 hover:border-amber-500/50 text-amber-300 hover:text-amber-200 text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm"
-                title="Bắt đầu phiên học tập trung cho nhiệm vụ này"
-              >
-                <Play className="w-3 h-3 fill-amber-400 text-amber-400" />
-                <span>Bắt đầu</span>
-              </button>
-            </div>
+          <div className="flex-1 overflow-y-auto px-5 sm:px-6 pt-4 pb-6 space-y-5 custom-study-scroll">
 
             {/* 1. Description Section */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                 <AlignLeft className="w-3.5 h-3.5 text-slate-400" />
                 <span>Mô tả chi tiết</span>
               </label>
               <textarea
-                placeholder="Nhấp để thêm mô tả, ghi chú chi tiết cho nhiệm vụ..."
+                placeholder="Thêm mô tả hoặc ghi chú cho nhiệm vụ này..."
                 value={selectedCard.description || ""}
                 spellCheck={false}
                 onChange={(e) => {
@@ -609,7 +793,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   }));
                 }}
                 rows={3}
-                className="w-full p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] focus:bg-white/[0.07] border border-white/[0.07] focus:border-white/20 text-xs sm:text-sm text-slate-200 placeholder-white/30 focus:outline-none resize-none min-h-[76px] transition-all font-normal leading-relaxed"
+                className="w-full p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.05] focus:bg-white/[0.06] border border-white/[0.08] focus:border-white/20 text-xs sm:text-sm text-slate-200 placeholder-white/30 focus:outline-none resize-none min-h-[76px] transition-all font-normal leading-relaxed"
               />
             </div>
 
@@ -618,7 +802,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
               <div className="flex items-center justify-between text-xs font-bold text-slate-300">
                 <span className="flex items-center gap-1.5">
                   <CheckSquare className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-slate-300">
                     Danh sách công việc con
                   </span>
                 </span>
@@ -733,10 +917,10 @@ export const CardDetailModal = React.memo(function CardDetailModal({
               )}
 
               {/* Add Checklist Input */}
-              <div className="flex items-center gap-2 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] focus-within:border-white/30 transition-all">
+              <div className="flex items-center gap-2 p-1 pl-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.08] focus-within:border-white/25 focus-within:bg-white/[0.05] transition-all">
                 <input
                   type="text"
-                  placeholder="Thêm mục việc cần làm..."
+                  placeholder="Thêm mục việc cần làm (nhấn Enter)..."
                   value={newChecklistText}
                   onChange={(e) => setNewChecklistText(e.target.value)}
                   onKeyDown={(e) => {
@@ -748,7 +932,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                       }
                     }
                   }}
-                  className="flex-1 px-3 py-1.5 bg-transparent border-0 text-xs text-white placeholder-white/30 focus:outline-none"
+                  className="flex-1 py-1.5 bg-transparent border-0 text-xs text-white placeholder-white/30 focus:outline-none"
                 />
                 <button
                   type="button"
@@ -758,32 +942,13 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                       setNewChecklistText("");
                     }
                   }}
-                  className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white text-white hover:text-black text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                  className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white text-white hover:text-black text-xs font-semibold transition-all cursor-pointer flex items-center gap-1 active:scale-95"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Thêm</span>
                 </button>
               </div>
             </div>
-          </div>
-
-          {/* Minimalist Footer */}
-          <div className="px-5 sm:px-6 py-3 border-t border-white/10 flex items-center justify-between bg-black/20">
-            <span className="text-[11px] text-slate-500 font-mono hidden sm:inline">
-              Nhấn <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-slate-300 text-[10px]">Esc</kbd> để đóng
-            </span>
-            <div className="sm:hidden" />
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedCard(null);
-                closeAllPopovers();
-              }}
-              className="px-5 py-1.5 rounded-xl bg-white text-slate-950 hover:bg-slate-200 text-xs font-bold shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
-            >
-              <Check className="w-3.5 h-3.5" />
-              <span>Xong</span>
-            </button>
           </div>
         </motion.div>
       </motion.div>

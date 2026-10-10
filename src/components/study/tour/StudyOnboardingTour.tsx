@@ -150,7 +150,14 @@ export function StudyOnboardingTour({
       return;
     }
 
-    const element = document.getElementById(currentStep.targetId);
+    let element = document.getElementById(currentStep.targetId);
+
+    // Fallback bảo vệ: Nếu ở bước bộ trộn âm thanh thiên nhiên mà nút chưa mount hoặc tạm ẩn,
+    // fallback bắt vào khung thanh phát nhạc để spotlight luôn sáng đúng vị trí
+    if (!element && currentStep.targetId === "tour-music-mixer-btn") {
+      element = document.getElementById("tour-music-player");
+    }
+
     if (element) {
       const rect = element.getBoundingClientRect();
       setTargetRect({
@@ -358,7 +365,6 @@ export function StudyOnboardingTour({
             height="100%"
             fill="rgba(5, 8, 16, 0.78)"
             mask="url(#tour-spotlight-mask)"
-            onClick={handleCloseTour}
           />
         </svg>
 

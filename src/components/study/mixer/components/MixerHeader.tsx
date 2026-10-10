@@ -1,33 +1,52 @@
 "use client";
 
-import { Sliders, X, Music2, CloudRain } from "lucide-react";
+import { X, Music2, CloudRain, VolumeX } from "lucide-react";
 import { IconBtn } from "@/components/ui/IconBtn";
-import { PillButton } from "@/components/ui/PillButton";
 import { MixerTab } from "../types";
 
 interface MixerHeaderProps {
   onClose: () => void;
   activeTab: MixerTab;
-  onTabChange: (tab: MixerTab) => void;
+  onTabChange?: (tab: MixerTab) => void;
   musicCount: number;
   ambienceCount: number;
+  activeAmbienceCount?: number;
+  onResetAmbience?: () => void;
 }
 
 export function MixerHeader({
   onClose,
   activeTab,
-  onTabChange,
   musicCount,
   ambienceCount,
+  activeAmbienceCount = 0,
+  onResetAmbience,
 }: MixerHeaderProps) {
   return (
-    <>
-      {/* Header Bar */}
-      <div className="flex items-center justify-between p-4 pb-3 border-b border-white/10 shrink-0">
-        <div className="flex items-center gap-2">
-          <Sliders className="w-4 h-4 text-emerald-400" />
-          <h3 className="text-base font-bold tracking-tight">Sound Mixer</h3>
-        </div>
+    <div className="flex items-center justify-between p-4 pb-3 border-b border-white/10 shrink-0">
+      <div className="flex items-center gap-2">
+        {activeTab === "music" ? (
+          <Music2 className="w-4 h-4 text-emerald-400" />
+        ) : (
+          <CloudRain className="w-4 h-4 text-emerald-400" />
+        )}
+        <h3 className="text-base font-bold tracking-tight">
+          {activeTab === "music"
+            ? `Nhạc Chill (${musicCount})`
+            : `Âm thanh nền (${ambienceCount})`}
+        </h3>
+      </div>
+      <div className="flex items-center gap-1.5">
+        {activeTab === "ambience" && activeAmbienceCount > 0 && onResetAmbience && (
+          <button
+            onClick={onResetAmbience}
+            className="h-8 px-2.5 rounded-full inline-flex items-center gap-1.5 text-xs font-medium bg-white/[0.06] hover:bg-rose-500/15 text-slate-300 hover:text-rose-300 border border-white/10 hover:border-rose-400/30 transition-all active:scale-95 cursor-pointer"
+            title="Tắt tất cả âm thanh thiên nhiên đang phát"
+          >
+            <VolumeX className="w-3.5 h-3.5" />
+            <span>Tắt tất cả</span>
+          </button>
+        )}
         <IconBtn
           onClick={onClose}
           title="Đóng"
@@ -35,28 +54,7 @@ export function MixerHeader({
           className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
         />
       </div>
-
-      {/* View Tabs: Nhạc nền (Music) vs Âm thanh môi trường (Ambience) */}
-      <div className="flex items-center gap-1.5 p-1 mx-4 mt-3 bg-black/40 rounded-2xl border border-white/10 shrink-0">
-        <PillButton
-          onClick={() => onTabChange("music")}
-          active={activeTab === "music"}
-          activeClassName="bg-emerald-600 text-white shadow-md"
-          className="flex-1 text-xs font-bold flex items-center justify-center gap-1.5"
-        >
-          <Music2 className="w-3.5 h-3.5" />
-          Nhạc Chill ({musicCount})
-        </PillButton>
-        <PillButton
-          onClick={() => onTabChange("ambience")}
-          active={activeTab === "ambience"}
-          activeClassName="bg-emerald-600 text-white shadow-md"
-          className="flex-1 text-xs font-bold flex items-center justify-center gap-1.5"
-        >
-          <CloudRain className="w-3.5 h-3.5" />
-          Âm thanh nền ({ambienceCount})
-        </PillButton>
-      </div>
-    </>
+    </div>
   );
 }
+

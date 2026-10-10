@@ -94,4 +94,18 @@ describe("Study Embed Player Utilities", () => {
       expect(result.length).toBe(0);
     });
   });
+
+  describe("Default Preset Configuration", () => {
+    it("should include preset-coffee-shop-jazz with correct title and category", async () => {
+      const { CURATED_EMBED_PRESETS } = await import("@/components/study/study-types");
+      const defaultPreset = CURATED_EMBED_PRESETS.find(
+        (p) => p.id === "preset-coffee-shop-jazz"
+      );
+      expect(defaultPreset).toBeDefined();
+      expect(defaultPreset?.title).toBe("Coffee Shop Ambience & Bossa Nova Jazz");
+      expect(defaultPreset?.category).toBe("Coffee Jazz");
+      expect(defaultPreset?.platform).toBe("youtube");
+      expect(defaultPreset?.embedUrl).toContain("Dx5qFachd3A");
+    });
+  });
 });

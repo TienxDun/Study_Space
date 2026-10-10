@@ -182,17 +182,22 @@ export const StudyPomodoroWidget = ({
 
       {/* Focus Task Pill (when a task is linked to Pomodoro) */}
       {currentTab === "pomodoro" && focusTask && (
-        <div className="mt-2.5 flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs shadow-sm backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
-          <Target className="w-3.5 h-3.5 text-amber-400 shrink-0 animate-pulse" />
-          <span className="truncate max-w-[200px] sm:max-w-[280px] font-medium">
-            Mục tiêu: {focusTask.title}
-          </span>
+        <div className="mt-1 mb-1 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/80 hover:bg-black/90 border border-white/15 hover:border-amber-500/40 text-xs shadow-[0_8px_25px_rgba(0,0,0,0.6),0_0_12px_rgba(245,158,11,0.12)] backdrop-blur-2xl transition-all animate-in fade-in zoom-in-95 duration-200">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Target className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span className="text-[11px] font-medium text-amber-400/90 shrink-0">
+              Mục tiêu:
+            </span>
+            <span className="font-semibold text-slate-100 truncate max-w-[170px] sm:max-w-[240px]">
+              {focusTask.title}
+            </span>
+          </div>
           <button
             onClick={clearFocus}
-            className="ml-1 p-0.5 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors cursor-pointer"
+            className="p-1 -mr-1 rounded-full text-slate-400 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer"
             title="Hủy liên kết nhiệm vụ này"
           >
-            <X className="w-3 h-3" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}

@@ -19,8 +19,8 @@ export function VinylArtworkBadge({
       className="flex items-center gap-2.5 sm:gap-3 min-w-0 max-w-[160px] sm:max-w-[220px] md:max-w-[260px] shrink-0 cursor-pointer group/art"
       title="Mở Sound Mixer & Danh sách nhạc"
     >
-      {/* Pro Vinyl Record with Specular Sheen */}
-      <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full p-[2px] bg-gradient-to-tr from-white/20 via-panel-edge to-white/10 shadow-lg shadow-black/60 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
+      {/* Pro Vinyl Record with Specular Sheen (Hiển thị full 100% nền đĩa) */}
+      <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full ring-1 ring-white/25 shadow-lg shadow-black/60 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
         <div
           className={`w-full h-full rounded-full overflow-hidden relative shadow-inner ${
             isPlaying ? "animate-[spin_10s_linear_infinite]" : ""
@@ -29,16 +29,16 @@ export function VinylArtworkBadge({
           <img
             src={currentTrack?.cover || "/study/thumbnails/coffee-shop.PNG"}
             alt={currentTrack?.title || "Track Cover"}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover scale-[1.1]"
           />
-          {/* Vinyl Specular Grooves Rings */}
-          <div className="absolute inset-0 rounded-full border border-white/20 pointer-events-none" />
+          {/* Subtle Vinyl Grooves Rings */}
+          <div className="absolute inset-0 rounded-full border border-white/15 pointer-events-none" />
           <div className="absolute inset-1 rounded-full border border-white/10 pointer-events-none" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15)_0%,transparent_70%)] pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.12)_0%,transparent_65%)] pointer-events-none" />
 
           {/* Center Core Spindle */}
-          <div className="absolute inset-0 m-auto w-3 h-3 rounded-full bg-panel border border-line/40 shadow-sm z-10 flex items-center justify-center">
-            <div className="w-1 h-1 rounded-full bg-white/40" />
+          <div className="absolute inset-0 m-auto w-2 h-2 rounded-full bg-slate-950 border border-white/40 shadow-sm z-10 flex items-center justify-center">
+            <div className="w-0.5 h-0.5 rounded-full bg-white/70" />
           </div>
         </div>
       </div>

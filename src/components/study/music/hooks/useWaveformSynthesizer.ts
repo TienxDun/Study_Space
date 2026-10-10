@@ -3,17 +3,20 @@
 import { useState, useEffect, useRef } from "react";
 
 const TOTAL_BARS = 28;
-const DEFAULT_BAR_HEIGHT = 20;
 const FRAME_THROTTLE_MS = 40; // ~25 FPS to prevent excessive React state churn
+
+// Dạng sóng tĩnh nhấp nhô tự nhiên mô phỏng âm nhạc khi tạm dừng/chờ
+const STATIC_WAVEFORM_CONTOUR: number[] = [
+  32, 45, 62, 80, 92, 84, 68, 52, 44, 66, 85, 96, 86, 70,
+  54, 72, 88, 94, 76, 60, 48, 68, 82, 89, 65, 46, 36, 26,
+];
 
 /**
  * Hook tạo sóng âm đa họa âm mô phỏng (Multi-harmonic Beat Synthesizer)
  * Giới hạn tần suất cập nhật ở ~25fps để giao diện mượt mà và tiết kiệm CPU.
  */
 export function useWaveformSynthesizer(isActive: boolean): number[] {
-  const [frequencyData, setFrequencyData] = useState<number[]>(() =>
-    new Array(TOTAL_BARS).fill(DEFAULT_BAR_HEIGHT)
-  );
+  const [frequencyData, setFrequencyData] = useState<number[]>(() => STATIC_WAVEFORM_CONTOUR);
   const animationFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -21,7 +24,7 @@ export function useWaveformSynthesizer(isActive: boolean): number[] {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      setFrequencyData(new Array(TOTAL_BARS).fill(DEFAULT_BAR_HEIGHT));
+      setFrequencyData(STATIC_WAVEFORM_CONTOUR);
       return;
     }
 

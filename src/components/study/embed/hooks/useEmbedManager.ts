@@ -28,7 +28,7 @@ export function useEmbedManager({
   onPlaySuccess,
 }: UseEmbedManagerOptions) {
   const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [savedEmbeds, setSavedEmbeds] = useState<StudyEmbedItem[]>([]);
   const [searchOrUrl, setSearchOrUrl] = useState("");
   const [isIframeLoading, setIsIframeLoading] = useState(false);
@@ -76,6 +76,8 @@ export function useEmbedManager({
       const savedView = localStorage.getItem(STORAGE_VIEW_MODE_KEY);
       if (savedView === "grid" || savedView === "list") {
         setViewMode(savedView);
+      } else {
+        setViewMode("list");
       }
     } catch {}
   }, [changeActiveItem]);

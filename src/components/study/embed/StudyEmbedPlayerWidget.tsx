@@ -13,6 +13,7 @@ import { StudioHeader } from "./components/StudioHeader";
 import { StagePlayer } from "./components/StagePlayer";
 import { ResizableDivider } from "./components/ResizableDivider";
 import { DiscoveryHub } from "./components/DiscoveryHub";
+import { CURATED_EMBED_PRESETS } from "../study-types";
 
 export const StudyEmbedPlayerWidget = ({
   isOpen,
@@ -66,6 +67,7 @@ export const StudyEmbedPlayerWidget = ({
     handlePlayFromInput,
     handleDeleteSaved,
     resolveActiveItemMetadata,
+    changeActiveItem,
   } = useEmbedManager({
     onStreamActiveChange,
     onActiveItemChange,
@@ -74,6 +76,18 @@ export const StudyEmbedPlayerWidget = ({
       if (onOpen) onOpen();
     },
   });
+
+  // Khi mở Đài phát embed lần đầu và chưa có bài nào được chọn, thiết lập mặc định bài "Coffee Shop Ambience & Bossa Nova Jazz"
+  useEffect(() => {
+    if (isOpen && !activeItem) {
+      const defaultPreset =
+        CURATED_EMBED_PRESETS.find((p) => p.id === "preset-coffee-shop-jazz") ||
+        CURATED_EMBED_PRESETS[2];
+      if (defaultPreset) {
+        changeActiveItem(defaultPreset);
+      }
+    }
+  }, [isOpen, activeItem, changeActiveItem]);
 
   // Background resolver for activeItem
   useEffect(() => {
@@ -159,14 +173,16 @@ export const StudyEmbedPlayerWidget = ({
             /* Dedicated PiP Player Frame */
             <div className="relative w-full h-[190px] sm:h-[236px] bg-black">
               {activeItem && (
-                <iframe
-                  key={activeItem.id}
-                  src={ensureYouTubeJsApi(activeItem.embedUrl)}
-                  title={activeItem.title}
-                  className="w-full h-full border-0"
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  loading="lazy"
-                />
+                <div className="w-full h-full">
+                  <iframe
+                    key={activeItem.id}
+                    src={ensureYouTubeJsApi(activeItem.embedUrl)}
+                    title={activeItem.title}
+                    className="w-full h-full border-0"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                  />
+                </div>
               )}
             </div>
           ) : (

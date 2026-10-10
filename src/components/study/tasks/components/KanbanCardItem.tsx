@@ -14,6 +14,7 @@ import {
 import { KanbanCard, KanbanColumn } from "../types";
 import { getDeadlineStatus } from "../utils/task-deadline";
 import { startFocusTask } from "@/lib/use-focus-task";
+import { PrioritySignalIcon } from "./PrioritySignalIcon";
 
 interface KanbanCardItemProps {
   card: KanbanCard;
@@ -95,24 +96,20 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
             )}
           </button>
 
-          {/* Priority Glowing Micro-Dot */}
-          {card.priority === "high" && (
+          {/* Priority Signal Bars */}
+          {Boolean(card.priority) && (
             <span
-              className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.8)] shrink-0"
-              title="Mức độ ưu tiên: Cao"
-            />
-          )}
-          {card.priority === "medium" && (
-            <span
-              className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.7)] shrink-0"
-              title="Mức độ ưu tiên: Vừa"
-            />
-          )}
-          {card.priority === "low" && (
-            <span
-              className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 shrink-0"
-              title="Mức độ ưu tiên: Thấp"
-            />
+              title={`Mức độ ưu tiên: ${
+                card.priority === "high"
+                  ? "Cao"
+                  : card.priority === "medium"
+                  ? "Vừa"
+                  : "Thấp"
+              }`}
+              className="flex items-center"
+            >
+              <PrioritySignalIcon priority={card.priority} className="w-3 h-3 shrink-0" />
+            </span>
           )}
 
           {/* Card Title */}
