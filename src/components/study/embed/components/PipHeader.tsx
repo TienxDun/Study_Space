@@ -34,11 +34,11 @@ export function PipHeader({
       {/* Left: Badge & Truncated Title */}
       <div className="flex items-center gap-2 min-w-0 pr-2 pointer-events-none max-w-[40%]">
         {activeItem?.isLive ? (
-          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 font-bold text-[9px] shrink-0">
+          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 font-bold text-[10px] shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> LIVE
           </span>
         ) : (
-          <span className="px-1.5 py-0.5 rounded bg-white/10 text-slate-300 font-bold text-[9px] shrink-0">
+          <span className="px-1.5 py-0.5 rounded bg-white/10 text-slate-300 font-bold text-[10px] shrink-0">
             PiP
           </span>
         )}

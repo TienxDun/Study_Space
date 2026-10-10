@@ -51,7 +51,7 @@ export function StopwatchLapsDrawer({
                   <h4 className="text-xs font-bold text-slate-100 leading-none">
                     Vòng bấm giờ
                   </h4>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-400 mt-0.5">
                     {laps.length} mốc thời gian
                   </p>
                 </div>
@@ -60,7 +60,7 @@ export function StopwatchLapsDrawer({
               <div className="flex items-center gap-1">
                 <button
                   onClick={onClearLaps}
-                  className="px-2 py-1 rounded-xl text-[10px] font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors flex items-center gap-1 cursor-pointer"
+                  className="px-2 py-1 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors flex items-center gap-1 cursor-pointer"
                   title="Xoá tất cả vòng"
                 >
                   <Trash2 className="w-3 h-3" />
@@ -92,7 +92,7 @@ export function StopwatchLapsDrawer({
                   >
                     <div className="flex items-center gap-2">
                       <span
-                        className={`text-[11px] font-bold px-1.5 py-0.5 rounded-lg ${
+                        className={`text-xs font-bold px-1.5 py-0.5 rounded-lg ${
                           isLatest
                             ? "bg-sky-400/30 text-sky-200"
                             : "bg-white/10 text-slate-400"
@@ -101,7 +101,7 @@ export function StopwatchLapsDrawer({
                         #{lapNumber}
                       </span>
                       {isLatest && (
-                        <span className="text-[10px] text-sky-300 font-semibold">
+                        <span className="text-xs text-sky-300 font-semibold">
                           Gần nhất
                         </span>
                       )}

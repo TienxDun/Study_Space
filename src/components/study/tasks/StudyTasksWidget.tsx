@@ -124,7 +124,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
         </span>
         {Boolean(draggingCard?.priority) && (
           <span
-            className={`px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 ${
+            className={`px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 ${
               draggingCard?.priority === "high"
                 ? "bg-rose-500/30 text-rose-200 border border-rose-400/40"
                 : draggingCard?.priority === "medium"
@@ -143,7 +143,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
           </span>
         )}
       </div>
-      <div className="text-[10px] text-emerald-300/70 font-semibold flex items-center gap-1">
+      <div className="text-xs text-emerald-300/70 font-semibold flex items-center gap-1">
         <span>↓ Thả để đặt thẻ vào đây</span>
       </div>
     </div>

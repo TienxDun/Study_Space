@@ -8,7 +8,7 @@ describe("Onboarding Tour Component", () => {
   it("should render active tour card when isOpen is true", () => {
     const html = renderToString(React.createElement(StudyOnboardingTour, { isOpen: true }));
     expect(html).toContain("Chào bạn tới ZenStudy Space");
-    expect(html).toContain("1 / 7");
+    expect(html).toContain("1 / 9");
     expect(html).toContain("Tiếp tục");
     expect(html).toContain("Quay lại");
   });
@@ -49,6 +49,7 @@ describe("Onboarding Tour Component", () => {
     );
 
     expect(html).toContain('id="tour-music-mixer-btn"');
+    expect(html).toContain('id="tour-music-tab-btn"');
     expect(html).toContain("Âm thanh nền");
     expect(html).toContain("Nhạc Chill");
   });

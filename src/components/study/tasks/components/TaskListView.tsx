@@ -244,7 +244,7 @@ export const TaskListView = React.memo(function TaskListView({
                             {card.title}
                           </h4>
                           {Boolean(card.description) && (
-                            <span className="text-[11px] text-slate-400/70 font-normal truncate hidden md:inline max-w-xs lg:max-w-sm">
+                            <span className="text-xs text-slate-400/70 font-normal truncate hidden md:inline max-w-xs lg:max-w-sm">
                               — {card.description}
                             </span>
                           )}
@@ -259,7 +259,7 @@ export const TaskListView = React.memo(function TaskListView({
                             if (!dStatus) return null;
                             return (
                               <span
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-medium border ${dStatus.badgeClass}`}
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium border ${dStatus.badgeClass}`}
                               >
                                 <Calendar className="w-3 h-3" />
                                 <span>{dStatus.label}</span>

@@ -176,14 +176,14 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   </div>
                 </div>
 
-                <div className="text-[11px] text-slate-400 flex items-center mt-1 px-0.5">
+                <div className="text-xs text-slate-400 flex items-center mt-1 px-0.5">
                   <span className="text-slate-400 font-medium">{currentBoard.title}</span>
                 </div>
               </div>
 
               {/* Quick Actions (Auto-save, Delete & Close) */}
               <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
-                <span className="text-[11px] text-emerald-400/90 flex items-center gap-1 font-medium mr-1">
+                <span className="text-xs text-emerald-400/90 flex items-center gap-1 font-medium mr-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                   Tự động lưu
                 </span>
@@ -299,7 +299,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   <div className="flex items-center gap-1.5 min-w-0">
                     <PrioritySignalIcon priority={selectedCard.priority || "medium"} className="w-3.5 h-3.5 shrink-0" />
                     <span className="flex items-center gap-1 min-w-0">
-                      <span className="opacity-75 text-[11px] sm:text-xs font-normal shrink-0">Ưu tiên:</span>
+                      <span className="opacity-75 text-xs font-normal shrink-0">Ưu tiên:</span>
                       <span className="font-semibold text-xs whitespace-nowrap">
                         {selectedCard.priority === "high"
                           ? "Cao"
@@ -440,7 +440,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                                 handleUpdateCardDueDate(undefined);
                                 setIsDueDatePopoverOpen(false);
                               }}
-                              className="text-[10px] text-rose-400 hover:text-rose-300 font-semibold transition-colors cursor-pointer"
+                              className="text-xs text-rose-400 hover:text-rose-300 font-semibold transition-colors cursor-pointer"
                             >
                               Gỡ hạn chót
                             </button>
@@ -513,7 +513,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                               {/* Quick Time Presets if date exists */}
                               {dateVal && (
                                 <div className="flex items-center justify-between gap-1 pt-0.5">
-                                  <span className="text-[10px] text-slate-400 shrink-0">Giờ:</span>
+                                  <span className="text-xs text-slate-400 shrink-0">Giờ:</span>
                                   <div className="flex items-center gap-1 flex-1 justify-end">
                                     {[
                                       { label: "09:00", val: "09:00" },
@@ -527,7 +527,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                                         onClick={() => {
                                           handleUpdateCardDueDate(`${dateVal}T${tp.val}`);
                                         }}
-                                        className={`px-2 py-0.5 rounded-lg text-[10px] font-mono transition-colors cursor-pointer ${
+                                        className={`px-2 py-0.5 rounded-lg text-xs font-mono transition-colors cursor-pointer ${
                                           timeVal === tp.val
                                             ? "bg-white/20 text-white font-bold border border-white/30"
                                             : "bg-white/[0.04] text-slate-400 hover:bg-white/10 hover:text-white"
@@ -572,7 +572,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                                   }
                                   setIsDueDatePopoverOpen(false);
                                 }}
-                                className={`py-1 rounded-lg text-[11px] font-medium text-center transition-all cursor-pointer ${
+                                className={`py-1 rounded-lg text-xs font-medium text-center transition-all cursor-pointer ${
                                   isSelected
                                     ? "bg-white/20 text-white font-bold border border-white/30"
                                     : "bg-white/[0.04] text-slate-300 hover:bg-white/10 hover:text-white"
@@ -649,7 +649,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   </span>
                 </span>
                 {totalCheck > 0 && (
-                  <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-white/10 text-slate-200 border border-white/15 flex items-center gap-1">
+                  <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-white/10 text-slate-200 border border-white/15 flex items-center gap-1">
                     <span>
                       {doneCheck}/{totalCheck}
                     </span>

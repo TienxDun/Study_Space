@@ -72,12 +72,12 @@ export function EmbedCardItem({
           ) : item.isLive ? (
             <Badge tone="red" shape="full" className="px-2 shadow-lg">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-              <span className="text-red-300 tracking-wider text-[9px]">LIVE</span>
+              <span className="text-red-300 tracking-wider text-[10px]">LIVE</span>
             </Badge>
           ) : (
             <Badge tone="red" shape="full" className="px-2 shadow-lg">
               <Play className="w-2.5 h-2.5 text-red-400 fill-current" />
-              <span className="text-red-300 tracking-wider text-[9px]">VIDEO</span>
+              <span className="text-red-300 tracking-wider text-[10px]">VIDEO</span>
             </Badge>
           )}
         </div>
@@ -122,7 +122,7 @@ export function EmbedCardItem({
           >
             {item.title}
           </h4>
-          <div className="flex items-center gap-1.5 mt-0.5 text-[11px]">
+          <div className="flex items-center gap-1.5 mt-0.5 text-xs">
             <span
               className={`truncate ${
                 item.platform === "spotify"
@@ -133,7 +133,7 @@ export function EmbedCardItem({
               {item.category || "Study Focus"}
             </span>
             {isCurrent && (
-              <span className="text-[10px] text-accent-music-glow shrink-0">• Đang phát</span>
+              <span className="text-xs text-accent-music-glow shrink-0">• Đang phát</span>
             )}
           </div>
         </div>

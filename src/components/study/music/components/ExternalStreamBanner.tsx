@@ -58,7 +58,7 @@ export function ExternalStreamBanner({
           <h4 className="text-xs sm:text-sm font-bold text-white truncate leading-tight group-hover/art:text-accent-stream-bright transition-colors">
             {externalStreamItem.title}
           </h4>
-          <div className="flex items-center gap-1.5 text-[10px] sm:text-xs">
+          <div className="flex items-center gap-1.5 text-xs">
             {externalStreamItem.platform === "spotify" ? (
               <div className="flex items-end gap-0.5 h-2.5 px-1.5 py-0.5 rounded-full bg-[#1DB954]/20 border border-[#1DB954]/30">
                 <span className="w-0.5 h-1.5 bg-[#1DB954] rounded-full animate-pulse" />
@@ -77,15 +77,15 @@ export function ExternalStreamBanner({
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
                 </span>
-                <span className="text-[9px] font-bold tracking-wider leading-none">LIVE</span>
+                <span className="text-[10px] font-bold tracking-wider leading-none">LIVE</span>
               </div>
             ) : (
-              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/10 border border-white/15 text-slate-200 text-[9px] font-bold tracking-wider">
+              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/10 border border-white/15 text-slate-200 text-[10px] font-bold tracking-wider">
                 <span className="w-1 h-1 rounded-full bg-white/60" />
                 <span>VIDEO</span>
               </div>
             )}
-            <span className="text-slate-300/90 truncate text-[10px] sm:text-xs">
+            <span className="text-slate-300/90 truncate text-xs">
               {externalStreamItem.category || "Study Stream"}
             </span>
           </div>

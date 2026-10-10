@@ -19,55 +19,63 @@ const TOUR_STEPS: TourStep[] = [
     title: "Chào bạn tới ZenStudy Space",
     emoji: "🌿",
     description:
-      "Chỗ này để nghe nhạc, học bài, làm việc – hoặc chỉ ngồi thở một chút. Hãy dạo một vòng nhỏ để làm quen các tính năng nhé!",
+      "Nghe nhạc, học bài, làm việc ở một chỗ. Đi dạo một vòng nhỏ để biết các nút chính nhé!",
     placement: "center",
   },
   {
     targetId: "tour-dock-scenes",
-    title: "50+ Bối cảnh 4K sống động",
+    title: "Đổi bối cảnh",
     emoji: "🎬",
-    description:
-      "Khám phá các không gian quán cafe mưa, thư viện cổ điển, anime chill, vũ trụ và thiên nhiên. Dễ dàng đổi qua lại giữa video 4K và ảnh tĩnh.",
+    description: "Nút này đổi không gian quán cafe, thư viện, anime cho có cảm hứng.",
     placement: "right",
   },
   {
-    targetId: "tour-music-mixer-btn",
-    title: "Bộ trộn 20 âm thanh thiên nhiên",
-    emoji: "🌧️",
-    description:
-      "Tùy chỉnh và hòa trộn tiếng mưa rơi, sóng biển, gió thổi, bếp lửa tí tách, tiếng lật sách và tiếng ồn trắng (white noise) chặn tạp âm xung quanh.",
+    targetId: "tour-music-player",
+    title: "Cụm phát nhạc",
+    emoji: "🎵",
+    description: "Bấm chạy/dừng, kéo dải sóng để tua bài đang nghe.",
     placement: "top",
   },
   {
-    targetId: "tour-music-player",
-    title: "Nhạc Lo-fi & Nhúng YouTube / Spotify",
-    emoji: "🎵",
-    description:
-      "Thưởng thức danh sách nhạc Lo-fi, Piano & Jazz thư giãn. Hoặc bấm mở Embed Player để nhúng video nhạc YouTube và playlist Spotify yêu thích.",
+    targetId: "tour-music-tab-btn",
+    title: "Nút Nhạc",
+    emoji: "🎧",
+    description: "Mở danh sách nhạc Chill, Lofi, Piano để đổi bài.",
     placement: "top",
+  },
+  {
+    targetId: "tour-music-mixer-btn",
+    title: "Nút Âm nền",
+    emoji: "🌧️",
+    description: "Trộn tiếng mưa, sóng biển, bếp lửa khi cần yên tĩnh.",
+    placement: "top",
+  },
+  {
+    targetId: "tour-dock-embed",
+    title: "Đài phát",
+    emoji: "📻",
+    description: "Mở nhạc YouTube, Spotify, tách cửa sổ nổi vừa học vừa xem.",
+    placement: "right",
   },
   {
     targetId: "tour-pomodoro-widget",
-    title: "Đồng hồ Pomodoro & Bấm giờ",
+    title: "Hẹn giờ Pomodoro",
     emoji: "⏱️",
-    description:
-      "Duy trì kỷ luật học tập với phương pháp quả cà chua 25-5-15, chuông báo thiền Zen du dương và đồng hồ lớn toàn màn hình (phím C).",
+    description: "Bấm giờ học 25 phút, nghỉ 5 phút để giữ nhịp.",
     placement: "bottom",
   },
   {
     targetId: "tour-dock-tasks",
-    title: "Kế hoạch công việc & Ghi chú",
+    title: "Việc & ghi chép",
     emoji: "📋",
-    description:
-      "Lập danh sách việc cần làm với bảng Kanban kéo thả trực quan và sổ ghi chép nhanh hỗ trợ Markdown, lưu trữ cục bộ bảo mật.",
+    description: "Nút này mở việc cần làm, nút bên dưới mở sổ ghi nhanh.",
     placement: "right",
   },
   {
     targetId: "tour-topbar-actions",
-    title: "Chế độ Zen Mode & Phím tắt",
+    title: "Điều khiển chung",
     emoji: "🧘",
-    description:
-      "Nhấn phím Z bất cứ lúc nào để ẩn toàn bộ giao diện giúp tập trung cao độ, hoặc bấm dấu hỏi (?) để xem phím tắt. Bắt đầu ngay nhé!",
+    description: "Phím Z ẩn giao diện để tập trung, M tắt tiếng, ? xem phím tắt.",
     placement: "bottom",
   },
 ];
@@ -152,10 +160,17 @@ export function StudyOnboardingTour({
 
     let element = document.getElementById(currentStep.targetId);
 
-    // Fallback bảo vệ: Nếu ở bước bộ trộn âm thanh thiên nhiên mà nút chưa mount hoặc tạm ẩn,
-    // fallback bắt vào khung thanh phát nhạc để spotlight luôn sáng đúng vị trí
-    if (!element && currentStep.targetId === "tour-music-mixer-btn") {
-      element = document.getElementById("tour-music-player");
+    // Fallback chung: nút con chưa mount/tạm ẩn thì bắt vào neo gần nhất
+    // để spotlight không rơi vào giữa màn hình vô nghĩa.
+    if (!element) {
+      const FALLBACK_ANCHOR: Record<string, string> = {
+        "tour-music-tab-btn": "tour-music-player",
+        "tour-music-mixer-btn": "tour-music-player",
+      };
+      const fallbackId = FALLBACK_ANCHOR[currentStep.targetId];
+      if (fallbackId) {
+        element = document.getElementById(fallbackId);
+      }
     }
 
     if (element) {

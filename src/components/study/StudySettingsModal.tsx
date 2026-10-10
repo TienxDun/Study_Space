@@ -161,7 +161,7 @@ export const StudySettingsModal = ({
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div>
                 <h3 className="text-sm font-extrabold text-white tracking-wide">Cài đặt không gian</h3>
-                <p className="text-[10px] text-slate-400 font-medium">Tùy biến hiển thị & thời lượng</p>
+                <p className="text-xs text-slate-400 font-medium">Tùy biến hiển thị & thời lượng</p>
               </div>
 
               <IconBtn
@@ -173,7 +173,7 @@ export const StudySettingsModal = ({
             </div>
 
             {/* Quick Filter Tabs */}
-            <div className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-[11px] font-bold">
+            <div className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-xs font-bold">
               <PillButton
                 onClick={() => handleSelectTab("clock")}
                 active={activeTab === "clock"}
@@ -221,7 +221,7 @@ export const StudySettingsModal = ({
                   <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/[0.06]">
                     <div className="space-y-0.5">
                       <div className="font-bold text-slate-200 text-xs">Định dạng thời gian</div>
-                      <div className="text-[10px] text-slate-400">24 Giờ hoặc 12 Giờ (AM/PM)</div>
+                      <div className="text-xs text-slate-400">24 Giờ hoặc 12 Giờ (AM/PM)</div>
                     </div>
                     <div className="flex items-center p-0.5 rounded-xl bg-white/10 border border-white/10">
                       <button
@@ -258,7 +258,7 @@ export const StudySettingsModal = ({
                   {/* Thời lượng */}
                   <div className="grid grid-cols-3 gap-2">
                     <div>
-                      <label className="text-[10px] text-slate-400 font-semibold block mb-1">Tập trung</label>
+                      <label className="text-xs text-slate-400 font-semibold block mb-1">Tập trung</label>
                       <input
                         type="number"
                         min={1}
@@ -274,7 +274,7 @@ export const StudySettingsModal = ({
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-400 font-semibold block mb-1">Nghỉ ngắn</label>
+                      <label className="text-xs text-slate-400 font-semibold block mb-1">Nghỉ ngắn</label>
                       <input
                         type="number"
                         min={1}
@@ -290,7 +290,7 @@ export const StudySettingsModal = ({
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-400 font-semibold block mb-1">Nghỉ dài</label>
+                      <label className="text-xs text-slate-400 font-semibold block mb-1">Nghỉ dài</label>
                       <input
                         type="number"
                         min={1}
@@ -362,7 +362,7 @@ export const StudySettingsModal = ({
                                 <button
                                   type="button"
                                   onClick={(e) => handlePreviewSound(opt.id, e)}
-                                  className={`px-2 py-1 rounded-lg text-[10px] font-bold border flex items-center gap-1 transition-all active:scale-95 cursor-pointer shrink-0 ${
+                                  className={`px-2 py-1 rounded-lg text-xs font-bold border flex items-center gap-1 transition-all active:scale-95 cursor-pointer shrink-0 ${
                                     isPreviewing
                                       ? "bg-emerald-500 text-slate-950 border-emerald-400 animate-pulse"
                                       : "bg-white/10 hover:bg-white/20 border-white/10 text-slate-200"
@@ -415,7 +415,7 @@ export const StudySettingsModal = ({
                       <Compass className="w-3.5 h-3.5 text-accent-music-glow" />
                       <span>Tour hướng dẫn sử dụng</span>
                     </div>
-                    <p className="text-[10px] text-slate-400">Xem lại hướng dẫn tương tác các tính năng</p>
+                    <p className="text-xs text-slate-400">Xem lại hướng dẫn tương tác các tính năng</p>
                   </div>
                   <button
                     type="button"
@@ -423,7 +423,7 @@ export const StudySettingsModal = ({
                       onClose();
                       onOpenTour();
                     }}
-                    className="px-3 py-1.5 rounded-full text-[11px] font-semibold bg-accent-music/20 hover:bg-accent-music/30 text-accent-music-bright border border-accent-music-glow/30 transition-all active:scale-95 cursor-pointer flex items-center gap-1 shadow-sm shrink-0"
+                    className="px-3 py-1.5 rounded-full text-xs font-semibold bg-accent-music/20 hover:bg-accent-music/30 text-accent-music-bright border border-accent-music-glow/30 transition-all active:scale-95 cursor-pointer flex items-center gap-1 shadow-sm shrink-0"
                     title="Mở lại Onboarding Tour"
                   >
                     <span>Xem lại</span>

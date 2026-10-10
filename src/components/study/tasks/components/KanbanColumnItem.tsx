@@ -340,7 +340,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                         setNewCardDueDate("");
                         setIsDueDateOpen(false);
                       }}
-                      className="text-[10px] text-rose-400 hover:text-rose-300 font-medium cursor-pointer"
+                      className="text-xs text-rose-400 hover:text-rose-300 font-medium cursor-pointer"
                     >
                       Gỡ hạn
                     </button>
@@ -372,7 +372,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                               setNewCardDueDate(timeVal ? `${nDate}T${timeVal}` : nDate);
                             }
                           }}
-                          className="flex-1 min-w-0 h-7 px-2 rounded-lg bg-black/60 border border-white/15 text-[11px] text-white focus:outline-none cursor-pointer [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                          className="flex-1 min-w-0 h-7 px-2 rounded-lg bg-black/60 border border-white/15 text-xs text-white focus:outline-none cursor-pointer [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                         />
                         {timeVal ? (
                           <div className="flex items-center gap-1 shrink-0">
@@ -385,7 +385,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                                   setNewCardDueDate(nTime ? `${dateVal}T${nTime}` : dateVal);
                                 }
                               }}
-                              className="w-24 h-7 px-1.5 rounded-lg bg-black/60 border border-white/15 text-[11px] text-white focus:outline-none cursor-pointer [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                              className="w-24 h-7 px-1.5 rounded-lg bg-black/60 border border-white/15 text-xs text-white focus:outline-none cursor-pointer [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                             />
                             <button
                               type="button"
@@ -405,7 +405,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                               const baseDate = dateVal || todayStr;
                               setNewCardDueDate(`${baseDate}T23:59`);
                             }}
-                            className="h-7 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-dashed border-white/20 text-[10px] text-slate-300 flex items-center gap-1 cursor-pointer shrink-0"
+                            className="h-7 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-dashed border-white/20 text-xs text-slate-300 flex items-center gap-1 cursor-pointer shrink-0"
                             title="Thêm giờ"
                           >
                             <Clock className="w-3 h-3 text-slate-400" />
@@ -416,14 +416,14 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
 
                       {/* Quick Date Presets Row */}
                       <div className="flex items-center gap-2 pt-0.5">
-                        <span className="text-[10px] text-slate-400 shrink-0 font-medium">Ngày:</span>
+                        <span className="text-xs text-slate-400 shrink-0 font-medium">Ngày:</span>
                         <div className="flex items-center gap-1.5 flex-1">
                           <button
                             type="button"
                             onClick={() => {
                               setNewCardDueDate(timeVal ? `${todayStr}T${timeVal}` : todayStr);
                             }}
-                            className={`flex-1 py-1 rounded-lg text-[10px] font-medium transition-colors cursor-pointer text-center ${
+                            className={`flex-1 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer text-center ${
                               dateVal === todayStr
                                 ? "bg-sky-500/20 border border-sky-400/40 text-sky-300 font-bold"
                                 : "bg-white/5 hover:bg-white/10 border border-white/5 text-slate-300 hover:text-white"
@@ -436,7 +436,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                             onClick={() => {
                               setNewCardDueDate(timeVal ? `${tmrStr}T${timeVal}` : tmrStr);
                             }}
-                            className={`flex-1 py-1 rounded-lg text-[10px] font-medium transition-colors cursor-pointer text-center ${
+                            className={`flex-1 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer text-center ${
                               dateVal === tmrStr
                                 ? "bg-sky-500/20 border border-sky-400/40 text-sky-300 font-bold"
                                 : "bg-white/5 hover:bg-white/10 border border-white/5 text-slate-300 hover:text-white"
@@ -450,7 +450,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                       {/* Quick Time Presets Row */}
                       {dateVal && (
                         <div className="flex items-center gap-2 pt-0.5">
-                          <span className="text-[10px] text-slate-400 shrink-0 font-medium">Giờ:</span>
+                          <span className="text-xs text-slate-400 shrink-0 font-medium">Giờ:</span>
                           <div className="grid grid-cols-4 gap-1 flex-1">
                             {["09:00", "12:00", "18:00", "23:59"].map((tp) => (
                               <button
@@ -459,7 +459,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                                 onClick={() => {
                                   setNewCardDueDate(`${dateVal}T${tp}`);
                                 }}
-                                className={`py-1 rounded-lg text-[10px] font-mono transition-colors cursor-pointer text-center ${
+                                className={`py-1 rounded-lg text-xs font-mono transition-colors cursor-pointer text-center ${
                                   timeVal === tp
                                     ? "bg-sky-500/25 border border-sky-400/40 text-sky-200 font-bold"
                                     : "bg-white/5 hover:bg-white/10 border border-white/5 text-slate-300 hover:text-white"
@@ -488,7 +488,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                     onClick={() => {
                       setIsPriorityOpen(!isPriorityOpen);
                     }}
-                    className={`h-6 px-2 rounded-lg border text-[11px] font-medium flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                    className={`h-6 px-2 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                       newCardPriority === "high"
                         ? "bg-rose-500/10 border-rose-500/30 text-rose-300"
                         : newCardPriority === "medium"
@@ -518,7 +518,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                             setNewCardPriority(item.value as CardPriority);
                             setIsPriorityOpen(false);
                           }}
-                          className={`w-full px-2 py-1 rounded-lg text-[11px] font-medium text-left flex items-center gap-1.5 cursor-pointer transition-colors ${
+                          className={`w-full px-2 py-1 rounded-lg text-xs font-medium text-left flex items-center gap-1.5 cursor-pointer transition-colors ${
                             newCardPriority === item.value
                               ? "bg-white/15 text-white font-bold"
                               : "text-slate-300 hover:bg-white/10 hover:text-white"
@@ -539,7 +539,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                     setIsPriorityOpen(false);
                     setIsDueDateOpen(!isDueDateOpen);
                   }}
-                  className={`h-6 rounded-lg border text-[11px] font-medium flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                  className={`h-6 rounded-lg border text-xs font-medium flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                     newCardDueDate || isDueDateOpen
                       ? "px-2 bg-sky-500/15 border-sky-400/40 text-sky-200 font-medium"
                       : "w-6 justify-center bg-white/[0.04] border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.08]"

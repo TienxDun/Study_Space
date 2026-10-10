@@ -21,6 +21,7 @@ import { motion, AnimatePresence, DragControls } from "framer-motion";
 import { StudyNote, ActiveFormats } from "../types";
 
 interface CompactStickyNoteProps {
+  width?: number;
   notes: StudyNote[];
   activeNote: StudyNote | null;
   isLight: boolean;
@@ -52,6 +53,7 @@ interface CompactStickyNoteProps {
 }
 
 export const CompactStickyNote = React.memo(function CompactStickyNote({
+  width,
   notes,
   activeNote,
   isLight,
@@ -109,17 +111,18 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
           }
           noteDragControls.start(e, { snapToCursor: false });
         }}
-        className={`relative px-3.5 py-2 border-b flex items-center justify-between gap-2 shrink-0 select-none touch-none cursor-grab active:cursor-grabbing ${
+        className={`relative px-3 py-2 border-b grid grid-cols-[minmax(96px,1fr)_auto_minmax(96px,1fr)] items-center gap-2 shrink-0 select-none touch-none cursor-grab active:cursor-grabbing group/compact ${
           isLight ? "border-slate-200/60 bg-white/40" : "border-white/10 bg-white/[0.03]"
         }`}
+        title="Nhấn giữ & kéo thả để di chuyển Sticky Note"
       >
         {/* Left: Quick Note Selector Dropdown & Quick Create Button */}
-        <div className="flex items-center gap-1.5 min-w-0">
+        <div className="flex items-center gap-1.5 min-w-0 max-w-full justify-self-start">
           <div className="relative min-w-0" ref={quickNoteListRef}>
           <button
             type="button"
             onClick={() => setShowQuickNoteList(!showQuickNoteList)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer border min-w-0 max-w-full ${
               isLight
                 ? "bg-white/80 hover:bg-white border-slate-200/90 text-slate-700 shadow-2xs"
                 : "bg-white/10 hover:bg-white/15 border-white/10 text-slate-200"
@@ -127,7 +130,9 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
             title="Xem danh sách ghi chú"
           >
             <List className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-            <span className="font-semibold text-[11px] truncate">Danh sách ({notes.length})</span>
+            {(width ?? 380) >= 400 && (
+              <span className="min-w-0 font-semibold truncate">Danh sách ({notes.length})</span>
+            )}
             <ChevronDown className="w-3 h-3 opacity-60 shrink-0 ml-0.5" />
           </button>
 
@@ -143,7 +148,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                     : "bg-black/75 border-white/15 text-white shadow-[0_20px_50px_rgba(0,0,0,0.65)] backdrop-blur-2xl"
                 }`}
               >
-                <div className="flex items-center justify-between px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <div className="flex items-center justify-between px-2 py-1 text-xs font-bold uppercase tracking-wider text-slate-400">
                   <span>Danh sách ({notes.length})</span>
                   <button
                     onClick={() => {
@@ -238,8 +243,21 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
           </button>
         </div>
 
+        {/* Center: Drag Indicator - luôn hiện, căn giữa tuyệt đối nhờ 2 cột bìa đối xứng */}
+        <div
+          className="flex items-center justify-center h-full px-2 min-w-0 pointer-events-none select-none transition-all duration-200 justify-self-center col-start-2"
+        >
+          <div
+            className={`w-7 h-1 rounded-full transition-all duration-200 ${
+              isLight
+                ? "bg-slate-300 group-hover/compact:bg-slate-400 group-hover/compact:w-9"
+                : "bg-white/20 group-hover/compact:bg-white/40 group-hover/compact:w-9"
+            }`}
+          />
+        </div>
+
         {/* Right: Window Actions (Pinned, More Menu, Close) */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 justify-self-end col-start-3">
           {/* Nút Ghim */}
           <button
             onClick={() => handleTogglePin(activeNote?.id || "")}
@@ -337,8 +355,8 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
             onClick={onClose}
             className={`w-7 h-7 rounded-xl border transition-colors flex items-center justify-center cursor-pointer ${
               isLight
-                ? "hover:bg-slate-200/80 border-slate-200 text-slate-500 hover:text-slate-900"
-                : "hover:bg-white/10 border-white/10 text-slate-400 hover:text-white"
+                ? "hover:bg-rose-500/10 border-slate-200 text-slate-500 hover:text-rose-600 hover:border-rose-300"
+                : "hover:bg-rose-500/10 border-white/10 text-slate-400 hover:text-rose-400 hover:border-rose-500/30"
             }`}
             title="Đóng ghi chú"
           >
@@ -488,7 +506,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
 
           {/* 4. Minimal Compact Footer */}
           <div
-            className={`px-3 py-1.5 border-t flex items-center justify-between text-[10px] select-none shrink-0 ${
+            className={`px-3 py-1.5 border-t flex items-center justify-between text-xs select-none shrink-0 ${
               isLight
                 ? "border-slate-200/60 bg-white/40 text-slate-500"
                 : "border-white/10 bg-white/[0.02] text-slate-400"
@@ -506,7 +524,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 text-[10px] opacity-75">
+              <div className="flex items-center gap-1.5 opacity-75">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span>Đã lưu {lastSavedTime}</span>
               </div>

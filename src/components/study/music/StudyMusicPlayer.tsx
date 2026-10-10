@@ -200,12 +200,12 @@ export const StudyMusicPlayer = ({
               <h4 className="text-xs sm:text-sm font-bold text-white truncate leading-tight group-hover/art:text-accent-music-bright transition-colors">
                 {currentTrack?.title || "Chưa phát nhạc"}
               </h4>
-              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-slate-300/90 truncate">
+              <div className="flex items-center gap-1.5 text-xs text-slate-300/90 truncate">
                 <span className="truncate">{currentTrack?.artist || "Zen Study"}</span>
                 {currentTrack?.genre && (
                   <>
                     <span>•</span>
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-accent-music/25 text-accent-music-bright font-semibold border border-accent-music/30 text-[9px] sm:text-[9.5px]">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-accent-music/25 text-accent-music-bright font-semibold border border-accent-music/30 text-[10px] sm:text-[11px]">
                       {currentTrack.genre}
                     </span>
                   </>
@@ -293,6 +293,7 @@ export const StudyMusicPlayer = ({
             >
               {/* Tab 1: Mở Playlist Nhạc Chill */}
               <button
+                id="tour-music-tab-btn"
                 onClick={handleOpenMusicTab}
                 className={`group relative h-8 sm:h-8.5 px-2.5 sm:px-3 rounded-xl flex items-center gap-1.5 sm:gap-2 transition-all active:scale-95 cursor-pointer text-xs font-semibold ${
                   isMixerOpen && activeMixerTab === "music"
@@ -373,7 +374,7 @@ export const StudyMusicPlayer = ({
                           <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-sky-400 opacity-75 animate-ping" />
                         )}
                         <span
-                          className={`relative inline-flex items-center justify-center min-w-3.5 h-3.5 px-1 rounded-full text-[9px] font-black leading-none ${
+                          className={`relative inline-flex items-center justify-center min-w-3.5 h-3.5 px-1 rounded-full text-[10px] font-black leading-none ${
                             isGlobalMuted
                               ? "bg-amber-400 text-slate-950"
                               : "bg-sky-400 text-slate-950 shadow-[0_0_8px_rgba(56,189,248,0.8)]"

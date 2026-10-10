@@ -63,7 +63,7 @@ export function WaveformScrubber({
         {hoverTime !== null && hoverPositionRatio !== null && (
           <div
             style={{ left: `${hoverPositionRatio * 100}%` }}
-            className="absolute -top-6 -translate-x-1/2 px-1.5 py-0.5 rounded bg-panel/95 text-[9px] font-mono font-bold text-accent-music-bright border border-line/20 shadow-lg pointer-events-none z-30"
+            className="absolute -top-6 -translate-x-1/2 px-1.5 py-0.5 rounded bg-panel/95 text-[10px] font-mono font-bold text-accent-music-bright border border-line/20 shadow-lg pointer-events-none z-30"
           >
             {formatTime(hoverTime)}
           </div>

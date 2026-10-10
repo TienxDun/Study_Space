@@ -96,10 +96,10 @@ export function SoundTileItem({
                 <span className="w-0.5 h-2.5 bg-current rounded-full animate-[bounce_0.8s_infinite_100ms]" />
                 <span className="w-0.5 h-3.5 bg-current rounded-full animate-[bounce_0.8s_infinite_300ms]" />
                 <span className="w-0.5 h-2 bg-current rounded-full animate-[bounce_0.8s_infinite_200ms]" />
-                <span className="text-[10px] font-semibold ml-1 text-emerald-300">Phát</span>
+                <span className="text-xs font-semibold ml-1 text-emerald-300">Phát</span>
               </div>
             ) : (
-              <span className="text-[10px] text-slate-500">Tắt</span>
+              <span className="text-xs text-slate-500">Tắt</span>
             )}
           </div>
         </div>

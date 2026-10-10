@@ -39,7 +39,7 @@ export const Badge = ({
 }: BadgeProps) => (
   <span
     className={cn(
-      "inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold border backdrop-blur-md",
+      "inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold border backdrop-blur-md",
       shape === "full" ? "rounded-full" : "rounded-lg",
       TONES[tone],
       className

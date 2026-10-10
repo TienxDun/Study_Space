@@ -44,7 +44,7 @@ export function MiniPlayerPill({
           <h4 className="text-xs font-bold text-slate-100 truncate group-hover/art:text-accent-music-bright transition-colors">
             {currentTrack?.title}
           </h4>
-          <p className="text-[10px] text-slate-400 truncate">{currentTrack?.artist}</p>
+          <p className="text-xs text-slate-400 truncate">{currentTrack?.artist}</p>
         </div>
       </div>
 

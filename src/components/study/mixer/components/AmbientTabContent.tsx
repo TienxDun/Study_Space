@@ -26,10 +26,10 @@ export function AmbientTabContent({
       {/* Quick Presets (4 Columns x 2 Rows Grid) */}
       <div className="space-y-2">
         <div className="flex items-center justify-between h-5">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
             Gợi ý phối âm nhanh
           </span>
-          <span className="text-[10px] text-slate-400">Chạm để Bật / Tắt</span>
+          <span className="text-xs text-slate-400">Chạm để Bật / Tắt</span>
         </div>
 
         <div className="grid grid-cols-4 gap-1.5">
@@ -53,7 +53,7 @@ export function AmbientTabContent({
                     isActive ? "text-emerald-400" : preset.color
                   } transition-transform group-hover:scale-110`}
                 />
-                <span className="text-[11px] leading-tight truncate w-full">
+                <span className="text-xs leading-tight truncate w-full">
                   {preset.label}
                 </span>
               </button>
@@ -64,18 +64,18 @@ export function AmbientTabContent({
 
       {/* Section Header for Soundboard Tiles */}
       <div className="flex items-center justify-between pt-2 border-t border-white/10 h-7">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
           Bộ phối âm chi tiết ({AMBIENT_SOUNDS.length} âm)
         </span>
         {activeCount > 0 ? (
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10.5px] font-medium text-emerald-300">
+            <span className="text-xs font-medium text-emerald-300">
               Đang phối <b className="font-bold">{activeCount}</b> âm thanh
             </span>
           </div>
         ) : (
-          <span className="text-[10px] text-slate-500">Tùy chỉnh từng âm</span>
+          <span className="text-xs text-slate-500">Tùy chỉnh từng âm</span>
         )}
       </div>
 

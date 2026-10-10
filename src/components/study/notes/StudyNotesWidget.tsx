@@ -51,7 +51,7 @@ export const StudyNotesWidget = ({
         if (saved) {
           const parsed = JSON.parse(saved);
           if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
-            const clampedX = Math.max(16, Math.min(window.innerWidth - 300, parsed.x));
+            const clampedX = Math.max(16, Math.min(window.innerWidth - 320, parsed.x));
             const clampedY = Math.max(16, Math.min(window.innerHeight - 240, parsed.y));
             return { x: clampedX, y: clampedY };
           }
@@ -96,7 +96,7 @@ export const StudyNotesWidget = ({
         if (parsed?.width && parsed?.height) {
           const maxAllowedW = typeof window !== "undefined" ? Math.max(320, window.innerWidth - 48) : 500;
           const maxAllowedH = typeof window !== "undefined" ? Math.max(260, window.innerHeight - 130) : 550;
-          const nextW = Math.max(300, Math.min(parsed.width, maxAllowedW));
+          const nextW = Math.max(320, Math.min(parsed.width, maxAllowedW));
           const nextH = Math.max(240, Math.min(parsed.height, maxAllowedH));
           setCompactSize({
             width: nextW,
@@ -124,7 +124,7 @@ export const StudyNotesWidget = ({
         if (savedPos) {
           const parsed = JSON.parse(savedPos);
           if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
-            const clampedX = Math.max(16, Math.min(window.innerWidth - 300, parsed.x));
+          const clampedX = Math.max(16, Math.min(window.innerWidth - 320, parsed.x));
             const clampedY = Math.max(16, Math.min(window.innerHeight - 240, parsed.y));
             setCompactPos((prev) => {
               if (prev.x === clampedX && prev.y === clampedY) return prev;
@@ -155,10 +155,10 @@ export const StudyNotesWidget = ({
     let rafId: number | null = null;
 
     const onPointerMove = (moveEv: PointerEvent) => {
-      const maxW = typeof window !== "undefined" ? Math.max(300, window.innerWidth - cardScreenLeft - 16) : 700;
+      const maxW = typeof window !== "undefined" ? Math.max(320, window.innerWidth - cardScreenLeft - 16) : 700;
       const maxH = typeof window !== "undefined" ? Math.max(240, window.innerHeight - cardScreenTop - 16) : 700;
 
-      const nextW = Math.round(Math.max(300, Math.min(maxW, startW + (moveEv.clientX - startX))));
+      const nextW = Math.round(Math.max(320, Math.min(maxW, startW + (moveEv.clientX - startX))));
       const nextH = Math.round(Math.max(240, Math.min(maxH, startH + (moveEv.clientY - startY))));
       latestSize = { width: nextW, height: nextH };
 
@@ -339,6 +339,7 @@ export const StudyNotesWidget = ({
               }`}
             >
               <CompactStickyNote
+                width={compactSize.width}
                 notes={sortedNotes}
                 activeNote={activeNote}
                 isLight={isLight}

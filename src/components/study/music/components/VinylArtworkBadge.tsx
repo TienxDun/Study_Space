@@ -49,7 +49,7 @@ export function VinylArtworkBadge({
           {currentTrack?.title}
         </h4>
 
-        <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-slate-400 truncate">
+        <div className="flex items-center gap-1.5 text-xs text-slate-400 truncate">
           <span className="truncate">{currentTrack?.artist}</span>
           <span>•</span>
           <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-accent-music/15 text-accent-music-bright font-semibold border border-accent-music/20 text-[10px]">

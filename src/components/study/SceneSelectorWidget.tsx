@@ -335,7 +335,7 @@ export const SceneSelectorWidget = ({
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
               Không gian làm việc
-              <span className="text-[11px] text-slate-400 font-normal">
+              <span className="text-xs text-slate-400 font-normal">
                 ({filteredScenes.length})
               </span>
             </h3>
@@ -349,7 +349,7 @@ export const SceneSelectorWidget = ({
               title="Đổi ngẫu nhiên không gian khác"
             >
               <Shuffle className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden sm:inline text-[11px] font-medium">Ngẫu nhiên</span>
+              <span className="hidden sm:inline font-medium">Ngẫu nhiên</span>
             </button>
 
             {/* Nút Mở Studio Quản lý Background (Chỉ hiện ở môi trường Local Development) */}
@@ -361,7 +361,7 @@ export const SceneSelectorWidget = ({
                 title="Mở Background Asset Studio để quản lý/lọc ảnh"
               >
                 <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                <span className="hidden sm:inline text-[11px] font-medium">Studio</span>
+                <span className="hidden sm:inline font-medium">Studio</span>
               </Link>
             )}
 

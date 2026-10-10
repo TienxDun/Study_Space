@@ -128,14 +128,14 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
       {/* Progress bar if checklist exists */}
       {totalCheck > 0 && (
         <div className="space-y-1 pt-0.5">
-          <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+          <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
             <span className="flex items-center gap-1 text-slate-300">
               <CheckSquare className="w-3 h-3 text-emerald-400" />
               <span>
                 {doneCheck}/{totalCheck}
               </span>
             </span>
-            <span className="text-[10px] text-slate-400">{progressPercent}%</span>
+            <span className="text-xs text-slate-400">{progressPercent}%</span>
           </div>
           <div className="w-full h-1 rounded-full bg-black/40 border border-white/5 overflow-hidden">
             <div
@@ -148,7 +148,7 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
 
       {/* Card Footer: Deadline & Pomodoro Badges */}
       <div
-        className={`flex items-center justify-between text-[10px] text-slate-400 ${
+        className={`flex items-center justify-between text-xs text-slate-400 ${
           card.dueDate || (card.pomodoros && card.pomodoros > 0) ? "pt-1.5 border-t border-white/5" : "pt-0"
         }`}
       >
@@ -159,7 +159,7 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
               if (!dStatus) return null;
               return (
                 <span
-                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] border ${dStatus.badgeClass}`}
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] border ${dStatus.badgeClass}`}
                 >
                   <Calendar className="w-2.5 h-2.5" />
                   <span>{dStatus.shortLabel}</span>
@@ -169,7 +169,7 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
 
           {card.pomodoros !== undefined && card.pomodoros > 0 && (
             <span
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono"
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono"
               title={`Đã tích lũy ${card.pomodoros} phiên Pomodoro (${card.pomodoros * 25} phút)`}
             >
               <span>🍅</span>

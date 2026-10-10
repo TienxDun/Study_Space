@@ -185,7 +185,7 @@ export const StudyPomodoroWidget = ({
         <div className="mt-1 mb-1 flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 rounded-xl text-xs select-none transition-all drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] animate-in fade-in zoom-in-95 duration-200 pointer-events-auto">
           <div className="flex items-center gap-1.5 min-w-0">
             <Target className="w-3.5 h-3.5 text-amber-400 shrink-0 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-pulse" />
-            <span className="text-[11px] font-semibold text-amber-400 shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+            <span className="text-xs font-semibold text-amber-400 shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
               Mục tiêu:
             </span>
             <span className="font-semibold text-slate-100 truncate max-w-[170px] sm:max-w-[240px] drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] tracking-tight">

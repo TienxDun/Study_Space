@@ -1,104 +1,130 @@
 # ZenStudy Space 🎧📚
 
-> **Không gian học tập tương tác nhập vai (Immersive Study Environment) trực tuyến tại [zenstudy.space](https://zenstudy.space)**
-> Được thiết kế để nâng cao sự tập trung, loại bỏ xao nhãng và duy trì trạng thái dòng chảy tư duy (Flow State) cho học sinh, sinh viên và người làm việc từ xa.
+> **Không gian học tập và làm việc nhập vai (Immersive Productivity Space) trực tuyến tại [zenstudy.space](https://zenstudy.space)**  
+> Loại bỏ xao nhãng, đưa tâm trí vào trạng thái dòng chảy tư duy (Flow State) với bối cảnh 4K, âm thanh thiên nhiên thư giãn và các công cụ quản lý thời gian khoa học.
 
 [![Website](https://img.shields.io/badge/Website-zenstudy.space-6366f1?style=for-the-badge&logo=google-chrome&logoColor=white)](https://zenstudy.space)
-[![Next.js](https://img.shields.io/badge/Next.js-16.4-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2-blue?style=for-the-badge&logo=react&logoColor=white)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vitest](https://img.shields.io/badge/Vitest-Passing-6ee7b7?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-99_Tests_Passing-6ee7b7?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg?style=for-the-badge)](LICENSE)
 
 ---
 
-## 🌟 Tính Năng Nổi Bật
+## 🌟 Giới Thiệu
 
-### 🎬 40+ Bối Cảnh Video 4K & Ảnh Nền Sống Động
+**ZenStudy Space** là ứng dụng web không gian học tập nhập vai một màn hình (All-in-One Immersive Workspace). Ứng dụng kết hợp giữa nghệ thuật thị giác (visuals), âm học thư giãn (ambient soundscape) và các công cụ năng suất thiết yếu (Pomodoro, Kanban, Notes, Music Player) để giúp học sinh, sinh viên và người làm việc từ xa tập trung tối đa mà không bị gián đoạn hay phân tâm.
 
-- Kho bối cảnh phong phú, độ phân giải cao: Quán cà phê ngày mưa, phòng đọc sách cổ điển, phong cảnh anime chill, thiên nhiên thanh bình, vũ trụ huyền ảo, ban công đêm...
-- Tìm kiếm bối cảnh nhanh chóng, lọc theo chủ đề (tag) và đánh dấu bối cảnh yêu thích (favorites).
-- Hỗ trợ chuyển đổi mượt mà giữa video động và ảnh nền tĩnh nhẹ máy.
+✨ **Đặc điểm nổi bật:**
+- **Không cần tài khoản:** Mở trình duyệt là học ngay, 100% dữ liệu được lưu an toàn trên máy bạn (`LocalStorage`).
+- **Giao diện Floating Ghost HUD:** Thiết kế không gian nổi chuẩn điện ảnh, loại bỏ viền đen nặng nề, hòa quyện tuyệt đối vào từng bối cảnh 4K.
+- **Tập trung tuyệt đối:** Tích hợp phím tắt toàn năng và chế độ Zen Mode ẩn toàn bộ giao diện chỉ với 1 phím bấm.
 
-### 🌧️ Bộ Trộn 20 Âm Thanh Thiên Nhiên (Ambient Sound Mixer)
+---
 
-- Hơn 20 âm thanh môi trường chất lượng cao: Mưa rào, mưa trên mái tôn, sấm sét dịu êm, sóng biển vỗ bờ, gió reo qua rừng cây, tiếng lật sách trong thư viện, ngọn lửa tí tách, tiếng chim hót, đêm hè, tiếng ồn trắng (white noise)...
-- Bộ trộn âm thanh đa luồng: Tự do điều chỉnh âm lượng riêng biệt cho từng nguồn âm thanh để tạo không gian âm thanh tập trung độc bản.
-- Tự động lưu cấu hình âm lượng vào LocalStorage.
+## 🚀 Tính Năng Trọng Tâm
 
-### 🎵 Trình Phát Nhạc Lo-fi, Jazz & Embed Player Thông Minh
+### 🎬 1. Bối Cảnh Video 4K & Ảnh Nền Sống Động
+- Kho hơn 30+ bối cảnh chuẩn điện ảnh: Quán cà phê mưa, thư viện cổ điển, phong cảnh anime chill, vũ trụ kỳ ảo, ban công ngắm mưa đêm, rừng cây thanh bình...
+- Tìm kiếm nhanh chóng, lọc theo chủ đề (lofi, cozy, nature, anime, cafe, room...) và đánh dấu yêu thích (**Favorites**).
+- Chuyển đổi linh hoạt giữa Video chuyển động mượt mà và Ảnh tĩnh tối ưu dung lượng pin/RAM.
+- Tích hợp trang quản trị bối cảnh độc lập (`/admin/scenes`) và đồng bộ tài nguyên qua Cloudflare R2 / AWS S3.
 
-- Tích hợp sẵn danh sách phát nhạc Lo-fi Hip Hop, Piano thư giãn và Jazz cổ điển.
-- Đĩa than ảo (Vinyl Artwork) xoay theo nhịp điệu bài hát cùng thông tin bài hát và nghệ sĩ.
-- **Embed Player**: Nhúng trực tiếp video/livestream YouTube hoặc playlist Spotify yêu thích.
-- Chế độ **Picture-in-Picture (PiP)** tiện lợi cho phép thu nhỏ trình phát video nổi trên màn hình.
+### 🌧️ 2. Bộ Trộn Âm Thanh Thiên Nhiên (Ambient Sound Mixer)
+- Hơn 20 âm thanh môi trường độc bản: Tiếng mưa rào, mưa mái tôn, sấm rền dịu êm, sóng biển vỗ bờ, gió luồn qua rặng cây, tiếng lật sách thư viện, bếp lửa tí tách, chim hót bình minh, tiếng ồn trắng (White Noise), sóng não Theta...
+- Bộ trộn đa tầng: Tùy ý điều chỉnh âm lượng độc lập cho từng âm thanh để tạo ra soundscape độc nhất cho riêng bạn.
+- Tự động ghi nhớ cấu hình âm lượng cho các phiên làm việc tiếp theo.
 
-### ⏱️ Đồng Hồ Pomodoro & Bấm Giờ Stopwatch Khoa Học
+### 🎵 3. Trình Phát Nhạc Lo-fi, Jazz & Embed Player Đa Năng
+- Tích hợp sẵn các danh sách nhạc được tuyển chọn kỹ lưỡng: **Lo-fi Chill**, **Acoustic / Piano** và **Classic Jazz**.
+- Đĩa than hoạt họa (**Vinyl Artwork**) xoay nhịp nhàng theo giai điệu cùng bảng thông tin bài hát.
+- **Đài phát Embed Player**: Hỗ trợ nhúng trực tiếp livestream YouTube, playlist Spotify hoặc radio trực tuyến.
+- Chế độ **Picture-in-Picture (PiP)**: Thu nhỏ trình phát video nổi trên màn hình để vừa xem vừa ghi chú.
+- Điều khiển thông minh: Tự động phối hợp luồng âm thanh giữa nhạc nội bộ và đài phát ngoài mà không gây xung đột.
 
-- Áp dụng phương pháp quả cà chua Pomodoro (mặc định 25 phút tập trung, 5 phút nghỉ ngắn, 15 phút nghỉ dài), có thể tùy chỉnh thời lượng theo nhu cầu.
-- Chuông báo Web Audio du dương (chuông cổ điển, chuông thiền Zen, tiếng chim hót).
-- Đồng hồ toàn màn hình (phím tắt `C`) hiển thị thời gian thực tế với định dạng 12h/24h và tùy chọn hiển thị giây.
-- Đồng hồ bấm giờ (Stopwatch) có độ chính xác cao.
+### ⏱️ 4. Bộ Công Cụ Thời Gian Pomodoro, Clock & Stopwatch
+- **Pomodoro Timer**: Cấu hình chuẩn 25-5-15 hoặc tùy chỉnh theo sở thích cá nhân. Chuông báo Web Audio du dương (chuông thiền Zen, chuông cổ điển, chim hót).
+- **Đồng hồ số thời gian thực (Real-time Clock)**: Hiển thị lớn, rõ nét với định dạng 12h/24h và tùy chọn hiển thị giây.
+- **Đồng hồ bấm giờ (Stopwatch)**: Bấm giờ chính xác từng mili-giây, hỗ trợ ghi lại các mốc thời gian (Lap).
+- **Liên kết mục tiêu tập trung**: Hiển thị thẻ mục tiêu Task đang làm việc ngay trên thanh trạng thái Pomodoro.
 
-### 📋 Quản Lý Công Việc Kanban & To-do List
+### 📋 5. Bảng Quản Lý Công Việc Kanban & To-do List
+- Kéo thả thẻ mượt mà qua các cột **Todo**, **In Progress**, **Done**.
+- Phân loại theo độ ưu tiên (Khẩn cấp, Cao, Trung bình, Thấp), gắn hạn chót (Deadline) và danh mục.
+- Chuyển đổi linh hoạt giữa giao diện Bảng (Kanban Board) và Danh sách (Task List).
+- **Nút "Bắt đầu tập trung" (Play Focus)**: 1 chạm kích hoạt ngay phiên Pomodoro liên kết với Task đã chọn.
+- Hiệu ứng pháo hoa **Canvas Confetti** khích lệ tinh thần khi hoàn thành công việc.
 
-- Kéo thả thẻ công việc trực quan qua các cột Todo, In Progress, Done.
-- Gắn thẻ độ ưu tiên, hạn chót (deadline) và danh mục.
-- Hiệu ứng pháo hoa Confetti chúc mừng khi hoàn thành nhiệm vụ.
-- **Tích hợp sâu**: Nút "Tập trung vào Task" tự động khởi chạy đồng hồ Pomodoro tương ứng.
+### 📝 6. Sổ Ghi Chú Nhanh (Quick Notes)
+- Trình soạn thảo văn bản phong phú hỗ trợ Markdown, đề mục, danh sách công việc, trích dẫn, khối mã nguồn.
+- Tùy chọn nhiều chủ đề giao diện màu sắc (Amber, Sky, Rose, Slate...) phù hợp tâm trạng.
+- Chế độ **Sticky Note** thu gọn cho phép ghim ghi chú nổi gọn gàng ở góc màn hình.
 
-### 📝 Sổ Ghi Chú Nhanh Quick Notes
+### 🧭 7. Tour Hướng Dẫn & Phím Tắt Tiện Lợi
+- Hệ thống Onboarding Tour tương tác trực quan cho người dùng mới làm quen mọi tính năng chỉ trong 30 giây.
+- Tra cứu nhanh toàn bộ phím tắt bằng phím <kbd>?</kbd> hoặc <kbd>H</kbd>.
 
-- Trình soạn thảo Markdown tiện lợi, hỗ trợ tiêu đề, danh sách, checklist, code block.
-- Nhiều giao diện (theme) ghi chú đẹp mắt, chế độ thu gọn tiết kiệm không gian.
-- Dữ liệu được lưu trữ tự động và an toàn trong LocalStorage của trình duyệt.
-
-### 🧘 Chế Độ Zen Mode Tối Giản
-
-- Ẩn toàn bộ nút bấm, widget và thanh công cụ chỉ bằng một phím bấm (`Z`) để biến màn hình thành một bức tranh động thư giãn tuyệt đối.
+---
 
 ## ⌨️ Bảng Phím Tắt Nhanh (Keyboard Shortcuts)
 
-|      Phím      | Chức năng                                              |
-| :--------------: | :------------------------------------------------------- |
-| <kbd>Space</kbd> | Bật / Dừng phát nhạc                                 |
-|   <kbd>M</kbd>   | Tắt / Bật toàn bộ âm thanh (Mute/Unmute)            |
-|   <kbd>F</kbd>   | Bật / Thoát chế độ toàn màn hình (Fullscreen)    |
-|   <kbd>Z</kbd>   | Bật / Tắt chế độ tập trung Zen Mode                |
-|   <kbd>C</kbd>   | Bật / Ẩn đồng hồ thời gian thực tế               |
-|   <kbd>P</kbd>   | Bật / Ẩn đồng hồ Pomodoro                           |
-|   <kbd>T</kbd>   | Mở bảng quản lý công việc (Kanban Tasks)           |
-|   <kbd>N</kbd>   | Mở sổ ghi chú nhanh (Quick Notes)                     |
-|   <kbd>S</kbd>   | Mở danh sách lựa chọn bối cảnh (Scenes)            |
-|   <kbd>X</kbd>   | Mở bộ trộn âm thanh môi trường (Sound Mixer)      |
-|   <kbd>E</kbd>   | Mở trình phát nhúng YouTube / Spotify (Embed Player) |
-|   <kbd>?</kbd>   | Hiển thị bảng tra cứu phím tắt                     |
-|  <kbd>Esc</kbd>  | Đóng modal đang mở                                   |
+Mọi thao tác đều có thể thực hiện nhanh chóng thông qua bàn phím:
+
+### 🎵 Điều Khiển Âm Nhạc
+| Phím | Chức năng |
+| :---: | :--- |
+| <kbd>Space</kbd> | Bật / Tạm dừng phát nhạc (hỗ trợ cả Player nội bộ và YouTube) |
+| <kbd>→</kbd> | Chuyển sang bài tiếp theo |
+| <kbd>←</kbd> | Quay lại bài trước đó |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | Tăng / Giảm âm lượng nhạc (bước 5%) |
+| <kbd>M</kbd> | Bật / Tắt toàn bộ âm thanh (Mute / Unmute) |
+| <kbd>S</kbd> | Bật / Tắt phát ngẫu nhiên bài hát (Shuffle) |
+| <kbd>L</kbd> | Bật / Tắt lặp lại bài hát hiện tại (Loop) |
+
+### 🛠️ Không Gian & Công Cụ Làm Việc
+| Phím | Chức năng |
+| :---: | :--- |
+| <kbd>Z</kbd> | **Chế độ Zen**: Ẩn / Hiện toàn bộ giao diện điều khiển |
+| <kbd>F</kbd> | Bật / Thoát chế độ toàn màn hình (Fullscreen) |
+| <kbd>T</kbd> | Bật / Ẩn widget Đồng hồ / Pomodoro / Stopwatch |
+| <kbd>K</kbd> | Mở / Đóng bảng quản lý công việc (Kanban Tasks) |
+| <kbd>N</kbd> | Mở / Đóng sổ ghi chú nhanh (Quick Notes) |
+| <kbd>B</kbd> | Mở / Đóng kho bối cảnh hình nền (Scenes) |
+| <kbd>P</kbd> | Mở / Đóng bộ trộn âm thanh môi trường (Sound Mixer) |
+| <kbd>E</kbd> | Mở / Đóng đài phát nhúng (Embed Player YouTube / Spotify) |
+| <kbd>?</kbd> hoặc <kbd>H</kbd> | Mở bảng tra cứu phím tắt |
+| <kbd>Esc</kbd> | Đóng mọi cửa sổ modal đang mở / Thoát Zen mode |
+
+> 💡 *Lưu ý: Phím tắt sẽ tự động tạm ngưng khi bạn đang nhập văn bản trong ô tìm kiếm, ghi chú hoặc form công việc.*
 
 ---
 
-## 🛠️ Công Nghệ Sử Dụng (Tech Stack)
+## 🛠️ Công Nghệ Phát Triển (Tech Stack)
 
-- **Framework**: [Next.js 16 (Turbopack, App Router)](https://nextjs.org/)
-- **UI Core**: [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
-- **Chuyển động**: [Framer Motion](https://www.framer.com/motion/)
-- **Biểu tượng**: [Lucide React](https://lucide.dev/)
-- **Thông báo**: [Sonner](https://sonner.emilkowal.ski/)
-- **Hiệu ứng**: [Canvas Confetti](https://www.kirilv.com/canvas-confetti/)
-- **Âm thanh**: HTML5 Audio & Web Audio API Chimes
-- **Lưu trữ & CDN**: [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/) / [AWS S3 SDK](https://aws.amazon.com/sdk-for-javascript/)
-- **Testing**: [Vitest](https://vitest.dev/)
-- **Đồ họa SEO**: [Sharp](https://sharp.pixelplumbing.com/)
+| Lớp | Công nghệ & Thư viện | Vai trò |
+| :--- | :--- | :--- |
+| **Framework** | [Next.js 16 (App Router)](https://nextjs.org/) | Kiến trúc hiện đại, Turbopack, hỗ trợ Static Export tối ưu |
+| **UI Core** | [React 19](https://react.dev/), [TypeScript 5](https://www.typescriptlang.org/) | Giao diện khai báo thành phần, kiểm soát kiểu dữ liệu nghiêm ngặt |
+| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) | Hệ thống tiện ích CSS tối tân, thiết kế Floating Ghost HUD |
+| **Motion** | [Framer Motion](https://www.framer.com/motion/) | Chuyển động mượt mà cho cửa sổ, modal và dock điều khiển |
+| **Icons** | [Lucide React](https://lucide.dev/) | Bộ icon vector sắc nét, tối giản và đồng bộ |
+| **Audio** | HTML5 Audio & Web Audio API | Xử lý đa luồng âm thanh môi trường và chuông báo tần số cao |
+| **Toast & Confetti** | [Sonner](https://sonner.emilkowal.ski/), [Canvas Confetti](https://www.kirilv.com/canvas-confetti/) | Thông báo toast hiện đại và hiệu ứng ăn mừng sinh động |
+| **Storage & CDN** | LocalStorage, [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/) | Lưu trữ an toàn trên máy khách & phân phối video 4K siêu tốc |
+| **Testing** | [Vitest](https://vitest.dev/) | Bộ kiểm thử đơn vị tốc độ cao (14 test suites, 99 tests passing) |
+| **SEO & Social** | [Sharp](https://sharp.pixelplumbing.com/), JSON-LD, OpenGraph | Tối ưu hóa công cụ tìm kiếm và chia sẻ mạng xã hội |
 
-## 🚀 Hướng Dẫn Cài Đặt & Phát Triển
+---
 
-### 1. Yêu cầu hệ thống
+## 🚀 Hướng Dẫn Cài Đặt & Chạy Dự Án
 
-- **Node.js**: Phiên bản 20 trở lên (khuyên dùng Node.js 22 LTS)
-- **NPM**: Phiên bản 10 trở lên
+### 1. Yêu cầu môi trường
+- **Node.js**: Phiên bản 20.x trở lên (khuyên dùng Node.js 22 LTS).
+- **NPM**: Phiên bản 10.x trở lên.
 
-### 2. Cài đặt dependencies
+### 2. Cài đặt mã nguồn
 
 ```bash
 git clone https://github.com/TienxDun/Study_Space.git
@@ -106,21 +132,21 @@ cd Study_Space
 npm install
 ```
 
-### 3. Khởi chạy môi trường phát triển (Development)
+### 3. Khởi chạy máy chủ phát triển (Development)
 
 ```bash
 npm run dev
 ```
 
-Ứng dụng sẽ chạy tại địa chỉ: `http://localhost:3001` (với chế độ Turbopack siêu tốc).
+Mở trình duyệt tại địa chỉ: `http://localhost:3001` (khởi chạy với chế độ Turbopack siêu tốc).
 
-### 4. Chạy kiểm thử (Unit Tests)
+### 4. Chạy bộ kiểm thử (Unit Tests)
 
 ```bash
 npm test
 ```
 
-Thực thi toàn bộ bộ test Vitest (10 test suites, 84 tests kiểm tra logic Pomodoro, Music, Mixer, Tasks, Notes, SEO Schema...).
+Thực thi 14 test suites với 99 bài kiểm tra tự động bao phủ logic Pomodoro, Music Player, Sound Mixer, Tasks, Notes, Embed Stream, SEO Schemas...
 
 ### 5. Kiểm tra mã nguồn (Linting)
 

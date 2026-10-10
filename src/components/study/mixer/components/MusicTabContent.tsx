@@ -54,7 +54,7 @@ export function MusicTabContent({
     <>
       {/* MOODS SECTION */}
       <div>
-        <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">
+        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">
           Moods
         </h4>
         <div className="grid grid-cols-3 gap-2">
@@ -127,7 +127,7 @@ export function MusicTabContent({
               className="w-full bg-white/15 hover:bg-white/25 rounded-full accent-emerald-400"
             />
           </div>
-          <div className="flex justify-between text-[11px] font-mono font-medium text-slate-400 px-0.5">
+          <div className="flex justify-between text-xs font-mono font-medium text-slate-400 px-0.5">
             <span className="text-emerald-400 font-semibold">{formatTime(currentTime)}</span>
             <span>{duration > 0 ? formatTime(duration) : "0:00"}</span>
           </div>
@@ -191,7 +191,7 @@ export function MusicTabContent({
 
       {/* UP NEXT PLAYLIST */}
       <div className="space-y-2 pb-6">
-        <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
           Up Next ({currentMoodTracks.length} bài)
         </h4>
         <div className="space-y-1.5">
@@ -212,7 +212,7 @@ export function MusicTabContent({
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold truncate leading-tight">{t.title}</p>
-                  <p className="text-[10px] text-slate-400 truncate">{t.artist}</p>
+                  <p className="text-xs text-slate-400 truncate">{t.artist}</p>
                 </div>
                 {isSelected && isPlaying && (
                   <div className="flex items-center gap-0.5 pr-1">

@@ -76,7 +76,7 @@ export function EmbedListItem({
           >
             {item.title}
           </h4>
-          <div className="flex items-center gap-1.5 mt-0.5 text-[11px]">
+          <div className="flex items-center gap-1.5 mt-0.5 text-xs">
             <span
               className={
                 item.platform === "spotify"
@@ -87,7 +87,7 @@ export function EmbedListItem({
               {item.category || "Study Focus"}
             </span>
             {isCurrent && (
-              <span className="text-[10px] text-accent-music-glow">• Đang phát</span>
+              <span className="text-xs text-accent-music-glow">• Đang phát</span>
             )}
           </div>
         </div>

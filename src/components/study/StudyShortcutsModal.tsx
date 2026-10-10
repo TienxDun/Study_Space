@@ -143,7 +143,7 @@ export const StudyShortcutsModal = ({
         </div>
 
         {/* Tip footer & Tour re-trigger */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400 pt-2 border-t border-white/10">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400 pt-2 border-t border-white/10">
           <span>💡 <span className="text-slate-300">Mẹo:</span> Phím tắt sẽ tạm ngưng khi bạn nhập nội dung.</span>
           {onOpenTour && (
             <button
