@@ -30,6 +30,7 @@ export const STORAGE_KEYS = {
   customEmbeds: "huflit_study_custom_embeds",
   activeEmbed: "huflit_study_active_embed",
   embedViewMode: "huflit_study_embed_view_mode",
+  embedStageTipsDismissed: "huflit_study_embed_stage_tips_dismissed",
   // Notes
   multiNotes: "huflit_study_multi_notes",
   oldNotes: "huflit_study_notes",

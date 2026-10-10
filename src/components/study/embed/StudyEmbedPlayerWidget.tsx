@@ -6,14 +6,13 @@ import { StudyEmbedPlayerWidgetProps } from "./types";
 import { usePipMode } from "./hooks/usePipMode";
 import { useEmbedSplitPane } from "./hooks/useEmbedSplitPane";
 import { useEmbedManager } from "./hooks/useEmbedManager";
-import { useYouTubeRemote, ensureYouTubeJsApi } from "@/lib/youtube-remote";
+import { useYouTubeRemote, ensureYouTubeJsApi, sendYouTubeCommand } from "@/lib/youtube-remote";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { PipHeader } from "./components/PipHeader";
 import { StudioHeader } from "./components/StudioHeader";
 import { StagePlayer } from "./components/StagePlayer";
 import { ResizableDivider } from "./components/ResizableDivider";
 import { DiscoveryHub } from "./components/DiscoveryHub";
-import { CURATED_EMBED_PRESETS } from "../study-types";
 
 export const StudyEmbedPlayerWidget = ({
   isOpen,
@@ -66,8 +65,8 @@ export const StudyEmbedPlayerWidget = ({
     handleStopStream,
     handlePlayFromInput,
     handleDeleteSaved,
+    handleToggleSaveItem,
     resolveActiveItemMetadata,
-    changeActiveItem,
   } = useEmbedManager({
     onStreamActiveChange,
     onActiveItemChange,
@@ -76,18 +75,6 @@ export const StudyEmbedPlayerWidget = ({
       if (onOpen) onOpen();
     },
   });
-
-  // Khi mở Đài phát embed lần đầu và chưa có bài nào được chọn, thiết lập mặc định bài "Coffee Shop Ambience & Bossa Nova Jazz"
-  useEffect(() => {
-    if (isOpen && !activeItem) {
-      const defaultPreset =
-        CURATED_EMBED_PRESETS.find((p) => p.id === "preset-coffee-shop-jazz") ||
-        CURATED_EMBED_PRESETS[2];
-      if (defaultPreset) {
-        changeActiveItem(defaultPreset);
-      }
-    }
-  }, [isOpen, activeItem, changeActiveItem]);
 
   // Background resolver for activeItem
   useEffect(() => {
@@ -198,7 +185,17 @@ export const StudyEmbedPlayerWidget = ({
                 isIframeLoading={isIframeLoading}
                 setIsIframeLoading={setIsIframeLoading}
                 onEnterPip={enterPip}
+                isSaved={Boolean(
+                  activeItem &&
+                    savedEmbeds.some(
+                      (s) => s.id === activeItem.id || s.url === activeItem.url
+                    )
+                )}
+                onToggleSave={() => {
+                  if (activeItem) handleToggleSaveItem(activeItem);
+                }}
                 onStopStream={(e) => {
+                  sendYouTubeCommand("pauseVideo");
                   handleStopStream(e);
                   exitPip(false);
                 }}

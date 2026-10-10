@@ -129,15 +129,16 @@ export const StudyTopBar = ({
               </span>
             </motion.button>
 
-            {/* Right Action Icons (Chuẩn hóa h-10) */}
+            {/* Right Action Icons - Floating Ghost HUD (Hoàn toàn không background, không viền) */}
             <div
               id="tour-topbar-actions"
-              className="flex items-center h-10 gap-1 px-1.5 rounded-full bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] pointer-events-auto transition-colors shrink-0"
+              aria-label="Thanh công cụ nhanh Study Space"
+              className="flex items-center h-9 sm:h-10 gap-0.5 sm:gap-1 pointer-events-auto select-none transition-all shrink-0 drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]"
             >
               {/* Keyboard Shortcuts Cheat Sheet Button (Ẩn trên mobile không có bàn phím cứng) */}
               <button
                 onClick={onToggleShortcuts}
-                className="hidden sm:flex w-8 h-8 rounded-full items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-colors active:scale-90 cursor-pointer"
+                className="hidden sm:flex w-8 h-8 rounded-xl items-center justify-center text-slate-200 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
                 title="Bảng tra cứu phím tắt (?)"
               >
                 <HelpCircle className="w-4 h-4" />
@@ -146,7 +147,7 @@ export const StudyTopBar = ({
               {/* Zen Mode Toggle (Ẩn thanh công cụ để tập trung) */}
               <button
                 onClick={onEnterZen}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-colors active:scale-90 cursor-pointer"
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-200 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
                 title="Chế độ Zen: Ẩn toàn bộ UI (Z)"
               >
                 <EyeOff className="w-4 h-4" />
@@ -155,23 +156,23 @@ export const StudyTopBar = ({
               {/* Global Mute Toggle */}
               <button
                 onClick={onToggleMute}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-colors active:scale-90 cursor-pointer"
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-200 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
                 title={isGlobalMuted ? "Bật âm thanh không gian (M)" : "Tắt toàn bộ âm thanh (M)"}
               >
                 {isGlobalMuted ? (
-                  <VolumeX className="w-4 h-4 text-accent-stream-rose-bright" />
+                  <VolumeX className="w-4 h-4 text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
                 ) : (
-                  <Volume2 className="w-4 h-4 text-accent-music-glow" />
+                  <Volume2 className="w-4 h-4 text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.7)]" />
                 )}
               </button>
 
               {/* Settings Toggle */}
               <button
                 onClick={onToggleSettings}
-                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors active:scale-90 cursor-pointer ${
+                className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
                   isSettingsOpen
-                    ? "bg-white text-panel shadow-md font-bold"
-                    : "text-slate-300 hover:text-white hover:bg-white/10"
+                    ? "bg-white/20 text-white backdrop-blur-md shadow-[0_0_14px_rgba(255,255,255,0.3)] font-bold"
+                    : "text-slate-200 hover:text-white hover:bg-white/10 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
                 }`}
                 title="Cài đặt không gian học tập"
               >
@@ -181,7 +182,7 @@ export const StudyTopBar = ({
               {/* Fullscreen Toggle */}
               <button
                 onClick={onToggleFullscreen}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-colors active:scale-90 cursor-pointer"
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-200 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
                 title={isFullscreen ? "Thoát toàn màn hình (F)" : "Toàn màn hình (F)"}
               >
                 {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -191,7 +192,7 @@ export const StudyTopBar = ({
         )}
       </AnimatePresence>
 
-      {/* Floating Zen Mode Restore Button */}
+      {/* Floating Zen Mode Restore Button - Minimal icon-only for true zen */}
       {isZenMode && (
         <motion.button
           initial={{ opacity: 0, y: -20, scale: 0.9 }}
@@ -199,14 +200,10 @@ export const StudyTopBar = ({
           exit={{ opacity: 0, y: -20, scale: 0.9 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
           onClick={onExitZen}
-          className="absolute top-4 right-4 z-50 flex items-center gap-2 h-10 px-4 rounded-full bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 text-white text-xs font-semibold shadow-[0_20px_50px_rgba(0,0,0,0.6)] transition-colors active:scale-95 cursor-pointer group"
-          title="Bấm để hiện lại giao diện điều khiển (Z)"
+          className="absolute top-4 right-4 z-50 flex items-center justify-center w-8 h-8 rounded-xl text-slate-200 hover:text-white hover:bg-white/10 drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] transition-all active:scale-90 cursor-pointer select-none"
+          title="Thoát Zen (Z)"
         >
-          <Eye className="w-3.5 h-3.5 text-accent-music-bright group-hover:scale-110 transition-transform" />
-          <span className="tracking-tight">Hiện lại giao diện</span>
-          <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-mono">
-            Z
-          </kbd>
+          <Eye className="w-4 h-4 text-accent-music-bright drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
         </motion.button>
       )}
     </>

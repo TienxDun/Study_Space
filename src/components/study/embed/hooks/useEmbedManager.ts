@@ -170,7 +170,7 @@ export function useEmbedManager({
     (e?: React.MouseEvent) => {
       if (e) e.stopPropagation();
       changeActiveItem(null);
-      toast.info("Đã dừng phát luồng ngoài");
+      toast.info("Đã dừng phát đài này");
     },
     [changeActiveItem]
   );
@@ -246,6 +246,21 @@ export function useEmbedManager({
     [savedEmbeds]
   );
 
+  const handleToggleSaveItem = useCallback(
+    (item: StudyEmbedItem) => {
+      const exists = savedEmbeds.some((s) => s.id === item.id || s.url === item.url);
+      const updated = exists
+        ? savedEmbeds.filter((s) => s.id !== item.id && s.url !== item.url)
+        : [{ ...item, addedAt: Date.now() }, ...savedEmbeds];
+      setSavedEmbeds(updated);
+      try {
+        localStorage.setItem(STORAGE_CUSTOM_EMBEDS_KEY, JSON.stringify(updated));
+      } catch {}
+      toast.success(exists ? "Đã xóa khỏi danh sách đã lưu" : "Đã lưu đài này");
+    },
+    [savedEmbeds]
+  );
+
   // Danh sách hiển thị sau khi lọc
   const displayedItems = useMemo(() => {
     const isUrlInput = detectedEmbed !== null;
@@ -281,6 +296,7 @@ export function useEmbedManager({
     handleStopStream,
     handlePlayFromInput,
     handleDeleteSaved,
+    handleToggleSaveItem,
     resolveActiveItemMetadata,
   };
 }

@@ -56,7 +56,13 @@ export const StudyLeftDock = ({
       isActive: isPomodoroVisible,
       onClick: onTogglePomodoro,
       icon: (active) => (
-        <Timer className={`w-5 h-5 ${active ? "text-accent-music-glow" : "text-slate-300"}`} />
+        <Timer
+          className={`w-5 h-5 transition-all ${
+            active
+              ? "text-accent-music-glow drop-shadow-[0_0_8px_rgba(52,211,153,0.9)]"
+              : "text-slate-200 group-hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+          }`}
+        />
       ),
     },
     {
@@ -66,7 +72,13 @@ export const StudyLeftDock = ({
       isActive: isTasksOpen,
       onClick: onToggleTasks,
       icon: (active) => (
-        <CheckSquare className={`w-5 h-5 ${active ? "text-accent-music-glow" : "text-slate-300"}`} />
+        <CheckSquare
+          className={`w-5 h-5 transition-all ${
+            active
+              ? "text-accent-music-glow drop-shadow-[0_0_8px_rgba(52,211,153,0.9)]"
+              : "text-slate-200 group-hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+          }`}
+        />
       ),
     },
     {
@@ -76,7 +88,13 @@ export const StudyLeftDock = ({
       isActive: isNotesOpen,
       onClick: onToggleNotes,
       icon: (active) => (
-        <FileText className={`w-5 h-5 ${active ? "text-accent-music-glow" : "text-slate-300"}`} />
+        <FileText
+          className={`w-5 h-5 transition-all ${
+            active
+              ? "text-accent-music-glow drop-shadow-[0_0_8px_rgba(52,211,153,0.9)]"
+              : "text-slate-200 group-hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+          }`}
+        />
       ),
     },
     {
@@ -86,7 +104,13 @@ export const StudyLeftDock = ({
       isActive: isScenesOpen,
       onClick: onToggleScenes,
       icon: (active) => (
-        <ImageIcon className={`w-5 h-5 ${active ? "text-accent-scene-glow" : "text-slate-300"}`} />
+        <ImageIcon
+          className={`w-5 h-5 transition-all ${
+            active
+              ? "text-accent-scene-glow drop-shadow-[0_0_8px_rgba(56,189,248,0.9)]"
+              : "text-slate-200 group-hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+          }`}
+        />
       ),
     },
     {
@@ -97,7 +121,13 @@ export const StudyLeftDock = ({
       onClick: onToggleEmbed,
       icon: (active) => (
         <div className="relative flex items-center justify-center">
-          <Radio className={`w-5 h-5 ${active ? "text-accent-stream-glow" : "text-slate-300"}`} />
+          <Radio
+            className={`w-5 h-5 transition-all ${
+              active
+                ? "text-accent-stream-glow drop-shadow-[0_0_8px_rgba(244,63,94,0.9)]"
+                : "text-slate-200 group-hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+            }`}
+          />
         </div>
       ),
     },
@@ -113,7 +143,7 @@ export const StudyLeftDock = ({
           animate={{ opacity: 1, x: 0, y: "-50%" }}
           exit={{ opacity: 0, x: -28, y: "-50%" }}
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute left-4 top-1/2 z-40 flex flex-col gap-1.5 p-1.5 rounded-3xl bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] select-none will-change-transform transition-colors"
+          className="absolute left-3 sm:left-4 top-1/2 z-40 flex flex-col gap-1 select-none will-change-transform drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]"
         >
           {dockItems.map((item) => (
             <button
@@ -123,19 +153,19 @@ export const StudyLeftDock = ({
               className="relative w-11 h-11 rounded-2xl flex items-center justify-center cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-music-glow/50"
               title={`${item.title} (${item.shortcut})`}
             >
-              {/* Sliding Active Pill Background (Không bị méo tỷ lệ khi hover icon) */}
+              {/* Sliding Active Pill Background (Không viền, hiệu ứng kính phát sáng tinh tế) */}
               {item.isActive && (
                 <motion.div
                   layoutId="dockActivePill"
                   transition={{ type: "spring", stiffness: 380, damping: 28 }}
-                  className="absolute inset-0 rounded-2xl bg-white/[0.14] border border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.1)_inset]"
+                  className="absolute inset-0 rounded-2xl bg-white/15 backdrop-blur-md shadow-[0_0_16px_rgba(52,211,153,0.25)]"
                 />
               )}
 
               {/* Hover Glow Pill */}
-              <div className="absolute inset-0 rounded-2xl bg-white/0 group-hover:bg-white/[0.06] transition-colors duration-150" />
+              <div className="absolute inset-0 rounded-2xl bg-white/0 group-hover:bg-white/10 transition-colors duration-150" />
 
-              {/* Magnified Icon (Tách biệt scale sang Icon để thanh trượt mượt mà) */}
+              {/* Magnified Icon */}
               <motion.div 
                 whileHover={{ scale: 1.18 }}
                 whileTap={{ scale: 0.9 }}
@@ -150,7 +180,7 @@ export const StudyLeftDock = ({
                 <motion.span
                   layoutId="dockActiveDot"
                   transition={{ type: "spring", stiffness: 380, damping: 28 }}
-                  className="absolute -left-1 w-1 h-3 rounded-full bg-accent-music-glow shadow-[0_0_8px_rgba(52,211,153,0.9)]"
+                  className="absolute -left-1 w-1 h-3 rounded-full bg-accent-music-glow shadow-[0_0_8px_rgba(52,211,153,1)]"
                 />
               )}
 

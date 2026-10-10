@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { Volume1, Volume2, VolumeX } from "lucide-react";
 import { formatTime } from "../utils/time-format";
+import { useWaveformSynthesizer } from "../hooks/useWaveformSynthesizer";
 
 interface WaveformScrubberProps {
   currentTime: number;
   duration: number;
-  frequencyData: number[];
+  isActive: boolean;
   isPlaying: boolean;
   onSeek: (time: number) => void;
   effectiveVolume?: number;
@@ -19,7 +20,7 @@ interface WaveformScrubberProps {
 export function WaveformScrubber({
   currentTime,
   duration,
-  frequencyData,
+  isActive,
   isPlaying,
   onSeek,
   effectiveVolume,
@@ -27,6 +28,9 @@ export function WaveformScrubber({
   isGlobalMuted,
   onToggleMute,
 }: WaveformScrubberProps) {
+  // Hook sóng nằm gọn trong scrubber để nhịp 25fps chỉ re-render cụm này,
+  // không lan lên toàn bộ StudyMusicPlayer.
+  const frequencyData = useWaveformSynthesizer(isActive);
   const [hoverTime, setHoverTime] = useState<number | null>(null);
   const [hoverPositionRatio, setHoverPositionRatio] = useState<number | null>(null);
 

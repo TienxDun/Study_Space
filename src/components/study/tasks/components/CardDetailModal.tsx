@@ -13,9 +13,7 @@ import {
   Edit3,
   Trash2,
   Plus,
-  Minus,
   Clock,
-  Timer,
   Play,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -60,46 +58,13 @@ export const CardDetailModal = React.memo(function CardDetailModal({
   const [editingChecklistText, setEditingChecklistText] = useState("");
   const [isPriorityPopoverOpen, setIsPriorityPopoverOpen] = useState(false);
   const [isDueDatePopoverOpen, setIsDueDatePopoverOpen] = useState(false);
-  const [isPomodoroPopoverOpen, setIsPomodoroPopoverOpen] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   const closeAllPopovers = useCallback(() => {
     setIsStatusDropdownOpen(false);
     setIsPriorityPopoverOpen(false);
     setIsDueDatePopoverOpen(false);
-    setIsPomodoroPopoverOpen(false);
   }, [setIsStatusDropdownOpen]);
-
-  const handleUpdatePomodoros = useCallback(
-    (delta: number) => {
-      if (!selectedCard) return;
-      const currentVal = selectedCard.pomodoros || 0;
-      const nextVal = Math.max(0, currentVal + delta);
-      setSelectedCard({ ...selectedCard, pomodoros: nextVal });
-      updateCurrentBoard((b) => ({
-        ...b,
-        cards: b.cards.map((c) =>
-          c.id === selectedCard.id ? { ...c, pomodoros: nextVal } : c
-        ),
-      }));
-    },
-    [selectedCard, setSelectedCard, updateCurrentBoard]
-  );
-
-  const handleSetPomodoros = useCallback(
-    (val: number) => {
-      if (!selectedCard) return;
-      const nextVal = Math.max(0, val);
-      setSelectedCard({ ...selectedCard, pomodoros: nextVal });
-      updateCurrentBoard((b) => ({
-        ...b,
-        cards: b.cards.map((c) =>
-          c.id === selectedCard.id ? { ...c, pomodoros: nextVal } : c
-        ),
-      }));
-    },
-    [selectedCard, setSelectedCard, updateCurrentBoard]
-  );
 
   // Intercept Escape key to close popover or detail modal without closing parent tasks widget
   useEffect(() => {
@@ -114,8 +79,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
         if (
           isPriorityPopoverOpen ||
           isDueDatePopoverOpen ||
-          isStatusDropdownOpen ||
-          isPomodoroPopoverOpen
+          isStatusDropdownOpen
         ) {
           closeAllPopovers();
         } else {
@@ -254,7 +218,6 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   onClick={() => {
                     setIsPriorityPopoverOpen(false);
                     setIsDueDatePopoverOpen(false);
-                    setIsPomodoroPopoverOpen(false);
                     setIsStatusDropdownOpen(!isStatusDropdownOpen);
                   }}
                   className="w-full h-8 px-2 sm:px-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-xs font-medium text-slate-200 flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs"
@@ -322,7 +285,6 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   onClick={() => {
                     setIsStatusDropdownOpen(false);
                     setIsDueDatePopoverOpen(false);
-                    setIsPomodoroPopoverOpen(false);
                     setIsPriorityPopoverOpen(!isPriorityPopoverOpen);
                   }}
                   className={`w-full h-8 px-2 sm:px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${
@@ -418,7 +380,6 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                     onClick={() => {
                       setIsStatusDropdownOpen(false);
                       setIsPriorityPopoverOpen(false);
-                      setIsPomodoroPopoverOpen(false);
                       setIsDueDatePopoverOpen(!isDueDatePopoverOpen);
                     }}
                     className={`w-full h-8 px-2 sm:px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${deadlineInfo.badgeClass}`}
@@ -440,7 +401,6 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                     onClick={() => {
                       setIsStatusDropdownOpen(false);
                       setIsPriorityPopoverOpen(false);
-                      setIsPomodoroPopoverOpen(false);
                       setIsDueDatePopoverOpen(!isDueDatePopoverOpen);
                     }}
                     className="w-full h-8 px-2 sm:px-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-xs font-medium text-slate-300 hover:text-white flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs"
@@ -629,143 +589,25 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                 </AnimatePresence>
               </div>
 
-              {/* 4. Pomodoro Chip with Popover */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsStatusDropdownOpen(false);
-                    setIsPriorityPopoverOpen(false);
-                    setIsDueDatePopoverOpen(false);
-                    setIsPomodoroPopoverOpen(!isPomodoroPopoverOpen);
-                  }}
-                  className={`w-full h-8 px-2 sm:px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${
-                    (selectedCard.pomodoros || 0) > 0
-                      ? "bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20"
-                      : "bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-slate-300 hover:text-white"
-                  }`}
-                  title="Cài đặt phiên Pomodoro"
-                >
-                  <div className="flex items-center gap-1.5 min-w-0 truncate">
-                    <Timer className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    <span className="font-semibold truncate">
-                      {selectedCard.pomodoros || 0} phiên
-                    </span>
-                  </div>
-                  <ChevronDown
-                    className={`w-3 h-3 opacity-60 shrink-0 transition-transform ${
-                      isPomodoroPopoverOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-
-                {/* Pomodoro Popover */}
-                <AnimatePresence>
-                  {isPomodoroPopoverOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setIsPomodoroPopoverOpen(false)}
-                      />
-                      <motion.div
-                        initial={{ opacity: 0, y: 4, scale: 0.97 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 4, scale: 0.97 }}
-                        transition={{ duration: 0.12 }}
-                        className="absolute top-full mt-1.5 left-0 sm:left-auto sm:right-0 w-72 p-3.5 rounded-2xl bg-[#181b22] backdrop-blur-2xl border border-white/15 shadow-2xl z-50 space-y-3"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                            <Timer className="w-3.5 h-3.5 text-amber-400" />
-                            <span>Phiên Pomodoro</span>
-                          </span>
-                          {(selectedCard.pomodoros || 0) > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => handleSetPomodoros(0)}
-                              className="text-[10px] text-rose-400 hover:text-rose-300 font-semibold transition-colors cursor-pointer"
-                            >
-                              Đặt về 0
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Stepper Display */}
-                        <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.04] border border-white/10">
-                          <button
-                            type="button"
-                            onClick={() => handleUpdatePomodoros(-1)}
-                            disabled={(selectedCard.pomodoros || 0) <= 0}
-                            className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 disabled:opacity-20 flex items-center justify-center text-white transition-all cursor-pointer disabled:cursor-not-allowed"
-                            title="Giảm 1 phiên"
-                          >
-                            <Minus className="w-3.5 h-3.5" />
-                          </button>
-
-                          <div className="text-center font-mono">
-                            <div className="text-sm font-bold text-amber-300 flex items-center justify-center gap-1">
-                              <span>🍅</span>
-                              <span>{selectedCard.pomodoros || 0} phiên</span>
-                            </div>
-                            <div className="text-[10px] text-slate-400">
-                              ~{(selectedCard.pomodoros || 0) * 25} phút tập trung
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handleUpdatePomodoros(1)}
-                            className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-white transition-all cursor-pointer"
-                            title="Tăng 1 phiên"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-
-                        {/* Quick Presets */}
-                        <div className="grid grid-cols-4 gap-1.5 pt-1 border-t border-white/10">
-                          {[
-                            { label: "1 (25p)", val: 1 },
-                            { label: "2 (50p)", val: 2 },
-                            { label: "3 (75p)", val: 3 },
-                            { label: "4 (100p)", val: 4 },
-                          ].map((p) => {
-                            const isSelected = (selectedCard.pomodoros || 0) === p.val;
-                            return (
-                              <button
-                                key={p.val}
-                                type="button"
-                                onClick={() => handleSetPomodoros(p.val)}
-                                className={`py-1 rounded-lg text-[10px] font-medium font-mono transition-all cursor-pointer ${
-                                  isSelected
-                                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold"
-                                    : "bg-white/[0.04] text-slate-300 hover:bg-white/10 hover:text-white"
-                                }`}
-                              >
-                                {p.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {/* Start Focus Button */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            startFocusTask({ id: selectedCard.id, title: selectedCard.title });
-                            setSelectedCard(null);
-                            closeAllPopovers();
-                          }}
-                          className="w-full h-8 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-98 text-slate-950 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
-                        >
-                          <Play className="w-3.5 h-3.5 fill-slate-950" />
-                          <span>Bắt đầu học ngay</span>
-                        </button>
-                      </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
-              </div>
+              {/* 4. Action Button: Bắt đầu phiên Pomodoro */}
+              <button
+                type="button"
+                onClick={() => {
+                  startFocusTask({ id: selectedCard.id, title: selectedCard.title });
+                  setSelectedCard(null);
+                  closeAllPopovers();
+                }}
+                className="w-full h-8 px-2 sm:px-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs shadow-amber-500/20"
+                title="Bắt đầu phiên Pomodoro"
+              >
+                <Play className="w-3.5 h-3.5 fill-slate-950 shrink-0" />
+                <span>Bắt đầu</span>
+                {typeof selectedCard.pomodoros === "number" && selectedCard.pomodoros > 0 && (
+                  <span className="text-[10px] opacity-75 font-mono">
+                    ({selectedCard.pomodoros})
+                  </span>
+                )}
+              </button>
             </div>
           </div>
 

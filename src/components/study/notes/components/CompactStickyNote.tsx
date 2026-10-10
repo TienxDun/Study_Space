@@ -10,6 +10,7 @@ import {
   Sun,
   Trash2,
   X,
+  MoreHorizontal,
   Bold,
   Italic,
   CheckSquare,
@@ -80,6 +81,20 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
   handleEditorKeyDown,
   handleSelectionOrFormatChange,
 }: CompactStickyNoteProps) {
+  const [showMoreMenu, setShowMoreMenu] = React.useState(false);
+  const moreMenuRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!showMoreMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setShowMoreMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showMoreMenu]);
+
   return (
     <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
       {/* Top Edge Reflection */}
@@ -98,8 +113,9 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
           isLight ? "border-slate-200/60 bg-white/40" : "border-white/10 bg-white/[0.03]"
         }`}
       >
-        {/* Left: Quick Note Selector Dropdown */}
-        <div className="relative min-w-0" ref={quickNoteListRef}>
+        {/* Left: Quick Note Selector Dropdown & Quick Create Button */}
+        <div className="flex items-center gap-1.5 min-w-0">
+          <div className="relative min-w-0" ref={quickNoteListRef}>
           <button
             type="button"
             onClick={() => setShowQuickNoteList(!showQuickNoteList)}
@@ -121,10 +137,10 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                 initial={{ opacity: 0, scale: 0.95, y: 4 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 4 }}
-                className={`absolute left-0 top-full mt-1.5 w-72 max-h-72 overflow-y-auto custom-study-scroll p-1.5 rounded-2xl border shadow-2xl z-50 ${
+                className={`absolute left-0 top-full mt-1.5 w-72 max-h-72 overflow-y-auto custom-study-scroll p-1.5 rounded-2xl border z-50 ${
                   isLight
-                    ? "bg-white/95 border-slate-200 text-slate-800 shadow-slate-400/40 backdrop-blur-xl"
-                    : "bg-slate-900/95 border-white/20 text-white shadow-black/90 backdrop-blur-xl"
+                    ? "bg-white/85 border-slate-200/90 text-slate-800 shadow-[0_16px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl"
+                    : "bg-black/75 border-white/15 text-white shadow-[0_20px_50px_rgba(0,0,0,0.65)] backdrop-blur-2xl"
                 }`}
               >
                 <div className="flex items-center justify-between px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -203,51 +219,35 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+          </div>
 
-        {/* Center: Apple-style Grab Bar */}
-        <div
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            noteDragControls.start(e, { snapToCursor: false });
-          }}
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 py-2 px-3 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none group/grab pointer-events-auto"
-          title="Nhấn giữ & kéo thả để di chuyển Sticky Note"
-        >
-          <div
-            className={`w-7 h-1 rounded-full transition-all duration-200 ${
-              isLight
-                ? "bg-slate-300 group-hover/grab:bg-slate-500 group-hover/grab:w-9"
-                : "bg-white/20 group-hover/grab:bg-white/50 group-hover/grab:w-9"
-            }`}
-          />
-        </div>
-
-        {/* Right: Window Actions & Quick New Note */}
-        <div className="flex items-center gap-1 shrink-0">
           {/* Nút Tạo nhanh ghi chú mới 1-Click */}
           <button
             onClick={() => {
               handleCreateNote();
               setShowQuickNoteList(false);
             }}
-            className={`p-1.5 rounded-lg border transition-colors cursor-pointer flex items-center justify-center active:scale-90 ${
+            className={`w-7 h-7 rounded-xl border transition-all cursor-pointer flex items-center justify-center active:scale-90 ${
               isLight
                 ? "bg-white/80 hover:bg-emerald-50 border-slate-200 text-slate-700 hover:text-emerald-600 hover:border-emerald-300 shadow-2xs"
                 : "bg-white/5 hover:bg-emerald-500/20 border-white/10 text-emerald-400 hover:border-emerald-500/30"
             }`}
             title="Tạo nhanh ghi chú mới (1-Click)"
           >
-            <Plus className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 stroke-[2.5]" />
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
           </button>
+        </div>
 
+        {/* Right: Window Actions (Pinned, More Menu, Close) */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Nút Ghim */}
           <button
             onClick={() => handleTogglePin(activeNote?.id || "")}
-            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+            className={`w-7 h-7 rounded-xl border transition-colors flex items-center justify-center cursor-pointer ${
               activeNote?.isPinned
                 ? "bg-amber-400/20 border-amber-400/40 text-amber-400"
                 : isLight
-                ? "hover:bg-slate-200/80 border-slate-200 text-slate-400"
+                ? "hover:bg-slate-200/80 border-slate-200 text-slate-400 hover:text-slate-700"
                 : "hover:bg-white/10 border-white/10 text-slate-400 hover:text-white"
             }`}
             title={activeNote?.isPinned ? "Bỏ ghim khỏi đầu danh sách" : "Ghim lên đầu danh sách"}
@@ -255,35 +255,87 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
             <Pin className={`w-3.5 h-3.5 ${activeNote?.isPinned ? "fill-current" : ""}`} />
           </button>
 
-          <button
-            onClick={toggleTheme}
-            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
-              isLight
-                ? "hover:bg-slate-200/80 border-slate-200 text-amber-600"
-                : "hover:bg-white/10 border-white/10 text-amber-300"
-            }`}
-            title={isLight ? "Giao diện tối" : "Giao diện sáng"}
-          >
-            {isLight ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
-          </button>
-
-          {activeNote && (
+          {/* Nút Tùy chọn khác ⋯ */}
+          <div className="relative" ref={moreMenuRef}>
             <button
-              onClick={() => onPromptDelete(activeNote)}
-              className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
-                isLight
-                  ? "hover:bg-red-50 border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200"
-                  : "hover:bg-red-500/15 border-white/10 text-slate-400 hover:text-red-400 hover:border-red-500/30"
+              type="button"
+              onClick={() => setShowMoreMenu((prev) => !prev)}
+              className={`w-7 h-7 rounded-xl border transition-colors flex items-center justify-center cursor-pointer ${
+                showMoreMenu
+                  ? isLight
+                    ? "bg-slate-200 border-slate-300 text-slate-900"
+                    : "bg-white/15 border-white/20 text-white"
+                  : isLight
+                  ? "hover:bg-slate-200/80 border-slate-200 text-slate-400 hover:text-slate-700"
+                  : "hover:bg-white/10 border-white/10 text-slate-400 hover:text-white"
               }`}
-              title="Xóa ghi chú này"
+              title="Tùy chọn khác"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <MoreHorizontal className="w-3.5 h-3.5" />
             </button>
-          )}
 
+            <AnimatePresence>
+              {showMoreMenu && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 4 }}
+                  className={`absolute right-0 top-full mt-1.5 w-44 p-1.5 rounded-2xl border z-50 ${
+                    isLight
+                      ? "bg-white/85 border-slate-200/90 text-slate-800 shadow-[0_16px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl"
+                      : "bg-black/75 border-white/15 text-white shadow-[0_20px_50px_rgba(0,0,0,0.65)] backdrop-blur-2xl"
+                  }`}
+                >
+                  {/* Đổi giao diện Sáng / Tối */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toggleTheme();
+                      setShowMoreMenu(false);
+                    }}
+                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
+                      isLight ? "hover:bg-slate-100 text-slate-700" : "hover:bg-white/10 text-slate-200"
+                    }`}
+                  >
+                    {isLight ? (
+                      <>
+                        <Moon className="w-3.5 h-3.5 text-amber-500" />
+                        <span>Giao diện tối</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sun className="w-3.5 h-3.5 text-amber-300" />
+                        <span>Giao diện sáng</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Xóa ghi chú (Chỉ hiển thị khi có activeNote) */}
+                  {activeNote && (
+                    <>
+                      <div className={`my-1 border-t ${isLight ? "border-slate-100" : "border-white/10"}`} />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowMoreMenu(false);
+                          onPromptDelete(activeNote);
+                        }}
+                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-medium text-red-500 dark:text-red-400 hover:bg-red-500/15 transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Xóa ghi chú này</span>
+                      </button>
+                    </>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Nút Đóng */}
           <button
             onClick={onClose}
-            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+            className={`w-7 h-7 rounded-xl border transition-colors flex items-center justify-center cursor-pointer ${
               isLight
                 ? "hover:bg-slate-200/80 border-slate-200 text-slate-500 hover:text-slate-900"
                 : "hover:bg-white/10 border-white/10 text-slate-400 hover:text-white"

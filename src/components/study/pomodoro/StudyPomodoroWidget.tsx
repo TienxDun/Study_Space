@@ -147,7 +147,7 @@ export const StudyPomodoroWidget = ({
     addLap,
     toggleLapsDrawer,
     clearLaps,
-  } = useStopwatchTimer();
+  } = useStopwatchTimer(showStopwatchMilliseconds);
 
   if (!isVisible) return null;
 
@@ -180,21 +180,22 @@ export const StudyPomodoroWidget = ({
         onToggleLaps={toggleLapsDrawer}
       />
 
-      {/* Focus Task Pill (when a task is linked to Pomodoro) */}
+      {/* Focus Task - Floating Ghost HUD (Không background, không viền) */}
       {currentTab === "pomodoro" && focusTask && (
-        <div className="mt-1 mb-1 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/80 hover:bg-black/90 border border-white/15 hover:border-amber-500/40 text-xs shadow-[0_8px_25px_rgba(0,0,0,0.6),0_0_12px_rgba(245,158,11,0.12)] backdrop-blur-2xl transition-all animate-in fade-in zoom-in-95 duration-200">
+        <div className="mt-1 mb-1 flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 rounded-xl text-xs select-none transition-all drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] animate-in fade-in zoom-in-95 duration-200 pointer-events-auto">
           <div className="flex items-center gap-1.5 min-w-0">
-            <Target className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span className="text-[11px] font-medium text-amber-400/90 shrink-0">
+            <Target className="w-3.5 h-3.5 text-amber-400 shrink-0 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-pulse" />
+            <span className="text-[11px] font-semibold text-amber-400 shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
               Mục tiêu:
             </span>
-            <span className="font-semibold text-slate-100 truncate max-w-[170px] sm:max-w-[240px]">
+            <span className="font-semibold text-slate-100 truncate max-w-[170px] sm:max-w-[240px] drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] tracking-tight">
               {focusTask.title}
             </span>
           </div>
           <button
+            type="button"
             onClick={clearFocus}
-            className="p-1 -mr-1 rounded-full text-slate-400 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-1 rounded-lg text-slate-300 hover:text-rose-400 hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
             title="Hủy liên kết nhiệm vụ này"
           >
             <X className="w-3.5 h-3.5" />

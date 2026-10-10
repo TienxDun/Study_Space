@@ -36,6 +36,9 @@ export function useAudioPlayer({
   const [duration, setDuration] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Mốc thời gian đã báo lên state — timeupdate bắn ~4Hz nên chỉ setState
+  // khi lệch đủ 250ms để cây player không re-render liên tục.
+  const lastReportedTimeRef = useRef(0);
 
   const currentTrack = tracks[currentTrackIndex] || tracks[0];
   const effectiveVolume = isGlobalMuted ? 0 : volume;
@@ -193,6 +196,7 @@ export function useAudioPlayer({
     const newTracks = STUDY_TRACKS_BY_MOOD[mood] || [];
     setTracks(newTracks);
     setCurrentTrackIndex(0);
+    lastReportedTimeRef.current = 0;
     setCurrentTime(0);
     setIsPlaying(true);
     if (audioRef.current) {
@@ -213,6 +217,8 @@ export function useAudioPlayer({
     if (idx !== -1) {
       setCurrentTrackIndex(idx);
     }
+    lastReportedTimeRef.current = 0;
+    setCurrentTime(0);
     setIsPlaying(true);
     if (audioRef.current) {
       audioRef.current.play().catch(() => {});
@@ -280,6 +286,7 @@ export function useAudioPlayer({
   }, []);
 
   const handleSeek = useCallback((time: number) => {
+    lastReportedTimeRef.current = time;
     setCurrentTime(time);
     const audio = audioRef.current;
     if (audio && isFinite(audio.duration)) {
@@ -295,7 +302,11 @@ export function useAudioPlayer({
 
   const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
+      const t = audioRef.current.currentTime;
+      if (Math.abs(t - lastReportedTimeRef.current) >= 0.25) {
+        lastReportedTimeRef.current = t;
+        setCurrentTime(t);
+      }
       if (isFinite(audioRef.current.duration) && audioRef.current.duration > 0) {
         setDuration(audioRef.current.duration);
       }

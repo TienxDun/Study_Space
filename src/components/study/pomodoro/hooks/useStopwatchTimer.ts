@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-export function useStopwatchTimer() {
+export function useStopwatchTimer(showMilliseconds = true) {
   const [stopwatchTime, setStopwatchTime] = useState(0); // in milliseconds
   const [isStopwatchRunning, setIsStopwatchRunning] = useState(false);
   const [laps, setLaps] = useState<number[]>([]);
@@ -12,14 +12,15 @@ export function useStopwatchTimer() {
     let interval: NodeJS.Timeout | null = null;
     if (isStopwatchRunning) {
       const startTime = Date.now() - stopwatchTime;
+      // Chỉ tick 30ms khi thật sự hiển thị ms, còn lại 200ms là đủ mượt cho giây.
       interval = setInterval(() => {
         setStopwatchTime(Date.now() - startTime);
-      }, 30); // ~33fps for smooth centiseconds
+      }, showMilliseconds ? 30 : 200);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isStopwatchRunning]);
+  }, [isStopwatchRunning, showMilliseconds]);
 
   const toggleStopwatch = useCallback(() => {
     setIsStopwatchRunning((prev) => !prev);

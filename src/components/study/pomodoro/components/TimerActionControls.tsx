@@ -29,22 +29,24 @@ export function TimerActionControls({
   if (currentTab === "clock") return null;
 
   return (
-    <div className="h-16 flex items-center justify-center gap-4 sm:gap-5 mt-2">
+    <div className="h-16 flex items-center justify-center gap-4 sm:gap-6 mt-2 select-none pointer-events-auto">
       {currentTab === "pomodoro" ? (
         <>
-          {/* Reset Circular Button */}
+          {/* Reset Ghost Button */}
           <button
+            type="button"
             onClick={onResetPomo}
-            className="w-12 h-12 rounded-full bg-black/80 hover:bg-black text-white/90 hover:text-white backdrop-blur-2xl border border-white/15 flex items-center justify-center transition-all active:scale-90 shadow-[0_8px_25px_rgba(0,0,0,0.5)] cursor-pointer"
+            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
             title="Đặt lại từ đầu"
           >
-            <RotateCcw className="w-5 h-5" />
+            <RotateCcw className="w-5 h-5 transition-transform duration-200 group-hover:-rotate-45" />
           </button>
 
-          {/* Big White Circular Play / Pause Button */}
+          {/* Focal Hero Play / Pause Button (Không viền, ánh sáng tỏa tự nhiên) */}
           <button
+            type="button"
             onClick={onTogglePomoRunning}
-            className="w-16 h-16 rounded-full bg-white text-black hover:bg-slate-100 flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-[0_12px_35px_rgba(0,0,0,0.6)] cursor-pointer"
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white text-slate-950 hover:bg-slate-100 flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-[0_0_28px_rgba(255,255,255,0.4),0_8px_25px_rgba(0,0,0,0.5)] cursor-pointer select-none"
             title={isPomoRunning ? "Tạm dừng" : "Bắt đầu tập trung"}
           >
             {isPomoRunning ? (
@@ -54,30 +56,33 @@ export function TimerActionControls({
             )}
           </button>
 
-          {/* Skip Circular Button */}
+          {/* Skip Ghost Button */}
           <button
+            type="button"
             onClick={onSkipPomo}
-            className="w-12 h-12 rounded-full bg-black/80 hover:bg-black text-white/90 hover:text-white backdrop-blur-2xl border border-white/15 flex items-center justify-center transition-all active:scale-90 shadow-[0_8px_25px_rgba(0,0,0,0.5)] cursor-pointer"
+            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
             title="Bỏ qua / Hoàn thành phiên"
           >
-            <SkipForward className="w-5 h-5" />
+            <SkipForward className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-0.5" />
           </button>
         </>
       ) : currentTab === "stopwatch" ? (
         <>
-          {/* Reset Stopwatch */}
+          {/* Reset Stopwatch Ghost Button */}
           <button
+            type="button"
             onClick={onResetStopwatch}
-            className="w-12 h-12 rounded-full bg-black/80 hover:bg-black text-white/90 hover:text-white backdrop-blur-2xl border border-white/15 flex items-center justify-center transition-all active:scale-90 shadow-[0_8px_25px_rgba(0,0,0,0.5)] cursor-pointer"
+            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
             title="Đặt lại từ đầu"
           >
-            <RotateCcw className="w-5 h-5" />
+            <RotateCcw className="w-5 h-5 transition-transform duration-200 group-hover:-rotate-45" />
           </button>
 
-          {/* Big White Play / Pause Stopwatch */}
+          {/* Focal Hero Play / Pause Stopwatch */}
           <button
+            type="button"
             onClick={onToggleStopwatch}
-            className="w-16 h-16 rounded-full bg-white text-black hover:bg-slate-100 flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-[0_12px_35px_rgba(0,0,0,0.6)] cursor-pointer"
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white text-slate-950 hover:bg-slate-100 flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-[0_0_28px_rgba(255,255,255,0.4),0_8px_25px_rgba(0,0,0,0.5)] cursor-pointer select-none"
             title={isStopwatchRunning ? "Tạm dừng" : "Bắt đầu bấm giờ"}
           >
             {isStopwatchRunning ? (
@@ -87,14 +92,15 @@ export function TimerActionControls({
             )}
           </button>
 
-          {/* Flag / Lap Button */}
+          {/* Flag / Lap Ghost Button */}
           <button
+            type="button"
             onClick={onAddLap}
             disabled={!isStopwatchRunning}
-            className={`w-12 h-12 rounded-full backdrop-blur-2xl border flex items-center justify-center transition-all active:scale-90 shadow-[0_8px_25px_rgba(0,0,0,0.5)] cursor-pointer ${
+            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all ${
               isStopwatchRunning
-                ? "bg-black/80 hover:bg-black border-white/15 text-white"
-                : "bg-black/40 border-white/5 text-white/30 cursor-not-allowed"
+                ? "text-slate-300 hover:text-white hover:bg-white/10 active:scale-90 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
+                : "text-white/20 cursor-not-allowed drop-shadow-none"
             }`}
             title="Ghi vòng (Lap)"
           >

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
@@ -36,6 +37,7 @@ export const StudyNotesWidget = ({
 
   // Theme state
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [isMounted, setIsMounted] = useState(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [showQuickNoteList, setShowQuickNoteList] = useState<boolean>(false);
   const [compactSize, setCompactSize] = useState<{ width: number; height: number }>({
@@ -82,6 +84,7 @@ export const StudyNotesWidget = ({
 
   // Load preferences from localStorage on mount
   useEffect(() => {
+    setIsMounted(true);
     try {
       const savedTheme = localStorage.getItem(STORAGE_THEME_KEY);
       if (savedTheme === "light" || savedTheme === "dark") {
@@ -274,13 +277,13 @@ export const StudyNotesWidget = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  return (
+  const widgetContent = (
     <>
       <AnimatePresence>
         {isOpen && (
           <div
             ref={dragContainerRef}
-            className="fixed inset-0 z-50 pointer-events-none overflow-hidden"
+            className="fixed inset-0 z-[60] pointer-events-none overflow-hidden"
           >
             {/* Window Container */}
             <motion.div
@@ -325,7 +328,7 @@ export const StudyNotesWidget = ({
                 width: compactSize.width,
                 height: compactSize.height,
               }}
-              className={`pointer-events-auto fixed min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] flex flex-col rounded-3xl backdrop-blur-2xl border overflow-hidden select-none transform-gpu will-change-transform z-50 group/compact ${
+              className={`pointer-events-auto fixed min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] flex flex-col rounded-3xl backdrop-blur-2xl border overflow-hidden select-none transform-gpu will-change-transform z-[60] group/compact ${
                 isDragging
                   ? "shadow-[0_30px_80px_rgba(0,0,0,0.65)] ring-2 ring-emerald-500/40 cursor-grabbing"
                   : "transition-colors duration-150"
@@ -383,4 +386,6 @@ export const StudyNotesWidget = ({
       />
     </>
   );
+
+  return isMounted ? createPortal(widgetContent, document.body) : widgetContent;
 };

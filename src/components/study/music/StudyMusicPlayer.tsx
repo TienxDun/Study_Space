@@ -8,7 +8,6 @@ import { StudyMusicPlayerProps } from "./types";
 import { SoundMixerWidget } from "../mixer/SoundMixerWidget";
 import { MixerTab } from "../mixer/types";
 import { useAudioPlayer } from "./hooks/useAudioPlayer";
-import { useWaveformSynthesizer } from "./hooks/useWaveformSynthesizer";
 import { useYouTubeRemote } from "@/lib/youtube-remote";
 import { WaveformScrubber } from "./components/WaveformScrubber";
 import { PlayerControls } from "./components/PlayerControls";
@@ -106,8 +105,6 @@ export const StudyMusicPlayer = ({
     toggleExternalPlay,
     onStopExternalStream,
   });
-
-  const frequencyData = useWaveformSynthesizer(isPlaying || isExternalStreamActive);
 
   const isShowingExternalStream = Boolean(
     isExternalStreamActive && externalStreamItem && !isPlaying
@@ -264,7 +261,7 @@ export const StudyMusicPlayer = ({
               <WaveformScrubber
                 currentTime={currentTime}
                 duration={duration}
-                frequencyData={frequencyData}
+                isActive={isPlaying || isExternalStreamActive}
                 isPlaying={isPlaying}
                 onSeek={handleSeek}
                 effectiveVolume={effectiveVolume}
@@ -287,32 +284,47 @@ export const StudyMusicPlayer = ({
               pointerEvents: isZenMode ? "none" : "auto",
             }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="fixed bottom-3 right-3 sm:bottom-3.5 sm:right-3.5 z-50"
+            className="fixed bottom-3 right-3 sm:bottom-3.5 sm:right-3.5 z-40"
           >
-            {/* Unified Modern Glassmorphic Audio Dock Capsule */}
+            {/* Minimalist Floating Ghost Audio Dock (Hoàn toàn không background, không viền) */}
             <div
               id="audio-control-dock"
-              className="h-10 sm:h-11 p-1 rounded-full bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 hover:border-white/25 shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex items-center gap-1 select-none pointer-events-auto transition-all will-change-transform"
+              className="h-9 sm:h-10 flex items-center gap-1 sm:gap-1.5 select-none pointer-events-auto transition-all will-change-transform drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]"
             >
               {/* Tab 1: Mở Playlist Nhạc Chill */}
               <button
                 onClick={handleOpenMusicTab}
-                className={`group relative h-8 sm:h-9 px-3 sm:px-3.5 rounded-full flex items-center gap-1.5 sm:gap-2 transition-all active:scale-95 cursor-pointer text-xs font-semibold ${
+                className={`group relative h-8 sm:h-8.5 px-2.5 sm:px-3 rounded-xl flex items-center gap-1.5 sm:gap-2 transition-all active:scale-95 cursor-pointer text-xs font-semibold ${
                   isMixerOpen && activeMixerTab === "music"
-                    ? "bg-white/[0.18] text-white border border-white/30 shadow-[0_0_15px_rgba(255,255,255,0.15)] backdrop-blur-md"
-                    : "text-slate-300 hover:text-white hover:bg-white/[0.08] border border-transparent"
+                    ? "text-white bg-white/15 backdrop-blur-md shadow-[0_0_16px_rgba(52,211,153,0.3)]"
+                    : "text-slate-200 hover:text-white hover:bg-white/10"
                 }`}
                 title="Mở danh sách nhạc Chill & Thư giãn"
               >
                 <Music2
-                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 shrink-0 ${
+                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-all duration-200 group-hover:scale-110 shrink-0 ${
                     isMixerOpen && activeMixerTab === "music"
-                      ? "text-accent-music-glow animate-pulse"
-                      : "text-accent-music-glow/90"
+                      ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse"
+                      : isPlaying && !isGlobalMuted
+                      ? "text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.7)]"
+                      : "text-emerald-400/80 group-hover:text-emerald-300 group-hover:drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]"
                   }`}
                 />
                 <span className="sr-only">Nhạc Chill</span>
-                <span className="leading-none">Nhạc</span>
+                <span className="leading-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Nhạc</span>
+
+                {/* Playing indicator: eq tĩnh — waveform ở giữa đã là motion chính */}
+                {(isMixerOpen && activeMixerTab === "music" ||
+                  (isPlaying && !isGlobalMuted)) && (
+                  <span
+                    className="flex items-end gap-[2px] h-3 ml-0.5 shrink-0"
+                    aria-hidden="true"
+                  >
+                    <span className="w-[2.5px] rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" style={{ height: "5px" }} />
+                    <span className="w-[2.5px] rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" style={{ height: "11px" }} />
+                    <span className="w-[2.5px] rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" style={{ height: "7px" }} />
+                  </span>
+                )}
               </button>
 
               {/* Tab 2: Mở Bộ trộn âm thanh thiên nhiên */}
@@ -324,12 +336,12 @@ export const StudyMusicPlayer = ({
                   <button
                     id="tour-music-mixer-btn"
                     onClick={handleOpenAmbienceTab}
-                    className={`group relative h-8 sm:h-9 px-3 sm:px-3.5 rounded-full flex items-center gap-1.5 sm:gap-2 transition-all active:scale-95 cursor-pointer text-xs font-semibold ${
+                    className={`group relative h-8 sm:h-8.5 px-2.5 sm:px-3 rounded-xl flex items-center gap-1.5 sm:gap-2 transition-all active:scale-95 cursor-pointer text-xs font-semibold ${
                       isAmbienceTabOpen
-                        ? "bg-white/[0.18] text-white border border-white/30 shadow-[0_0_15px_rgba(255,255,255,0.15)] backdrop-blur-md"
+                        ? "text-white bg-white/15 backdrop-blur-md shadow-[0_0_16px_rgba(56,189,248,0.3)]"
                         : isAmbienceActive
-                        ? "bg-sky-500/20 text-sky-200 border border-sky-400/40 hover:bg-sky-500/30 shadow-[0_0_15px_rgba(56,189,248,0.25)]"
-                        : "text-slate-300 hover:text-white hover:bg-white/[0.08] border border-transparent"
+                        ? "text-sky-200 hover:text-white hover:bg-sky-500/20"
+                        : "text-slate-200 hover:text-white hover:bg-white/10"
                     }`}
                     title={
                       isAmbienceActive
@@ -340,16 +352,16 @@ export const StudyMusicPlayer = ({
                     }
                   >
                     <CloudRain
-                      className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 shrink-0 ${
+                      className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-all duration-200 group-hover:scale-110 shrink-0 ${
                         isAmbienceTabOpen
-                          ? "text-accent-scene-glow animate-pulse"
+                          ? "text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.9)] animate-pulse"
                           : isAmbienceActive
-                          ? "text-accent-scene-bright animate-pulse"
-                          : "text-accent-scene-bright/90"
+                          ? "text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.8)] animate-pulse"
+                          : "text-sky-400/80 group-hover:text-sky-300 group-hover:drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]"
                       }`}
                     />
                     <span className="sr-only">Âm thanh nền</span>
-                    <span className="leading-none">Âm nền</span>
+                    <span className="leading-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Âm nền</span>
 
                     {/* Active Ambience Indicator Badge */}
                     {isAmbienceActive && (
@@ -358,13 +370,13 @@ export const StudyMusicPlayer = ({
                         aria-label={`${ambientActiveCount} âm thanh đang bật`}
                       >
                         {!isGlobalMuted && (
-                          <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-accent-scene opacity-75 animate-ping" />
+                          <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-sky-400 opacity-75 animate-ping" />
                         )}
                         <span
                           className={`relative inline-flex items-center justify-center min-w-3.5 h-3.5 px-1 rounded-full text-[9px] font-black leading-none ${
                             isGlobalMuted
                               ? "bg-amber-400 text-slate-950"
-                              : "bg-accent-scene text-slate-950 shadow-[0_0_8px_rgba(56,189,248,0.8)]"
+                              : "bg-sky-400 text-slate-950 shadow-[0_0_8px_rgba(56,189,248,0.8)]"
                           }`}
                         >
                           {ambientActiveCount}

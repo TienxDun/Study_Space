@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Tv,
   Music2,
@@ -7,9 +8,18 @@ import {
   Square,
   PictureInPicture2,
   Radio,
+  Bookmark,
+  BookmarkCheck,
+  Link2,
+  Volume2,
+  Play,
+  Lightbulb,
+  X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { StudyEmbedItem } from "../types";
 import { ensureYouTubeJsApi } from "@/lib/youtube-remote";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 interface StagePlayerProps {
   activeItem: StudyEmbedItem | null;
@@ -18,6 +28,8 @@ interface StagePlayerProps {
   setIsIframeLoading: (loading: boolean) => void;
   onEnterPip: () => void;
   onStopStream: (e?: React.MouseEvent) => void;
+  isSaved?: boolean;
+  onToggleSave?: () => void;
 }
 
 export function StagePlayer({
@@ -27,7 +39,53 @@ export function StagePlayer({
   setIsIframeLoading,
   onEnterPip,
   onStopStream,
+  isSaved = false,
+  onToggleSave,
 }: StagePlayerProps) {
+  const handleCopyLink = async () => {
+    if (!activeItem) return;
+    try {
+      await navigator.clipboard.writeText(activeItem.url);
+      toast.success("Đã copy link đài này");
+    } catch {
+      toast.error("Không copy được link");
+    }
+  };
+
+  const [showTips, setShowTips] = useState(true);
+
+  // Chỉ hiện Lưu/Copy với đài do người dùng tự dán link (id "custom-*",
+  // quy ước tạo trong useEmbedManager.handlePlayFromInput). Đài nạp sẵn
+  // (preset "preset-*") đã có trong danh sách nên 2 nút này thừa.
+  const isCustomItem = activeItem?.id.startsWith("custom-") ?? false;
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(STORAGE_KEYS.embedStageTipsDismissed) === "1") {
+        setShowTips(false);
+      }
+    } catch {}
+  }, []);
+
+  const handleDismissTips = () => {
+    setShowTips(false);
+    try {
+      localStorage.setItem(STORAGE_KEYS.embedStageTipsDismissed, "1");
+    } catch {}
+  };
+
+  const handleToggleTips = () => {
+    setShowTips((prev) => {
+      const next = !prev;
+      try {
+        if (next) {
+          localStorage.removeItem(STORAGE_KEYS.embedStageTipsDismissed);
+        } else {
+          localStorage.setItem(STORAGE_KEYS.embedStageTipsDismissed, "1");
+        }
+      } catch {}
+      return next;
+    });
+  };
   return (
     <div
       style={{ flexBasis: `${splitRatio}%` }}
@@ -58,7 +116,7 @@ export function StagePlayer({
                   style={{ animationDelay: "300ms" }}
                 />
               </div>
-              <span className="text-[11px] font-medium text-slate-300">
+              <span className="text-xs font-medium text-slate-300">
                 Đang tải luồng phát...
               </span>
             </div>
@@ -77,9 +135,22 @@ export function StagePlayer({
             </div>
           </div>
 
-          {/* Seamless Single-line Media Bar */}
+          {/* Spotify autoplay notice: luôn hiện nổi bật, không nằm trong tips tắt được */}
+          {activeItem.platform === "spotify" && (
+            <div className="flex items-center gap-2.5 rounded-2xl border border-[#1DB954]/40 bg-[#1DB954]/10 p-3 shadow-[0_0_16px_rgba(29,185,84,0.15)]">
+              <span className="w-7 h-7 rounded-lg bg-[#1DB954]/15 border border-[#1DB954]/30 flex items-center justify-center shrink-0">
+                <Play className="w-3.5 h-3.5 text-[#1DB954] fill-current" />
+              </span>
+              <p className="text-xs leading-relaxed text-slate-300">
+                <span className="text-white font-semibold">Spotify cần bấm ▶ tay</span>
+                {" — "}trình duyệt chặn autoplay trong khung nhúng.
+              </p>
+            </div>
+          )}
+
+          {/* Seamless Single-line Media Bar: giữ nguyên 3 nút thao tác */}
           <div className="flex items-center justify-between gap-3 px-1 py-0.5">
-            {/* Left: Badge + Truncated Title on single line */}
+            {/* Left: Badge + Truncated Title */}
             <div className="flex items-center gap-2 min-w-0 flex-1">
               {activeItem.platform === "spotify" ? (
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-accent-music/15 text-accent-music-bright text-[10px] font-bold shrink-0">
@@ -106,7 +177,7 @@ export function StagePlayer({
               </span>
             </div>
 
-            {/* Right: Icon Buttons Strip */}
+            {/* Right: Icon Buttons Strip (giữ nguyên) + nút bật/tắt tips */}
             <div className="flex items-center gap-1 shrink-0">
               {activeItem.platform === "youtube" && (
                 <button
@@ -129,14 +200,128 @@ export function StagePlayer({
               </a>
 
               <button
-                onClick={onStopStream}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStopStream(e);
+                }}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer active:scale-95 flex items-center justify-center"
                 title="Dừng phát đài này"
               >
                 <Square className="w-4 h-4" />
               </button>
+
+              <button
+                type="button"
+                onClick={handleToggleTips}
+                className={`p-1.5 rounded-lg transition-colors cursor-pointer active:scale-95 flex items-center justify-center ${
+                  showTips
+                    ? "text-amber-300 bg-amber-400/10"
+                    : "text-slate-400 hover:text-white hover:bg-white/10"
+                }`}
+                title={showTips ? "Ẩn mẹo dùng đài" : "Hiện mẹo dùng đài"}
+              >
+                <Lightbulb className="w-4 h-4" />
+              </button>
             </div>
           </div>
+
+          {/* Save + Copy: chỉ với đài người dùng tự nhập, preset nạp sẵn thì ẩn */}
+          {isCustomItem && (
+            <div className="flex items-center gap-2 px-1">
+            <button
+              type="button"
+              onClick={onToggleSave}
+              className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 border ${
+                isSaved
+                  ? "bg-accent-music/15 text-accent-music-bright border-accent-music/30"
+                  : "bg-white/[0.04] text-slate-200 border-line/15 hover:bg-white/[0.08] hover:text-white"
+              }`}
+              title={isSaved ? "Bỏ lưu đài này" : "Lưu đài này vào danh sách"}
+            >
+              {isSaved ? (
+                <BookmarkCheck className="w-3.5 h-3.5" />
+              ) : (
+                <Bookmark className="w-3.5 h-3.5" />
+              )}
+              <span>{isSaved ? "Đã lưu" : "Lưu đài này"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-white/[0.04] text-slate-200 border border-line/15 hover:bg-white/[0.08] hover:text-white transition-all cursor-pointer active:scale-95"
+              title="Copy link đài này để chia sẻ"
+            >
+              <Link2 className="w-3.5 h-3.5" />
+              <span>Copy link</span>
+            </button>
+            </div>
+          )}
+
+          {/* Đài tips: lớp giải thích cho 3 nút phía trên, tắt được khi đã hiểu */}
+          {showTips && (
+            <div className="rounded-2xl bg-white/[0.03] border border-line/10 p-3 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-200">
+                  <Lightbulb className="w-3.5 h-3.5" />
+                  Mẹo dùng đài
+                </span>
+                <button
+                  type="button"
+                  onClick={handleDismissTips}
+                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer active:scale-95"
+                  title="Ẩn mẹo này, không hiện lại"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              {activeItem.platform === "youtube" && (
+                <div className="flex items-center gap-2.5">
+                  <span className="w-7 h-7 rounded-lg bg-white/5 border border-line/10 flex items-center justify-center shrink-0">
+                    <PictureInPicture2 className="w-3.5 h-3.5 text-accent-music-glow" />
+                  </span>
+                  <p className="text-xs leading-relaxed text-slate-400">
+                    <span className="text-slate-200 font-semibold">Nút PiP vừa học vừa xem</span>
+                    {" — "}tách video nổi để đọc tài liệu mà vẫn thấy hình.
+                  </p>
+                </div>
+              )}
+              <div className="flex items-center gap-2.5">
+                <span className="w-7 h-7 rounded-lg bg-white/5 border border-line/10 flex items-center justify-center shrink-0">
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-300" />
+                </span>
+                <p className="text-xs leading-relaxed text-slate-400">
+                  <span className="text-slate-200 font-semibold">Nút mở trang gốc</span>
+                  {" — "}xem bình luận, mô tả và kênh phát hành.
+                </p>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <span className="w-7 h-7 rounded-lg bg-white/5 border border-line/10 flex items-center justify-center shrink-0">
+                  <Square className="w-3.5 h-3.5 text-slate-400" />
+                </span>
+                <p className="text-xs leading-relaxed text-slate-400">
+                  <span className="text-slate-200 font-semibold">Nút ■ dừng hẳn đài</span>
+                  {" — "}tắt modal vẫn phát nền, chỉ nút này mới dừng.
+                </p>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <span className="w-7 h-7 rounded-lg bg-white/5 border border-line/10 flex items-center justify-center shrink-0">
+                  <Volume2 className="w-3.5 h-3.5 text-accent-music-bright" />
+                </span>
+                <p className="text-xs leading-relaxed text-slate-400">
+                  <span className="text-slate-200 font-semibold">Phím M tắt tiếng cả đài</span>
+                  {" — "}áp dụng chung cho nhạc nền và đài phát.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleDismissTips}
+                className="w-full py-2 rounded-xl text-xs font-bold text-slate-300 bg-white/[0.04] border border-line/10 hover:bg-white/[0.08] hover:text-white transition-all cursor-pointer active:scale-95"
+              >
+                Đã hiểu, không hiện lại
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         /* Empty Stage State */
