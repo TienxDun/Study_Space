@@ -55,10 +55,18 @@ export const StudyBackground = ({ scene, isBlurActive = false }: StudyBackground
       </AnimatePresence>
 
       {/* GPU-Accelerated Spatial Depth Blur Overlay (Sử dụng Opacity để 60fps mượt mà, không giật lag video) */}
+      {/* Tắt hẳn (visibility) khi mờ về 0 để trình duyệt khỏi chạy backdrop-filter ngầm */}
       <motion.div
         initial={false}
-        animate={{ opacity: isBlurActive ? 1 : 0 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
+        animate={isBlurActive ? "on" : "off"}
+        variants={{
+          on: { opacity: 1, visibility: "visible", transition: { duration: 0.35, ease: "easeOut" } },
+          off: {
+            opacity: 0,
+            transition: { duration: 0.35, ease: "easeOut" },
+            transitionEnd: { visibility: "hidden" },
+          },
+        }}
         className="absolute inset-0 bg-slate-950/45 backdrop-blur-md pointer-events-none will-change-[opacity]"
       />
 

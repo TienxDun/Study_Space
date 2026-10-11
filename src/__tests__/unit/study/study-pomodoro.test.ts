@@ -115,4 +115,24 @@ describe("Study Pomodoro & Stopwatch Formatter Logic", () => {
     const night = new Date(2026, 9, 7, 23, 0, 0);
     expect(getGreeting(night)).toContain("đêm");
   });
+
+  it("should compute span delta without double-counting across pause/resume", async () => {
+    const { computeSpanDelta } = await import(
+      "@/components/study/pomodoro/utils/timer-formatters"
+    );
+
+    // Phiên 25p, chạy 10p rồi pause -> flush 600s
+    expect(computeSpanDelta(1500, 900, 0)).toBe(600);
+    // Resume rồi chạy thêm 5p -> chỉ flush 300s mới (không đếm lại 600s cũ)
+    expect(computeSpanDelta(1500, 600, 600)).toBe(300);
+    // Chạy hết giờ -> flush nốt 600s còn lại, tổng 3 lần = 1500s
+    expect(computeSpanDelta(1500, 0, 900)).toBe(600);
+    // Pause ngay khi chưa chạy giây nào -> không emit
+    expect(computeSpanDelta(1500, 1500, 0)).toBe(0);
+    // Flush trùng (đã flush hết) -> 0, chống ghi trùng khi unmount/beforeunload
+    expect(computeSpanDelta(1500, 0, 1500)).toBe(0);
+    // Số liệu rác -> 0 thay vì NaN/âm
+    expect(computeSpanDelta(NaN, 900, 0)).toBe(0);
+    expect(computeSpanDelta(1500, 900, 2000)).toBe(0);
+  });
 });

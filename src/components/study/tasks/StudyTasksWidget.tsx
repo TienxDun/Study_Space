@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { StudyTasksWidgetProps } from "./types";
@@ -98,6 +98,70 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
     isMeaningfulColMove,
     isMeaningfulCardMove,
   } = useKanbanBoards();
+
+  // Giữ phím Tab bên trong cửa sổ Kanban khi mở
+  const panelRef = useRef<HTMLDivElement>(null);
+  const prevFocusRef = useRef<HTMLElement | null>(null);
+  const isConfirmOpen = Boolean(boardToDelete || columnToDelete || cardToDelete);
+  const isCardDetailOpen = Boolean(selectedCard);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    // Khi có cửa sổ xác nhận xóa nổi lên trên, nhường Tab cho nó
+    if (isConfirmOpen) return;
+    prevFocusRef.current = document.activeElement as HTMLElement | null;
+    const t = window.setTimeout(() => panelRef.current?.focus(), 60);
+
+    const getFocusable = (root: HTMLElement): HTMLElement[] => {
+      const nodes = Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+      return nodes.filter((el) => {
+        if (el.hasAttribute("disabled")) return false;
+        const rect = el.getBoundingClientRect();
+        // Bỏ qua ô đang ẩn (rộng/cao = 0)
+        if (rect.width === 0 && rect.height === 0) return false;
+        return el.offsetParent !== null || el === document.activeElement;
+      });
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Cửa sổ chi tiết thẻ đã tự chặn Esc, ở đây chỉ lo Tab + Esc đóng Kanban
+      if (e.key === "Escape") {
+        if (isCardDetailOpen) return;
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const root = panelRef.current;
+      if (!root) return;
+      const list = getFocusable(root);
+      if (list.length === 0) {
+        e.preventDefault();
+        root.focus();
+        return;
+      }
+      const first = list[0];
+      const last = list[list.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      window.clearTimeout(t);
+      document.removeEventListener("keydown", onKeyDown, true);
+      prevFocusRef.current?.focus?.();
+    };
+  }, [isOpen, isConfirmOpen, isCardDetailOpen, onClose]);
 
   // Helper: Card Live Preview Placeholder
   const renderCardPlaceholder = (
@@ -201,10 +265,16 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
               transition={{ duration: 0.15, ease: "easeOut" }}
               className="fixed inset-0 bg-black/40 backdrop-blur-xs pointer-events-auto cursor-pointer"
               onClick={onClose}
+              aria-hidden="true"
             />
 
             <motion.div
               key="tasks-widget-panel"
+              ref={panelRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Quản lý công việc Kanban"
+              tabIndex={-1}
               initial={{ opacity: 0, scale: 0.97, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97, y: 8 }}

@@ -105,7 +105,9 @@ export function WaveformScrubber({
         <div className="group/vol flex items-center shrink-0">
           <button
             onClick={onToggleMute}
-            className="w-5 h-5 sm:w-6 sm:h-6 rounded-full text-slate-400 hover:text-white glass-hover transition-all active:scale-90 cursor-pointer flex items-center justify-center shrink-0"
+            aria-label={isGlobalMuted ? "Bật âm thanh không gian" : "Tắt toàn bộ âm thanh"}
+            aria-pressed={Boolean(isGlobalMuted)}
+            className="w-5 h-5 sm:w-6 sm:h-6 rounded-full text-slate-400 hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/80 glass-hover transition-all active:scale-90 cursor-pointer flex items-center justify-center shrink-0"
             title={isGlobalMuted ? "Bật âm thanh không gian (M)" : "Tắt toàn bộ âm thanh (M)"}
           >
             {isGlobalMuted || (effectiveVolume ?? 0) === 0 ? (
@@ -117,9 +119,9 @@ export function WaveformScrubber({
             )}
           </button>
 
-          {/* Expandable slider on hover */}
-          <div className="w-0 group-hover/vol:w-12 sm:group-hover/vol:w-14 opacity-0 group-hover/vol:opacity-100 overflow-hidden transition-all duration-300 ease-out flex items-center">
-            <div className="relative flex items-center h-3.5 w-12 sm:w-14 cursor-pointer pl-1">
+          {/* Expandable slider: hover chuột + focus bàn phím + luôn hiện trên cảm ứng */}
+          <div className="w-0 opacity-0 overflow-hidden transition-all duration-300 ease-out flex items-center group-hover/vol:w-12 group-hover/vol:opacity-100 group-focus-within/vol:w-12 group-focus-within/vol:opacity-100 focus-within:w-12 focus-within:opacity-100 sm:group-hover/vol:w-14 sm:group-focus-within/vol:w-14 sm:focus-within:w-14 [@media(hover:none)]:w-12 [@media(hover:none)]:opacity-100 [@media(hover:none)]:overflow-visible max-sm:w-12 max-sm:opacity-100 max-sm:overflow-visible">
+            <div className="relative flex items-center h-6 min-w-12 sm:min-w-14 cursor-pointer pl-1">
               <div className="w-full h-1 sm:h-1.5 rounded-full bg-white/20 overflow-hidden backdrop-blur-xs">
                 <div
                   className={`h-full rounded-full transition-all duration-75 ${
@@ -140,8 +142,10 @@ export function WaveformScrubber({
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   onVolumeChange?.(parseFloat(e.target.value))
                 }
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/80 focus-visible:rounded"
                 aria-label="Điều chỉnh âm lượng nhạc"
+                aria-valuetext={`${Math.round((isGlobalMuted ? 0 : (effectiveVolume ?? 0)) * 100)} phần trăm`}
+                title="Điều chỉnh âm lượng nhạc"
               />
             </div>
           </div>

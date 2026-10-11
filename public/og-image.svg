@@ -74,7 +74,7 @@
 
   <!-- Subtitle Description -->
   <text x="112" y="355" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="19" font-weight="400">
-    Tích hợp 50+ bối cảnh 4K, 20 âm thanh môi trường thư giãn, Pomodoro thông minh,
+    Tích hợp 30+ bối cảnh 4K, 20 âm thanh môi trường thư giãn, Pomodoro thông minh,
   </text>
   <text x="112" y="385" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="19" font-weight="400">
     nhạc Lo-fi tuyển chọn, bảng quản lý Kanban Tasks và ghi chú Markdown nhanh.
@@ -84,7 +84,7 @@
   <g transform="translate(112, 435)">
     <!-- Feature 1 -->
     <rect x="0" y="0" width="180" height="44" rx="12" fill="#1e293b" fill-opacity="0.8" stroke="#334155" stroke-width="1"/>
-    <text x="16" y="27" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="600">🎬 50+ Bối Cảnh 4K</text>
+    <text x="16" y="27" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="600">🎬 30+ Bối Cảnh 4K</text>
 
     <!-- Feature 2 -->
     <rect x="195" y="0" width="195" height="44" rx="12" fill="#1e293b" fill-opacity="0.8" stroke="#334155" stroke-width="1"/>

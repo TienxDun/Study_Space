@@ -19,7 +19,7 @@ export function StudySeoSemanticContent() {
         <h2>Các Tính Năng Trọng Tâm Hỗ Trợ Học Tập Hiệu Quả Trên ZenStudy Space</h2>
 
         <article>
-          <h3>1. 50+ Bối Cảnh Video 4K &amp; Hình Nền Sống Động</h3>
+          <h3>1. 30+ Bối Cảnh Video 4K &amp; Hình Nền Sống Động</h3>
           <p>
             Đắm chìm vào các không gian học bài đẹp mắt với chất lượng 4K: quán cà phê ngày mưa,
             phòng đọc sách cổ điển, phong cảnh anime chill, vũ trụ huyền ảo, thiên nhiên thanh bình

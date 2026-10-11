@@ -50,6 +50,7 @@ interface CompactStickyNoteProps {
   handleEditorClick: (e: React.MouseEvent) => void;
   handleEditorKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
   handleSelectionOrFormatChange: () => void;
+  isDragging?: boolean;
 }
 
 export const CompactStickyNote = React.memo(function CompactStickyNote({
@@ -82,6 +83,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
   handleEditorClick,
   handleEditorKeyDown,
   handleSelectionOrFormatChange,
+  isDragging = false,
 }: CompactStickyNoteProps) {
   const [showMoreMenu, setShowMoreMenu] = React.useState(false);
   const moreMenuRef = React.useRef<HTMLDivElement>(null);
@@ -248,10 +250,12 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
           className="flex items-center justify-center h-full px-2 min-w-0 pointer-events-none select-none transition-all duration-200 justify-self-center col-start-2"
         >
           <div
-            className={`w-7 h-1 rounded-full transition-all duration-200 ${
-              isLight
-                ? "bg-slate-300 group-hover/compact:bg-slate-400 group-hover/compact:w-9"
-                : "bg-white/20 group-hover/compact:bg-white/40 group-hover/compact:w-9"
+            className={`h-1 rounded-full transition-all duration-200 ${
+              isDragging
+                ? "w-9 bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]"
+                : isLight
+                ? "w-7 bg-slate-300 group-hover/compact:bg-slate-400 group-hover/compact:w-9"
+                : "w-7 bg-white/20 group-hover/compact:bg-white/40 group-hover/compact:w-9"
             }`}
           />
         </div>

@@ -45,11 +45,24 @@ export function useSiriWaveform({
 
     let alive = true;
     let rafId = 0;
+    let lastStaticDraw = 0;
 
     const draw = (t: number) => {
       if (!alive) return;
+      // Tab ẩn thì trình duyệt đã bóp rAF, nhưng vẫn bỏ qua phần vẽ cho chắc
+      if (typeof document !== "undefined" && document.hidden) {
+        rafId = requestAnimationFrame(draw);
+        return;
+      }
       const { isActive: active, getProgress: gp, getHoverRatio: gh } =
         liveRef.current;
+      const hoverRatio = gh();
+      // Đứng yên (không phát, không di chuột) thì vẽ thưa 5 khung/giây là đủ
+      if (!active && hoverRatio === null && t - lastStaticDraw < 200) {
+        rafId = requestAnimationFrame(draw);
+        return;
+      }
+      lastStaticDraw = t;
       const W = canvas.width;
       const H = canvas.height;
       if (W === 0 || H === 0) {
@@ -60,11 +73,15 @@ export function useSiriWaveform({
       g.clearRect(0, 0, W, H);
 
       const progress = Math.max(0, Math.min(1, gp()));
-      const hoverRatio = gh();
 
       const gap = 2 * dpr;
       const bw = (W - gap * (BAR_COUNT - 1)) / BAR_COUNT;
       const time = t / 1000;
+
+      // Dựng gradient 1 lần/khung rồi dùng chung, khỏi tạo 28 cái mỗi khung
+      const playedGrad = g.createLinearGradient(0, H, 0, 0);
+      playedGrad.addColorStop(0, "#10b981");
+      playedGrad.addColorStop(1, "#6ee7b7");
 
       for (let i = 0; i < BAR_COUNT; i++) {
         const barRatio = i / (BAR_COUNT - 1);
@@ -84,10 +101,7 @@ export function useSiriWaveform({
           hoverRatio !== null && barRatio <= hoverRatio && !played;
 
         if (played && active) {
-          const grad = g.createLinearGradient(0, H, 0, 0);
-          grad.addColorStop(0, "#10b981");
-          grad.addColorStop(1, "#6ee7b7");
-          g.fillStyle = grad;
+          g.fillStyle = playedGrad;
         } else if (hovered) {
           g.fillStyle = "rgba(52,211,153,0.6)";
         } else {

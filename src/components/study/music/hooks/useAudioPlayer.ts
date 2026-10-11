@@ -352,9 +352,11 @@ export function useAudioPlayer({
           if (externalStreamItem.platform === "youtube") {
             toggleExternalPlay?.();
           } else if (externalStreamItem.platform === "spotify") {
-            toast.info(
-              "Spotify không hỗ trợ phím tắt từ xa do giới hạn sandbox bảo mật. Hãy nhấp trực tiếp vào widget Spotify!"
-            );
+            toast.info("Hãy nhấp trực tiếp vào widget Spotify.", {
+              duration: 6000,
+              // Chống chồng toast khi bấm Space liên tục
+              id: "spotify-space-shortcut",
+            });
           }
         } else {
           togglePlay();

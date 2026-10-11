@@ -106,7 +106,7 @@ export const TaskHeader = React.memo(function TaskHeader({
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute top-full mt-2 left-0 w-64 p-2 rounded-2xl bg-slate-900/95 backdrop-blur-2xl border border-white/20 shadow-2xl text-xs space-y-1 z-50"
+                    className="absolute top-full mt-2 left-0 w-64 p-2 rounded-2xl bg-black/40 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-xs space-y-1 z-50"
                   >
                     <div className="text-[10px] font-bold text-slate-400 px-2 py-1 uppercase">
                       Danh sách bảng học tập:

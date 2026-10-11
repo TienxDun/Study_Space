@@ -38,6 +38,29 @@ export function getNextBreakType(completedCount: number): PomodoroMode {
 }
 
 /**
+ * Số giây focus MỚI phát sinh trong đoạn chạy hiện tại.
+ * planned - timeLeft = tổng giây đã chạy; trừ đi phần đã flush trước đó
+ * (pause/resume nhiều lần trong 1 phiên không đếm trùng).
+ */
+export function computeSpanDelta(
+  plannedSeconds: number,
+  timeLeftSeconds: number,
+  flushedSeconds: number
+): number {
+  if (
+    !isFinite(plannedSeconds) ||
+    !isFinite(timeLeftSeconds) ||
+    !isFinite(flushedSeconds)
+  ) {
+    return 0;
+  }
+  return Math.max(
+    0,
+    Math.floor(plannedSeconds - timeLeftSeconds - flushedSeconds)
+  );
+}
+
+/**
  * Lời chào theo các khung giờ trong ngày
  */
 export function getGreeting(date: Date = new Date()): string {

@@ -14,7 +14,6 @@ export const viewport: Viewport = {
   themeColor: "#090d16",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
@@ -27,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s | ZenStudy Space",
   },
   description:
-    "Không gian học tập ảo nhập vai đỉnh cao tại ZenStudy Space (zenstudy.space): 50+ bối cảnh Video 4K sống động, bộ trộn 20 âm thanh mưa & thiên nhiên thư giãn, nhạc Lo-fi chill, Pomodoro timer thông minh, Kanban to-do và ghi chú Markdown.",
+    "Không gian học tập ảo nhập vai đỉnh cao tại ZenStudy Space (zenstudy.space): 30+ bối cảnh Video 4K sống động, bộ trộn 20 âm thanh mưa & thiên nhiên thư giãn, nhạc Lo-fi chill, Pomodoro timer thông minh, Kanban to-do và ghi chú Markdown.",
   applicationName: "ZenStudy Space",
   authors: [{ name: "TienxDun", url: "https://github.com/TienxDun" }],
   creator: "TienxDun",
@@ -71,7 +70,7 @@ export const metadata: Metadata = {
     siteName: "ZenStudy Space",
     title: "ZenStudy Space - Không Gian Học Tập Tương Tác & Tập Trung 4K",
     description:
-      "Tập trung học tập và làm việc hiệu quả với 50+ bối cảnh Video 4K, 20 âm thanh môi trường thư giãn, nhạc Lo-fi và đồng hồ Pomodoro tại ZenStudy Space.",
+      "Tập trung học tập và làm việc hiệu quả với 30+ bối cảnh Video 4K, 20 âm thanh môi trường thư giãn, nhạc Lo-fi và đồng hồ Pomodoro tại ZenStudy Space.",
     images: [
       {
         url: `${basePath}/og-image.png`,
@@ -86,7 +85,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ZenStudy Space - Không Gian Học Tập Tương Tác & Tập Trung 4K",
     description:
-      "Không gian học tập ảo nhập vai tại zenstudy.space với 50+ bối cảnh 4K, 20 âm thanh thiên nhiên, nhạc Lo-fi và Pomodoro.",
+      "Không gian học tập ảo nhập vai tại zenstudy.space với 30+ bối cảnh 4K, 20 âm thanh thiên nhiên, nhạc Lo-fi và Pomodoro.",
     images: [`${basePath}/og-image.png`],
     creator: "@TienxDun",
   },
@@ -134,7 +133,16 @@ export default function RootLayout({
           style={{ "--width": "390px" } as React.CSSProperties}
           toastOptions={{
             className:
-              "!items-start bg-[#14161f]/95 backdrop-blur-2xl border border-white/12 shadow-[0_20px_50px_rgba(0,0,0,0.7)] text-white rounded-2xl p-4 gap-3",
+              "!items-start bg-black/40 backdrop-blur-2xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-white rounded-2xl p-4 gap-3",
+            // Tô thẳng vào thẻ để thắng màu nền mặc định của thư viện
+            style: {
+              background: "rgba(0, 0, 0, 0.55)",
+              backdropFilter: "blur(40px)",
+              WebkitBackdropFilter: "blur(40px)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              boxShadow:
+                "0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12)",
+            },
             descriptionClassName: "text-slate-300 text-xs mt-1 leading-relaxed",
             classNames: {
               icon: "mt-0.5 shrink-0",

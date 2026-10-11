@@ -678,21 +678,21 @@ summary {
 }
 
 [data-sonner-toaster] [data-sonner-toast] {
-  background: rgba(15, 23, 42, 0.94) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: rgba(0, 0, 0, 0.55) !important;
+  backdrop-filter: blur(40px) !important;
+  -webkit-backdrop-filter: blur(40px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   color: #ffffff !important;
-  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08) inset !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
   border-radius: 1rem !important;
-  padding: 0.85rem 1.1rem !important;
+  padding: 1rem !important;
   display: flex !important;
-  align-items: center !important;
+  align-items: flex-start !important;
   gap: 0.75rem !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast] [data-icon] {
-  margin-top: 0 !important;
+  margin-top: 2px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -705,6 +705,8 @@ summary {
   display: flex !important;
   flex-direction: column !important;
   gap: 0.15rem !important;
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast] [data-title] {
@@ -712,14 +714,21 @@ summary {
   font-weight: 600 !important;
   font-size: 0.8125rem !important;
   letter-spacing: -0.01em !important;
-  line-height: 1.3 !important;
+  line-height: 1.4 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast] [data-description] {
-  color: #94a3b8 !important;
+  color: #cbd5e1 !important;
   font-size: 0.75rem !important;
   font-weight: 400 !important;
-  line-height: 1.35 !important;
+  line-height: 1.6 !important;
+  margin-top: 0.25rem !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast][data-type="success"] [data-icon] {
@@ -736,6 +745,33 @@ summary {
 
 [data-sonner-toaster] [data-sonner-toast][data-type="warning"] [data-icon] {
   color: #fbbf24 !important;
+}
+
+/* Nút tương tác trong toast (đóng/vuốt) luôn có vòng focus thấy rõ */
+[data-sonner-toaster] [data-sonner-toast] button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8) !important;
+  outline-offset: 2px !important;
+  border-radius: 0.5rem !important;
+}
+
+/* Màn hình nhỏ: toast co theo viewport, không tràn 390px cố định */
+@media (max-width: 640px) {
+  [data-sonner-toaster] {
+    left: 1rem !important;
+    right: 1rem !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast] {
+    width: auto !important;
+  }
+}
+
+/* Tôn trọng prefers-reduced-motion: tắt animation nảy của toast */
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toaster] [data-sonner-toast] {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 /* IMPORTANT-ALLOWED-END */
 

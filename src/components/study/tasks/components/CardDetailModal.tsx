@@ -129,8 +129,9 @@ export const CardDetailModal = React.memo(function CardDetailModal({
           exit={{ scale: 0.96, y: 12, opacity: 0 }}
           transition={{ type: "spring", stiffness: 360, damping: 28 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-[660px] max-h-[88vh] flex flex-col rounded-3xl bg-[#14161b]/98 backdrop-blur-2xl border border-white/12 shadow-[0_30px_70px_rgba(0,0,0,0.85),0_0_1px_1px_rgba(255,255,255,0.08)] text-white overflow-hidden"
+          className="relative w-full max-w-[660px] max-h-[88vh] flex flex-col rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-white overflow-hidden"
         >
+          <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
           {/* Header: Title, Board Info & Action Bar */}
           <div className="px-5 sm:px-6 pt-5 pb-3.5 border-b border-white/10 space-y-3 bg-white/[0.01]">
             <div className="flex items-start justify-between gap-3">
@@ -249,7 +250,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 4, scale: 0.97 }}
                         transition={{ duration: 0.12 }}
-                        className="absolute top-full mt-1.5 left-0 w-48 p-1.5 rounded-2xl bg-[#181b22] backdrop-blur-2xl border border-white/15 shadow-2xl z-50 max-h-48 overflow-y-auto custom-study-scroll space-y-0.5"
+                        className="absolute top-full mt-1.5 left-0 w-48 p-1.5 rounded-2xl bg-black/40 backdrop-blur-2xl border border-white/15 shadow-2xl z-50 max-h-48 overflow-y-auto custom-study-scroll space-y-0.5"
                       >
                         {currentBoard.columns.map((col) => {
                           const isActive = selectedCard.columnId === col.id;
@@ -329,7 +330,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 4, scale: 0.97 }}
                         transition={{ duration: 0.12 }}
-                        className="absolute top-full mt-1.5 left-0 w-36 p-1.5 rounded-2xl bg-[#181b22] backdrop-blur-2xl border border-white/15 shadow-2xl z-50 space-y-0.5"
+                        className="absolute top-full mt-1.5 left-0 w-36 p-1.5 rounded-2xl bg-black/40 backdrop-blur-2xl border border-white/15 shadow-2xl z-50 space-y-0.5"
                       >
                         {[
                           { value: "low", label: "Thấp" },
@@ -427,7 +428,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 4, scale: 0.97 }}
                         transition={{ duration: 0.12 }}
-                        className="absolute top-full mt-1.5 left-0 sm:left-auto sm:right-0 w-80 p-3.5 rounded-2xl bg-[#181b22] backdrop-blur-2xl border border-white/15 shadow-2xl z-50 space-y-3"
+                        className="absolute top-full mt-1.5 left-0 sm:left-auto sm:right-0 w-80 p-3.5 rounded-2xl bg-black/40 backdrop-blur-2xl border border-white/15 shadow-2xl z-50 space-y-3"
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -597,10 +598,10 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   setSelectedCard(null);
                   closeAllPopovers();
                 }}
-                className="w-full h-8 px-2 sm:px-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs shadow-amber-500/20"
+                className="w-full h-8 px-2 sm:px-2.5 rounded-xl bg-amber-400/15 hover:bg-amber-400/25 active:scale-95 text-amber-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-amber-400/30 shadow-xs"
                 title="Bắt đầu phiên Pomodoro"
               >
-                <Play className="w-3.5 h-3.5 fill-slate-950 shrink-0" />
+                <Play className="w-3.5 h-3.5 fill-amber-200 shrink-0" />
                 <span>Bắt đầu</span>
                 {typeof selectedCard.pomodoros === "number" && selectedCard.pomodoros > 0 && (
                   <span className="text-[10px] opacity-75 font-mono">

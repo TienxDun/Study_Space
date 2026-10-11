@@ -82,8 +82,8 @@ export function MusicTabContent({
       {/* CURRENT PLAYING CARD */}
       <div className="relative p-4 rounded-3xl bg-gradient-to-b from-slate-800/70 via-slate-900/85 to-[#0b0f19]/95 border border-white/15 shadow-[0_12px_36px_rgba(0,0,0,0.6)] overflow-hidden">
         {/* Ambient dynamic glow blobs */}
-        <div className="absolute -top-10 -right-10 w-36 h-36 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
-        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-sky-500/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -top-10 -right-10 w-36 h-36 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-sky-500/10 rounded-full blur-2xl pointer-events-none" />
 
         {/* Track Header & Artwork */}
         <div className="relative z-10 flex items-center gap-3.5 mb-3.5">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export interface ConfirmDeleteModalProps {
@@ -25,18 +25,51 @@ export const ConfirmDeleteModal = ({
   cancelText = "Hủy",
 }: ConfirmDeleteModalProps) => {
   // Global Escape key to cancel
+  const panelRef = useRef<HTMLDivElement>(null);
+  const prevFocusRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     if (!isOpen) return;
+    prevFocusRef.current = document.activeElement as HTMLElement | null;
+    const t = window.setTimeout(() => panelRef.current?.focus(), 60);
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
         onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const root = panelRef.current;
+      if (!root) return;
+      const list = Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => el.offsetParent !== null);
+      if (list.length === 0) {
+        e.preventDefault();
+        root.focus();
+        return;
+      }
+      const first = list[0];
+      const last = list[list.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
       }
     };
     window.addEventListener("keydown", handleKeyDown, true);
-    return () => window.removeEventListener("keydown", handleKeyDown, true);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener("keydown", handleKeyDown, true);
+      prevFocusRef.current?.focus?.();
+    };
   }, [isOpen, onClose]);
 
   return (
@@ -58,12 +91,18 @@ export const ConfirmDeleteModal = ({
 
           {/* Minimalist Modern Dialog Box */}
           <motion.div
+            ref={panelRef}
+            role="alertdialog"
+            aria-modal="true"
+            aria-label={title}
+            tabIndex={-1}
             initial={{ opacity: 0, scale: 0.96, y: 6 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 4 }}
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 w-full max-w-[340px] rounded-2xl bg-[#12141a]/96 backdrop-blur-md border border-white/10 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] text-white select-none pointer-events-auto transform-gpu will-change-transform space-y-4"
+            className="relative z-10 w-full max-w-[340px] rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-2xl border border-white/15 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-white select-none pointer-events-auto transform-gpu will-change-transform space-y-4 overflow-hidden"
           >
+            <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
             {/* Content */}
             <div className="space-y-1.5">
               <h3 className="text-sm font-bold text-white tracking-tight leading-snug">

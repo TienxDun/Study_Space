@@ -3,12 +3,28 @@
 import { useState, useEffect, useCallback } from "react";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { KanbanBoard } from "@/components/study/study-types";
+import {
+  PomodoroSessionResult,
+  FocusSpanInfo,
+} from "@/components/study/pomodoro/types";
+import {
+  logFocusSession,
+  focusSessionStore,
+  getTodaySummary,
+  formatFocusDuration,
+} from "@/lib/focus-sessions";
 import { toast } from "sonner";
 
 export interface ActiveFocusTask {
   id: string;
   title: string;
 }
+
+/** Task gán cho thời gian focus không gắn task cụ thể (vẫn tính vào ngày/tuần). */
+export const UNGROUPED_FOCUS_TASK: ActiveFocusTask = {
+  id: "__ungrouped__",
+  title: "Tập trung tự do",
+};
 
 export const EVENT_START_FOCUS = "study_space_start_focus";
 export const EVENT_CLEAR_FOCUS = "study_space_clear_focus";
@@ -42,7 +58,10 @@ export function clearFocusTask() {
 }
 
 /** Tăng +1 số phiên Pomodoro cho một task trong Kanban Boards LocalStorage */
-export function incrementTaskPomodoroInStorage(taskId: string): number {
+export function incrementTaskPomodoroInStorage(
+  taskId: string,
+  session?: PomodoroSessionResult
+): number {
   if (typeof window === "undefined") return 0;
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.kanbanBoards);
@@ -60,7 +79,16 @@ export function incrementTaskPomodoroInStorage(taskId: string): number {
       }),
     }));
     localStorage.setItem(STORAGE_KEYS.kanbanBoards, JSON.stringify(updated));
-    window.dispatchEvent(new CustomEvent(EVENT_POMO_COMPLETED, { detail: { taskId, newCount } }));
+    window.dispatchEvent(
+      new CustomEvent(EVENT_POMO_COMPLETED, {
+        detail: {
+          taskId,
+          newCount,
+          focusSeconds: session?.focusSeconds ?? 0,
+          startedAt: session?.startedAt ?? Date.now(),
+        },
+      })
+    );
     return newCount;
   } catch {
     return 0;
@@ -96,7 +124,7 @@ export function useFocusTask() {
 
   const handleStartFocus = useCallback((task: ActiveFocusTask) => {
     startFocusTask(task);
-    toast.success(`Bắt đầu tập trung vào: "${task.title}"`, {
+    toast.success(`Bắt đầu tập trung vào: “${task.title}”`, {
       description: "Đồng hồ Pomodoro đã được gán mục tiêu này.",
     });
   }, []);
@@ -106,17 +134,47 @@ export function useFocusTask() {
     toast.info("Đã hủy liên kết nhiệm vụ với Pomodoro");
   }, []);
 
-  const handleCompleteSession = useCallback((task: ActiveFocusTask) => {
-    const count = incrementTaskPomodoroInStorage(task.id);
-    toast.success("Hoàn thành phiên Pomodoro! 🎉", {
-      description: `"${task.title}" • Đã tích lũy ${count} phiên (~${count * 25}\u00A0phút).`,
-    });
-  }, []);
+  const handleCompleteSession = useCallback(
+    (task: ActiveFocusTask, session?: PomodoroSessionResult) => {
+      // Thời gian đã được ghi dần qua từng span (logFocusTime) nên ở đây
+      // chỉ +1 đếm phiên và toast — không ghi trùng.
+      const count = incrementTaskPomodoroInStorage(task.id, session);
+      const today = getTodaySummary(focusSessionStore.list());
+      toast.success("Hoàn thành phiên Pomodoro!", {
+        description: `“${task.title}” • Phiên này ${formatFocusDuration(
+          session?.focusSeconds ?? 0
+        )} • Hôm nay ${formatFocusDuration(today.totalSeconds)} (${count} phiên task này).`,
+      });
+    },
+    []
+  );
+
+  /**
+   * Ghi thầm lặng 1 đoạn focus (pause/skip/reset/hết giờ/tắt tab đều gọi).
+   * Không toast để khỏi spam — số liệu tự hiện ở dòng thống kê + toast
+   * tổng khi hết phiên.
+   */
+  const handleLogFocusTime = useCallback(
+    (task: ActiveFocusTask | null, span: FocusSpanInfo) => {
+      if (!span || span.seconds < 1) return;
+      const target = task ?? UNGROUPED_FOCUS_TASK;
+      logFocusSession({
+        taskId: target.id,
+        taskTitle: target.title,
+        startedAt: span.startedAt,
+        endedAt: span.endedAt,
+        focusSeconds: span.seconds,
+        plannedSeconds: span.plannedSeconds,
+      });
+    },
+    []
+  );
 
   return {
     focusTask,
     startFocus: handleStartFocus,
     clearFocus: handleClearFocus,
     completeSession: handleCompleteSession,
+    logFocusTime: handleLogFocusTime,
   };
 }

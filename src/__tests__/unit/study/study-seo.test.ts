@@ -79,7 +79,7 @@ describe("SEO - Semantic HTML Content Component", () => {
     expect(html).toContain("ZenStudy Space - Không Gian Học Tập Tương Tác &amp; Tập Trung Tối Đa");
     expect(html).toContain("<h2");
     expect(html).toContain("sr-only");
-    expect(html).toContain("50+ Bối Cảnh Video 4K");
+    expect(html).toContain("30+ Bối Cảnh Video 4K");
     expect(html).toContain("Bộ Trộn 20 Âm Thanh Môi Trường");
     expect(html).toContain("Đồng Hồ Pomodoro");
   });

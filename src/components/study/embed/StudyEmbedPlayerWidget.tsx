@@ -1,12 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { StudyEmbedPlayerWidgetProps } from "./types";
 import { usePipMode } from "./hooks/usePipMode";
 import { useEmbedSplitPane } from "./hooks/useEmbedSplitPane";
 import { useEmbedManager } from "./hooks/useEmbedManager";
 import { useYouTubeRemote, ensureYouTubeJsApi, sendYouTubeCommand } from "@/lib/youtube-remote";
+import {
+  ensureYouTubeIframeApi,
+  getYouTubeTime,
+  seekYouTubeTime,
+  seekMemory,
+  withTimeout,
+} from "@/lib/youtube-player-api";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { PipHeader } from "./components/PipHeader";
 import { StudioHeader } from "./components/StudioHeader";
@@ -29,8 +36,11 @@ export const StudyEmbedPlayerWidget = ({
     pipX,
     pipY,
     dragBounds,
+    pipSize,
     enterPip,
     exitPip,
+    handlePipResizePointerDown,
+    handlePipResizeKeyDown,
   } = usePipMode({
     isOpen,
     onPipModeChange,
@@ -44,6 +54,17 @@ export const StudyEmbedPlayerWidget = ({
     handleMouseDownDivider,
     handleDoubleClickDivider,
   } = useEmbedSplitPane();
+
+  // Trạng thái kéo thả PiP (đồng bộ hiệu ứng với Notes/Rooms khi dragging).
+  const [isPipDragging, setIsPipDragging] = useState(false);
+
+  // Iframe YouTube đang gắn (Studio XOR PiP — chỉ 1 tồn tại cùng lúc).
+  const ytIframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  // Warm YouTube IFrame API từ sớm để lần chuyển mode đầu tiên cũng nhanh.
+  useEffect(() => {
+    void ensureYouTubeIframeApi().catch(() => {});
+  }, []);
 
   const {
     activeCategory,
@@ -103,6 +124,37 @@ export const StudyEmbedPlayerWidget = ({
     }
   }, [activeItem, setIsIframeLoading]);
 
+  // Chụp vị trí phát hiện tại trước khi unmount iframe (chuyển mode).
+  // Chỉ YouTube VOD: live không tua được, Spotify không có API.
+  const snapshotYouTubeTime = async (): Promise<void> => {
+    const item = activeItem;
+    const iframe = ytIframeRef.current;
+    if (!item || item.platform !== "youtube" || item.isLive) return;
+    if (!iframe || !iframe.isConnected) return;
+    try {
+      const t = await withTimeout(getYouTubeTime(iframe), 800, "remember-time");
+      if (t != null) seekMemory.remember(item.embedUrl, t);
+    } catch {}
+  };
+
+  // Khôi phục vị trí đã nhớ khi iframe mới load xong.
+  const flushPendingSeek = (iframe: HTMLIFrameElement | null) => {
+    const item = activeItem;
+    if (!iframe || !item || item.platform !== "youtube" || item.isLive) return;
+    ytIframeRef.current = iframe;
+    const t = seekMemory.consume(item.embedUrl);
+    if (t == null) return;
+    void seekYouTubeTime(iframe, t);
+  };
+
+  // Vào PiP / về Studio: nhớ giờ trước, chuyển mode sau.
+  const handleEnterPipKeepTime = () => {
+    void snapshotYouTubeTime().finally(() => enterPip());
+  };
+  const handleMaximizeKeepTime = () => {
+    void snapshotYouTubeTime().finally(() => exitPip(true));
+  };
+
   const isBackdropOpen = isOpen && !isPipMode;
 
   // Don't render anything if completely closed and no active stream
@@ -129,14 +181,22 @@ export const StudyEmbedPlayerWidget = ({
         }
       >
         <motion.div
-          style={{ x: pipX, y: pipY }}
+          style={
+            isPipMode
+              ? { x: pipX, y: pipY, width: pipSize.width, height: pipSize.height }
+              : { x: pipX, y: pipY }
+          }
           drag={isPipMode}
           dragConstraints={isPipMode ? dragBounds : undefined}
           dragControls={pipDragControls}
           dragListener={false}
           dragMomentum={false}
           dragElastic={0.08}
+          onDragStart={() => {
+            if (isPipMode) setIsPipDragging(true);
+          }}
           onDragEnd={() => {
+            setIsPipDragging(false);
             try {
               localStorage.setItem(
                 STORAGE_KEYS.embedPipPos,
@@ -148,7 +208,11 @@ export const StudyEmbedPlayerWidget = ({
           transition={{ duration: 0.15, ease: "easeOut" }}
           className={
             isPipMode
-              ? "pointer-events-auto fixed bottom-24 right-6 w-[340px] sm:w-[420px] rounded-3xl bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)] overflow-hidden group/pip touch-none select-none transition-colors"
+              ? `pointer-events-auto fixed bottom-24 right-6 min-w-[260px] min-h-[200px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] flex flex-col rounded-3xl bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 overflow-hidden group/pip touch-none select-none transition-colors ${
+                  isPipDragging
+                    ? "shadow-[0_30px_80px_rgba(0,0,0,0.65)] ring-2 ring-emerald-500/40 cursor-grabbing"
+                    : "shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
+                }`
               : "pointer-events-auto relative w-full max-w-5xl h-[88vh] max-h-[820px] flex flex-col rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-slate-100 overflow-hidden transform-gpu will-change-transform"
           }
         >
@@ -160,10 +224,13 @@ export const StudyEmbedPlayerWidget = ({
             <PipHeader
               activeItem={activeItem}
               pipDragControls={pipDragControls}
-              isExternalPaused={isExternalPaused}
-              toggleExternalPlay={toggleExternalPlay}
-              onMaximize={() => exitPip(true)}
-              onClose={() => exitPip(false)}
+              onMaximize={handleMaximizeKeepTime}
+              onClose={() => {
+                // Thu về thanh đáy: tắt PiP + đóng Studio (giữ luồng phát nền)
+                exitPip(false);
+                onClose();
+              }}
+              isDragging={isPipDragging}
             />
           ) : (
             <StudioHeader onClose={onClose} />
@@ -172,16 +239,18 @@ export const StudyEmbedPlayerWidget = ({
           {/* 2. Body Area */}
           {isPipMode ? (
             /* Dedicated PiP Player Frame */
-            <div className="relative w-full h-[190px] sm:h-[236px] bg-black">
+            <div className="relative w-full flex-1 min-h-0 bg-black">
               {activeItem && (
                 <div className="w-full h-full">
                   <iframe
                     key={activeItem.id}
+                    ref={ytIframeRef}
                     src={ensureYouTubeJsApi(activeItem.embedUrl)}
                     title={activeItem.title}
                     className="w-full h-full border-0"
                     allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                     loading="lazy"
+                    onLoad={(e) => flushPendingSeek(e.currentTarget)}
                   />
                 </div>
               )}
@@ -198,7 +267,8 @@ export const StudyEmbedPlayerWidget = ({
                 splitRatio={splitRatio}
                 isIframeLoading={isIframeLoading}
                 setIsIframeLoading={setIsIframeLoading}
-                onEnterPip={enterPip}
+                onEnterPip={handleEnterPipKeepTime}
+                onIframeLoad={flushPendingSeek}
                 isSaved={Boolean(
                   activeItem &&
                     savedEmbeds.some(
@@ -243,6 +313,24 @@ export const StudyEmbedPlayerWidget = ({
                 onPlayItem={handlePlayItem}
                 onDeleteSaved={handleDeleteSaved}
               />
+            </div>
+          )}
+
+          {/* Tay kéo to/nhỏ góc dưới phải, y như thẻ Notes / Rooms */}
+          {isPipMode && (
+            <div
+              onPointerDown={handlePipResizePointerDown}
+              onKeyDown={handlePipResizeKeyDown}
+              role="separator"
+              aria-orientation="horizontal"
+              aria-label="Kéo để đổi cỡ cửa sổ nổi. Bấm phím mũi tên để chỉnh, Enter để về cỡ mặc định."
+              title="Kéo để đổi cỡ (mũi tên + Enter = về mặc định)"
+              tabIndex={0}
+              className="absolute bottom-1 right-1 w-6 h-6 cursor-nwse-resize touch-none z-20 flex items-end justify-end rounded-md opacity-60 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 transition-opacity before:content-[''] before:absolute before:-inset-2"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" className="text-slate-300">
+                <path d="M11 1 L1 11 M11 5 L5 11 M11 9 L9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
             </div>
           )}
         </motion.div>

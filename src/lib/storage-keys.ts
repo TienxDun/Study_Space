@@ -39,6 +39,10 @@ export const STORAGE_KEYS = {
   notesCompactPos: "study_space_notes_compact_pos",
   notesCompactSize: "study_space_notes_compact_size",
   embedPipPos: "study_space_pip_pos",
+  embedPipSize: "study_space_pip_size",
+  // Thẻ gọi video phòng học nhóm
+  roomsPos: "study_space_rooms_pos",
+  roomsSize: "study_space_rooms_size",
   // Favorites
   favoriteScenes: "huflit_study_favorite_scenes",
   favoriteTracks: "huflit_study_favorite_tracks",
@@ -46,6 +50,8 @@ export const STORAGE_KEYS = {
   slideshowIntervalMin: "huflit_study_slideshow_interval_min",
   // Focus Mode Integration
   activeFocusTask: "study_space_active_focus_task",
+  // Focus sessions log (ghi nhận thời gian tập trung theo task)
+  focusSessions: "study_space_focus_sessions_v1",
   // Onboarding Tour
   tourCompleted: "zenstudy_tour_completed",
 } as const;

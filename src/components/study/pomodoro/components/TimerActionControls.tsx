@@ -13,6 +13,8 @@ interface TimerActionControlsProps {
   onToggleStopwatch: () => void;
   onResetStopwatch: () => void;
   onAddLap: () => void;
+  /** true khi đồng hồ focus đang chạy — chỉ giữ nút Play/Pause cho gọn. */
+  isRunning?: boolean;
 }
 
 export function TimerActionControls({
@@ -25,22 +27,25 @@ export function TimerActionControls({
   onToggleStopwatch,
   onResetStopwatch,
   onAddLap,
+  isRunning = false,
 }: TimerActionControlsProps) {
   if (currentTab === "clock") return null;
 
   return (
-    <div className="h-16 flex items-center justify-center gap-4 sm:gap-6 mt-2 select-none pointer-events-auto">
+    <div className="relative z-40 h-16 flex items-center justify-center gap-4 sm:gap-6 mt-2 select-none pointer-events-auto">
       {currentTab === "pomodoro" ? (
         <>
-          {/* Reset Ghost Button */}
-          <button
-            type="button"
-            onClick={onResetPomo}
-            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
-            title="Đặt lại từ đầu"
-          >
-            <RotateCcw className="w-5 h-5 transition-transform duration-200 group-hover:-rotate-45" />
-          </button>
+          {/* Reset Ghost Button (ẩn khi đang chạy — pause trước rồi mới reset) */}
+          {!isRunning && (
+            <button
+              type="button"
+              onClick={onResetPomo}
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
+              title="Đặt lại từ đầu"
+            >
+              <RotateCcw className="w-5 h-5 transition-transform duration-200 group-hover:-rotate-45" />
+            </button>
+          )}
 
           {/* Focal Hero Play / Pause Button (Không viền, ánh sáng tỏa tự nhiên) */}
           <button
@@ -56,15 +61,17 @@ export function TimerActionControls({
             )}
           </button>
 
-          {/* Skip Ghost Button */}
-          <button
-            type="button"
-            onClick={onSkipPomo}
-            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
-            title="Bỏ qua / Hoàn thành phiên"
-          >
-            <SkipForward className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-0.5" />
-          </button>
+          {/* Skip Ghost Button (ẩn khi đang chạy — pause trước rồi mới bỏ qua) */}
+          {!isRunning && (
+            <button
+              type="button"
+              onClick={onSkipPomo}
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
+              title="Bỏ qua / Hoàn thành phiên"
+            >
+              <SkipForward className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-0.5" />
+            </button>
+          )}
         </>
       ) : currentTab === "stopwatch" ? (
         <>

@@ -67,12 +67,17 @@ export function DiscoveryHub({
       <div className="space-y-3 shrink-0">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search aria-hidden="true" className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <label htmlFor="embed-search-input" className="sr-only">
+              Tìm kiếm hoặc dán liên kết video
+            </label>
             <input
+              id="embed-search-input"
               type="text"
               value={searchOrUrl}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Tìm kiếm hoặc dán liên kết..."
+              aria-label="Tìm kiếm hoặc dán liên kết video"
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-black/40 border border-white/15 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-white/30 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"
             />
           </div>

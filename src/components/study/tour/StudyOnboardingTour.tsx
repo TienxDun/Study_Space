@@ -408,7 +408,7 @@ export function StudyOnboardingTour({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.94, y: 12 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
-              className="pointer-events-auto w-[92vw] max-w-[420px] bg-[#121622]/95 backdrop-blur-2xl border border-white/15 rounded-3xl p-5 sm:p-6 shadow-[0_24px_60px_rgba(0,0,0,0.85)] text-white"
+              className="pointer-events-auto w-[92vw] max-w-[420px] bg-black/40 hover:bg-black/45 backdrop-blur-2xl border border-white/15 rounded-3xl p-5 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-white"
             >
               {cardContent}
             </motion.div>
@@ -421,7 +421,7 @@ export function StudyOnboardingTour({
             exit={{ opacity: 0, scale: 0.94, y: 10 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
             style={getCardStyle()}
-            className="z-[99999] w-[92vw] max-w-[420px] bg-[#121622]/95 backdrop-blur-2xl border border-white/15 rounded-3xl p-5 sm:p-6 shadow-[0_24px_60px_rgba(0,0,0,0.85)] text-white"
+            className="z-[99999] w-[92vw] max-w-[420px] bg-black/40 hover:bg-black/45 backdrop-blur-2xl border border-white/15 rounded-3xl p-5 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-white"
           >
             {cardContent}
           </motion.div>

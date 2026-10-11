@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { Music2, CloudRain } from "lucide-react";
@@ -116,6 +116,32 @@ export const StudyMusicPlayer = ({
     isExternalStreamActive && externalStreamItem && !isPlaying
   );
 
+  // Cầu nối với mèo linh vật: báo cho mèo biết nhạc đang chạy hay dừng,
+  // và nghe lệnh bật/tắt từ mèo. Hai bên nhắn qua cửa sổ, khỏi đụng chỗ khác.
+  const musicBridgeRef = useRef({
+    togglePlay,
+    toggleExternalPlay,
+    isShowingExternalStream,
+  });
+  musicBridgeRef.current = { togglePlay, toggleExternalPlay, isShowingExternalStream };
+
+  useEffect(() => {
+    const playing = isPlaying || (isExternalStreamActive && !isExternalPaused);
+    window.dispatchEvent(
+      new CustomEvent("zenstudy:music-state", { detail: { isPlaying: playing } })
+    );
+  }, [isPlaying, isExternalStreamActive, isExternalPaused]);
+
+  useEffect(() => {
+    const onToggle = () => {
+      const b = musicBridgeRef.current;
+      if (b.isShowingExternalStream) b.toggleExternalPlay();
+      else b.togglePlay();
+    };
+    window.addEventListener("zenstudy:music-toggle", onToggle);
+    return () => window.removeEventListener("zenstudy:music-toggle", onToggle);
+  }, []);
+
   return (
     <>
       <audio
@@ -211,7 +237,7 @@ export const StudyMusicPlayer = ({
                 {currentTrack?.genre && (
                   <>
                     <span>•</span>
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-accent-music/25 text-accent-music-bright font-semibold border border-accent-music/30 text-[10px] sm:text-[11px]">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md text-slate-300 font-semibold border border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.4)] text-[10px] sm:text-[11px]">
                       {currentTrack.genre}
                     </span>
                   </>
@@ -235,10 +261,10 @@ export const StudyMusicPlayer = ({
       >
 
         <div
-          className={`relative h-[60px] sm:h-[62px] text-white transition-all ${
+          className={`relative h-[60px] sm:h-[62px] text-white ${
             isShowingExternalStream && externalStreamItem
-              ? "flex items-center justify-between gap-3 sm:gap-4 px-2 py-1 min-w-[320px] sm:min-w-[380px] md:min-w-[420px] drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]"
-              : "flex flex-col items-center justify-center gap-1.5 sm:gap-2 px-1 py-1 min-w-[270px] sm:min-w-[290px] drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]"
+              ? "flex items-center justify-between gap-3 sm:gap-4 px-2 py-1 min-w-[min(320px,100%)] sm:min-w-[380px] md:min-w-[420px] drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]"
+              : "flex flex-col items-center justify-center gap-1.5 sm:gap-2 px-1 py-1 min-w-[min(270px,100%)] sm:min-w-[290px] drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]"
           }`}
         >
           {isShowingExternalStream && externalStreamItem ? (
@@ -253,8 +279,6 @@ export const StudyMusicPlayer = ({
             <>
               {/* Row 1: 5 Core Playback Controls (Căn giữa màn hình hoàn hảo tuyệt đối) */}
               <PlayerControls
-                isPlaying={isPlaying}
-                onTogglePlay={togglePlay}
                 onNextTrack={handleNextTrack}
                 onPrevTrack={handlePrevTrack}
                 isShuffle={isShuffle}

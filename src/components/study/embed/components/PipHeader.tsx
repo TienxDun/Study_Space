@@ -1,25 +1,23 @@
 "use client";
 
-import { Play, Pause, Maximize2, X } from "lucide-react";
+import { Maximize2, X } from "lucide-react";
 import { StudyEmbedItem } from "../types";
 import { DragControls } from "framer-motion";
 
 interface PipHeaderProps {
   activeItem: StudyEmbedItem | null;
   pipDragControls: DragControls;
-  isExternalPaused: boolean;
-  toggleExternalPlay: () => void;
   onMaximize: () => void;
   onClose: () => void;
+  isDragging?: boolean;
 }
 
 export function PipHeader({
   activeItem,
   pipDragControls,
-  isExternalPaused,
-  toggleExternalPlay,
   onMaximize,
   onClose,
+  isDragging = false,
 }: PipHeaderProps) {
   return (
     <div
@@ -47,7 +45,7 @@ export function PipHeader({
         </span>
       </div>
 
-      {/* Center: Apple-style Grab Bar */}
+      {/* Center: Apple-style Grab Bar (sáng xanh khi đang kéo, như Notes/Rooms) */}
       <div
         onPointerDown={(e) => {
           e.stopPropagation();
@@ -56,29 +54,17 @@ export function PipHeader({
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 py-2 px-3 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none group/grab pointer-events-auto"
         title="Nhấn giữ & kéo thả để di chuyển cửa sổ nổi"
       >
-        <div className="w-7 h-1 rounded-full bg-white/20 group-hover/grab:bg-white/50 group-hover/grab:w-9 transition-all duration-200" />
+        <div
+          className={`h-1 rounded-full transition-all duration-200 ${
+            isDragging
+              ? "w-9 bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]"
+              : "w-7 bg-white/20 group-hover/grab:bg-white/50 group-hover/grab:w-9"
+          }`}
+        />
       </div>
 
       {/* Right: Window Controls */}
       <div className="flex items-center gap-1 shrink-0 z-10">
-        {activeItem?.platform === "youtube" && (
-          <button
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={toggleExternalPlay}
-            className="p-1 rounded-md hover:bg-white/10 text-accent-stream-bright hover:text-white transition-colors cursor-pointer"
-            title={
-              isExternalPaused
-                ? "Tiếp tục phát YouTube (Space)"
-                : "Tạm dừng YouTube (Space)"
-            }
-          >
-            {isExternalPaused ? (
-              <Play className="w-3.5 h-3.5 fill-current" />
-            ) : (
-              <Pause className="w-3.5 h-3.5 fill-current" />
-            )}
-          </button>
-        )}
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={onMaximize}

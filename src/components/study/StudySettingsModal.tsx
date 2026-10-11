@@ -155,7 +155,7 @@ export const StudySettingsModal = ({
       initial={{ opacity: 0, scale: 0.96, y: -6, x: 6 }}
       animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
       exit={{ opacity: 0, scale: 0.96, y: -6, x: 6 }}
-      panelClassName="fixed top-[4.5rem] right-4 sm:right-6 z-50 w-full max-w-[340px] sm:max-w-[380px] rounded-3xl bg-[#14161b]/98 backdrop-blur-xl border border-white/15 shadow-[0_25px_60px_rgba(0,0,0,0.85)] p-5 space-y-4 text-white select-none max-h-[calc(100vh-92px)] overflow-y-auto custom-study-scroll"
+      panelClassName="fixed top-[4.5rem] right-4 sm:right-6 z-50 w-full max-w-[340px] sm:max-w-[380px] rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-5 space-y-4 text-white select-none max-h-[calc(100vh-92px)] overflow-y-auto custom-study-scroll"
     >
             {/* Header (Đã xóa icon thừa, tinh gọn & thanh lịch) */}
             <div className="flex items-center justify-between pb-3 border-b border-white/10">

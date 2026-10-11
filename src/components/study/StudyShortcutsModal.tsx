@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Keyboard, Music2, CheckSquare, X } from "lucide-react";
 import { IconBtn } from "../ui/IconBtn";
@@ -15,7 +16,53 @@ export const StudyShortcutsModal = ({
   isOpen,
   onClose,
   onOpenTour,
-}: StudyShortcutsModalProps) => (
+}: StudyShortcutsModalProps) => {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const prevFocusRef = useRef<HTMLElement | null>(null);
+
+  // Mở lên tự vào bảng, Tab xoay vòng bên trong, tắt đi trả về chỗ cũ
+  useEffect(() => {
+    if (!isOpen) return;
+    prevFocusRef.current = document.activeElement as HTMLElement | null;
+    const t = window.setTimeout(() => panelRef.current?.focus(), 60);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const root = panelRef.current;
+      if (!root) return;
+      const list = Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => el.offsetParent !== null);
+      if (list.length === 0) {
+        e.preventDefault();
+        root.focus();
+        return;
+      }
+      const first = list[0];
+      const last = list[list.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => {
+      window.clearTimeout(t);
+      document.removeEventListener("keydown", onKey, true);
+      prevFocusRef.current?.focus?.();
+    };
+  }, [isOpen, onClose]);
+
+  return (
   <AnimatePresence>
     {isOpen && (
     <motion.div
@@ -25,14 +72,21 @@ export const StudyShortcutsModal = ({
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
       onClick={() => onClose()}
+      aria-hidden="true"
     >
       <motion.div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Bảng phím tắt"
+        tabIndex={-1}
         initial={{ scale: 0.95, y: 15 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.95, y: 15 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl rounded-3xl bg-[#0b0f17]/80 backdrop-blur-2xl border border-white/20 shadow-2xl p-6 space-y-5 text-white"
+        className="relative w-full max-w-xl rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-6 space-y-5 text-white overflow-hidden focus:outline-none"
       >
+        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div className="flex items-center gap-2.5">
@@ -46,7 +100,7 @@ export const StudyShortcutsModal = ({
           </div>
                 <IconBtn
                   onClick={onClose}
-                  title="Dong"
+                  title="Đóng (Esc)"
                   icon={<X className="w-5 h-5" />}
                   className="p-2 rounded-full hover:bg-white/10 text-white/60 hover:text-white transition-colors"
                 />
@@ -103,6 +157,10 @@ export const StudyShortcutsModal = ({
             </h4>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
+                <span className="text-slate-300">Bộ trộn âm thanh (Mixer)</span>
+                <kbd className="px-2 py-1 rounded-lg bg-black/50 border border-white/20 font-mono text-[11px] font-bold text-slate-200">P</kbd>
+              </div>
+              <div className="flex items-center justify-between">
                 <span className="text-slate-300">Bật/Tắt Toàn màn hình</span>
                 <kbd className="px-2 py-1 rounded-lg bg-black/50 border border-white/20 font-mono text-[11px] font-bold text-slate-200">F</kbd>
               </div>
@@ -129,6 +187,10 @@ export const StudyShortcutsModal = ({
               <div className="flex items-center justify-between">
                 <span className="text-slate-300">Đài phát (YouTube/Spotify)</span>
                 <kbd className="px-2 py-1 rounded-lg bg-black/50 border border-white/20 font-mono text-[11px] font-bold text-slate-200">E</kbd>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-300">Phòng học nhóm</span>
+                <kbd className="px-2 py-1 rounded-lg bg-black/50 border border-white/20 font-mono text-[11px] font-bold text-slate-200">G</kbd>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-300">Mở nhanh lệnh</span>
@@ -166,4 +228,5 @@ export const StudyShortcutsModal = ({
     </motion.div>
   )}
 </AnimatePresence>
-);
+  );
+};

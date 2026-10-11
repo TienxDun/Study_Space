@@ -15,6 +15,7 @@ export interface StudyKeyboardApi {
   setShortcutsOpen: Dispatch<SetStateAction<boolean>>;
   setZenMode: Dispatch<SetStateAction<boolean>>;
   setCommandOpen: Dispatch<SetStateAction<boolean>>;
+  setRoomsOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 /** Phím tắt toàn cục của StudySpace. Mọi nhánh chỉ dùng functional
@@ -48,7 +49,6 @@ export const useStudyKeyboard = (api: StudyKeyboardApi) => {
         a.setZenMode(false);
         return;
       }
-
       if (isInput) {
         // Cmd/Ctrl+K vẫn mở palette ngay cả khi đang nhập
         if (
@@ -145,8 +145,7 @@ export const useStudyKeyboard = (api: StudyKeyboardApi) => {
         a.setNotesOpen(false);
         a.setScenesOpen(false);
         a.setEmbedOpen(false);
-      } else if (e.key === "?" || e.key === "h" || e.key === "H") {
-        e.preventDefault();
+      } else if (e.key === "?" || e.key === "h" || e.key === "H") {        e.preventDefault();
         a.setShortcutsOpen((prev) => {
           const next = !prev;
           if (next) a.closeSettings();
@@ -154,6 +153,9 @@ export const useStudyKeyboard = (api: StudyKeyboardApi) => {
         });
         a.setMixerOpen(false);
         a.setEmbedOpen(false);
+      } else if (e.key === "g" || e.key === "G") {
+        e.preventDefault();
+        a.setRoomsOpen((prev) => !prev);
       }
     };
 

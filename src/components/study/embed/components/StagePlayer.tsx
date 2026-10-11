@@ -30,6 +30,8 @@ interface StagePlayerProps {
   onStopStream: (e?: React.MouseEvent) => void;
   isSaved?: boolean;
   onToggleSave?: () => void;
+  /** Báo iframe vừa load xong để khôi phục vị trí phát (Studio↔PiP). */
+  onIframeLoad?: (iframe: HTMLIFrameElement) => void;
 }
 
 export function StagePlayer({
@@ -41,6 +43,7 @@ export function StagePlayer({
   onStopStream,
   isSaved = false,
   onToggleSave,
+  onIframeLoad,
 }: StagePlayerProps) {
   const handleCopyLink = async () => {
     if (!activeItem) return;
@@ -48,7 +51,9 @@ export function StagePlayer({
       await navigator.clipboard.writeText(activeItem.url);
       toast.success("Đã copy link đài này");
     } catch {
-      toast.error("Không copy được link");
+      toast.error("Không copy được link", {
+        description: "Hãy thử bôi đen link và copy thủ công.",
+      });
     }
   };
 
@@ -130,7 +135,10 @@ export function StagePlayer({
                 className="w-full h-full border-0"
                 allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                 loading="lazy"
-                onLoad={() => setIsIframeLoading(false)}
+                onLoad={(e) => {
+                  setIsIframeLoading(false);
+                  onIframeLoad?.(e.currentTarget as HTMLIFrameElement);
+                }}
               />
             </div>
           </div>
@@ -260,10 +268,10 @@ export function StagePlayer({
 
           {/* Đài tips: lớp giải thích cho 3 nút phía trên, tắt được khi đã hiểu */}
           {showTips && (
-            <div className="rounded-2xl bg-white/[0.03] border border-line/10 p-3 space-y-2.5">
-              <div className="flex items-center justify-between">
+            <div className="rounded-2xl bg-white/[0.03] border border-line/10 p-3.5 space-y-3">
+              <div className="flex items-center justify-between pb-0.5">
                 <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-200">
-                  <Lightbulb className="w-3.5 h-3.5" />
+                  <Lightbulb className="w-3.5 h-3.5 text-amber-300" />
                   Mẹo dùng đài
                 </span>
                 <button
@@ -275,44 +283,77 @@ export function StagePlayer({
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
-              {activeItem.platform === "youtube" && (
-                <div className="flex items-center gap-2.5">
+
+              <div className="space-y-1.5">
+                {activeItem.platform === "youtube" && (
+                  <button
+                    type="button"
+                    onClick={onEnterPip}
+                    title="Bấm để tách video nổi ngay (PiP)"
+                    aria-label="Tách video nổi ngay"
+                    className="w-full flex items-center gap-3 rounded-xl p-2 text-left hover:bg-white/[0.06] active:scale-[0.99] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                  >
+                    <span className="w-7 h-7 rounded-lg bg-white/5 border border-line/10 flex items-center justify-center shrink-0">
+                      <PictureInPicture2 className="w-3.5 h-3.5 text-accent-music-glow" />
+                    </span>
+                    <p className="text-xs leading-relaxed text-slate-400 whitespace-nowrap">
+                      <span className="text-slate-200 font-semibold">Nút PiP vừa học vừa xem</span>
+                      {" — "}tách video nổi để đọc tài liệu mà vẫn thấy hình.
+                    </p>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (activeItem) window.open(activeItem.url, "_blank", "noopener,noreferrer");
+                  }}
+                  title="Bấm để mở trang gốc ngay"
+                  aria-label="Mở trang gốc ngay"
+                  className="w-full flex items-center gap-3 rounded-xl p-2 text-left hover:bg-white/[0.06] active:scale-[0.99] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                >
                   <span className="w-7 h-7 rounded-lg bg-white/5 border border-line/10 flex items-center justify-center shrink-0">
-                    <PictureInPicture2 className="w-3.5 h-3.5 text-accent-music-glow" />
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-300" />
                   </span>
-                  <p className="text-xs leading-relaxed text-slate-400">
-                    <span className="text-slate-200 font-semibold">Nút PiP vừa học vừa xem</span>
-                    {" — "}tách video nổi để đọc tài liệu mà vẫn thấy hình.
+                  <p className="text-xs leading-relaxed text-slate-400 whitespace-nowrap">
+                    <span className="text-slate-200 font-semibold">Nút mở trang gốc</span>
+                    {" — "}xem bình luận, mô tả và kênh phát hành.
                   </p>
-                </div>
-              )}
-              <div className="flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-lg bg-white/5 border border-line/10 flex items-center justify-center shrink-0">
-                  <ExternalLink className="w-3.5 h-3.5 text-slate-300" />
-                </span>
-                <p className="text-xs leading-relaxed text-slate-400">
-                  <span className="text-slate-200 font-semibold">Nút mở trang gốc</span>
-                  {" — "}xem bình luận, mô tả và kênh phát hành.
-                </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => onStopStream(e)}
+                  title="Bấm để dừng hẳn đài ngay"
+                  aria-label="Dừng hẳn đài ngay"
+                  className="w-full flex items-center gap-3 rounded-xl p-2 text-left hover:bg-white/[0.06] active:scale-[0.99] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                >
+                  <span className="w-7 h-7 rounded-lg bg-white/5 border border-line/10 flex items-center justify-center shrink-0">
+                    <Square className="w-3.5 h-3.5 text-slate-400" />
+                  </span>
+                  <p className="text-xs leading-relaxed text-slate-400 whitespace-nowrap">
+                    <span className="text-slate-200 font-semibold">Nút ■ dừng hẳn đài</span>
+                    {" — "}tắt modal vẫn phát nền, chỉ nút này mới dừng.
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Bấm y như gõ phím M: tắt tiếng chung cả nhạc nền lẫn đài phát
+                    window.dispatchEvent(new KeyboardEvent("keydown", { key: "m" }));
+                  }}
+                  title="Bấm để tắt / bật tiếng ngay (như phím M)"
+                  aria-label="Tắt hoặc bật tiếng ngay"
+                  className="w-full flex items-center gap-3 rounded-xl p-2 text-left hover:bg-white/[0.06] active:scale-[0.99] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                >
+                  <span className="w-7 h-7 rounded-lg bg-white/5 border border-line/10 flex items-center justify-center shrink-0">
+                    <Volume2 className="w-3.5 h-3.5 text-accent-music-bright" />
+                  </span>
+                  <p className="text-xs leading-relaxed text-slate-400 whitespace-nowrap">
+                    <span className="text-slate-200 font-semibold">Phím M tắt tiếng cả đài</span>
+                    {" — "}áp dụng chung cho nhạc nền và đài phát.
+                  </p>
+                </button>
               </div>
-              <div className="flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-lg bg-white/5 border border-line/10 flex items-center justify-center shrink-0">
-                  <Square className="w-3.5 h-3.5 text-slate-400" />
-                </span>
-                <p className="text-xs leading-relaxed text-slate-400">
-                  <span className="text-slate-200 font-semibold">Nút ■ dừng hẳn đài</span>
-                  {" — "}tắt modal vẫn phát nền, chỉ nút này mới dừng.
-                </p>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-lg bg-white/5 border border-line/10 flex items-center justify-center shrink-0">
-                  <Volume2 className="w-3.5 h-3.5 text-accent-music-bright" />
-                </span>
-                <p className="text-xs leading-relaxed text-slate-400">
-                  <span className="text-slate-200 font-semibold">Phím M tắt tiếng cả đài</span>
-                  {" — "}áp dụng chung cho nhạc nền và đài phát.
-                </p>
-              </div>
+
               <button
                 type="button"
                 onClick={handleDismissTips}

@@ -6,7 +6,7 @@ export const STORAGE_ACTIVE_EMBED_KEY = STORAGE_KEYS.activeEmbed;
 export const STORAGE_VIEW_MODE_KEY = STORAGE_KEYS.embedViewMode;
 export const STORAGE_SPLIT_RATIO_KEY = "study_embed_split_ratio";
 
-export const DEFAULT_SPLIT_RATIO = 44;
+export const DEFAULT_SPLIT_RATIO = 58;
 export const MIN_SPLIT_RATIO = 28;
 export const MAX_SPLIT_RATIO = 72;
 

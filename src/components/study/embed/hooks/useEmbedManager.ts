@@ -232,7 +232,7 @@ export function useEmbedManager({
         try {
           localStorage.setItem(STORAGE_CUSTOM_EMBEDS_KEY, JSON.stringify(updated));
         } catch {}
-        toast.success("Đã lưu vào danh sách!");
+        toast.success("Đã lưu vào danh sách");
       }
 
       handlePlayItem(newItem);

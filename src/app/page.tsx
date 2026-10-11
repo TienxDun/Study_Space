@@ -20,6 +20,7 @@ import { StudyBackground } from "@/components/study/StudyBackground";
 import { useStudyKeyboard } from "@/lib/use-study-keyboard";
 import { StudyTopBar } from "@/components/study/StudyTopBar";
 import { StudyLeftDock } from "@/components/study/StudyLeftDock";
+import { StudyRoomsWidget } from "@/components/study/rooms/StudyRoomsWidget";
 import { StudyShortcutsModal } from "@/components/study/StudyShortcutsModal";
 import { StudyOnboardingTour } from "@/components/study/tour/StudyOnboardingTour";
 import {
@@ -83,6 +84,7 @@ export default function StudySpacePage() {
   const [isShortcutsHelpOpen, setIsShortcutsHelpOpen] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const [isRoomsOpen, setIsRoomsOpen] = useState(false);
 
   // Slideshow tự xoay bối cảnh (mặc định tắt, nhớ lựa chọn vào LocalStorage)
   const [isSlideshowOn, setIsSlideshowOn] = useState(false);
@@ -329,6 +331,7 @@ export default function StudySpacePage() {
     setShortcutsOpen: setIsShortcutsHelpOpen,
     setZenMode: setIsZenMode,
     setCommandOpen: setIsCommandOpen,
+    setRoomsOpen: setIsRoomsOpen,
   });
 
   // Mở 1 panel duy nhất (đóng settings + các panel khác)
@@ -411,6 +414,8 @@ export default function StudySpacePage() {
         onToggleNotes={handleToggleNotes}
         onToggleScenes={handleToggleScenes}
         onToggleEmbed={handleToggleEmbed}
+        isRoomsOpen={isRoomsOpen}
+        onToggleRooms={() => setIsRoomsOpen((prev) => !prev)}
       />
 
       {/* Popout Widgets */}
@@ -563,8 +568,10 @@ export default function StudySpacePage() {
         onOpenTour={() => setIsTourOpen(true)}
       />
 
-      {/* First-time Onboarding Tour & Interactive Spotlight Walkthrough */}
-      <StudyOnboardingTour
+      {/* Phòng học nhóm (video call) */}
+      <StudyRoomsWidget isOpen={isRoomsOpen} onClose={() => setIsRoomsOpen(false)} />
+
+      {/* First-time Onboarding Tour & Interactive Spotlight Walkthrough */}      <StudyOnboardingTour
         isOpen={isTourOpen ? true : undefined}
         onClose={() => setIsTourOpen(false)}
       />

@@ -14,6 +14,8 @@ import {
 import { KanbanCard, KanbanColumn } from "../types";
 import { getDeadlineStatus } from "../utils/task-deadline";
 import { startFocusTask } from "@/lib/use-focus-task";
+import { useFocusStats } from "@/lib/use-focus-stats";
+import { formatFocusDuration } from "@/lib/focus-sessions";
 import { PrioritySignalIcon } from "./PrioritySignalIcon";
 
 interface KanbanCardItemProps {
@@ -55,6 +57,13 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
   const isFullyDone = totalCheck > 0 && doneCheck === totalCheck;
   const isDoneColumn = /xong|done|hoàn thành/i.test(column.title) || (totalColumns > 1 && colIdx === totalColumns - 1);
   const isCardCompleted = Boolean(card.completed) || isDoneColumn || isFullyDone;
+
+  // Tổng thời gian focus đã ghi nhận cho task này (tự refresh khi có phiên mới).
+  const allTimeStats = useFocusStats("all");
+  const focusEntry = allTimeStats.byTask.find((t) => t.taskId === card.id);
+  const focusSeconds = focusEntry?.focusSeconds ?? 0;
+  const hasFooterMeta =
+    Boolean(card.dueDate) || (card.pomodoros ?? 0) > 0 || focusSeconds > 0;
 
   return (
     <div
@@ -149,7 +158,7 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
       {/* Card Footer: Deadline & Pomodoro Badges */}
       <div
         className={`flex items-center justify-between text-xs text-slate-400 ${
-          card.dueDate || (card.pomodoros && card.pomodoros > 0) ? "pt-1.5 border-t border-white/5" : "pt-0"
+          hasFooterMeta ? "pt-1.5 border-t border-white/5" : "pt-0"
         }`}
       >
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -159,22 +168,37 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
               if (!dStatus) return null;
               return (
                 <span
-                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] border ${dStatus.badgeClass}`}
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] leading-none border ${dStatus.badgeClass}`}
                 >
-                  <Calendar className="w-2.5 h-2.5" />
+                  <Calendar className="w-2.5 h-2.5 shrink-0" />
                   <span>{dStatus.shortLabel}</span>
                 </span>
               );
             })()}
 
-          {card.pomodoros !== undefined && card.pomodoros > 0 && (
+          {focusSeconds > 0 ? (
             <span
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono"
-              title={`Đã tích lũy ${card.pomodoros} phiên Pomodoro (${card.pomodoros * 25} phút)`}
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] leading-none bg-amber-500/15 border border-amber-500/30 text-amber-200 font-mono"
+              title={`Tổng thời gian tập trung: ${formatFocusDuration(focusSeconds)}${
+                focusEntry && focusEntry.sessions > 1
+                  ? ` • ${focusEntry.sessions} đoạn ghi nhận`
+                  : ""
+              }`}
             >
-              <span>🍅</span>
-              <span>{card.pomodoros}</span>
+              <Timer className="w-2.5 h-2.5 shrink-0" />
+              <span>{formatFocusDuration(focusSeconds)}</span>
             </span>
+          ) : (
+            card.pomodoros !== undefined &&
+            card.pomodoros > 0 && (
+              <span
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] leading-none bg-amber-500/15 border border-amber-500/30 text-amber-200 font-mono"
+                title={`Đã tích lũy ${card.pomodoros} phiên Pomodoro (dữ liệu cũ)`}
+              >
+                <Timer className="w-2.5 h-2.5 shrink-0" />
+                <span>{card.pomodoros}</span>
+              </span>
+            )
           )}
         </div>
 

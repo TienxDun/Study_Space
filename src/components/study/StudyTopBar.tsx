@@ -12,8 +12,10 @@ import {
   EyeOff,
   Sliders,
   HelpCircle,
+  BarChart3,
 } from "lucide-react";
 import { ZenStudyLogo } from "./brand/ZenStudyLogo";
+import { FocusStatsModal } from "./stats/FocusStatsModal";
 import type { TimerTab } from "./pomodoro/types";
 
 export interface StudyTopBarProps {
@@ -32,22 +34,16 @@ export interface StudyTopBarProps {
   onToggleFullscreen: () => void;
 }
 
-/** Thanh điều hướng trên phong cách Spatial Glass & Dynamic Island Capsule */
-export const StudyTopBar = ({
-  isZenMode,
+/** Nút đồng hồ giữa: tự tick mỗi giây, tách riêng để khỏi vẽ lại cả thanh */
+const TopBarClockButton = ({
   isPomodoroVisible,
   centerTab,
-  isGlobalMuted,
-  isSettingsOpen,
-  isFullscreen,
   onToggleClock,
-  onToggleShortcuts,
-  onEnterZen,
-  onExitZen,
-  onToggleMute,
-  onToggleSettings,
-  onToggleFullscreen,
-}: StudyTopBarProps) => {
+}: {
+  isPomodoroVisible: boolean;
+  centerTab: TimerTab;
+  onToggleClock: () => void;
+}) => {
   const [currentTime, setCurrentTime] = useState("");
 
   useEffect(() => {
@@ -66,6 +62,53 @@ export const StudyTopBar = ({
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  return (
+    <motion.button
+      layout
+      transition={{ layout: { type: "spring", stiffness: 400, damping: 30 } }}
+      onClick={onToggleClock}
+      className={`absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 h-9 inline-flex items-center justify-center px-2.5 sm:px-3 rounded-xl pointer-events-auto group cursor-pointer active:scale-95 will-change-transform transition-all duration-200 select-none ${
+        isPomodoroVisible && centerTab === "clock"
+          ? "text-accent-music-bright drop-shadow-[0_0_14px_rgba(52,211,153,0.7)] glass-hover"
+          : "text-slate-100 hover:text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] glass-hover"
+      }`}
+      title={
+        isPomodoroVisible && centerTab === "clock"
+          ? "Bấm để ẩn Đồng hồ lớn"
+          : "Bấm để mở Đồng hồ lớn (C)"
+      }
+    >
+      {/* Realtime Monospace Clock */}
+      <span className="font-mono text-xs sm:text-sm font-semibold tracking-wider tabular-nums transition-colors">
+        {currentTime || "00:00:00"}
+      </span>
+
+      {/* Subtle Status Hint without layout-thrashing reflows (chỉ mở rộng trên desktop/hover) */}
+      <span className="hidden sm:inline max-w-0 group-hover:max-w-20 overflow-hidden whitespace-nowrap text-[10px] text-accent-music-bright font-medium opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out pl-0 group-hover:pl-1.5">
+        • {isPomodoroVisible && centerTab === "clock" ? "Ẩn giờ" : "Hiện giờ"}
+      </span>
+    </motion.button>
+  );
+};
+
+/** Thanh điều hướng trên phong cách Spatial Glass & Dynamic Island Capsule */
+export const StudyTopBar = ({
+  isZenMode,
+  isPomodoroVisible,
+  centerTab,
+  isGlobalMuted,
+  isSettingsOpen,
+  isFullscreen,
+  onToggleClock,
+  onToggleShortcuts,
+  onEnterZen,
+  onExitZen,
+  onToggleMute,
+  onToggleSettings,
+  onToggleFullscreen,
+}: StudyTopBarProps) => {
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
 
   return (
     <>
@@ -103,31 +146,11 @@ export const StudyTopBar = ({
             </Link>
 
             {/* Dynamic Island Center Capsule - Realtime Clock (Thuần túy không viền không hộp, hiển thị thẳng lên bg) */}
-            <motion.button
-              layout
-              transition={{ layout: { type: "spring", stiffness: 400, damping: 30 } }}
-              onClick={onToggleClock}
-              className={`absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 h-9 inline-flex items-center justify-center px-2.5 sm:px-3 rounded-xl pointer-events-auto group cursor-pointer active:scale-95 will-change-transform transition-all duration-200 select-none ${
-                isPomodoroVisible && centerTab === "clock"
-                  ? "text-accent-music-bright drop-shadow-[0_0_14px_rgba(52,211,153,0.7)] glass-hover"
-                  : "text-slate-100 hover:text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] glass-hover"
-              }`}
-              title={
-                isPomodoroVisible && centerTab === "clock"
-                  ? "Bấm để ẩn Đồng hồ lớn"
-                  : "Bấm để mở Đồng hồ lớn (C)"
-              }
-            >
-              {/* Realtime Monospace Clock */}
-              <span className="font-mono text-xs sm:text-sm font-semibold tracking-wider tabular-nums transition-colors">
-                {currentTime || "00:00:00"}
-              </span>
-
-              {/* Subtle Status Hint without layout-thrashing reflows (chỉ mở rộng trên desktop/hover) */}
-              <span className="hidden sm:inline max-w-0 group-hover:max-w-20 overflow-hidden whitespace-nowrap text-[10px] text-accent-music-bright font-medium opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out pl-0 group-hover:pl-1.5">
-                • {isPomodoroVisible && centerTab === "clock" ? "Ẩn giờ" : "Hiện giờ"}
-              </span>
-            </motion.button>
+            <TopBarClockButton
+              isPomodoroVisible={isPomodoroVisible}
+              centerTab={centerTab}
+              onToggleClock={onToggleClock}
+            />
 
             {/* Right Action Icons - Floating Ghost HUD (Hoàn toàn không background, không viền) */}
             <div
@@ -142,6 +165,16 @@ export const StudyTopBar = ({
                 title="Bảng tra cứu phím tắt (?)"
               >
                 <HelpCircle className="w-4 h-4" />
+              </button>
+
+              {/* Focus Stats Button */}
+              <button
+                onClick={() => setIsStatsOpen(true)}
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-200 hover:text-white glass-hover transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                title="Thống kê thời gian tập trung"
+                aria-label="Mở thống kê thời gian tập trung"
+              >
+                <BarChart3 className="w-4 h-4" />
               </button>
 
               {/* Zen Mode Toggle (Ẩn thanh công cụ để tập trung) */}
@@ -206,6 +239,9 @@ export const StudyTopBar = ({
           <Eye className="w-4 h-4 text-accent-music-bright drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
         </motion.button>
       )}
+
+      {/* Focus Stats Modal (portal ra body, tự quản lý state) */}
+      <FocusStatsModal isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} />
     </>
   );
 };

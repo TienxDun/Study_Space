@@ -97,11 +97,11 @@ export function useYouTubeRemote(
     if (isPaused) {
       sendYouTubeCommand("playVideo");
       setIsPaused(false);
-      toast.success("Tiếp tục phát YouTube (Space)", { duration: 1500 });
+      toast.success("Tiếp tục phát YouTube (Space)", { duration: 2500 });
     } else {
       sendYouTubeCommand("pauseVideo");
       setIsPaused(true);
-      toast.info("Đã tạm dừng YouTube (Space)", { duration: 1500 });
+      toast.info("Đã tạm dừng YouTube (Space)", { duration: 2500 });
     }
   }, [isPaused, isYouTubePlatform]);
 

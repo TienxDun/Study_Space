@@ -8,6 +8,7 @@ import {
   FileText,
   Image as ImageIcon,
   Radio,
+  Users,
 } from "lucide-react";
 
 export interface StudyLeftDockProps {
@@ -18,11 +19,13 @@ export interface StudyLeftDockProps {
   isScenesOpen: boolean;
   isEmbedPlayerOpen: boolean;
   isExternalStreamActive: boolean;
+  isRoomsOpen: boolean;
   onTogglePomodoro: () => void;
   onToggleTasks: () => void;
   onToggleNotes: () => void;
   onToggleScenes: () => void;
   onToggleEmbed: () => void;
+  onToggleRooms: () => void;
 }
 
 interface DockItemConfig {
@@ -43,11 +46,13 @@ export const StudyLeftDock = ({
   isScenesOpen,
   isEmbedPlayerOpen,
   isExternalStreamActive,
+  isRoomsOpen,
   onTogglePomodoro,
   onToggleTasks,
   onToggleNotes,
   onToggleScenes,
   onToggleEmbed,
+  onToggleRooms,
 }: StudyLeftDockProps) => {
   const dockItems: DockItemConfig[] = [
     {
@@ -130,6 +135,22 @@ export const StudyLeftDock = ({
             }`}
           />
         </div>
+      ),
+    },
+    {
+      id: "rooms",
+      title: "Phòng học nhóm",
+      shortcut: "G",
+      isActive: isRoomsOpen,
+      onClick: onToggleRooms,
+      icon: (active) => (
+        <Users
+          className={`w-5 h-5 transition-all ${
+            active
+              ? "text-accent-music-glow drop-shadow-[0_0_8px_rgba(52,211,153,0.9)]"
+              : "text-slate-200 group-hover:text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+          }`}
+        />
       ),
     },
   ];

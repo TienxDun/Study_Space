@@ -376,6 +376,7 @@ export const StudyNotesWidget = ({
                 notes={sortedNotes}
                 activeNote={activeNote}
                 isLight={isLight}
+                isDragging={isDragging}
                 activeFormats={activeFormats}
                 wordCount={wordCount}
                 checklistStats={checklistStats}

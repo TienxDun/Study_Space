@@ -1,17 +1,17 @@
 "use client";
 
+import { useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  Play,
-  Pause,
   SkipForward,
   SkipBack,
   Repeat,
   Shuffle,
 } from "lucide-react";
+import { MascotFace } from "@/components/study/mascot/MascotFace";
+import { useMusicBridge } from "@/components/study/mascot/useMusicBridge";
 
 interface PlayerControlsProps {
-  isPlaying: boolean;
-  onTogglePlay: () => void;
   onNextTrack: () => void;
   onPrevTrack: () => void;
   isShuffle: boolean;
@@ -21,8 +21,6 @@ interface PlayerControlsProps {
 }
 
 export function PlayerControls({
-  isPlaying,
-  onTogglePlay,
   onNextTrack,
   onPrevTrack,
   isShuffle,
@@ -30,8 +28,24 @@ export function PlayerControls({
   isLooping,
   onToggleLoop,
 }: PlayerControlsProps) {
+  // Mèo ngồi giữa làm nút phát/dừng chính
+  const { musicPlaying, toggleMusic } = useMusicBridge();
+  const [poking, setPoking] = useState(false);
+  const [bubble, setBubble] = useState<string | null>(null);
+  const bubbleTimer = useRef<number | null>(null);
+
+  const handleCatPress = () => {
+    const wasPlaying = musicPlaying;
+    toggleMusic();
+    setPoking(true);
+    setBubble(wasPlaying ? "Nghỉ chút nhé~" : "Nhạc chạy rồi~");
+    if (bubbleTimer.current) window.clearTimeout(bubbleTimer.current);
+    bubbleTimer.current = window.setTimeout(() => setBubble(null), 1500);
+    window.setTimeout(() => setPoking(false), 320);
+  };
+
   return (
-    <div className="flex items-center justify-between select-none w-full max-w-[270px] sm:max-w-[290px] px-1">
+    <div className="flex items-center justify-center gap-1 select-none w-full max-w-[270px] sm:max-w-[290px] px-1">
       {/* 1. Xáo trộn bài hát */}
       <button
         onClick={onToggleShuffle}
@@ -54,18 +68,37 @@ export function PlayerControls({
         <SkipBack className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
       </button>
 
-      {/* 3. Nút Play/Pause chính ở trung tâm (Trục đối xứng tuyệt đối) */}
-      <button
-        onClick={onTogglePlay}
-        className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-accent-music to-accent-music-bright hover:from-accent-music-glow hover:to-accent-music-pale text-panel font-black shadow-[0_0_18px_rgba(52,211,153,0.75)] hover:shadow-[0_0_26px_rgba(52,211,153,0.95)] transition-all active:scale-90 cursor-pointer shrink-0 flex items-center justify-center"
-        title={isPlaying ? "Tạm dừng (Space)" : "Phát nhạc (Space)"}
-      >
-        {isPlaying ? (
-          <Pause className="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-panel" />
-        ) : (
-          <Play className="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-panel ml-0.5" />
-        )}
-      </button>
+      {/* 3. Mèo linh vật: nút phát/dừng chính, bấm vào mèo để bật/tắt nhạc */}
+      <div className="relative shrink-0 mx-0.5">
+        <AnimatePresence>
+          {bubble && (
+            <motion.div
+              key={bubble}
+              initial={{ opacity: 0, y: 4, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 2, scale: 0.95 }}
+              transition={{ duration: 0.18 }}
+              className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-full border border-white/15 bg-black/40 backdrop-blur-2xl px-2.5 py-1 text-[11px] font-medium text-white shadow-lg"
+            >
+              {bubble}
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <motion.button
+          onClick={handleCatPress}
+          animate={poking ? { scale: [1, 0.85, 1.08, 1] } : { scale: 1 }}
+          transition={{ duration: 0.32, ease: "easeOut" }}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.9 }}
+          className={`cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70 ${
+            musicPlaying ? "drop-shadow-[0_0_10px_rgba(52,211,153,0.6)]" : ""
+          }`}
+          title={musicPlaying ? "Tạm dừng (Space)" : "Phát nhạc (Space)"}
+          aria-label={musicPlaying ? "Tạm dừng nhạc" : "Phát nhạc"}
+        >
+          <MascotFace size={42} musicPlaying={musicPlaying} poking={poking} />
+        </motion.button>
+      </div>
 
       {/* 4. Bài tiếp theo */}
       <button

@@ -22,7 +22,7 @@ export function StudyJsonLd({
       operatingSystem: "All (Web Browser)",
       browserRequirements: "Requires JavaScript. Requires HTML5.",
       description:
-        "Không gian học tập tương tác nhập vai tại ZenStudy Space (zenstudy.space) với 50+ bối cảnh Video 4K, 20 âm thanh môi trường thư giãn, danh sách nhạc Lo-fi/Jazz, đồng hồ Pomodoro, quản lý công việc và ghi chú nhanh.",
+        "Không gian học tập tương tác nhập vai tại ZenStudy Space (zenstudy.space) với 30+ bối cảnh Video 4K, 20 âm thanh môi trường thư giãn, danh sách nhạc Lo-fi/Jazz, đồng hồ Pomodoro, quản lý công việc và ghi chú nhanh.",
       image: `${siteUrl}/og-image.png`,
       screenshot: `${siteUrl}/og-image.png`,
       offers: {
@@ -32,7 +32,7 @@ export function StudyJsonLd({
         availability: "https://schema.org/InStock",
       },
       featureList: [
-        "50+ Bối cảnh Video 4K & Ảnh nền học tập độ nét cao",
+        "30+ Bối cảnh Video 4K & Ảnh nền học tập độ nét cao",
         "Bộ trộn 20 âm thanh môi trường thư giãn (mưa, sấm chớp, sóng biển, gió, tiếng lật sách, lò sưởi, quán cafe)",
         "Trình phát nhạc Lo-fi, Jazz và thư giãn không giới hạn",
         "Hỗ trợ nhúng video nhạc YouTube và playlist Spotify",

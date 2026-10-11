@@ -7,8 +7,8 @@ import { StudyEmbedItem } from "@/components/study/embed/types";
 
 describe("Study Embed Player Utilities", () => {
   describe("clampSplitRatio", () => {
-    it("returns default 44 when input is NaN", () => {
-      expect(clampSplitRatio(NaN)).toBe(44);
+    it("returns default 58 when input is NaN", () => {
+      expect(clampSplitRatio(NaN)).toBe(58);
     });
 
     it("clamps values below minimum (28%)", () => {

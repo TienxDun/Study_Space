@@ -96,7 +96,8 @@ export function StudyCommandPalette({
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-lg rounded-2xl bg-[#0b0f17]/95 backdrop-blur-2xl border border-white/15 shadow-[0_30px_80px_rgba(0,0,0,0.8)] overflow-hidden">
+      <div className="relative w-full max-w-lg rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
         <div className="flex items-center gap-2.5 px-4 border-b border-white/10">
           <Search className="w-4 h-4 text-slate-400 shrink-0" />
           <input

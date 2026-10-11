@@ -1,17 +1,25 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { PomodoroMode, PomodoroDurations, PomodoroSoundType } from "../types";
+import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  PomodoroMode,
+  PomodoroDurations,
+  PomodoroSoundType,
+  PomodoroSessionResult,
+  FocusSpanInfo,
+} from "../types";
 import { playPomodoroSound } from "../../study-sound";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
-import { getNextBreakType } from "../utils/timer-formatters";
+import { computeSpanDelta, getNextBreakType } from "../utils/timer-formatters";
 import { EVENT_START_FOCUS } from "@/lib/use-focus-task";
 
 interface UsePomodoroCountdownOptions {
   durations: PomodoroDurations;
   soundEnabled: boolean;
   soundType?: PomodoroSoundType;
-  onSessionComplete?: (mode: PomodoroMode) => void;
+  onSessionComplete?: (result: PomodoroSessionResult) => void;
+  /** Bắn mỗi khi 1 đoạn chạy focus dừng (pause/skip/reset/hết giờ/tắt tab) để ghi log thầm lặng. */
+  onFocusSpan?: (span: FocusSpanInfo) => void;
 }
 
 export function usePomodoroCountdown({
@@ -19,15 +27,96 @@ export function usePomodoroCountdown({
   soundEnabled,
   soundType = "classic_clock",
   onSessionComplete,
+  onFocusSpan,
 }: UsePomodoroCountdownOptions) {
   const [pomoMode, setPomoMode] = useState<PomodoroMode>("focus");
   const [timeLeft, setTimeLeft] = useState(durations.focus * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [completedSessions, setCompletedSessions] = useState(0);
 
+  // Chốt thông tin phiên lúc BẮT ĐẦU chạy (đổi duration giữa chừng không
+  // làm sai số liệu). flushedSeconds = số giây đã flush qua các lần pause
+  // trước — resume không đếm trùng.
+  const sessionRef = useRef<{
+    startedAt: number;
+    plannedSeconds: number;
+    flushedSeconds: number;
+  } | null>(null);
+  // Mốc bắt đầu của ĐOẠN chạy hiện tại (set mỗi lần bấm chạy, clear khi dừng).
+  const spanStartRef = useRef<number | null>(null);
+  const timeLeftRef = useRef(timeLeft);
+  timeLeftRef.current = timeLeft;
+  const pomoModeRef = useRef(pomoMode);
+  pomoModeRef.current = pomoMode;
+  const isRunningRef = useRef(isRunning);
+  isRunningRef.current = isRunning;
+  const onFocusSpanRef = useRef(onFocusSpan);
+  onFocusSpanRef.current = onFocusSpan;
+
+  const ensureSession = useCallback((plannedSeconds: number) => {
+    if (!sessionRef.current) {
+      sessionRef.current = {
+        startedAt: Date.now(),
+        plannedSeconds,
+        flushedSeconds: 0,
+      };
+    }
+  }, []);
+
+  /**
+   * Flush đoạn chạy hiện tại: tính số giây MỚI phát sinh kể từ lần flush
+   * trước, emit để ghi log. Gọi khi pause/skip/reset/đổi mode/hết giờ/tắt
+   * tab — kể cả 1 giây cũng ghi, không mất thời gian tích lũy.
+   */
+  const flushSpan = useCallback((completed: boolean): FocusSpanInfo | null => {
+    const mode = pomoModeRef.current;
+    const startedAt = spanStartRef.current;
+    spanStartRef.current = null;
+    if (mode !== "focus") return null;
+    const sess = sessionRef.current;
+    if (!sess) return null;
+    const delta = computeSpanDelta(
+      sess.plannedSeconds,
+      timeLeftRef.current,
+      sess.flushedSeconds
+    );
+    if (delta < 1) return null;
+    sess.flushedSeconds += delta;
+    const endedAt = Date.now();
+    const span: FocusSpanInfo = {
+      mode,
+      completed,
+      startedAt: startedAt ?? endedAt - delta * 1000,
+      endedAt,
+      seconds: delta,
+      plannedSeconds: sess.plannedSeconds,
+    };
+    try {
+      onFocusSpanRef.current?.(span);
+    } catch {}
+    return span;
+  }, []);
+
+  // Tắt tab giữa chừng vẫn flush đoạn đang chạy (localStorage write đồng bộ).
+  useEffect(() => {
+    const onUnload = () => flushSpan(false);
+    window.addEventListener("beforeunload", onUnload);
+    return () => {
+      window.removeEventListener("beforeunload", onUnload);
+      flushSpan(false);
+    };
+  }, [flushSpan]);
+
   // Tự động kích hoạt đếm ngược chế độ Focus khi người dùng bấm Bắt đầu tập trung vào Task
   useEffect(() => {
     const handleStartFocus = () => {
+      flushSpan(false); // flush phiên dở trước khi bắt đầu phiên mới
+      sessionRef.current = {
+        startedAt: Date.now(),
+        plannedSeconds: durations.focus * 60,
+        flushedSeconds: 0,
+      };
+      spanStartRef.current = Date.now();
       setPomoMode("focus");
       setTimeLeft(durations.focus * 60);
       setIsRunning(true);
@@ -37,7 +126,7 @@ export function usePomodoroCountdown({
     return () => {
       window.removeEventListener(EVENT_START_FOCUS, handleStartFocus);
     };
-  }, [durations.focus]);
+  }, [durations.focus, flushSpan]);
 
   // Khôi phục số phiên hoàn thành từ LocalStorage
   useEffect(() => {
@@ -47,9 +136,18 @@ export function usePomodoroCountdown({
     } catch {}
   }, []);
 
-  // Cập nhật lại timeLeft khi thời gian cài đặt thay đổi và đang tạm dừng
+  // Chỉ cập nhật lại timeLeft khi user ĐỔI thời gian cài đặt (lúc đang
+  // tạm dừng). So sánh giá trị từng field để object durations bị tạo lại
+  // mỗi render cũng không reset oan đồng hồ.
+  const prevDurationsRef = useRef(durations);
   useEffect(() => {
-    if (!isRunning) {
+    const prev = prevDurationsRef.current;
+    prevDurationsRef.current = durations;
+    const changed =
+      prev.focus !== durations.focus ||
+      prev.short_break !== durations.short_break ||
+      prev.long_break !== durations.long_break;
+    if (changed && !isRunning) {
       setTimeLeft(durations[pomoMode] * 60);
     }
   }, [durations, pomoMode, isRunning]);
@@ -60,32 +158,69 @@ export function usePomodoroCountdown({
 
   const switchPomoMode = useCallback(
     (mode: PomodoroMode) => {
+      flushSpan(false); // giữ lại số phút đã chạy trước khi đổi mode
+      sessionRef.current = null;
       setPomoMode(mode);
       setTimeLeft(durations[mode] * 60);
       setIsRunning(false);
     },
-    [durations]
+    [durations, flushSpan]
   );
 
-  const handleComplete = useCallback(() => {
-    setIsRunning(false);
-    playChime();
+  const finishSession = useCallback(
+    (natural: boolean) => {
+      setIsRunning(false);
+      playChime();
 
-    if (pomoMode === "focus") {
-      const nextCount = completedSessions + 1;
-      setCompletedSessions(nextCount);
-      try {
-        localStorage.setItem(STORAGE_KEYS.pomoCount, String(nextCount));
-      } catch {}
-      if (onSessionComplete) onSessionComplete("focus");
+      const latched = sessionRef.current;
+      const plannedSeconds =
+        latched?.plannedSeconds ?? durations[pomoMode] * 60;
+      const sessionStartedAt = latched?.startedAt ?? Date.now();
+      // Flush đoạn cuối để ghi log (kể cả skip — 10 phút chạy dở vẫn ghi 10 phút).
+      const span = flushSpan(natural);
+      sessionRef.current = null;
+      const endedAt = span?.endedAt ?? Date.now();
+      const completed = natural;
+      const focusSeconds =
+        completed && pomoMode === "focus" ? plannedSeconds : 0;
+      const result: PomodoroSessionResult = {
+        mode: pomoMode,
+        completed,
+        startedAt: sessionStartedAt,
+        endedAt,
+        plannedSeconds,
+        focusSeconds,
+      };
 
-      const nextBreak = getNextBreakType(nextCount);
-      switchPomoMode(nextBreak);
-    } else {
-      if (onSessionComplete) onSessionComplete(pomoMode);
-      switchPomoMode("focus");
-    }
-  }, [completedSessions, onSessionComplete, playChime, pomoMode, switchPomoMode]);
+      if (pomoMode === "focus") {
+        if (completed) {
+          const nextCount = completedSessions + 1;
+          setCompletedSessions(nextCount);
+          try {
+            localStorage.setItem(STORAGE_KEYS.pomoCount, String(nextCount));
+          } catch {}
+        }
+        if (onSessionComplete) onSessionComplete(result);
+
+        // Đếm cả slot hiện tại (kể cả skip) để chu kỳ nghỉ ngắn/dài
+        // không lệch — còn dots thì chỉ tính phiên chạy hết giờ.
+        const nextBreak = getNextBreakType(completedSessions + 1);
+        switchPomoMode(nextBreak);
+      } else {
+        if (onSessionComplete) onSessionComplete(result);
+        switchPomoMode("focus");
+      }
+    },
+    [
+      completedSessions,
+      durations,
+      flushSpan,
+      onSessionComplete,
+      playChime,
+      pomoMode,
+      switchPomoMode,
+    ]
+  );
 
   // Vòng lặp đếm ngược mỗi giây
   useEffect(() => {
@@ -96,31 +231,43 @@ export function usePomodoroCountdown({
         setTimeLeft((prev) => prev - 1);
       }, 1000);
     } else if (isRunning && timeLeft === 0) {
-      handleComplete();
+      finishSession(true);
     }
 
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isRunning, timeLeft, handleComplete]);
+  }, [isRunning, timeLeft, finishSession]);
 
   const toggleRunning = useCallback(() => {
-    setIsRunning((prev) => !prev);
-  }, []);
+    if (isRunningRef.current) {
+      flushSpan(false); // pause → chốt đoạn vừa chạy, không mất giây nào
+      setIsRunning(false);
+    } else {
+      ensureSession(timeLeftRef.current);
+      spanStartRef.current = Date.now();
+      setIsRunning(true);
+    }
+  }, [ensureSession, flushSpan]);
 
   const resetPomodoro = useCallback(() => {
+    flushSpan(false); // giữ lại số phút đã chạy trước khi reset
+    sessionRef.current = null;
     setIsRunning(false);
     setTimeLeft(durations[pomoMode] * 60);
-  }, [durations, pomoMode]);
+  }, [durations, flushSpan, pomoMode]);
+
+  const skipSession = useCallback(() => {
+    finishSession(false);
+  }, [finishSession]);
 
   return {
     pomoMode,
     timeLeft,
     isRunning,
     completedSessions,
-    switchPomoMode,
     toggleRunning,
     resetPomodoro,
-    skipSession: handleComplete,
+    skipSession,
   };
 }

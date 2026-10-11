@@ -318,18 +318,6 @@
     ]
   },
   {
-    "id": "6969d8e4f5373372f117a101",
-    "name": "Cozy Anime Home Interior",
-    "category": "anime",
-    "type": "IMAGE",
-    "mediaPath": "scenes/anime-style-cozy-home-interior-with-furnishings.avif",
-    "thumbnailPath": "scenes/anime-style-cozy-home-interior-with-furnishings.avif",
-    "tags": [
-      "anime",
-      "image"
-    ]
-  },
-  {
     "id": "6969d8e4f5373372f117a109",
     "name": "Foggy Dark City I",
     "category": "dark",
@@ -470,6 +458,42 @@
     "thumbnailPath": "scenes/urban-view-with-people-street.avif",
     "tags": [
       "urban",
+      "image"
+    ]
+  },
+  {
+    "id": "scene-custom-1791729273851",
+    "name": "Snowfall at Matsuoka",
+    "category": "anime",
+    "type": "IMAGE",
+    "mediaPath": "scenes/wallhaven-9oor8k.jpg",
+    "thumbnailPath": "scenes/wallhaven-9oor8k.jpg",
+    "tags": [
+      "anime",
+      "image"
+    ]
+  },
+  {
+    "id": "scene-custom-1791729300504",
+    "name": "Above the Sea of Clouds",
+    "category": "nature",
+    "type": "IMAGE",
+    "mediaPath": "scenes/wallhaven-m3jyy8.jpg",
+    "thumbnailPath": "scenes/wallhaven-m3jyy8.jpg",
+    "tags": [
+      "nature",
+      "image"
+    ]
+  },
+  {
+    "id": "scene-custom-1791729315990",
+    "name": "Whispers of Summer",
+    "category": "anime",
+    "type": "IMAGE",
+    "mediaPath": "scenes/wallhaven-x6128o.jpg",
+    "thumbnailPath": "scenes/wallhaven-x6128o.jpg",
+    "tags": [
+      "anime",
       "image"
     ]
   }
