@@ -15,7 +15,7 @@ export interface UseScenePreloaderReturn {
   pendingScene: Scene | null;
   isPreloading: boolean;
   selectScene: (scene: Scene) => void;
-  setCurrentSceneDirectly: (scene: Scene) => void;
+  setCurrentSceneDirectly: (scene: Scene, opts?: { persist?: boolean }) => void;
 }
 
 /**
@@ -174,18 +174,23 @@ export function useScenePreloader({
     [currentScene.id, pendingScene, timeoutMs, applyScene]
   );
 
-  const setCurrentSceneDirectly = useCallback((scene: Scene) => {
-    if (cancelPreviousPreloadRef.current) {
-      cancelPreviousPreloadRef.current();
-      cancelPreviousPreloadRef.current = null;
-    }
-    setPendingScene(null);
-    setIsPreloading(false);
-    setCurrentScene(scene);
-    try {
-      localStorage.setItem(STORAGE_KEYS.sceneId, scene.id);
-    } catch {}
-  }, []);
+  const setCurrentSceneDirectly = useCallback(
+    (scene: Scene, opts?: { persist?: boolean }) => {
+      if (cancelPreviousPreloadRef.current) {
+        cancelPreviousPreloadRef.current();
+        cancelPreviousPreloadRef.current = null;
+      }
+      setPendingScene(null);
+      setIsPreloading(false);
+      setCurrentScene(scene);
+      if (opts?.persist !== false) {
+        try {
+          localStorage.setItem(STORAGE_KEYS.sceneId, scene.id);
+        } catch {}
+      }
+    },
+    []
+  );
 
   return {
     currentScene,

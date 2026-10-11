@@ -86,8 +86,8 @@ export default function StudySpacePage() {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isRoomsOpen, setIsRoomsOpen] = useState(false);
 
-  // Slideshow tự xoay bối cảnh (mặc định tắt, nhớ lựa chọn vào LocalStorage)
-  const [isSlideshowOn, setIsSlideshowOn] = useState(false);
+  // Slideshow tự xoay bối cảnh (mặc định bật 5 phút, nhớ lựa chọn vào LocalStorage)
+  const [isSlideshowOn, setIsSlideshowOn] = useState(true);
   const [slideshowIntervalMin, setSlideshowIntervalMin] = useState(
     DEFAULT_SLIDESHOW_INTERVAL_MIN
   );
@@ -146,13 +146,18 @@ export default function StudySpacePage() {
     selectSoundType: handleSelectSoundType,
   } = useStudySettings();
 
-  // Phục hồi Background Scene & Cài đặt cá nhân từ LocalStorage khi vào lại trang
+  // Phục hồi Background Scene & Cài đặt cá nhân từ LocalStorage khi vào lại trang.
+  // Chưa từng chọn cảnh → mở cảnh ngẫu nhiên (không lưu để lần sau random tiếp).
   useEffect(() => {
     try {
       const savedSceneId = localStorage.getItem(STORAGE_KEYS.sceneId);
       if (savedSceneId) {
         const found = STUDY_SCENES.find((s) => s.id === savedSceneId);
         if (found) setCurrentSceneDirectly(found);
+      } else if (STUDY_SCENES.length > 0) {
+        const random =
+          STUDY_SCENES[Math.floor(Math.random() * STUDY_SCENES.length)];
+        setCurrentSceneDirectly(random, { persist: false });
       }
       const savedMute = localStorage.getItem(STORAGE_KEYS.globalMute);
       if (savedMute !== null) {
@@ -185,6 +190,19 @@ export default function StudySpacePage() {
     window.addEventListener("study_space_start_focus", handleStartFocus);
     return () => {
       window.removeEventListener("study_space_start_focus", handleStartFocus);
+    };
+  }, []);
+
+  // Mở thẳng UI Pomodoro (từ CTA trong modal Thống kê khi chưa có dữ liệu)
+  useEffect(() => {
+    const handleOpenPomodoro = () => {
+      setIsPomodoroVisible(true);
+      setCenterTab("pomodoro");
+    };
+
+    window.addEventListener("study_space_open_pomodoro", handleOpenPomodoro);
+    return () => {
+      window.removeEventListener("study_space_open_pomodoro", handleOpenPomodoro);
     };
   }, []);
 

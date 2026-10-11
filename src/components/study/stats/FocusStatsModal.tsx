@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X, BarChart3, ChevronDown } from "lucide-react";
+import { X, BarChart3, ChevronDown, Timer } from "lucide-react";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { useFocusStats } from "@/lib/use-focus-stats";
+import { EVENT_OPEN_POMODORO } from "@/lib/use-focus-task";
 import {
   formatFocusDuration,
   formatDayLabel,
@@ -112,10 +113,23 @@ export function FocusStatsModal({ isOpen, onClose }: FocusStatsModalProps) {
         </div>
 
         {all.totalSeconds <= 0 ? (
-          <p className="text-xs leading-relaxed text-slate-400 rounded-2xl bg-white/[0.04] border border-white/10 p-3">
-            Chưa ghi nhận phiên nào. Bấm chạy Pomodoro để bắt đầu tích lũy —
-            pause giữa chừng vẫn tính giờ.
-          </p>
+          <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-3.5 space-y-3 text-center">
+            <p className="text-xs leading-relaxed text-slate-400">
+              Chưa ghi nhận phiên nào. Bấm chạy Pomodoro để bắt đầu tích lũy —
+              pause giữa chừng vẫn tính giờ.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                window.dispatchEvent(new Event(EVENT_OPEN_POMODORO));
+              }}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-400/15 border border-emerald-400/30 text-emerald-300 hover:bg-emerald-400/25 hover:text-emerald-200 transition-colors cursor-pointer active:scale-[0.98] touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
+            >
+              <Timer className="w-4 h-4" />
+              Mở Pomodoro ngay
+            </button>
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-2">

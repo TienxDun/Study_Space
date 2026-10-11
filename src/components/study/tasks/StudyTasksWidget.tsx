@@ -268,6 +268,8 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
               aria-hidden="true"
             />
 
+            {/* Panel nhận focus lập trình khi mở (đọc dialog) nên tắt outline
+                của khung — nút/input bên trong vẫn giữ ring focus riêng. */}
             <motion.div
               key="tasks-widget-panel"
               ref={panelRef}
@@ -279,7 +281,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97, y: 8 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="relative z-10 w-[94vw] sm:w-[80vw] h-full rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden text-white select-none pointer-events-auto transform-gpu will-change-transform"
+              className="relative z-10 w-[94vw] sm:w-[80vw] h-full rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden text-white select-none pointer-events-auto transform-gpu will-change-transform outline-none"
             >
               {/* Header Bar */}
               <TaskHeader

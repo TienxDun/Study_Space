@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import type { Scene } from "@/components/study/study-types";
 
 export const SLIDESHOW_INTERVALS_MIN = [5, 15, 30, 60];
-export const DEFAULT_SLIDESHOW_INTERVAL_MIN = 15;
+export const DEFAULT_SLIDESHOW_INTERVAL_MIN = 5;
 
 interface UseSceneSlideshowOptions {
   enabled: boolean;

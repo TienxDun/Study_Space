@@ -29,6 +29,8 @@ export const UNGROUPED_FOCUS_TASK: ActiveFocusTask = {
 export const EVENT_START_FOCUS = "study_space_start_focus";
 export const EVENT_CLEAR_FOCUS = "study_space_clear_focus";
 export const EVENT_POMO_COMPLETED = "study_space_pomo_completed";
+/** Mở UI Pomodoro (bật widget + chuyển tab giữa sang pomodoro). */
+export const EVENT_OPEN_POMODORO = "study_space_open_pomodoro";
 
 export function getStoredFocusTask(): ActiveFocusTask | null {
   if (typeof window === "undefined") return null;
