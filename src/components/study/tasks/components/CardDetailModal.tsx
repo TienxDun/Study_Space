@@ -117,7 +117,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-60 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4"
+        className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
         onClick={() => {
           setSelectedCard(null);
           closeAllPopovers();
@@ -129,7 +129,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
           exit={{ scale: 0.96, y: 12, opacity: 0 }}
           transition={{ type: "spring", stiffness: 360, damping: 28 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-[660px] max-h-[88vh] flex flex-col rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-white overflow-hidden"
+          className="relative w-full max-w-[660px] max-h-[88vh] flex flex-col rounded-3xl bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-white overflow-hidden"
         >
           <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
           {/* Header: Title, Board Info & Action Bar */}

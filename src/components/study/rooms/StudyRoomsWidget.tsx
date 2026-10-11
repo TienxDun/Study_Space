@@ -136,16 +136,34 @@ export const StudyRoomsWidget = ({ isOpen, onClose }: StudyRoomsWidgetProps) => 
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, token, onClose]);
 
-  const handleJoin = useCallback(async () => {
-    if (!displayName.trim() || !roomName.trim() || joining) return;
-    await doJoin(roomName.trim(), displayName.trim());
-  }, [displayName, roomName, joining, roomSize]);
+const getLiveKitEndpoints = () => {
+  const raw = (process.env.NEXT_PUBLIC_LIVEKIT_TOKEN_URL || "").trim().replace(/\/+$/, "");
+  if (!raw) {
+    const isDev = process.env.NODE_ENV === "development";
+    return {
+      tokenUrl: isDev ? "/api/livekit-token/" : "",
+      roomsUrl: isDev ? "/api/livekit-rooms/" : "",
+      isAvailable: isDev,
+    };
+  }
+  const base = raw.replace(/\/(token|rooms)$/, "");
+  return {
+    tokenUrl: `${base}/token`,
+    roomsUrl: `${base}/rooms`,
+    isAvailable: true,
+  };
+};
 
-  const doJoin = async (room: string, name: string) => {
+  const doJoin = useCallback(async (room: string, name: string) => {
+    const { tokenUrl, isAvailable } = getLiveKitEndpoints();
+    if (!isAvailable || !tokenUrl) {
+      setError("Chưa cấu hình máy chủ phòng học nhóm (NEXT_PUBLIC_LIVEKIT_TOKEN_URL).");
+      return;
+    }
     setJoining(true);
     setError(null);
     try {
-      const res = await fetch("/api/livekit-token/", {
+      const res = await fetch(tokenUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ room, name }),
@@ -179,13 +197,23 @@ export const StudyRoomsWidget = ({ isOpen, onClose }: StudyRoomsWidgetProps) => 
     } finally {
       setJoining(false);
     }
-  };
+  }, [roomSize]);
+
+  const handleJoin = useCallback(async () => {
+    if (!displayName.trim() || !roomName.trim() || joining) return;
+    await doJoin(roomName.trim(), displayName.trim());
+  }, [displayName, roomName, joining, doJoin]);
 
   // Lấy phòng đang mở mỗi lần mở bảng + bấm tải lại
   const loadOpenRooms = useCallback(async () => {
+    const { roomsUrl, isAvailable } = getLiveKitEndpoints();
+    if (!isAvailable || !roomsUrl) {
+      setOpenRooms([]);
+      return;
+    }
     setLoadingRooms(true);
     try {
-      const res = await fetch("/api/livekit-rooms/", { cache: "no-store" });
+      const res = await fetch(roomsUrl, { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       if (res.ok) setOpenRooms(data.rooms || []);
     } catch {}
@@ -395,7 +423,11 @@ export const StudyRoomsWidget = ({ isOpen, onClose }: StudyRoomsWidgetProps) => 
                       </div>
                       {openRooms.length === 0 ? (
                         <p className="text-[11px] text-slate-500 px-1 py-2">
-                          {loadingRooms ? "Đang tìm..." : "Chưa có phòng nào mở. Tạo phòng mới ở dưới nhé."}
+                          {loadingRooms
+                            ? "Đang tìm..."
+                            : !getLiveKitEndpoints().isAvailable
+                            ? "Chưa cấu hình Cloudflare Worker cho phòng học (NEXT_PUBLIC_LIVEKIT_TOKEN_URL)."
+                            : "Chưa có phòng nào mở. Tạo phòng mới ở dưới nhé."}
                         </p>
                       ) : (
                         <div className="space-y-1.5 max-h-36 overflow-y-auto custom-study-scroll pr-0.5">
