@@ -14,6 +14,7 @@ export interface StudyKeyboardApi {
   setEmbedOpen: Dispatch<SetStateAction<boolean>>;
   setShortcutsOpen: Dispatch<SetStateAction<boolean>>;
   setZenMode: Dispatch<SetStateAction<boolean>>;
+  setCommandOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 /** Phím tắt toàn cục của StudySpace. Mọi nhánh chỉ dùng functional
@@ -48,7 +49,26 @@ export const useStudyKeyboard = (api: StudyKeyboardApi) => {
         return;
       }
 
-      if (isInput) return;
+      if (isInput) {
+        // Cmd/Ctrl+K vẫn mở palette ngay cả khi đang nhập
+        if (
+          (e.metaKey || e.ctrlKey) &&
+          (e.key === "k" || e.key === "K")
+        ) {
+          e.preventDefault();
+          a.setCommandOpen((prev) => !prev);
+        }
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
+        e.preventDefault();
+        a.setCommandOpen((prev) => !prev);
+        return;
+      }
+
+      // Phím chữ đi kèm Cmd/Ctrl (Vid: Cmd+Z của trình duyệt) không kích hoạt shortcut app
+      if (e.metaKey || e.ctrlKey) return;
 
       if (e.key === "f" || e.key === "F") {
         e.preventDefault();

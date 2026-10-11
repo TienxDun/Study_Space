@@ -1,11 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { STUDY_SCENES, StudyEmbedItem } from "@/components/study/study-types";
 import { useScenePreloader } from "@/lib/use-scene-preloader";
+import {
+  useSceneSlideshow,
+  SLIDESHOW_INTERVALS_MIN,
+  DEFAULT_SLIDESHOW_INTERVAL_MIN,
+} from "@/lib/use-scene-slideshow";
+import { useFavoriteScenes } from "@/lib/use-favorites";
 import { StudyMusicPlayer } from "@/components/study/music/StudyMusicPlayer";
 import { StudyPomodoroWidget } from "@/components/study/pomodoro/StudyPomodoroWidget";
 import type { TimerTab } from "@/components/study/pomodoro/types";
@@ -16,6 +22,10 @@ import { StudyTopBar } from "@/components/study/StudyTopBar";
 import { StudyLeftDock } from "@/components/study/StudyLeftDock";
 import { StudyShortcutsModal } from "@/components/study/StudyShortcutsModal";
 import { StudyOnboardingTour } from "@/components/study/tour/StudyOnboardingTour";
+import {
+  StudyCommandPalette,
+  type CommandAction,
+} from "@/components/study/command/StudyCommandPalette";
 import { StudySeoSemanticContent } from "@/components/study/seo/StudySeoSemanticContent";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useStudySettings } from "@/lib/use-study-settings";
@@ -72,6 +82,49 @@ export default function StudySpacePage() {
   const [isPipActive, setIsPipActive] = useState(false);
   const [isShortcutsHelpOpen, setIsShortcutsHelpOpen] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
+
+  // Slideshow tự xoay bối cảnh (mặc định tắt, nhớ lựa chọn vào LocalStorage)
+  const [isSlideshowOn, setIsSlideshowOn] = useState(false);
+  const [slideshowIntervalMin, setSlideshowIntervalMin] = useState(
+    DEFAULT_SLIDESHOW_INTERVAL_MIN
+  );
+  const { favoriteIds } = useFavoriteScenes();
+  const slideshowPool = useMemo(() => {
+    const favs = STUDY_SCENES.filter((s) => favoriteIds.includes(s.id));
+    return favs.length >= 2 ? favs : STUDY_SCENES;
+  }, [favoriteIds]);
+  const isSlideshowPoolFavorites =
+    slideshowPool.length < STUDY_SCENES.length;
+  useSceneSlideshow({
+    enabled: isSlideshowOn,
+    intervalMin: slideshowIntervalMin,
+    currentSceneId: currentScene.id,
+    pool: slideshowPool,
+    onAdvance: handleSelectScene,
+  });
+
+  const handleToggleSlideshow = () => {
+    setIsSlideshowOn((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(STORAGE_KEYS.slideshowEnabled, String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const handleCycleSlideshowInterval = () => {
+    setSlideshowIntervalMin((prev) => {
+      const idx = SLIDESHOW_INTERVALS_MIN.indexOf(prev);
+      const next =
+        SLIDESHOW_INTERVALS_MIN[(idx + 1) % SLIDESHOW_INTERVALS_MIN.length];
+      try {
+        localStorage.setItem(STORAGE_KEYS.slideshowIntervalMin, String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   // Unified Settings Modal State (Default: Tắt giây đồng hồ, Tắt .00 stopwatch, Bật chuông Pomodoro 25-5-15)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -106,6 +159,15 @@ export default function StudySpacePage() {
       const savedPomoVis = localStorage.getItem(STORAGE_KEYS.pomoVisible);
       if (savedPomoVis !== null) {
         setIsPomodoroVisible(savedPomoVis === "true");
+      }
+      const savedSlideshow = localStorage.getItem(STORAGE_KEYS.slideshowEnabled);
+      if (savedSlideshow !== null) {
+        setIsSlideshowOn(savedSlideshow === "true");
+      }
+      const savedSlideshowMin = localStorage.getItem(STORAGE_KEYS.slideshowIntervalMin);
+      const parsedMin = savedSlideshowMin ? parseInt(savedSlideshowMin, 10) : NaN;
+      if (SLIDESHOW_INTERVALS_MIN.includes(parsedMin)) {
+        setSlideshowIntervalMin(parsedMin);
       }
     } catch {}
   }, []);
@@ -266,7 +328,45 @@ export default function StudySpacePage() {
     setEmbedOpen: setIsEmbedPlayerOpen,
     setShortcutsOpen: setIsShortcutsHelpOpen,
     setZenMode: setIsZenMode,
+    setCommandOpen: setIsCommandOpen,
   });
+
+  // Mở 1 panel duy nhất (đóng settings + các panel khác)
+  const openPanelOnly = (
+    setter: React.Dispatch<React.SetStateAction<boolean>>
+  ) => {
+    handleCloseSettings();
+    setIsTasksOpen(false);
+    setIsNotesOpen(false);
+    setIsScenesOpen(false);
+    setIsMixerOpen(false);
+    setIsEmbedPlayerOpen(false);
+    setter(true);
+  };
+
+  const commandActions = useMemo<CommandAction[]>(
+    () => [
+      { id: "nav-pomodoro", group: "Mở nhanh", label: "Đồng hồ Pomodoro", hint: "T", run: () => handleTogglePomodoroVisibility() },
+      { id: "nav-tasks", group: "Mở nhanh", label: "Kế hoạch học tập", hint: "K", run: () => openPanelOnly(setIsTasksOpen) },
+      { id: "nav-notes", group: "Mở nhanh", label: "Ghi chép nhanh", hint: "N", run: () => openPanelOnly(setIsNotesOpen) },
+      { id: "nav-scenes", group: "Mở nhanh", label: "Không gian làm việc", hint: "B", run: () => openPanelOnly(setIsScenesOpen) },
+      { id: "nav-embed", group: "Mở nhanh", label: "Đài phát YouTube & Spotify", hint: "E", run: () => openPanelOnly(setIsEmbedPlayerOpen) },
+      { id: "nav-mixer", group: "Mở nhanh", label: "Bộ trộn âm thanh", hint: "P", run: () => openPanelOnly(setIsMixerOpen) },
+      { id: "nav-settings", group: "Mở nhanh", label: "Cài đặt không gian", run: () => handleOpenSettings() },
+      { id: "nav-tour", group: "Mở nhanh", label: "Xem lại tour hướng dẫn", run: () => setIsTourOpen(true) },
+      { id: "act-zen", group: "Hành động", label: "Bật/tắt chế độ Zen", hint: "Z", run: () => setIsZenMode((prev) => !prev) },
+      { id: "act-mute", group: "Hành động", label: "Bật/tắt tiếng chung", hint: "M", run: () => toggleGlobalMute() },
+      { id: "act-fullscreen", group: "Hành động", label: "Bật/tắt toàn màn hình", hint: "F", run: () => toggleFullscreen() },
+      ...STUDY_SCENES.map((s) => ({
+        id: `scene-${s.id}`,
+        group: "Bối cảnh",
+        label: s.name,
+        run: () => handleSelectScene(s),
+      })),
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [handleSelectScene]
+  );
 
   const isAnyModalOpen =
     isSettingsOpen ||
@@ -326,6 +426,15 @@ export default function StudySpacePage() {
         pendingScene={pendingScene}
         isPreloading={isPreloadingScene}
         onSelectScene={handleSelectScene}
+        slideshowEnabled={isSlideshowOn}
+        slideshowIntervalMin={slideshowIntervalMin}
+        slideshowPoolLabel={
+          isSlideshowPoolFavorites
+            ? `${slideshowPool.length} cảnh yêu thích`
+            : `tất cả ${slideshowPool.length} cảnh`
+        }
+        onToggleSlideshow={handleToggleSlideshow}
+        onCycleSlideshowInterval={handleCycleSlideshowInterval}
       />
 
       {/* Floating Scene Preload Status Capsule (Hiển thị khi nạp bối cảnh mới lúc mạng yếu) */}
@@ -458,6 +567,13 @@ export default function StudySpacePage() {
       <StudyOnboardingTour
         isOpen={isTourOpen ? true : undefined}
         onClose={() => setIsTourOpen(false)}
+      />
+
+      {/* Command Palette mở nhanh (Cmd/Ctrl+K) */}
+      <StudyCommandPalette
+        isOpen={isCommandOpen}
+        onClose={() => setIsCommandOpen(false)}
+        actions={commandActions}
       />
     </div>
   );

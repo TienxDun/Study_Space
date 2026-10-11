@@ -31,7 +31,7 @@ export const StudyShortcutsModal = ({
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.95, y: 15 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl rounded-3xl bg-slate-900/95 backdrop-blur-2xl border border-white/20 shadow-2xl p-6 space-y-5 text-white"
+        className="w-full max-w-xl rounded-3xl bg-[#0b0f17]/80 backdrop-blur-2xl border border-white/20 shadow-2xl p-6 space-y-5 text-white"
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
@@ -129,6 +129,10 @@ export const StudyShortcutsModal = ({
               <div className="flex items-center justify-between">
                 <span className="text-slate-300">Đài phát (YouTube/Spotify)</span>
                 <kbd className="px-2 py-1 rounded-lg bg-black/50 border border-white/20 font-mono text-[11px] font-bold text-slate-200">E</kbd>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-300">Mở nhanh lệnh</span>
+                <kbd className="px-2 py-1 rounded-lg bg-black/50 border border-white/20 font-mono text-[11px] font-bold text-slate-200">⌘K</kbd>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-300">Bảng phím tắt này</span>

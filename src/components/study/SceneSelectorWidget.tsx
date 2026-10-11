@@ -16,6 +16,9 @@ import {
   Shuffle,
   Smile,
   Loader2,
+  Play,
+  Pause,
+  Timer,
 } from "lucide-react";
 import { Scene, STUDY_SCENES } from "./study-types";
 import { useFavoriteScenes } from "@/lib/use-favorites";
@@ -31,6 +34,11 @@ interface SceneSelectorWidgetProps {
   pendingScene?: Scene | null;
   isPreloading?: boolean;
   onSelectScene: (scene: Scene) => void;
+  slideshowEnabled?: boolean;
+  slideshowIntervalMin?: number;
+  slideshowPoolLabel?: string;
+  onToggleSlideshow?: () => void;
+  onCycleSlideshowInterval?: () => void;
 }
 
 const SceneThumbnail = React.memo<{ scene: Scene }>(({ scene }) => {
@@ -70,11 +78,11 @@ const SceneCardItem = React.memo<SceneCardItemProps>(
     const isVideo = scene.type === "VIDEO";
 
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => onSelect(scene)}
-        onKeyDown={(e) => {
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(scene)}
+      onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             onSelect(scene);
@@ -168,6 +176,11 @@ export const SceneSelectorWidget = ({
   currentScene,
   pendingScene,
   onSelectScene,
+  slideshowEnabled = false,
+  slideshowIntervalMin = 15,
+  slideshowPoolLabel = "",
+  onToggleSlideshow,
+  onCycleSlideshowInterval,
 }: SceneSelectorWidgetProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -331,49 +344,83 @@ export const SceneSelectorWidget = ({
     >
       {/* Header & Search Bar gọn gàng, tinh tế */}
       <div className="p-4 pb-3 border-b border-white/10 shrink-0 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
-              Không gian làm việc
-              <span className="text-xs text-slate-400 font-normal">
+        {/* Hàng 1: Tiêu đề + Đóng */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <h3 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2 whitespace-nowrap min-w-0">
+              <span className="truncate min-w-0">Không gian làm việc</span>
+              <span className="text-xs text-slate-400 font-normal shrink-0">
                 ({filteredScenes.length})
               </span>
             </h3>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            {/* Nút Đổi ngẫu nhiên không gian */}
-            <button
-              onClick={handleShuffle}
-              className="p-1.5 px-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex items-center gap-1.5 text-xs active:scale-95"
-              title="Đổi ngẫu nhiên không gian khác"
-            >
-              <Shuffle className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden sm:inline font-medium">Ngẫu nhiên</span>
-            </button>
+          {/* Nút Đóng */}
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer active:scale-95 shrink-0"
+            title="Đóng (ESC)"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
 
-            {/* Nút Mở Studio Quản lý Background (Chỉ hiện ở môi trường Local Development) */}
-            {process.env.NODE_ENV === "development" && (
-              <Link
-                href="/admin/scenes/"
-                target="_blank"
-                className="p-1.5 px-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex items-center gap-1.5 text-xs active:scale-95"
-                title="Mở Background Asset Studio để quản lý/lọc ảnh"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                <span className="hidden sm:inline font-medium">Studio</span>
-              </Link>
-            )}
-
-            {/* Nút Đóng */}
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer active:scale-95"
-              title="Đóng (ESC)"
+        {/* Hàng 2: Thanh công cụ (hàng riêng nên không bao giờ chen tiêu đề) */}
+        <div className="flex items-center gap-1.5">
+          {/* Nút Bật/Tắt slideshow tự xoay bối cảnh */}
+          <button
+            onClick={onToggleSlideshow}
+            className={`p-1.5 px-2.5 rounded-xl transition-colors cursor-pointer border flex flex-1 items-center justify-center gap-1.5 text-xs active:scale-95 ${
+              slideshowEnabled
+                ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-300 font-bold"
+                : "text-slate-300 hover:text-white hover:bg-white/10 border-transparent hover:border-white/10 font-medium"
+            }`}
+              title={
+                slideshowEnabled
+                  ? `Slideshow mỗi ${slideshowIntervalMin} phút (${slideshowPoolLabel}) — bấm để tắt`
+                  : "Slideshow bối cảnh — bấm để bật"
+              }
             >
-              <X className="w-4 h-4" />
+              {slideshowEnabled ? (
+                <Pause className="w-3.5 h-3.5 text-emerald-400 fill-current" />
+              ) : (
+                <Play className="w-3.5 h-3.5 text-emerald-400" />
+              )}
+              <span className="hidden sm:inline font-medium whitespace-nowrap">Slideshow</span>
+          </button>
+
+          {/* Nút chọn thời gian mỗi lượt (chỉ hiện khi slideshow đang bật) */}
+          {slideshowEnabled && (
+            <button
+              onClick={onCycleSlideshowInterval}
+              className="p-1.5 px-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex flex-1 items-center justify-center gap-1.5 text-xs active:scale-95 font-bold"
+              title="Bấm để đổi thời gian mỗi lượt (5 → 15 → 30 → 60 phút)"
+            >
+                <Timer className="w-3.5 h-3.5 text-sky-400" />
+                <span className="hidden sm:inline font-medium whitespace-nowrap">{slideshowIntervalMin} phút</span>
             </button>
-          </div>
+          )}
+
+          {/* Nút Đổi ngẫu nhiên không gian (icon phổ quát nên icon-only) */}
+          <button
+            onClick={handleShuffle}
+            className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex flex-1 items-center justify-center gap-1.5 text-xs active:scale-95"
+            title="Đổi cảnh ngẫu nhiên"
+          >
+            <Shuffle className="w-3.5 h-3.5 text-emerald-400" />
+          </button>
+
+          {/* Nút Mở Studio Quản lý Background (Chỉ hiện ở môi trường Local Development) */}
+          {process.env.NODE_ENV === "development" && (
+            <Link
+              href="/admin/scenes/"
+              target="_blank"
+              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex flex-1 items-center justify-center gap-1.5 text-xs active:scale-95"
+              title="Mở Studio quản lý bối cảnh"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            </Link>
+          )}
         </div>
 
         {/* Quick Search Bar thanh mảnh */}

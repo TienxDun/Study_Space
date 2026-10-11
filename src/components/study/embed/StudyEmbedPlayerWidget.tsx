@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { StudyEmbedPlayerWidgetProps } from "./types";
 import { usePipMode } from "./hooks/usePipMode";
@@ -86,8 +86,22 @@ export const StudyEmbedPlayerWidget = ({
   const isYouTubeActive = Boolean(activeItem && activeItem.platform === "youtube");
   const { isPaused: isExternalPaused, toggleExternalPlay } = useYouTubeRemote(
     Boolean(activeItem),
-    isYouTubeActive
+    isYouTubeActive,
+    // Tín hiệu đáng tin nhất để tắt màn che loading: player báo đang phát thật
+    () => setIsIframeLoading(false)
   );
+
+  // Đài đổi id (kể cả khôi phục từ lần trước) thì bật loading lại từ đầu
+  const lastLoadingIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (activeItem && lastLoadingIdRef.current !== activeItem.id) {
+      lastLoadingIdRef.current = activeItem.id;
+      setIsIframeLoading(true);
+    }
+    if (!activeItem) {
+      lastLoadingIdRef.current = null;
+    }
+  }, [activeItem, setIsIframeLoading]);
 
   const isBackdropOpen = isOpen && !isPipMode;
 

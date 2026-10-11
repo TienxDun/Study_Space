@@ -42,6 +42,8 @@ export const STORAGE_KEYS = {
   // Favorites
   favoriteScenes: "huflit_study_favorite_scenes",
   favoriteTracks: "huflit_study_favorite_tracks",
+  slideshowEnabled: "huflit_study_slideshow_enabled",
+  slideshowIntervalMin: "huflit_study_slideshow_interval_min",
   // Focus Mode Integration
   activeFocusTask: "study_space_active_focus_task",
   // Onboarding Tour

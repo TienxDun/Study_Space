@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Timer,
@@ -150,7 +151,7 @@ export const StudyLeftDock = ({
               key={item.id}
               id={`tour-dock-${item.id}`}
               onClick={item.onClick}
-              className="relative w-11 h-11 rounded-2xl flex items-center justify-center cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-music-glow/50"
+              className="relative w-11 h-11 rounded-2xl flex items-center justify-center cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-music-glow/50 active:scale-95 transition-transform"
               title={`${item.title} (${item.shortcut})`}
             >
               {/* Sliding Active Pill Background (Không viền, hiệu ứng kính phát sáng tinh tế) */}
@@ -163,17 +164,12 @@ export const StudyLeftDock = ({
               )}
 
               {/* Hover Glow Pill */}
-              <div className="absolute inset-0 rounded-2xl bg-white/0 group-hover:bg-white/10 transition-colors duration-150" />
+              <div className="absolute inset-0 rounded-2xl group-hover:glass-hover transition-all duration-150" />
 
-              {/* Magnified Icon */}
-              <motion.div 
-                whileHover={{ scale: 1.18 }}
-                whileTap={{ scale: 0.9 }}
-                transition={{ type: "spring", stiffness: 450, damping: 22 }}
-                className="relative z-10 flex items-center justify-center will-change-transform"
-              >
+              {/* Icon with Hover Scale effect */}
+              <div className="relative z-10 flex items-center justify-center pointer-events-none transition-transform duration-200 ease-out group-hover:scale-110">
                 {item.icon(item.isActive)}
-              </motion.div>
+              </div>
 
               {/* Active Dot Marker on the Left Rim */}
               {item.isActive && (

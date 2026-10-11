@@ -22,6 +22,7 @@ import { usePomodoroCountdown } from "./hooks/usePomodoroCountdown";
 import { useStopwatchTimer } from "./hooks/useStopwatchTimer";
 import { TimerTabPillBar } from "./components/TimerTabPillBar";
 import { GiantDigitsDisplay } from "./components/GiantDigitsDisplay";
+import { PomoProgressRing } from "./components/PomoProgressRing";
 import { SubmodeBar } from "./components/SubmodeBar";
 import { TimerActionControls } from "./components/TimerActionControls";
 import { PaginationDots } from "./components/PaginationDots";
@@ -159,15 +160,23 @@ export const StudyPomodoroWidget = ({
       {/* 1. Sleek Floating Mode Pill Bar */}
       <TimerTabPillBar currentTab={currentTab} onSelectTab={switchTab} />
 
-      {/* 2. Giant Clean Digits */}
-      <GiantDigitsDisplay
-        currentTab={currentTab}
-        clockDigits={clockDigits}
-        clockPeriod={clockPeriod}
-        timeLeft={timeLeft}
-        stopwatchTime={stopwatchTime}
-        showStopwatchMilliseconds={showStopwatchMilliseconds}
-      />
+      {/* 2. Giant Clean Digits + vòng tiến trình phiên */}
+      <div className="relative flex items-center justify-center">
+        {currentTab === "pomodoro" &&
+          (() => {
+            const total = durations[pomoMode] * 60;
+            const progress = total > 0 ? 1 - timeLeft / total : 0;
+            return <PomoProgressRing progress={progress} />;
+          })()}
+        <GiantDigitsDisplay
+          currentTab={currentTab}
+          clockDigits={clockDigits}
+          clockPeriod={clockPeriod}
+          timeLeft={timeLeft}
+          stopwatchTime={stopwatchTime}
+          showStopwatchMilliseconds={showStopwatchMilliseconds}
+        />
+      </div>
 
       {/* 3. Subtitle Area: Submodes / Date / Laps count */}
       <SubmodeBar

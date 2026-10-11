@@ -14,6 +14,27 @@ const STORAGE_THEME_KEY = STORAGE_KEYS.notesTheme;
 const STORAGE_COMPACT_POS_KEY = STORAGE_KEYS.notesCompactPos;
 const STORAGE_COMPACT_SIZE_KEY = STORAGE_KEYS.notesCompactSize;
 
+const NOTE_MARGIN = 16;
+const DEFAULT_NOTE_W = 380;
+const DEFAULT_NOTE_H = 420;
+
+// Giữ thẻ luôn nằm trong màn hình, dùng chung cho mọi chỗ để khỏi bị lệch
+const clampNotePos = (x: number, y: number, w: number, h: number) => {
+  if (typeof window === "undefined") return { x: Math.round(x), y: Math.round(y) };
+  const maxX = Math.max(NOTE_MARGIN, window.innerWidth - w - NOTE_MARGIN);
+  const maxY = Math.max(NOTE_MARGIN, window.innerHeight - h - NOTE_MARGIN);
+  return {
+    x: Math.round(Math.max(NOTE_MARGIN, Math.min(maxX, x))),
+    y: Math.round(Math.max(NOTE_MARGIN, Math.min(maxY, y))),
+  };
+};
+
+// Lần đầu chưa có chỗ lưu thì cho ra giữa màn hình
+const getCenterPos = (w: number, h: number) => {
+  if (typeof window === "undefined") return { x: 100, y: 100 };
+  return clampNotePos((window.innerWidth - w) / 2, (window.innerHeight - h) / 2, w, h);
+};
+
 export const StudyNotesWidget = ({
   isOpen,
   onClose,
@@ -41,9 +62,10 @@ export const StudyNotesWidget = ({
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [showQuickNoteList, setShowQuickNoteList] = useState<boolean>(false);
   const [compactSize, setCompactSize] = useState<{ width: number; height: number }>({
-    width: 380,
-    height: 420,
+    width: DEFAULT_NOTE_W,
+    height: DEFAULT_NOTE_H,
   });
+  // Lần đầu: nếu có chỗ cũ thì dùng, chưa có thì cho ra giữa màn hình
   const [compactPos, setCompactPos] = useState<{ x: number; y: number }>(() => {
     if (typeof window !== "undefined") {
       try {
@@ -51,16 +73,11 @@ export const StudyNotesWidget = ({
         if (saved) {
           const parsed = JSON.parse(saved);
           if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
-            const clampedX = Math.max(16, Math.min(window.innerWidth - 320, parsed.x));
-            const clampedY = Math.max(16, Math.min(window.innerHeight - 240, parsed.y));
-            return { x: clampedX, y: clampedY };
+            return clampNotePos(parsed.x, parsed.y, DEFAULT_NOTE_W, DEFAULT_NOTE_H);
           }
         }
       } catch {}
-      return {
-        x: Math.max(16, window.innerWidth - 380 - 24),
-        y: Math.max(16, window.innerHeight - 420 - 96),
-      };
+      return getCenterPos(DEFAULT_NOTE_W, DEFAULT_NOTE_H);
     }
     return { x: 100, y: 100 };
   });
@@ -90,6 +107,8 @@ export const StudyNotesWidget = ({
       if (savedTheme === "light" || savedTheme === "dark") {
         setTheme(savedTheme);
       }
+      // Đọc cỡ trước, rồi mới tính chỗ cho đúng cỡ đó
+      let nextSize = { width: DEFAULT_NOTE_W, height: DEFAULT_NOTE_H };
       const savedSize = localStorage.getItem(STORAGE_COMPACT_SIZE_KEY);
       if (savedSize) {
         const parsed = JSON.parse(savedSize);
@@ -98,25 +117,26 @@ export const StudyNotesWidget = ({
           const maxAllowedH = typeof window !== "undefined" ? Math.max(260, window.innerHeight - 130) : 550;
           const nextW = Math.max(320, Math.min(parsed.width, maxAllowedW));
           const nextH = Math.max(240, Math.min(parsed.height, maxAllowedH));
-          setCompactSize({
-            width: nextW,
-            height: nextH,
-          });
+          nextSize = { width: nextW, height: nextH };
+          setCompactSize(nextSize);
         }
       }
       const savedPos = localStorage.getItem(STORAGE_COMPACT_POS_KEY);
       if (savedPos) {
         const parsed = JSON.parse(savedPos);
         if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
-          const clampedX = Math.max(16, Math.min(window.innerWidth - 300, parsed.x));
-          const clampedY = Math.max(16, Math.min(window.innerHeight - 240, parsed.y));
-          setCompactPos({ x: clampedX, y: clampedY });
+          setCompactPos(clampNotePos(parsed.x, parsed.y, nextSize.width, nextSize.height));
+        } else {
+          setCompactPos(getCenterPos(nextSize.width, nextSize.height));
         }
+      } else {
+        // Chưa từng mở/kéo thẻ thì luôn ở giữa
+        setCompactPos(getCenterPos(nextSize.width, nextSize.height));
       }
     } catch {}
   }, []);
 
-  // Update position on mount/re-open if stored
+  // Mỗi lần mở lại: lấy đúng chỗ cũ đã lưu, kéo vào trong màn hình nếu bị tràn
   useEffect(() => {
     if (isOpen) {
       try {
@@ -124,17 +144,34 @@ export const StudyNotesWidget = ({
         if (savedPos) {
           const parsed = JSON.parse(savedPos);
           if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
-          const clampedX = Math.max(16, Math.min(window.innerWidth - 320, parsed.x));
-            const clampedY = Math.max(16, Math.min(window.innerHeight - 240, parsed.y));
+            const next = clampNotePos(parsed.x, parsed.y, compactSize.width, compactSize.height);
             setCompactPos((prev) => {
-              if (prev.x === clampedX && prev.y === clampedY) return prev;
-              return { x: clampedX, y: clampedY };
+              if (prev.x === next.x && prev.y === next.y) return prev;
+              return next;
             });
           }
         }
       } catch {}
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  // Khi đổi cỡ màn hình (xoay điện thoại, thu nhỏ web): tự kéo thẻ vào trong
+  useEffect(() => {
+    const handleWindowResize = () => {
+      setCompactSize((prevSize) => {
+        const maxAllowedW = Math.max(320, window.innerWidth - 32);
+        const maxAllowedH = Math.max(240, window.innerHeight - 120);
+        const nextW = Math.max(320, Math.min(prevSize.width, maxAllowedW));
+        const nextH = Math.max(240, Math.min(prevSize.height, maxAllowedH));
+        if (nextW === prevSize.width && nextH === prevSize.height) return prevSize;
+        return { width: nextW, height: nextH };
+      });
+      setCompactPos((prev) => clampNotePos(prev.x, prev.y, compactSize.width, compactSize.height));
+    };
+    window.addEventListener("resize", handleWindowResize);
+    return () => window.removeEventListener("resize", handleWindowResize);
+  }, [compactSize.width, compactSize.height]);
 
   // Resize handler for Compact Sticky Note with requestAnimationFrame
   const handleResizePointerDown = useCallback((e: React.PointerEvent) => {
@@ -145,11 +182,9 @@ export const StudyNotesWidget = ({
     const startW = compactSize.width;
     const startH = compactSize.height;
 
-    // Đo tọa độ hiển thị góc trên-trái thực tế của card trên viewport
-    const cardEl = compactPanelRef.current;
-    const rect = cardEl?.getBoundingClientRect();
-    const cardScreenLeft = rect ? rect.left : compactPos.x;
-    const cardScreenTop = rect ? rect.top : compactPos.y;
+    // Vị trí thật của thẻ lúc bắt đầu kéo to/nhỏ
+    const cardScreenLeft = compactPos.x;
+    const cardScreenTop = compactPos.y;
 
     let latestSize = { width: startW, height: startH };
     let rafId: number | null = null;
@@ -176,14 +211,14 @@ export const StudyNotesWidget = ({
         rafId = null;
       }
       setCompactSize(latestSize);
+      // Sau khi đổi cỡ thì kéo lại thẻ vào trong màn hình nếu bị lòi ra
+      const fixedPos = clampNotePos(cardScreenLeft, cardScreenTop, latestSize.width, latestSize.height);
+      setCompactPos(fixedPos);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
       try {
         localStorage.setItem(STORAGE_COMPACT_SIZE_KEY, JSON.stringify(latestSize));
-        localStorage.setItem(
-          STORAGE_COMPACT_POS_KEY,
-          JSON.stringify({ x: Math.round(cardScreenLeft), y: Math.round(cardScreenTop) })
-        );
+        localStorage.setItem(STORAGE_COMPACT_POS_KEY, JSON.stringify(fixedPos));
       } catch {}
     };
 
@@ -290,30 +325,26 @@ export const StudyNotesWidget = ({
               ref={compactPanelRef}
               key="notes-compact-panel"
               drag
-              dragConstraints={dragContainerRef}
               dragControls={noteDragControls}
               dragListener={false}
               dragMomentum={false}
               dragElastic={0}
               onDragStart={() => setIsDragging(true)}
-              onDragEnd={() => {
+              onDragEnd={(_, info) => {
                 setIsDragging(false);
-                const cardEl = compactPanelRef.current;
-                if (cardEl && typeof window !== "undefined") {
-                  const rect = cardEl.getBoundingClientRect();
-                  const clampedX = Math.round(
-                    Math.max(16, Math.min(window.innerWidth - compactSize.width - 16, rect.left))
-                  );
-                  const clampedY = Math.round(
-                    Math.max(16, Math.min(window.innerHeight - compactSize.height - 16, rect.top))
+                // Chỗ mới = chỗ cũ + đoạn vừa kéo, rồi kéo vào trong màn hình
+                setCompactPos((prev) => {
+                  const next = clampNotePos(
+                    prev.x + info.offset.x,
+                    prev.y + info.offset.y,
+                    compactSize.width,
+                    compactSize.height
                   );
                   try {
-                    localStorage.setItem(
-                      STORAGE_COMPACT_POS_KEY,
-                      JSON.stringify({ x: clampedX, y: clampedY })
-                    );
+                    localStorage.setItem(STORAGE_COMPACT_POS_KEY, JSON.stringify(next));
                   } catch {}
-                }
+                  return next;
+                });
               }}
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -323,8 +354,10 @@ export const StudyNotesWidget = ({
                 scale: { duration: 0.16, ease: "easeOut" },
               }}
               style={{
-                top: compactPos.y,
-                left: compactPos.x,
+                top: 0,
+                left: 0,
+                x: compactPos.x,
+                y: compactPos.y,
                 width: compactSize.width,
                 height: compactSize.height,
               }}

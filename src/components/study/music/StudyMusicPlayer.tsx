@@ -8,7 +8,7 @@ import { StudyMusicPlayerProps } from "./types";
 import { SoundMixerWidget } from "../mixer/SoundMixerWidget";
 import { MixerTab } from "../mixer/types";
 import { useAudioPlayer } from "./hooks/useAudioPlayer";
-import { useYouTubeRemote } from "@/lib/youtube-remote";
+import { useYouTubeRemote, sendYouTubeCommand } from "@/lib/youtube-remote";
 import { WaveformScrubber } from "./components/WaveformScrubber";
 import { PlayerControls } from "./components/PlayerControls";
 import { ExternalStreamBanner } from "./components/ExternalStreamBanner";
@@ -41,6 +41,12 @@ export const StudyMusicPlayer = ({
     Boolean(isExternalStreamActive),
     isExternalYouTube
   );
+
+  // M toàn cục cũng tắt tiếng đài YouTube ngoài (iframe không tự nghe theo).
+  useEffect(() => {
+    if (!isExternalYouTube) return;
+    sendYouTubeCommand(isGlobalMuted ? "mute" : "unMute");
+  }, [isGlobalMuted, isExternalYouTube, isExternalStreamActive]);
 
   const [ambientActiveCount, setAmbientActiveCount] = useState(0);
 
@@ -262,7 +268,6 @@ export const StudyMusicPlayer = ({
                 currentTime={currentTime}
                 duration={duration}
                 isActive={isPlaying || isExternalStreamActive}
-                isPlaying={isPlaying}
                 onSeek={handleSeek}
                 effectiveVolume={effectiveVolume}
                 onVolumeChange={handleVolumeChange}
@@ -298,7 +303,7 @@ export const StudyMusicPlayer = ({
                 className={`group relative h-8 sm:h-8.5 px-2.5 sm:px-3 rounded-xl flex items-center gap-1.5 sm:gap-2 transition-all active:scale-95 cursor-pointer text-xs font-semibold ${
                   isMixerOpen && activeMixerTab === "music"
                     ? "text-white bg-white/15 backdrop-blur-md shadow-[0_0_16px_rgba(52,211,153,0.3)]"
-                    : "text-slate-200 hover:text-white hover:bg-white/10"
+                    : "text-slate-200 hover:text-white glass-hover"
                 }`}
                 title="Mở danh sách nhạc Chill & Thư giãn"
               >
@@ -342,7 +347,7 @@ export const StudyMusicPlayer = ({
                         ? "text-white bg-white/15 backdrop-blur-md shadow-[0_0_16px_rgba(56,189,248,0.3)]"
                         : isAmbienceActive
                         ? "text-sky-200 hover:text-white hover:bg-sky-500/20"
-                        : "text-slate-200 hover:text-white hover:bg-white/10"
+                        : "text-slate-200 hover:text-white glass-hover"
                     }`}
                     title={
                       isAmbienceActive

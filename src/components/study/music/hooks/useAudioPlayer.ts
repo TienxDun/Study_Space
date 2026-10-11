@@ -45,6 +45,11 @@ export function useAudioPlayer({
 
   // Auto-pause internal music ONLY when external stream transitions from inactive to active
   const prevExternalStreamActiveRef = useRef(isExternalStreamActive);
+  // Trạng thái đài ngoài mới nhất cho autoplay mồi (effect mount chạy 1 lần nên phải đọc qua ref)
+  const externalActiveRef = useRef(isExternalStreamActive);
+  useEffect(() => {
+    externalActiveRef.current = isExternalStreamActive;
+  });
   useEffect(() => {
     if (!prevExternalStreamActiveRef.current && isExternalStreamActive) {
       setIsPlaying(false);
@@ -107,6 +112,8 @@ export function useAudioPlayer({
     if (!audio) return;
 
     const attemptAutoplay = () => {
+      // Đài ngoài đang chiếm sóng thì không tự phát nhạc nội bộ
+      if (externalActiveRef.current) return;
       audio
         .play()
         .then(() => {
@@ -114,6 +121,7 @@ export function useAudioPlayer({
         })
         .catch(() => {
           const onFirstInteraction = () => {
+            if (externalActiveRef.current) return;
             if (audioRef.current && audioRef.current.paused) {
               audioRef.current
                 .play()

@@ -1,15 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Volume1, Volume2, VolumeX } from "lucide-react";
 import { formatTime } from "../utils/time-format";
-import { useWaveformSynthesizer } from "../hooks/useWaveformSynthesizer";
+import { useSiriWaveform } from "../hooks/useSiriWaveform";
 
 interface WaveformScrubberProps {
   currentTime: number;
   duration: number;
   isActive: boolean;
-  isPlaying: boolean;
   onSeek: (time: number) => void;
   effectiveVolume?: number;
   onVolumeChange?: (val: number) => void;
@@ -21,21 +20,28 @@ export function WaveformScrubber({
   currentTime,
   duration,
   isActive,
-  isPlaying,
   onSeek,
   effectiveVolume,
   onVolumeChange,
   isGlobalMuted,
   onToggleMute,
 }: WaveformScrubberProps) {
-  // Hook sóng nằm gọn trong scrubber để nhịp 25fps chỉ re-render cụm này,
-  // không lan lên toàn bộ StudyMusicPlayer.
-  const frequencyData = useWaveformSynthesizer(isActive);
   const [hoverTime, setHoverTime] = useState<number | null>(null);
   const [hoverPositionRatio, setHoverPositionRatio] = useState<number | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  // Mirror hover vào ref để vòng vẽ canvas đọc được mà không cần re-render.
+  const hoverRatioRef = useRef<number | null>(null);
+  hoverRatioRef.current = hoverPositionRatio;
 
   const maxSeek = duration > 0 ? duration : 100;
   const hasVolumeControl = Boolean(onVolumeChange && onToggleMute);
+
+  useSiriWaveform({
+    canvasRef,
+    isActive,
+    getProgress: () => (duration > 0 ? currentTime / duration : 0),
+    getHoverRatio: () => hoverRatioRef.current,
+  });
 
   return (
     <div className="flex items-center gap-1.5 sm:gap-2 w-full max-w-[270px] sm:max-w-[290px] px-1 select-none">
@@ -57,8 +63,11 @@ export function WaveformScrubber({
           setHoverPositionRatio(null);
           setHoverTime(null);
         }}
-        className="relative flex-1 h-3.5 sm:h-4 flex items-center justify-between gap-[2px] px-0.5 group/waveform cursor-pointer"
+        className="relative flex-1 h-3.5 sm:h-4 px-0.5 group/waveform cursor-pointer"
       >
+        {/* Siri waveform canvas: sóng thật từ analyser, fallback synth */}
+        <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+
         {/* Floating Time Scrubber Tooltip */}
         {hoverTime !== null && hoverPositionRatio !== null && (
           <div
@@ -68,35 +77,6 @@ export function WaveformScrubber({
             {formatTime(hoverTime)}
           </div>
         )}
-
-        {/* Frequency Bars */}
-        {frequencyData.map((heightPercent, idx) => {
-          const progressRatio = duration > 0 ? currentTime / duration : 0;
-          const barRatio = idx / (frequencyData.length - 1);
-          const isPlayed = barRatio <= progressRatio;
-          const isHovered = hoverPositionRatio !== null && barRatio <= hoverPositionRatio;
-
-          const computedHeight = Math.max(22, Math.min(100, heightPercent));
-
-          return (
-            <div key={`freq-${idx}`} className="flex-1 min-w-[2px] flex items-center justify-center h-full">
-              <span
-                style={{
-                  height: `${computedHeight}%`,
-                }}
-                className={`w-full max-w-[3px] rounded-full will-change-[height] transition-[height] duration-75 ${
-                  isPlayed
-                    ? isPlaying
-                      ? "bg-gradient-to-t from-accent-music to-accent-music-bright shadow-[0_0_8px_rgba(52,211,153,0.85)]"
-                      : "bg-gradient-to-t from-accent-music to-accent-music-bright shadow-[0_0_5px_rgba(52,211,153,0.6)]"
-                    : isHovered
-                    ? "bg-accent-music-glow/60"
-                    : "bg-white/20 group-hover/waveform:bg-white/35"
-                }`}
-              />
-            </div>
-          );
-        })}
 
         {/* Invisible native range input for smooth seeking */}
         <input
@@ -125,7 +105,7 @@ export function WaveformScrubber({
         <div className="group/vol flex items-center shrink-0">
           <button
             onClick={onToggleMute}
-            className="w-5 h-5 sm:w-6 sm:h-6 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer flex items-center justify-center shrink-0"
+            className="w-5 h-5 sm:w-6 sm:h-6 rounded-full text-slate-400 hover:text-white glass-hover transition-all active:scale-90 cursor-pointer flex items-center justify-center shrink-0"
             title={isGlobalMuted ? "Bật âm thanh không gian (M)" : "Tắt toàn bộ âm thanh (M)"}
           >
             {isGlobalMuted || (effectiveVolume ?? 0) === 0 ? (

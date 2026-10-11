@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 
 /**
@@ -21,7 +21,9 @@ export function ensureYouTubeJsApi(url: string | undefined | null): string {
 /**
  * Gửi lệnh điều khiển trực tiếp tới tất cả iframe YouTube đang hiển thị trên trang
  */
-export function sendYouTubeCommand(func: "playVideo" | "pauseVideo" | "stopVideo"): boolean {
+export function sendYouTubeCommand(
+  func: "playVideo" | "pauseVideo" | "stopVideo" | "mute" | "unMute"
+): boolean {
   if (typeof document === "undefined") return false;
   const iframes = document.querySelectorAll<HTMLIFrameElement>("iframe");
   let found = false;
@@ -49,8 +51,16 @@ export function sendYouTubeCommand(func: "playVideo" | "pauseVideo" | "stopVideo
 /**
  * Hook quản lý trạng thái phát/tạm dừng của luồng YouTube ngoài
  */
-export function useYouTubeRemote(isExternalActive: boolean, isYouTubePlatform: boolean) {
+export function useYouTubeRemote(
+  isExternalActive: boolean,
+  isYouTubePlatform: boolean,
+  onPlaying?: () => void
+) {
   const [isPaused, setIsPaused] = useState(false);
+  const onPlayingRef = useRef(onPlaying);
+  useEffect(() => {
+    onPlayingRef.current = onPlaying;
+  });
 
   // Lắng nghe sự kiện phản hồi từ YouTube iframe nếu có
   useEffect(() => {
@@ -61,7 +71,10 @@ export function useYouTubeRemote(isExternalActive: boolean, isYouTubePlatform: b
         const data = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
         if (data && data.event === "onStateChange") {
           // 1: PLAYING, 2: PAUSED, 0: ENDED, 3: BUFFERING
-          if (data.info === 1) setIsPaused(false);
+          if (data.info === 1) {
+            setIsPaused(false);
+            onPlayingRef.current?.();
+          }
           if (data.info === 2) setIsPaused(true);
         }
       } catch {}

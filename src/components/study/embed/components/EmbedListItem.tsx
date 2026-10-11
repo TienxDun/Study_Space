@@ -29,6 +29,12 @@ export function EmbedListItem({
   return (
     <div
       onClick={onPlay}
+      onMouseMove={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        const rect = el.getBoundingClientRect();
+        el.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+        el.style.setProperty("--my", `${e.clientY - rect.top}px`);
+      }}
       className={`group relative flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer ${
         isCurrent
           ? "bg-white/[0.08] border-accent-music-glow/60 shadow-sm"
@@ -102,6 +108,16 @@ export function EmbedListItem({
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       )}
+
+      {/* Spotlight theo chuột */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(200px circle at var(--mx, 50%) var(--my, 50%), rgba(244,63,94,0.12), transparent 70%)",
+        }}
+      />
     </div>
   );
 }

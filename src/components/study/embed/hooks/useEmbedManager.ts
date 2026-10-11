@@ -32,6 +32,14 @@ export function useEmbedManager({
   const [savedEmbeds, setSavedEmbeds] = useState<StudyEmbedItem[]>([]);
   const [searchOrUrl, setSearchOrUrl] = useState("");
   const [isIframeLoading, setIsIframeLoading] = useState(false);
+
+  // Lưới an toàn cuối: kẹt loading quá 15s thì ép tắt để không che video
+  // đang phát (onLoad iframe + sự kiện PLAYING đều có thể miss).
+  useEffect(() => {
+    if (!isIframeLoading) return;
+    const timerId = setTimeout(() => setIsIframeLoading(false), 15000);
+    return () => clearTimeout(timerId);
+  }, [isIframeLoading]);
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const [fetchedMetadata, setFetchedMetadata] = useState<{

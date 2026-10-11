@@ -30,6 +30,12 @@ export function EmbedCardItem({
   return (
     <div
       onClick={onPlay}
+      onMouseMove={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        const rect = el.getBoundingClientRect();
+        el.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+        el.style.setProperty("--my", `${e.clientY - rect.top}px`);
+      }}
       className={`group relative flex flex-col rounded-2xl overflow-hidden border transition-all cursor-pointer ${
         isCurrent
           ? "bg-white/[0.08] border-accent-music-glow/60 ring-1 ring-accent-music-glow/40 shadow-xl shadow-accent-music-ink/40"
@@ -60,6 +66,16 @@ export function EmbedCardItem({
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+
+        {/* Spotlight theo chuột */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), rgba(244,63,94,0.14), transparent 70%)",
+          }}
+        />
 
         {/* Platform Badge */}
         <div className="absolute top-2 right-2">
