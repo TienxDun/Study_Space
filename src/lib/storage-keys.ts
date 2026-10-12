@@ -15,6 +15,8 @@ export const STORAGE_KEYS = {
   soundEnabled: "study_sound_enabled",
   pomoSoundType: "study_pomodoro_sound_type",
   pomoCount: "huflit_study_pomo_count",
+  // Giờ đang chạy dở của Pomodoro (để F5 vẫn chạy tiếp, tính theo giờ thật)
+  pomoRunningState: "study_pomodoro_running_state_v1",
   // Music player
   mood: "huflit_study_mood",
   trackId: "huflit_study_track_id",

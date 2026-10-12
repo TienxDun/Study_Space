@@ -22,6 +22,49 @@ interface UsePomodoroCountdownOptions {
   onFocusSpan?: (span: FocusSpanInfo) => void;
 }
 
+/** Giờ đang chạy dở, lưu xuống máy để F5 vẫn nhớ. Tính theo giờ thật
+ *  (endAt) nên tắt trang bao lâu mở lại vẫn đúng, không bị chạy nhanh/chậm. */
+interface PersistedPomoState {
+  mode: PomodoroMode;
+  timeLeft: number;
+  isRunning: boolean;
+  endAt: number;
+  savedAt: number;
+  plannedSeconds: number;
+  flushedSeconds: number;
+  sessionStartedAt: number;
+  durationsSnapshot?: PomodoroDurations;
+}
+
+const POMO_STATE_KEY = STORAGE_KEYS.pomoRunningState;
+
+function readPersistedPomoState(): PersistedPomoState | null {
+  try {
+    const raw = localStorage.getItem(POMO_STATE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedPomoState;
+    if (
+      parsed.mode !== "focus" &&
+      parsed.mode !== "short_break" &&
+      parsed.mode !== "long_break"
+    ) {
+      return null;
+    }
+    if (typeof parsed.timeLeft !== "number" || Number.isNaN(parsed.timeLeft)) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writePersistedPomoState(state: PersistedPomoState) {
+  try {
+    localStorage.setItem(POMO_STATE_KEY, JSON.stringify(state));
+  } catch {}
+}
+
 export function usePomodoroCountdown({
   durations,
   soundEnabled,
@@ -51,12 +94,18 @@ export function usePomodoroCountdown({
 
   // Đồng bộ ref sau render (không gán lúc render để khỏi lỗi lint):
   // vòng đếm + flush log đọc qua ref nên luôn thấy số mới nhất.
+  const durationsRef = useRef(durations);
   useEffect(() => {
     timeLeftRef.current = timeLeft;
     pomoModeRef.current = pomoMode;
     isRunningRef.current = isRunning;
     onFocusSpanRef.current = onFocusSpan;
+    durationsRef.current = durations;
   });
+
+  // Giữ bản cài đặt giờ lúc nhớ lại giờ cũ. Khi phần cài đặt nạp xong
+  // mà trùng đúng bản này thì giữ nguyên giờ, không reset về giờ đầy.
+  const restoredDurationsRef = useRef<PomodoroDurations | null>(null);
 
   const ensureSession = useCallback((plannedSeconds: number) => {
     if (!sessionRef.current) {
@@ -102,15 +151,142 @@ export function usePomodoroCountdown({
     return span;
   }, []);
 
-  // Tắt tab giữa chừng vẫn flush đoạn đang chạy (localStorage write đồng bộ).
+  // Tắt / tải lại trang giữa chừng: chốt đoạn đang chạy để ghi log,
+  // đồng thời ghi nhớ giờ để mở lại chạy tiếp đúng chỗ.
+  // Lưu ý: chỉ ghi lúc trình duyệt báo sắp tắt (beforeunload). Không ghi
+  // trong hàm dọn dẹp vì lúc chạy thử trình duyệt gọi dọn dẹp giả 1 lần,
+  // ghi lúc đó sẽ đè mất số giờ vừa nhớ.
   useEffect(() => {
-    const onUnload = () => flushSpan(false);
+    const saveNow = () => {
+      try {
+        const sess = sessionRef.current;
+        const left = timeLeftRef.current;
+        const running = isRunningRef.current;
+        const d = durationsRef.current;
+        writePersistedPomoState({
+          mode: pomoModeRef.current,
+          timeLeft: left,
+          isRunning: running,
+          endAt: running ? Date.now() + Math.max(0, left) * 1000 : 0,
+          savedAt: Date.now(),
+          plannedSeconds: sess?.plannedSeconds ?? d[pomoModeRef.current] * 60,
+          flushedSeconds: sess?.flushedSeconds ?? 0,
+          sessionStartedAt: sess?.startedAt ?? Date.now(),
+          durationsSnapshot: d,
+        });
+      } catch {}
+    };
+    const onUnload = () => {
+      flushSpan(false);
+      saveNow();
+    };
     window.addEventListener("beforeunload", onUnload);
     return () => {
       window.removeEventListener("beforeunload", onUnload);
       flushSpan(false);
     };
   }, [flushSpan]);
+
+  // Mở trang lên: nhớ lại giờ trước khi tải lại. Đang chạy thì chạy tiếp
+  // theo giờ thật (trừ đúng số giây lúc tắt). Tạm dừng thì giữ nguyên.
+  useEffect(() => {
+    const saved = readPersistedPomoState();
+    if (!saved) return;
+    const snap = saved.durationsSnapshot;
+    const fullOf = (m: PomodoroMode) =>
+      Math.max(1, Math.round((snap?.[m] ?? durations[m]) * 60));
+    const clampedLeft = Math.min(
+      Math.max(0, Math.floor(saved.timeLeft)),
+      fullOf(saved.mode)
+    );
+
+    // Nhớ bản cài đặt đi kèm giờ cũ để lát cài đặt nạp xong mà trùng
+    // thì giữ nguyên giờ (không reset oan về giờ đầy).
+    restoredDurationsRef.current = snap
+      ? { focus: snap.focus, short_break: snap.short_break, long_break: snap.long_break }
+      : null;
+
+    if (saved.isRunning) {
+      const remaining = Math.round((saved.endAt - Date.now()) / 1000);
+      if (remaining > 0) {
+        // Còn giờ: chạy tiếp ngay, không tính lại từ đầu.
+        sessionRef.current = {
+          startedAt: saved.sessionStartedAt || Date.now(),
+          plannedSeconds: saved.plannedSeconds || clampedLeft,
+          flushedSeconds: Math.max(0, saved.flushedSeconds || 0),
+        };
+        spanStartRef.current = Date.now();
+        setPomoMode(saved.mode);
+        setTimeLeft(Math.min(remaining, fullOf(saved.mode)));
+        setIsRunning(true);
+        return;
+      }
+      // Hết giờ luôn lúc đang tắt trang: tự coi như xong 1 phiên (không kêu
+      // chuông làm giật mình), lặng lẽ chuyển sang giờ nghỉ / giờ mới.
+      try {
+        if (saved.mode === "focus") {
+          const rawCount = localStorage.getItem(STORAGE_KEYS.pomoCount);
+          const count = parseInt(rawCount || "0", 10) || 0;
+          const nextCount = count + 1;
+          localStorage.setItem(STORAGE_KEYS.pomoCount, String(nextCount));
+          setCompletedSessions(nextCount);
+          const nextBreak = getNextBreakType(nextCount);
+          setPomoMode(nextBreak);
+          setTimeLeft(fullOf(nextBreak));
+          setIsRunning(false);
+        } else {
+          setPomoMode("focus");
+          setTimeLeft(fullOf("focus"));
+          setIsRunning(false);
+        }
+      } catch {
+        setPomoMode(saved.mode);
+        setTimeLeft(clampedLeft);
+        setIsRunning(false);
+      }
+      sessionRef.current = null;
+      spanStartRef.current = null;
+      return;
+    }
+
+    // Đang tạm dừng trước khi tải lại: giữ nguyên số giờ đó.
+    sessionRef.current = saved.plannedSeconds
+      ? {
+          startedAt: saved.sessionStartedAt || Date.now(),
+          plannedSeconds: saved.plannedSeconds,
+          flushedSeconds: Math.max(0, saved.flushedSeconds || 0),
+        }
+      : null;
+    spanStartRef.current = null;
+    setPomoMode(saved.mode);
+    setTimeLeft(clampedLeft);
+    setIsRunning(false);
+  }, []);
+
+  // Giờ thay đổi mỗi giây là ghi nhớ ngay để F5 lúc nào cũng còn số mới nhất.
+  // Bỏ qua lần đầu lúc mới mở trang: lúc đó số trên màn hình chưa phải số
+  // thật (số thật đang chờ nhớ lại), ghi lúc này sẽ đè mất số đúng.
+  const isFirstPersistRunRef = useRef(true);
+  useEffect(() => {
+    if (isFirstPersistRunRef.current) {
+      isFirstPersistRunRef.current = false;
+      return;
+    }
+    try {
+      const sess = sessionRef.current;
+      writePersistedPomoState({
+        mode: pomoMode,
+        timeLeft,
+        isRunning,
+        endAt: isRunning ? Date.now() + Math.max(0, timeLeft) * 1000 : 0,
+        savedAt: Date.now(),
+        plannedSeconds: sess?.plannedSeconds ?? durations[pomoMode] * 60,
+        flushedSeconds: sess?.flushedSeconds ?? 0,
+        sessionStartedAt: sess?.startedAt ?? Date.now(),
+        durationsSnapshot: durations,
+      });
+    } catch {}
+  }, [pomoMode, timeLeft, isRunning, durations]);
 
   // Tự động kích hoạt đếm ngược chế độ Focus khi người dùng bấm Bắt đầu tập trung vào Task
   useEffect(() => {
@@ -146,6 +322,19 @@ export function usePomodoroCountdown({
   // mỗi render cũng không reset oan đồng hồ.
   const prevDurationsRef = useRef(durations);
   useEffect(() => {
+    // Cài đặt vừa nạp xong mà trùng đúng bản lúc nhớ giờ cũ: giữ nguyên
+    // giờ đó, không reset về giờ đầy. Xong thì thôi để lần sau đổi thật vẫn reset.
+    const snap = restoredDurationsRef.current;
+    if (
+      snap &&
+      snap.focus === durations.focus &&
+      snap.short_break === durations.short_break &&
+      snap.long_break === durations.long_break
+    ) {
+      restoredDurationsRef.current = null;
+      prevDurationsRef.current = durations;
+      return;
+    }
     const prev = prevDurationsRef.current;
     prevDurationsRef.current = durations;
     const changed =
