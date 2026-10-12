@@ -3,13 +3,13 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Timer,
-  CheckSquare,
-  FileText,
-  Image as ImageIcon,
-  Radio,
-  Users,
-} from "lucide-react";
+  TimerIcon,
+  CheckSquareIcon,
+  FileTextIcon,
+  ImageIcon,
+  RadioIcon,
+  UsersIcon,
+} from "@phosphor-icons/react";
 
 export interface StudyLeftDockProps {
   isZenMode: boolean;
@@ -62,7 +62,7 @@ export const StudyLeftDock = ({
       isActive: isPomodoroVisible,
       onClick: onTogglePomodoro,
       icon: (active) => (
-        <Timer
+        <TimerIcon
           className={`w-5 h-5 transition-all ${
             active
               ? "text-accent-music-glow drop-shadow-[0_0_8px_rgba(52,211,153,0.9)]"
@@ -78,7 +78,7 @@ export const StudyLeftDock = ({
       isActive: isTasksOpen,
       onClick: onToggleTasks,
       icon: (active) => (
-        <CheckSquare
+        <CheckSquareIcon
           className={`w-5 h-5 transition-all ${
             active
               ? "text-accent-music-glow drop-shadow-[0_0_8px_rgba(52,211,153,0.9)]"
@@ -94,7 +94,7 @@ export const StudyLeftDock = ({
       isActive: isNotesOpen,
       onClick: onToggleNotes,
       icon: (active) => (
-        <FileText
+        <FileTextIcon
           className={`w-5 h-5 transition-all ${
             active
               ? "text-accent-music-glow drop-shadow-[0_0_8px_rgba(52,211,153,0.9)]"
@@ -127,7 +127,7 @@ export const StudyLeftDock = ({
       onClick: onToggleEmbed,
       icon: (active) => (
         <div className="relative flex items-center justify-center">
-          <Radio
+          <RadioIcon
             className={`w-5 h-5 transition-all ${
               active
                 ? "text-accent-stream-glow drop-shadow-[0_0_8px_rgba(244,63,94,0.9)]"
@@ -144,7 +144,7 @@ export const StudyLeftDock = ({
       isActive: isRoomsOpen,
       onClick: onToggleRooms,
       icon: (active) => (
-        <Users
+        <UsersIcon
           className={`w-5 h-5 transition-all ${
             active
               ? "text-accent-music-glow drop-shadow-[0_0_8px_rgba(52,211,153,0.9)]"

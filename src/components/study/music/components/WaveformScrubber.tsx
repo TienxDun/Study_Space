@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Volume1, Volume2, VolumeX } from "lucide-react";
+import {
+  SpeakerLowIcon,
+  SpeakerHighIcon,
+  SpeakerXIcon,
+} from "@phosphor-icons/react";
 import { formatTime } from "../utils/time-format";
 import { useSiriWaveform } from "../hooks/useSiriWaveform";
 
@@ -156,11 +160,11 @@ export function WaveformScrubber({
             title={isGlobalMuted ? "Bật âm thanh không gian (M)" : "Tắt toàn bộ âm thanh (M)"}
           >
             {isGlobalMuted || (effectiveVolume ?? 0) === 0 ? (
-              <VolumeX className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-400" />
+              <SpeakerXIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-400" />
             ) : (effectiveVolume ?? 0) < 0.5 ? (
-              <Volume1 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-accent-music-glow" />
+              <SpeakerLowIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-accent-music-glow" />
             ) : (
-              <Volume2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-accent-music-glow" />
+              <SpeakerHighIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-accent-music-glow" />
             )}
           </button>
 

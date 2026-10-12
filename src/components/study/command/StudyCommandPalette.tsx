@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, CornerDownLeft } from "lucide-react";
+import {
+  MagnifyingGlassIcon,
+  ArrowDownLeftIcon,
+} from "@phosphor-icons/react";
 
 export interface CommandAction {
   id: string;
@@ -109,7 +112,7 @@ export function StudyCommandPalette({
       <div className="relative w-full max-w-lg glass-panel hover:bg-black/45 overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
         <div className="flex items-center gap-2.5 px-4 border-b border-white/10">
-          <Search className="w-4 h-4 text-slate-400 shrink-0" />
+          <MagnifyingGlassIcon className="w-4 h-4 text-slate-400 shrink-0" />
           <input
             autoFocus
             value={query}
@@ -168,7 +171,7 @@ export function StudyCommandPalette({
             <kbd className="px-1 rounded bg-white/10 border border-white/10 font-mono">↑↓</kbd> chọn
           </span>
           <span className="flex items-center gap-1">
-            <CornerDownLeft className="w-3 h-3" /> chạy
+            <ArrowDownLeftIcon className="w-3 h-3" /> chạy
           </span>
           <span className="ml-auto">{filtered.length} kết quả</span>
         </div>

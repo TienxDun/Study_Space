@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Flag, Trash2, X } from "lucide-react";
+import {
+  FlagIcon,
+  TrashIcon,
+  XIcon,
+} from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatStopwatch } from "../utils/timer-formatters";
 
@@ -73,7 +77,7 @@ export function StopwatchLapsDrawer({
             <div className="flex items-center justify-between gap-2 px-1 pb-2 border-b border-white/10">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="p-1.5 rounded-xl bg-sky-500/20 text-sky-300 border border-sky-400/30 shrink-0">
-                  <Flag className="w-3.5 h-3.5" />
+                  <FlagIcon className="w-3.5 h-3.5" />
                 </span>
                 <h4 className="text-sm font-bold text-slate-100 leading-none truncate">
                   Vòng bấm giờ
@@ -89,7 +93,7 @@ export function StopwatchLapsDrawer({
                 title="Thu gọn"
                 aria-label="Thu gọn bảng vòng bấm giờ"
               >
-                <X className="w-4 h-4" />
+                <XIcon className="w-4 h-4" />
               </button>
             </div>
 
@@ -141,7 +145,7 @@ export function StopwatchLapsDrawer({
               }`}
               title="Xoá tất cả vòng"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <TrashIcon className="w-3.5 h-3.5" />
               <span>{confirmingClear ? "Bấm lại để xóa hết" : "Xóa tất cả"}</span>
             </button>
           </motion.div>

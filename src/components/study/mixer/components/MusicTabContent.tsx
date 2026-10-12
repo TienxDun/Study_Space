@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  Play,
-  Pause,
-  SkipForward,
-  SkipBack,
-  Shuffle,
-  Repeat,
-} from "lucide-react";
+  PlayIcon,
+  PauseIcon,
+  SkipForwardIcon,
+  SkipBackIcon,
+  ShuffleIcon,
+  RepeatIcon,
+} from "@phosphor-icons/react";
 import { RangeSlider } from "@/components/ui/RangeSlider";
 import { MoodType, Track } from "../types";
 import { MOOD_OPTIONS } from "../constants";
@@ -144,7 +144,7 @@ export function MusicTabContent({
             }`}
             title="Xáo trộn bài hát"
           >
-            <Shuffle className="w-4 h-4" />
+            <ShuffleIcon className="w-4 h-4" />
           </button>
 
           <button
@@ -152,7 +152,7 @@ export function MusicTabContent({
             className="p-2.5 rounded-2xl bg-white/5 hover:bg-white/15 text-slate-200 hover:text-white border border-white/10 active:scale-90 transition-all shadow-sm cursor-pointer"
             title="Bài trước"
           >
-            <SkipBack className="w-4 h-4 fill-current" />
+            <SkipBackIcon weight="fill" className="w-4 h-4" />
           </button>
 
           <button
@@ -161,9 +161,9 @@ export function MusicTabContent({
             title={isPlaying ? "Tạm dừng" : "Phát nhạc"}
           >
             {isPlaying ? (
-              <Pause className="w-5 h-5 fill-slate-950" />
+              <PauseIcon weight="fill" className="w-5 h-5" />
             ) : (
-              <Play className="w-5 h-5 fill-slate-950" />
+              <PlayIcon weight="fill" className="w-5 h-5" />
             )}
           </button>
 
@@ -172,7 +172,7 @@ export function MusicTabContent({
             className="p-2.5 rounded-2xl bg-white/5 hover:bg-white/15 text-slate-200 hover:text-white border border-white/10 active:scale-90 transition-all shadow-sm cursor-pointer"
             title="Bài tiếp theo"
           >
-            <SkipForward className="w-4 h-4 fill-current" />
+            <SkipForwardIcon weight="fill" className="w-4 h-4" />
           </button>
 
           <button
@@ -184,7 +184,7 @@ export function MusicTabContent({
             }`}
             title="Lặp lại bài hát"
           >
-            <Repeat className="w-4 h-4" />
+            <RepeatIcon className="w-4 h-4" />
           </button>
         </div>
       </div>

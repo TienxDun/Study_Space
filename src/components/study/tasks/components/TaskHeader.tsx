@@ -2,16 +2,16 @@
 
 import React, { useState } from "react";
 import {
-  CheckSquare,
-  ChevronDown,
-  Edit3,
-  Trash2,
-  Plus,
-  Search,
-  X,
-  LayoutGrid,
-  List,
-} from "lucide-react";
+  CheckSquareIcon,
+  CaretDownIcon,
+  PencilLineIcon,
+  TrashIcon,
+  PlusIcon,
+  MagnifyingGlassIcon,
+  XIcon,
+  SquaresFourIcon,
+  ListIcon,
+} from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { KanbanBoard, ViewMode } from "../types";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
@@ -96,11 +96,11 @@ export const TaskHeader = React.memo(function TaskHeader({
               onClick={() => setIsBoardDropdownOpen(!isBoardDropdownOpen)}
               className="px-3.5 py-1.5 rounded-2xl bg-white/10 hover:bg-white/20 text-sm sm:text-base font-black text-white flex items-center gap-2 transition-all cursor-pointer border border-white/10 shadow-sm max-w-[200px] sm:max-w-xs"
             >
-              <CheckSquare className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <CheckSquareIcon className="w-4 h-4 text-emerald-400 flex-shrink-0" />
               <span className="truncate max-w-[110px] sm:max-w-[180px]" title={currentBoard.title}>
                 {currentBoard.title}
               </span>
-              <ChevronDown className="w-3.5 h-3.5 opacity-60 flex-shrink-0" />
+              <CaretDownIcon className="w-3.5 h-3.5 opacity-60 flex-shrink-0" />
             </button>
 
             <AnimatePresence>
@@ -161,7 +161,7 @@ export const TaskHeader = React.memo(function TaskHeader({
           className="p-1.5 rounded-xl hover:bg-white/10 text-white/50 hover:text-white transition-colors cursor-pointer"
           title="Sửa tên bảng"
         >
-          <Edit3 className="w-3.5 h-3.5" />
+          <PencilLineIcon className="w-3.5 h-3.5" />
         </button>
 
         {/* Delete Board */}
@@ -171,7 +171,7 @@ export const TaskHeader = React.memo(function TaskHeader({
             className="p-1.5 rounded-xl hover:bg-rose-500/20 text-rose-400 transition-colors cursor-pointer"
             title="Xóa bảng này"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <TrashIcon className="w-3.5 h-3.5" />
           </button>
         )}
 
@@ -213,7 +213,7 @@ export const TaskHeader = React.memo(function TaskHeader({
               className="p-1.5 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
               title="Hủy"
             >
-              <X className="w-3.5 h-3.5" />
+              <XIcon className="w-3.5 h-3.5" />
             </button>
           </div>
         ) : (
@@ -225,7 +225,7 @@ export const TaskHeader = React.memo(function TaskHeader({
             className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center gap-1.5 border border-emerald-400/30 transition-all cursor-pointer"
             title="Tạo bảng mới"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <PlusIcon className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Tạo bảng</span>
           </button>
         )}
@@ -235,7 +235,7 @@ export const TaskHeader = React.memo(function TaskHeader({
       <div className="flex items-center gap-3">
         {/* Search Bar */}
         <div className="relative w-44 sm:w-56">
-          <Search className="w-3.5 h-3.5 text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
+          <MagnifyingGlassIcon className="w-3.5 h-3.5 text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Tìm kiếm thẻ..."
@@ -248,7 +248,7 @@ export const TaskHeader = React.memo(function TaskHeader({
               onClick={() => setSearchQuery("")}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
             >
-              <X className="w-3 h-3" />
+              <XIcon className="w-3 h-3" />
             </button>
           )}
         </div>
@@ -264,7 +264,7 @@ export const TaskHeader = React.memo(function TaskHeader({
             }`}
             title="Chế độ bảng Kanban"
           >
-            <LayoutGrid className="w-3.5 h-3.5" />
+            <SquaresFourIcon className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Bảng</span>
           </button>
           <button
@@ -276,7 +276,7 @@ export const TaskHeader = React.memo(function TaskHeader({
             }`}
             title="Chế độ danh sách"
           >
-            <List className="w-3.5 h-3.5" />
+            <ListIcon className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Danh sách</span>
           </button>
         </div>
@@ -287,7 +287,7 @@ export const TaskHeader = React.memo(function TaskHeader({
           className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all cursor-pointer"
           title="Đóng (Esc)"
         >
-          <X className="w-4 h-4" />
+          <XIcon className="w-4 h-4" />
         </button>
       </div>
     </div>

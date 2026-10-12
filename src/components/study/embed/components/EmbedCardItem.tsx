@@ -1,6 +1,11 @@
 "use client";
 
-import { Play, Music2, Tv, Trash2 } from "lucide-react";
+import {
+  PlayIcon,
+  MusicNotesIcon,
+  TelevisionIcon,
+  TrashIcon,
+} from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/Badge";
 import { StudyEmbedItem } from "../types";
 
@@ -59,9 +64,9 @@ export function EmbedCardItem({
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             {item.platform === "spotify" ? (
-              <Music2 className="w-8 h-8 text-accent-music-glow" />
+              <MusicNotesIcon className="w-8 h-8 text-accent-music-glow" />
             ) : (
-              <Tv className="w-8 h-8 text-accent-stream-glow" />
+              <TelevisionIcon className="w-8 h-8 text-accent-stream-glow" />
             )}
           </div>
         )}
@@ -92,7 +97,7 @@ export function EmbedCardItem({
             </Badge>
           ) : (
             <Badge tone="red" shape="full" className="px-2 shadow-lg">
-              <Play className="w-2.5 h-2.5 text-red-400 fill-current" />
+              <PlayIcon weight="fill" className="w-2.5 h-2.5 text-red-400" />
               <span className="text-red-300 tracking-wider text-[10px]">VIDEO</span>
             </Badge>
           )}
@@ -107,7 +112,7 @@ export function EmbedCardItem({
                 : "bg-white/90 text-slate-950 opacity-0 group-hover:opacity-100 group-hover:scale-105"
             }`}
           >
-            <Play className="w-4 h-4 ml-0.5 fill-current" />
+            <PlayIcon weight="fill" className="w-4 h-4 ml-0.5" />
           </div>
         </div>
 
@@ -160,7 +165,7 @@ export function EmbedCardItem({
             title="Xóa khỏi đã lưu"
             className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer shrink-0"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <TrashIcon className="w-3.5 h-3.5" />
           </button>
         )}
       </div>

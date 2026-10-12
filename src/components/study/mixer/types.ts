@@ -1,5 +1,7 @@
 import { MoodType, Track, AmbientSound } from "../study-types";
-import { LucideIcon } from "lucide-react";
+import {
+  Icon,
+} from "@phosphor-icons/react";
 
 export interface SoundMixerWidgetProps {
   isOpen: boolean;
@@ -31,7 +33,7 @@ export type MixerTab = "music" | "ambience";
 
 export interface AmbientPreset {
   label: string;
-  icon: LucideIcon;
+  icon: Icon;
   color: string;
   recipe: Record<string, number>;
 }

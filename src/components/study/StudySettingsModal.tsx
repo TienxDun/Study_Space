@@ -2,15 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  X,
-  Clock,
-  Flame,
-  Volume2,
-  Minus,
-  Plus,
-  Compass,
-  Smartphone
-} from "lucide-react";
+  XIcon,
+  ClockIcon,
+  FlameIcon,
+  SpeakerHighIcon,
+  MinusIcon,
+  PlusIcon,
+  CompassIcon,
+  DeviceMobileIcon,
+} from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { ModalShell } from "../ui/ModalShell";
 import { IconBtn } from "../ui/IconBtn";
@@ -220,14 +220,14 @@ export const StudySettingsModal = ({
         <IconBtn
           onClick={onClose}
           title="Đóng (Esc)"
-          icon={<X className="w-4 h-4" />}
+          icon={<XIcon className="w-4 h-4" />}
           className="p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
         />
       </div>
 
       {/* NHÓM 1: HIỂN THỊ */}
       <SettingsSection
-        icon={<Clock className="w-3.5 h-3.5 text-emerald-400" />}
+        icon={<ClockIcon className="w-3.5 h-3.5 text-emerald-400" />}
         title="Hiển thị"
       >
         {/* Xem trước chạy thật theo đúng nút gạt bên dưới */}
@@ -305,7 +305,7 @@ export const StudySettingsModal = ({
 
       {/* NHÓM 2: PHIÊN HỌC */}
       <SettingsSection
-        icon={<Flame className="w-3.5 h-3.5 text-emerald-400" />}
+        icon={<FlameIcon className="w-3.5 h-3.5 text-emerald-400" />}
         title="Phiên học"
       >
         {/* Chỉnh tay từng phút bằng nút cộng trừ */}
@@ -323,7 +323,7 @@ export const StudySettingsModal = ({
                 aria-label={`Giảm ${DURATION_LABELS[key]}`}
                 className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center transition-all active:scale-90 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                <Minus className="w-3.5 h-3.5" />
+                <MinusIcon className="w-3.5 h-3.5" />
               </button>
               <span className="w-10 text-center text-xs font-bold font-mono text-white tabular-nums">
                 {durations[key]}′
@@ -335,7 +335,7 @@ export const StudySettingsModal = ({
                 aria-label={`Tăng ${DURATION_LABELS[key]}`}
                 className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center transition-all active:scale-90 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <PlusIcon className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -344,7 +344,7 @@ export const StudySettingsModal = ({
 
       {/* NHÓM 3: CHUÔNG */}
       <SettingsSection
-        icon={<Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
+        icon={<SpeakerHighIcon className="w-3.5 h-3.5 text-emerald-400" />}
         title="Chuông báo"
       >
         <SettingRow
@@ -394,7 +394,7 @@ export const StudySettingsModal = ({
       {/* NHÓM 4: MÀN HÌNH — chỉ 1 nút nên gọn 1 hàng, khỏi khung nhóm + tiêu đề riêng */}
       <div className="flex items-center justify-between gap-2 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.08]">
         <div className="flex items-start gap-2 min-w-0">
-          <Smartphone className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
+          <DeviceMobileIcon className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
           <div className="min-w-0">
             <div className="font-bold text-slate-200 text-xs">Giữ màn hình sáng khi học</div>
             <p className="text-[11px] text-slate-400">
@@ -420,7 +420,7 @@ export const StudySettingsModal = ({
           <div className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] transition-colors">
             <div className="space-y-0.5">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
-                <Compass className="w-3.5 h-3.5 text-accent-music-glow" />
+                <CompassIcon className="w-3.5 h-3.5 text-accent-music-glow" />
                 <span>Tour hướng dẫn sử dụng</span>
               </div>
                     <p className="text-xs text-slate-400">Xem lại cách dùng các tính năng</p>
@@ -439,6 +439,7 @@ export const StudySettingsModal = ({
           </div>
         </div>
       )}
+
     </ModalShell>
   );
 };

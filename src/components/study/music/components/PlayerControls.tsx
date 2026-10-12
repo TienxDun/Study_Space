@@ -3,11 +3,11 @@
 import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  SkipForward,
-  SkipBack,
-  Repeat,
-  Shuffle,
-} from "lucide-react";
+  SkipForwardIcon,
+  SkipBackIcon,
+  RepeatIcon,
+  ShuffleIcon,
+} from "@phosphor-icons/react";
 import { MascotFace } from "@/components/study/mascot/MascotFace";
 import { useMusicBridge } from "@/components/study/mascot/useMusicBridge";
 
@@ -56,7 +56,7 @@ export function PlayerControls({
         }`}
         title="Xáo trộn bài hát (S)"
       >
-        <Shuffle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        <ShuffleIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
       </button>
 
       {/* 2. Bài trước đó */}
@@ -65,7 +65,7 @@ export function PlayerControls({
         className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer"
         title="Bài trước đó (←)"
       >
-        <SkipBack className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
+        <SkipBackIcon weight="fill" className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
       </button>
 
       {/* 3. Mèo linh vật: nút phát/dừng chính, bấm vào mèo để bật/tắt nhạc */}
@@ -106,7 +106,7 @@ export function PlayerControls({
         className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer"
         title="Bài tiếp theo (→)"
       >
-        <SkipForward className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
+        <SkipForwardIcon weight="fill" className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
       </button>
 
       {/* 5. Lặp lại danh sách */}
@@ -119,7 +119,7 @@ export function PlayerControls({
         }`}
         title="Lặp lại danh sách (L)"
       >
-        <Repeat className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        <RepeatIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
       </button>
     </div>
   );

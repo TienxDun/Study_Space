@@ -2,7 +2,12 @@
 
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Keyboard, Music2, CheckSquare, X } from "lucide-react";
+import {
+  KeyboardIcon,
+  MusicNotesIcon,
+  CheckSquareIcon,
+  XIcon,
+} from "@phosphor-icons/react";
 import { IconBtn } from "../ui/IconBtn";
 
 export interface StudyShortcutsModalProps {
@@ -91,7 +96,7 @@ export const StudyShortcutsModal = ({
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300">
-              <Keyboard className="w-5 h-5" />
+              <KeyboardIcon className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-white tracking-tight">Phím Tắt Không Gian Học Tập</h3>
@@ -101,7 +106,7 @@ export const StudyShortcutsModal = ({
                 <IconBtn
                   onClick={onClose}
                   title="Đóng (Esc)"
-                  icon={<X className="w-5 h-5" />}
+                  icon={<XIcon className="w-5 h-5" />}
                   className="p-2 rounded-full hover:bg-white/10 text-white/60 hover:text-white transition-colors"
                 />
         </div>
@@ -111,7 +116,7 @@ export const StudyShortcutsModal = ({
           {/* Music Group */}
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5">
             <h4 className="font-bold text-emerald-400 text-xs flex items-center gap-1.5 uppercase tracking-wider">
-              <Music2 className="w-3.5 h-3.5" />
+              <MusicNotesIcon className="w-3.5 h-3.5" />
               <span>Điều Khiển Âm Nhạc</span>
             </h4>
             <div className="space-y-2">
@@ -152,7 +157,7 @@ export const StudyShortcutsModal = ({
           {/* Workspace & Tools Group */}
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2.5">
             <h4 className="font-bold text-sky-400 text-xs flex items-center gap-1.5 uppercase tracking-wider">
-              <CheckSquare className="w-3.5 h-3.5" />
+              <CheckSquareIcon className="w-3.5 h-3.5" />
               <span>Công Cụ & Không Gian</span>
             </h4>
             <div className="space-y-2">

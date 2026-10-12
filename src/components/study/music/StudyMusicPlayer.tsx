@@ -3,7 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import { Music2, CloudRain } from "lucide-react";
+import {
+  MusicNotesIcon,
+  CloudRainIcon,
+} from "@phosphor-icons/react";
 import { StudyMusicPlayerProps } from "./types";
 import { SoundMixerWidget } from "../mixer/SoundMixerWidget";
 import { MixerTab } from "../mixer/types";
@@ -334,7 +337,7 @@ export const StudyMusicPlayer = ({
                 }`}
                 title="Mở danh sách nhạc Chill & Thư giãn"
               >
-                <Music2
+                <MusicNotesIcon
                   className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-all duration-200 group-hover:scale-110 shrink-0 ${
                     isMixerOpen && activeMixerTab === "music"
                       ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse"
@@ -384,7 +387,7 @@ export const StudyMusicPlayer = ({
                         : "Mở Bộ trộn 20 âm thanh thiên nhiên (Mưa, sóng biển, rừng cây...)"
                     }
                   >
-                    <CloudRain
+                    <CloudRainIcon
                       className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-all duration-200 group-hover:scale-110 shrink-0 ${
                         isAmbienceTabOpen
                           ? "text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.9)] animate-pulse"

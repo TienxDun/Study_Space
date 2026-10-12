@@ -2,7 +2,9 @@
 
 import React, { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
+import {
+  PlusIcon,
+} from "@phosphor-icons/react";
 import { KanbanBoard, KanbanCard, KanbanColumn, CardPriority } from "../types";
 import { KanbanColumnItem } from "./KanbanColumnItem";
 import { useFocusStats } from "@/lib/use-focus-stats";
@@ -248,7 +250,7 @@ export const TaskBoardView = React.memo(function TaskBoardView({
             }}
             className="w-full py-3.5 px-4 rounded-3xl bg-white/[0.04] hover:bg-white/[0.08] text-white/60 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-2 border border-dashed border-white/10 hover:border-white/20 cursor-pointer shadow-sm"
           >
-            <Plus className="w-4 h-4" />
+            <PlusIcon className="w-4 h-4" />
             <span>Thêm danh sách mới</span>
           </button>
         )}

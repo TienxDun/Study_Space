@@ -28,20 +28,6 @@
     ]
   },
   {
-    "id": "scene-4k-train-journey",
-    "name": "Sotheby Train Journey",
-    "category": "chill",
-    "type": "VIDEO",
-    "mediaPath": "scenes/sotheby-train-journey-live-wallpaper.mp4",
-    "thumbnailPath": "thumbnails/sotheby-train-journey.webp",
-    "badge": "4K",
-    "tags": [
-      "chill",
-      "video",
-      "4k"
-    ]
-  },
-  {
     "id": "6908d218cf9c9d8232aeb13a",
     "name": "Living Room",
     "category": "chill",

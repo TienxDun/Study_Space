@@ -3,13 +3,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
-  GripVertical,
-  Trash2,
-  Plus,
-  Calendar,
-  Clock,
-  X,
-} from "lucide-react";
+  DotsSixVerticalIcon,
+  TrashIcon,
+  PlusIcon,
+  CalendarIcon,
+  ClockIcon,
+  XIcon,
+} from "@phosphor-icons/react";
 import { KanbanCard, KanbanColumn, CardPriority } from "../types";
 import { KanbanCardItem } from "./KanbanCardItem";
 import { PrioritySignalIcon } from "./PrioritySignalIcon";
@@ -236,7 +236,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
           </div>
         ) : (
           <div className="flex items-center gap-1.5 min-w-0 flex-1 mr-1">
-            <GripVertical className="w-3.5 h-3.5 text-white/30 group-hover/colheader:text-white/70 transition-colors flex-shrink-0" />
+            <DotsSixVerticalIcon className="w-3.5 h-3.5 text-white/30 group-hover/colheader:text-white/70 transition-colors flex-shrink-0" />
             <h3
               onClick={(e) => {
                 e.stopPropagation();
@@ -261,7 +261,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
               className="p-1 rounded-lg text-white/40 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer"
               title="Xóa cột"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <TrashIcon className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
@@ -442,7 +442,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                               className="p-1 rounded-md text-slate-400 hover:text-rose-400 hover:bg-white/5 transition-colors cursor-pointer"
                               title="Gỡ giờ"
                             >
-                              <X className="w-3.5 h-3.5" />
+                              <XIcon className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         ) : (
@@ -455,7 +455,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                             className="h-7 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-dashed border-white/20 text-xs text-slate-300 flex items-center gap-1 cursor-pointer shrink-0"
                             title="Thêm giờ"
                           >
-                            <Clock className="w-3 h-3 text-slate-400" />
+                            <ClockIcon className="w-3 h-3 text-slate-400" />
                             <span>+ Giờ</span>
                           </button>
                         )}
@@ -603,7 +603,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                   }`}
                   title={newCardDueDate ? `Hạn chót: ${newCardDueDate}` : "Gán hạn chót"}
                 >
-                  <Calendar className="w-3.5 h-3.5 shrink-0" />
+                  <CalendarIcon className="w-3.5 h-3.5 shrink-0" />
                   {newCardDueDate && (
                     <span>
                       {(() => {
@@ -663,7 +663,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
           }}
           className="w-full mt-2 py-2 px-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-white/60 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-2 border border-dashed border-white/10 hover:border-white/20 cursor-pointer"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <PlusIcon className="w-3.5 h-3.5" />
           <span>Thêm thẻ mới</span>
         </button>
       )}

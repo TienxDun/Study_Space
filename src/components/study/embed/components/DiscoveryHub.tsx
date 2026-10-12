@@ -1,6 +1,12 @@
 "use client";
 
-import { Search, Play, Bookmark, LayoutGrid, ListFilter } from "lucide-react";
+import {
+  MagnifyingGlassIcon,
+  PlayIcon,
+  BookmarkIcon,
+  SquaresFourIcon,
+  FunnelIcon,
+} from "@phosphor-icons/react";
 import { StudyEmbedItem, ViewMode } from "../types";
 import { CATEGORY_DEFINITIONS } from "../constants";
 import { handleHorizontalWheel } from "@/lib/use-horizontal-scroll";
@@ -67,7 +73,7 @@ export function DiscoveryHub({
       <div className="space-y-3 shrink-0">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search aria-hidden="true" className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <MagnifyingGlassIcon aria-hidden="true" className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <label htmlFor="embed-search-input" className="sr-only">
               Tìm kiếm hoặc dán liên kết video
             </label>
@@ -88,7 +94,7 @@ export function DiscoveryHub({
                 onClick={() => onPlayFromInput(false)}
                 className="px-3.5 py-2.5 rounded-xl bg-accent-music hover:bg-accent-music-glow text-xs font-bold text-panel flex items-center gap-1.5 shadow-md shadow-accent-music/20 transition-all cursor-pointer"
               >
-                <Play className="w-3.5 h-3.5 fill-current" />
+                <PlayIcon weight="fill" className="w-3.5 h-3.5" />
                 <span>Phát ngay</span>
               </button>
               <button
@@ -96,7 +102,7 @@ export function DiscoveryHub({
                 className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-medium text-white transition-all border border-line/15 cursor-pointer"
                 title="Lưu vào danh sách & Phát"
               >
-                <Bookmark className="w-4 h-4" />
+                <BookmarkIcon className="w-4 h-4" />
               </button>
             </div>
           ) : (
@@ -111,7 +117,7 @@ export function DiscoveryHub({
                 }`}
                 title="Dạng lưới thẻ"
               >
-                <LayoutGrid className="w-4 h-4" />
+                <SquaresFourIcon className="w-4 h-4" />
               </button>
               <button
                 onClick={() => onToggleViewMode("list")}
@@ -122,7 +128,7 @@ export function DiscoveryHub({
                 }`}
                 title="Dạng danh sách gọn"
               >
-                <ListFilter className="w-4 h-4" />
+                <FunnelIcon className="w-4 h-4" />
               </button>
             </div>
           )}

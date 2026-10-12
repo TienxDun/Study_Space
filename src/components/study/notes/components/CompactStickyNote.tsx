@@ -2,21 +2,21 @@
 
 import React from "react";
 import {
-  List,
-  ChevronDown,
-  Plus,
-  Pin,
-  Moon,
-  Sun,
-  Trash2,
-  X,
-  MoreHorizontal,
-  Bold,
-  Italic,
-  CheckSquare,
-  Highlighter,
-  Undo2,
-} from "lucide-react";
+  ListIcon,
+  CaretDownIcon,
+  PlusIcon,
+  PushPinIcon,
+  MoonIcon,
+  SunIcon,
+  TrashIcon,
+  XIcon,
+  DotsThreeIcon,
+  TextBIcon,
+  TextItalicIcon,
+  CheckSquareIcon,
+  HighlighterIcon,
+  ArrowUUpLeftIcon,
+} from "@phosphor-icons/react";
 import { motion, AnimatePresence, DragControls } from "framer-motion";
 import { StudyNote, ActiveFormats } from "../types";
 
@@ -133,11 +133,11 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
             }`}
             title="Xem danh sách ghi chú"
           >
-            <List className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+            <ListIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
             {(width ?? 380) >= 400 && (
               <span className="min-w-0 font-semibold truncate">Danh sách ({notes.length})</span>
             )}
-            <ChevronDown className="w-3 h-3 opacity-60 shrink-0 ml-0.5" />
+            <CaretDownIcon className="w-3 h-3 opacity-60 shrink-0 ml-0.5" />
           </button>
 
           <AnimatePresence>
@@ -161,7 +161,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                     }}
                     className="text-emerald-500 hover:text-emerald-400 flex items-center gap-1 cursor-pointer font-bold"
                   >
-                    <Plus className="w-3 h-3 stroke-[2.5]" />
+                    <PlusIcon weight="bold" className="w-3 h-3" />
                     <span>Tạo mới</span>
                   </button>
                 </div>
@@ -205,7 +205,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                           }`}
                           title={n.isPinned ? "Bỏ ghim khỏi đầu danh sách" : "Ghim lên đầu danh sách"}
                         >
-                          <Pin className={`w-3 h-3 ${n.isPinned ? "fill-current text-amber-400" : ""}`} />
+                          <PushPinIcon weight={n.isPinned ? "fill" : "regular"} className={`w-3 h-3 ${n.isPinned ? "text-amber-400" : ""}`} />
                         </button>
 
                         {/* Nút Xóa ghi chú */}
@@ -219,7 +219,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                           className="p-1 rounded-md transition-all cursor-pointer opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-400 hover:bg-red-500/10"
                           title="Xóa ghi chú này"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <TrashIcon className="w-3 h-3" />
                         </button>
                       </div>
                     </div>
@@ -243,7 +243,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
             }`}
             title="Tạo nhanh ghi chú mới (1-Click)"
           >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <PlusIcon weight="bold" className="w-3.5 h-3.5" />
           </button>
         </div>
 
@@ -276,7 +276,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
             }`}
             title={activeNote?.isPinned ? "Bỏ ghim khỏi đầu danh sách" : "Ghim lên đầu danh sách"}
           >
-            <Pin className={`w-3.5 h-3.5 ${activeNote?.isPinned ? "fill-current" : ""}`} />
+            <PushPinIcon weight={activeNote?.isPinned ? "fill" : "regular"} className="w-3.5 h-3.5" />
           </button>
 
           {/* Nút Tùy chọn khác ⋯ */}
@@ -295,7 +295,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
               }`}
               title="Tùy chọn khác"
             >
-              <MoreHorizontal className="w-3.5 h-3.5" />
+              <DotsThreeIcon className="w-3.5 h-3.5" />
             </button>
 
             <AnimatePresence>
@@ -323,12 +323,12 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                   >
                     {isLight ? (
                       <>
-                        <Moon className="w-3.5 h-3.5 text-amber-500" />
+                        <MoonIcon className="w-3.5 h-3.5 text-amber-500" />
                         <span>Giao diện tối</span>
                       </>
                     ) : (
                       <>
-                        <Sun className="w-3.5 h-3.5 text-amber-300" />
+                        <SunIcon className="w-3.5 h-3.5 text-amber-300" />
                         <span>Giao diện sáng</span>
                       </>
                     )}
@@ -346,7 +346,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                         }}
                         className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-medium text-red-500 dark:text-red-400 hover:bg-red-500/15 transition-colors cursor-pointer"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <TrashIcon className="w-3.5 h-3.5" />
                         <span>Xóa ghi chú này</span>
                       </button>
                     </>
@@ -366,7 +366,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
             }`}
             title="Đóng ghi chú"
           >
-            <X className="w-3.5 h-3.5" />
+            <XIcon className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
@@ -395,7 +395,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                 }`}
                 title="In đậm (Ctrl+B)"
               >
-                <Bold className="w-3.5 h-3.5" />
+                <TextBIcon className="w-3.5 h-3.5" />
               </button>
 
               <button
@@ -413,7 +413,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                 }`}
                 title="In nghiêng (Ctrl+I)"
               >
-                <Italic className="w-3.5 h-3.5" />
+                <TextItalicIcon className="w-3.5 h-3.5" />
               </button>
 
               <button
@@ -431,7 +431,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                 }`}
                 title="Việc cần làm (Checklist)"
               >
-                <CheckSquare className="w-3.5 h-3.5" />
+                <CheckSquareIcon className="w-3.5 h-3.5" />
               </button>
 
               <button
@@ -447,7 +447,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                 }`}
                 title="Tô sáng dạ quang"
               >
-                <Highlighter className="w-3.5 h-3.5" />
+                <HighlighterIcon className="w-3.5 h-3.5" />
               </button>
 
               <button
@@ -461,7 +461,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                 }`}
                 title="Hoàn tác (Ctrl+Z)"
               >
-                <Undo2 className="w-3.5 h-3.5" />
+                <ArrowUUpLeftIcon className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>

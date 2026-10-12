@@ -3,12 +3,12 @@
 import React from "react";
 import { motion } from "framer-motion";
 import {
-  CheckSquare,
-  CheckCircle2,
-  Circle,
-  Calendar,
-  GripVertical,
-} from "lucide-react";
+  CheckSquareIcon,
+  CheckCircleIcon,
+  CircleIcon,
+  CalendarIcon,
+  DotsSixVerticalIcon,
+} from "@phosphor-icons/react";
 import { KanbanBoard, KanbanCard } from "../types";
 import { getDeadlineStatus } from "../utils/task-deadline";
 import { PrioritySignalIcon } from "./PrioritySignalIcon";
@@ -198,7 +198,7 @@ export const TaskListView = React.memo(function TaskListView({
                   >
                     <div className="flex items-center justify-between gap-3 min-w-0">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <GripVertical
+                        <DotsSixVerticalIcon
                           className={`w-3.5 h-3.5 flex-shrink-0 transition-opacity ${
                             isCardDragging
                               ? "text-white/60 opacity-100"
@@ -216,9 +216,9 @@ export const TaskListView = React.memo(function TaskListView({
                           title={isCardCompleted ? "Đánh dấu chưa hoàn thành" : "Hoàn thành nhiệm vụ"}
                         >
                           {isCardCompleted ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
+                            <CheckCircleIcon className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
                           ) : (
-                            <Circle className="w-4 h-4 text-white/30 hover:text-emerald-400 transition-colors" />
+                            <CircleIcon className="w-4 h-4 text-white/30 hover:text-emerald-400 transition-colors" />
                           )}
                         </button>
 
@@ -265,7 +265,7 @@ export const TaskListView = React.memo(function TaskListView({
                               <span
                                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium border ${dStatus.badgeClass}`}
                               >
-                                <Calendar className="w-3 h-3" />
+                                <CalendarIcon className="w-3 h-3" />
                                 <span>{dStatus.label}</span>
                               </span>
                             );
@@ -273,7 +273,7 @@ export const TaskListView = React.memo(function TaskListView({
 
                         {card.checklist.length > 0 && (
                           <span className="text-[10px] text-slate-300 bg-white/10 border border-white/10 px-2 py-0.5 rounded-lg font-mono flex items-center gap-1">
-                            <CheckSquare className="w-3 h-3 text-emerald-400" />
+                            <CheckSquareIcon className="w-3 h-3 text-emerald-400" />
                             <span>
                               {card.checklist.filter((i) => i.completed).length}/
                               {card.checklist.length}

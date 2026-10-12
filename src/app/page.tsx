@@ -3,7 +3,9 @@
 import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import {
+  CircleNotchIcon,
+} from "@phosphor-icons/react";
 import { STUDY_SCENES, StudyEmbedItem } from "@/components/study/study-types";
 import { useScenePreloader } from "@/lib/use-scene-preloader";
 import {
@@ -513,7 +515,7 @@ export default function StudySpacePage() {
             transition={{ duration: 0.22, ease: "easeOut" }}
             className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 px-4 py-2 rounded-full bg-black/85 backdrop-blur-2xl border border-white/20 text-white text-xs shadow-[0_12px_40px_rgba(0,0,0,0.8)] pointer-events-none select-none"
           >
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-music-glow shrink-0" />
+            <CircleNotchIcon className="w-3.5 h-3.5 animate-spin text-accent-music-glow shrink-0" />
             <span className="text-slate-200">
               Đang tải bối cảnh <strong className="text-white font-semibold">{pendingScene.name}</strong>...
             </span>

@@ -3,23 +3,23 @@
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
-  X,
-  Sparkles,
-  Video,
-  Search,
-  Coffee,
-  Trees,
-  Building2,
-  Heart,
-  Tv,
-  Check,
-  Shuffle,
-  Smile,
-  Loader2,
-  Play,
-  Pause,
-  Timer,
-} from "lucide-react";
+  XIcon,
+  SparkleIcon,
+  VideoCameraIcon,
+  MagnifyingGlassIcon,
+  CoffeeIcon,
+  TreeEvergreenIcon,
+  BuildingsIcon,
+  HeartIcon,
+  TelevisionIcon,
+  CheckIcon,
+  ShuffleIcon,
+  SmileyIcon,
+  CircleNotchIcon,
+  PlayIcon,
+  PauseIcon,
+  TimerIcon,
+} from "@phosphor-icons/react";
 import { Scene, STUDY_SCENES } from "./study-types";
 import { useFavoriteScenes } from "@/lib/use-favorites";
 import { motion } from "framer-motion";
@@ -112,17 +112,17 @@ const SceneCardItem = React.memo<SceneCardItemProps>(
           <div className="flex items-center gap-1.5 pointer-events-none">
             {isPending ? (
               <Badge tone="amber" className="shadow-md flex items-center gap-1">
-                <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                <CircleNotchIcon className="w-2.5 h-2.5 animate-spin" />
                 <span>Đang nạp...</span>
               </Badge>
             ) : isSelected ? (
               <div className="w-5 h-5 rounded-full bg-emerald-400 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-400/40 font-bold animate-in zoom-in-75 duration-200">
-                <Check className="w-3 h-3 stroke-[3]" />
+                <CheckIcon weight="bold" className="w-3 h-3" />
               </div>
             ) : null}
             {isVideo && !isPending && (
               <Badge tone="amber" className="shadow-md">
-                <Video className="w-2.5 h-2.5" /> 4K Động
+                <VideoCameraIcon className="w-2.5 h-2.5" /> 4K Động
               </Badge>
             )}
           </div>
@@ -137,11 +137,12 @@ const SceneCardItem = React.memo<SceneCardItemProps>(
             className="p-1 -mr-1 -mt-1 rounded-full cursor-pointer transition-all duration-200 active:scale-75 hover:scale-125 focus:outline-none opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
             title={isFav ? "Bỏ yêu thích" : "Lưu vào yêu thích"}
           >
-            <Heart
+            <HeartIcon
+              weight={isFav ? "fill" : "bold"}
               className={`w-4 h-4 transition-all duration-200 ${
                 isFav
-                  ? "fill-rose-500 text-rose-500 drop-shadow-[0_2px_8px_rgba(244,63,94,0.7)] scale-105"
-                  : "text-white/80 hover:text-rose-400 stroke-[2.2] drop-shadow-[0_2px_5px_rgba(0,0,0,0.85)]"
+                  ? "text-rose-500 drop-shadow-[0_2px_8px_rgba(244,63,94,0.7)] scale-105"
+                  : "text-white/80 hover:text-rose-400 drop-shadow-[0_2px_5px_rgba(0,0,0,0.85)]"
               }`}
             />
           </button>
@@ -305,14 +306,14 @@ export const SceneSelectorWidget = ({
   };
 
   const categories: CategoryItem[] = useMemo(() => [
-    { key: "all", label: "Tất cả", icon: Sparkles },
-    { key: "favorites", label: `Yêu thích${favoriteCount > 0 ? ` (${favoriteCount})` : ""}`, icon: Heart },
-    { key: "video", label: "Video 4K", icon: Video },
-    { key: "chill", label: "Chill & Lofi", icon: Coffee },
-    { key: "anime", label: "Anime", icon: Tv },
-    { key: "nature", label: "Thiên nhiên", icon: Trees },
-    { key: "urban", label: "Đô thị", icon: Building2 },
-    { key: "cute", label: "Đáng yêu", icon: Smile },
+    { key: "all", label: "Tất cả", icon: SparkleIcon },
+    { key: "favorites", label: `Yêu thích${favoriteCount > 0 ? ` (${favoriteCount})` : ""}`, icon: HeartIcon },
+    { key: "video", label: "Video 4K", icon: VideoCameraIcon },
+    { key: "chill", label: "Chill & Lofi", icon: CoffeeIcon },
+    { key: "anime", label: "Anime", icon: TelevisionIcon },
+    { key: "nature", label: "Thiên nhiên", icon: TreeEvergreenIcon },
+    { key: "urban", label: "Đô thị", icon: BuildingsIcon },
+    { key: "cute", label: "Đáng yêu", icon: SmileyIcon },
   ], [favoriteCount]);
 
   const availableCategories = useMemo(() => {
@@ -392,7 +393,7 @@ export const SceneSelectorWidget = ({
             className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer active:scale-95 shrink-0"
             title="Đóng (ESC)"
           >
-            <X className="w-4 h-4" />
+            <XIcon className="w-4 h-4" />
           </button>
         </div>
 
@@ -413,9 +414,9 @@ export const SceneSelectorWidget = ({
               }
             >
               {slideshowEnabled ? (
-                <Pause className="w-3.5 h-3.5 text-emerald-400 fill-current" />
+                <PauseIcon weight="fill" className="w-3.5 h-3.5 text-emerald-400" />
               ) : (
-                <Play className="w-3.5 h-3.5 text-emerald-400" />
+                <PlayIcon className="w-3.5 h-3.5 text-emerald-400" />
               )}
               <span className="hidden sm:inline font-medium whitespace-nowrap">Tự xoay cảnh</span>
           </button>
@@ -427,7 +428,7 @@ export const SceneSelectorWidget = ({
               className="p-1.5 px-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex flex-1 items-center justify-center gap-1.5 text-xs active:scale-95 font-bold"
               title="Bấm để đổi thời gian mỗi lượt (5 → 15 → 30 → 60 phút)"
             >
-                <Timer className="w-3.5 h-3.5 text-sky-400" />
+                <TimerIcon className="w-3.5 h-3.5 text-sky-400" />
                 <span className="hidden sm:inline font-medium whitespace-nowrap">{slideshowIntervalMin} phút</span>
             </button>
           )}
@@ -438,7 +439,7 @@ export const SceneSelectorWidget = ({
             className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex flex-1 items-center justify-center gap-1.5 text-xs active:scale-95"
             title="Đổi cảnh ngẫu nhiên"
           >
-            <Shuffle className="w-3.5 h-3.5 text-emerald-400" />
+            <ShuffleIcon className="w-3.5 h-3.5 text-emerald-400" />
           </button>
 
           {/* Nút Mở Studio Quản lý Background (Chỉ hiện ở môi trường Local Development) */}
@@ -449,14 +450,14 @@ export const SceneSelectorWidget = ({
               className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex flex-1 items-center justify-center gap-1.5 text-xs active:scale-95"
               title="Mở Studio quản lý bối cảnh"
             >
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <SparkleIcon className="w-3.5 h-3.5 text-indigo-400" />
             </Link>
           )}
         </div>
 
         {/* Quick Search Bar thanh mảnh */}
         <div className="relative flex items-center">
-          <Search className="w-3.5 h-3.5 absolute left-3 text-slate-400 pointer-events-none" />
+          <MagnifyingGlassIcon className="w-3.5 h-3.5 absolute left-3 text-slate-400 pointer-events-none" />
           <input
             type="text"
             placeholder="Tìm kiếm bối cảnh (Tokyo, cafe, mưa, lofi...)"
@@ -470,7 +471,7 @@ export const SceneSelectorWidget = ({
               className="absolute right-2.5 text-slate-400 hover:text-white text-xs cursor-pointer p-0.5 rounded-full hover:bg-white/10"
               title="Xóa tìm kiếm"
             >
-              <X className="w-3 h-3" />
+              <XIcon className="w-3 h-3" />
             </button>
           )}
         </div>
@@ -529,9 +530,9 @@ export const SceneSelectorWidget = ({
             className="col-span-full py-12 px-4 text-center"
             icon={
               selectedCategory === "favorites" ? (
-                <Heart className="w-8 h-8 opacity-40 text-rose-400 stroke-1" />
+                <HeartIcon className="w-8 h-8 opacity-40 text-rose-400 stroke-1" />
               ) : (
-                <Search className="w-8 h-8 opacity-40 text-slate-400 stroke-1" />
+                <MagnifyingGlassIcon className="w-8 h-8 opacity-40 text-slate-400 stroke-1" />
               )
             }
             message={

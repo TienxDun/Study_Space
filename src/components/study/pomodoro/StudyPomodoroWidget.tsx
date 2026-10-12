@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { X } from "lucide-react";
+import {
+  XIcon,
+} from "@phosphor-icons/react";
 import { useFocusTask, EVENT_START_FOCUS } from "@/lib/use-focus-task";
 import {
   TimerTab,
@@ -210,7 +212,7 @@ export const StudyPomodoroWidget = ({
                     className="p-1 rounded-lg text-slate-300 hover:text-rose-400 hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] shrink-0"
                     title="Hủy liên kết nhiệm vụ này"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <XIcon className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>

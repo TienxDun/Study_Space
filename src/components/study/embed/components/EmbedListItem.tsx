@@ -1,6 +1,9 @@
 "use client";
 
-import { Play, Trash2 } from "lucide-react";
+import {
+  PlayIcon,
+  TrashIcon,
+} from "@phosphor-icons/react";
 import { StudyEmbedItem } from "../types";
 
 interface EmbedListItemProps {
@@ -62,8 +65,9 @@ export function EmbedListItem({
             </div>
           )}
           <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 flex items-center justify-center transition-colors">
-            <Play
-              className={`w-3.5 h-3.5 ml-0.5 fill-current ${
+            <PlayIcon
+              weight="fill"
+              className={`w-3.5 h-3.5 ml-0.5 ${
                 isCurrent
                   ? "text-accent-music-glow opacity-100"
                   : "text-white opacity-0 group-hover:opacity-100"
@@ -105,7 +109,7 @@ export function EmbedListItem({
           title="Xóa khỏi đã lưu"
           className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer shrink-0"
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          <TrashIcon className="w-3.5 h-3.5" />
         </button>
       )}
 

@@ -4,7 +4,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { LiveKitRoom } from "@livekit/components-react";
 import "@livekit/components-styles";
-import { Users, X, Loader2, RefreshCw, LogIn } from "lucide-react";
+import {
+  UsersIcon,
+  XIcon,
+  CircleNotchIcon,
+  ArrowClockwiseIcon,
+  SignInIcon,
+} from "@phosphor-icons/react";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useFloatingSize } from "@/lib/use-floating-size";
 import { StudyRoomView } from "./StudyRoomView";
@@ -333,7 +339,7 @@ const getLiveKitEndpoints = () => {
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="p-2 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300">
-                      <Users className="w-5 h-5" />
+                      <UsersIcon className="w-5 h-5" />
                     </span>
                     <div>
                       <h2 className="text-sm font-bold">Phòng học nhóm</h2>
@@ -346,7 +352,7 @@ const getLiveKitEndpoints = () => {
                     className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                     title="Đóng (Esc)"
                   >
-                    <X className="w-4 h-4" />
+                    <XIcon className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -378,7 +384,7 @@ const getLiveKitEndpoints = () => {
                           className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
                           title="Tải lại danh sách"
                         >
-                          <RefreshCw className={`w-3 h-3 ${loadingRooms ? "animate-spin" : ""}`} />
+                          <ArrowClockwiseIcon className={`w-3 h-3 ${loadingRooms ? "animate-spin" : ""}`} />
                           Tải lại
                         </button>
                       </div>
@@ -408,7 +414,7 @@ const getLiveKitEndpoints = () => {
                                 disabled={joining}
                                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-40 shrink-0"
                               >
-                                <LogIn className="w-3.5 h-3.5" /> Vào
+                                <SignInIcon className="w-3.5 h-3.5" /> Vào
                               </button>
                             </div>
                           ))}
@@ -447,7 +453,7 @@ const getLiveKitEndpoints = () => {
                   >
                     {joining ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> Đang vào...
+                        <CircleNotchIcon className="w-4 h-4 animate-spin" /> Đang vào...
                       </>
                     ) : (
                       "Vào phòng học"

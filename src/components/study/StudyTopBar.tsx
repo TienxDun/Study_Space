@@ -4,18 +4,20 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Maximize2,
-  Minimize2,
-  Volume2,
-  VolumeX,
-  Eye,
-  EyeOff,
-  Sliders,
-  HelpCircle,
-  BarChart3,
-} from "lucide-react";
+  CornersOutIcon,
+  CornersInIcon,
+  SpeakerHighIcon,
+  SpeakerXIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  SlidersIcon,
+  QuestionIcon,
+  ChartBarIcon,
+  InfoIcon,
+} from "@phosphor-icons/react";
 import { ZenStudyLogo } from "./brand/ZenStudyLogo";
 import { FocusStatsModal } from "./stats/FocusStatsModal";
+import { StudyAboutModal } from "./StudyAboutModal";
 import type { TimerTab } from "./pomodoro/types";
 
 export interface StudyTopBarProps {
@@ -118,6 +120,7 @@ export const StudyTopBar = ({
   onToggleFullscreen,
 }: StudyTopBarProps) => {
   const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
 
   return (
     <>
@@ -169,13 +172,23 @@ export const StudyTopBar = ({
               aria-label="Thanh công cụ nhanh Study Space"
               className="flex items-center h-9 sm:h-10 gap-0.5 sm:gap-1 pointer-events-auto select-none transition-all shrink-0 drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]"
             >
+              {/* Giới thiệu website (nằm bên trái nút Phím tắt) */}
+              <button
+                onClick={() => setIsAboutOpen(true)}
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-200 hover:text-white glass-hover transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+                title="Giới thiệu website"
+                aria-label="Mở giới thiệu website"
+              >
+                <InfoIcon className="w-4 h-4" />
+              </button>
+
               {/* Keyboard Shortcuts Cheat Sheet Button (Ẩn trên mobile không có bàn phím cứng) */}
               <button
                 onClick={onToggleShortcuts}
                 className="hidden sm:flex w-8 h-8 rounded-xl items-center justify-center text-slate-200 hover:text-white glass-hover transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
                 title="Bảng tra cứu phím tắt (?)"
               >
-                <HelpCircle className="w-4 h-4" />
+                <QuestionIcon className="w-4 h-4" />
               </button>
 
               {/* Focus Stats Button */}
@@ -185,7 +198,7 @@ export const StudyTopBar = ({
                 title="Thống kê thời gian tập trung"
                 aria-label="Mở thống kê thời gian tập trung"
               >
-                <BarChart3 className="w-4 h-4" />
+                <ChartBarIcon className="w-4 h-4" />
               </button>
 
               {/* Zen Mode Toggle (Ẩn thanh công cụ để tập trung) */}
@@ -194,7 +207,7 @@ export const StudyTopBar = ({
                 className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-200 hover:text-white glass-hover transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
                 title="Chế độ Zen: Ẩn toàn bộ UI (Z)"
               >
-                <EyeOff className="w-4 h-4" />
+                <EyeSlashIcon className="w-4 h-4" />
               </button>
 
               {/* Global Mute Toggle */}
@@ -204,9 +217,9 @@ export const StudyTopBar = ({
                 title={isGlobalMuted ? "Bật âm thanh không gian (M)" : "Tắt toàn bộ âm thanh (M)"}
               >
                 {isGlobalMuted ? (
-                  <VolumeX className="w-4 h-4 text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
+                  <SpeakerXIcon className="w-4 h-4 text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
                 ) : (
-                  <Volume2 className="w-4 h-4 text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.7)]" />
+                  <SpeakerHighIcon className="w-4 h-4 text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.7)]" />
                 )}
               </button>
 
@@ -220,7 +233,7 @@ export const StudyTopBar = ({
                 }`}
                 title="Cài đặt không gian học tập"
               >
-                <Sliders className="w-4 h-4" />
+                <SlidersIcon className="w-4 h-4" />
               </button>
 
               {/* Fullscreen Toggle */}
@@ -229,7 +242,7 @@ export const StudyTopBar = ({
                 className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-200 hover:text-white glass-hover transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
                 title={isFullscreen ? "Thoát toàn màn hình (F)" : "Toàn màn hình (F)"}
               >
-                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                {isFullscreen ? <CornersInIcon className="w-4 h-4" /> : <CornersOutIcon className="w-4 h-4" />}
               </button>
             </div>
           </motion.header>
@@ -247,12 +260,15 @@ export const StudyTopBar = ({
           className="absolute top-4 right-4 z-50 flex items-center justify-center w-8 h-8 rounded-xl text-slate-200 hover:text-white glass-hover drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] transition-all active:scale-90 cursor-pointer select-none"
           title="Thoát Zen (Z)"
         >
-          <Eye className="w-4 h-4 text-accent-music-bright drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+          <EyeIcon className="w-4 h-4 text-accent-music-bright drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
         </motion.button>
       )}
 
       {/* Focus Stats Modal (portal ra body, tự quản lý state) */}
       <FocusStatsModal isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} />
+
+      {/* Giới thiệu website (portal ra body, tự quản lý state) */}
+      <StudyAboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
     </>
   );
 };

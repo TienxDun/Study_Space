@@ -1,6 +1,9 @@
 "use client";
 
-import { Radio, X } from "lucide-react";
+import {
+  RadioIcon,
+  XIcon,
+} from "@phosphor-icons/react";
 
 interface StudioHeaderProps {
   onClose: () => void;
@@ -11,7 +14,7 @@ export function StudioHeader({ onClose }: StudioHeaderProps) {
     <div className="relative z-10 flex items-center justify-between px-5 sm:px-6 py-3.5 border-b border-white/10 bg-white/[0.02]">
       <div className="flex items-center gap-2.5">
         <div className="w-7 h-7 rounded-lg bg-accent-stream/15 border border-accent-stream/30 flex items-center justify-center text-accent-stream-bright">
-          <Radio className="w-4 h-4" />
+          <RadioIcon className="w-4 h-4" />
         </div>
         <div>
           <h2 className="text-sm font-bold tracking-wide text-white flex items-center gap-2">
@@ -29,7 +32,7 @@ export function StudioHeader({ onClose }: StudioHeaderProps) {
           className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
           title="Đóng (Esc)"
         >
-          <X className="w-4 h-4" />
+          <XIcon className="w-4 h-4" />
         </button>
       </div>
     </div>

@@ -1,23 +1,23 @@
 "use client";
 
 import {
-  CloudRain,
-  Zap,
-  Trees,
-  Bird,
-  Flame,
-  Waves,
-  Wind,
-  Keyboard,
-  Coffee,
-  Fan,
-  TrainTrack,
-  Plane,
-  Car,
-  Droplets,
-  Orbit,
-  Volume2,
-} from "lucide-react";
+  CloudRainIcon,
+  LightningIcon,
+  TreeEvergreenIcon,
+  BirdIcon,
+  FlameIcon,
+  WavesIcon,
+  WindIcon,
+  KeyboardIcon,
+  CoffeeIcon,
+  FanIcon,
+  TrainIcon,
+  AirplaneIcon,
+  CarIcon,
+  DropIcon,
+  PlanetIcon,
+  SpeakerHighIcon,
+} from "@phosphor-icons/react";
 import { RangeSlider } from "@/components/ui/RangeSlider";
 import { AmbientSound } from "../types";
 import { getSoundTheme } from "../utils/sound-helpers";
@@ -32,22 +32,22 @@ interface SoundTileItemProps {
 const renderSoundIcon = (iconName: string, active: boolean) => {
   const props = { className: `w-4 h-4 ${active ? "text-emerald-400" : "text-slate-400"}` };
   switch (iconName) {
-    case "CloudRain": return <CloudRain {...props} />;
-    case "Zap": return <Zap {...props} />;
-    case "Trees": return <Trees {...props} />;
-    case "Bird": return <Bird {...props} />;
-    case "Flame": return <Flame {...props} />;
-    case "Waves": return <Waves {...props} />;
-    case "Wind": return <Wind {...props} />;
-    case "Keyboard": return <Keyboard {...props} />;
-    case "Coffee": return <Coffee {...props} />;
-    case "Fan": return <Fan {...props} />;
-    case "TrainTrack": return <TrainTrack {...props} />;
-    case "Plane": return <Plane {...props} />;
-    case "Car": return <Car {...props} />;
-    case "Droplets": return <Droplets {...props} />;
-    case "Orbit": return <Orbit {...props} />;
-    default: return <Volume2 {...props} />;
+    case "CloudRain": return <CloudRainIcon {...props} />;
+    case "Zap": return <LightningIcon {...props} />;
+    case "Trees": return <TreeEvergreenIcon {...props} />;
+    case "Bird": return <BirdIcon {...props} />;
+    case "Flame": return <FlameIcon {...props} />;
+    case "Waves": return <WavesIcon {...props} />;
+    case "Wind": return <WindIcon {...props} />;
+    case "Keyboard": return <KeyboardIcon {...props} />;
+    case "Coffee": return <CoffeeIcon {...props} />;
+    case "Fan": return <FanIcon {...props} />;
+    case "TrainTrack": return <TrainIcon {...props} />;
+    case "Plane": return <AirplaneIcon {...props} />;
+    case "Car": return <CarIcon {...props} />;
+    case "Droplets": return <DropIcon {...props} />;
+    case "Orbit": return <PlanetIcon {...props} />;
+    default: return <SpeakerHighIcon {...props} />;
   }
 };
 

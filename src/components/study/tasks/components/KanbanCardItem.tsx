@@ -3,15 +3,15 @@
 import React from "react";
 import { motion } from "framer-motion";
 import {
-  CheckSquare,
-  CheckCircle2,
-  Circle,
-  Calendar,
-  ArrowLeft,
-  ArrowRight,
-  GripVertical,
-  Timer,
-} from "lucide-react";
+  CheckSquareIcon,
+  CheckCircleIcon,
+  CircleIcon,
+  CalendarIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  DotsSixVerticalIcon,
+  TimerIcon,
+} from "@phosphor-icons/react";
 import { KanbanCard, KanbanColumn } from "../types";
 import { getDeadlineStatus } from "../utils/task-deadline";
 import { startFocusTask } from "@/lib/use-focus-task";
@@ -105,9 +105,9 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
             title={isCardCompleted ? "Đánh dấu chưa hoàn thành" : "Hoàn thành nhiệm vụ"}
           >
             {isCardCompleted ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20 shrink-0" />
+              <CheckCircleIcon className="w-4 h-4 text-emerald-400 fill-emerald-400/20 shrink-0" />
             ) : (
-              <Circle className="w-4 h-4 text-white/30 hover:text-emerald-400 transition-colors shrink-0" />
+              <CircleIcon className="w-4 h-4 text-white/30 hover:text-emerald-400 transition-colors shrink-0" />
             )}
           </button>
 
@@ -137,7 +137,7 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
           </h4>
         </div>
 
-        <GripVertical className="w-3.5 h-3.5 text-white/20 group-hover:text-white/60 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <DotsSixVerticalIcon className="w-3.5 h-3.5 text-white/20 group-hover:text-white/60 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
 
       {/* Progress bar if checklist exists */}
@@ -145,7 +145,7 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
         <div className="space-y-1 pt-0.5">
           <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
             <span className="flex items-center gap-1 text-slate-300">
-              <CheckSquare className="w-3 h-3 text-emerald-400" />
+              <CheckSquareIcon className="w-3 h-3 text-emerald-400" />
               <span>
                 {doneCheck}/{totalCheck}
               </span>
@@ -176,7 +176,7 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
                 <span
                   className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] leading-none border ${dStatus.badgeClass}`}
                 >
-                  <Calendar className="w-2.5 h-2.5 shrink-0" />
+                  <CalendarIcon className="w-2.5 h-2.5 shrink-0" />
                   <span>{dStatus.shortLabel}</span>
                 </span>
               );
@@ -187,7 +187,7 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
               className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] leading-none bg-amber-500/15 border border-amber-500/30 text-amber-200 font-mono"
               title={`Tổng thời gian tập trung: ${formatFocusDuration(focusSeconds)}`}
             >
-              <Timer className="w-2.5 h-2.5 shrink-0" />
+              <TimerIcon className="w-2.5 h-2.5 shrink-0" />
               <span>{formatFocusDuration(focusSeconds)}</span>
             </span>
           ) : (
@@ -197,7 +197,7 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
                 className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] leading-none bg-amber-500/15 border border-amber-500/30 text-amber-200 font-mono"
                 title={`Đã tích lũy ${card.pomodoros} phiên Pomodoro (dữ liệu cũ)`}
               >
-                <Timer className="w-2.5 h-2.5 shrink-0" />
+                <TimerIcon className="w-2.5 h-2.5 shrink-0" />
                 <span>{card.pomodoros}</span>
               </span>
             )
@@ -215,7 +215,7 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
             className="p-1 rounded-md hover:bg-amber-500/20 text-white/50 hover:text-amber-300 transition-colors cursor-pointer"
             title="Tập trung vào nhiệm vụ này với Pomodoro"
           >
-            <Timer className="w-3 h-3" />
+            <TimerIcon className="w-3 h-3" />
           </button>
           {prevColumn && (
             <button
@@ -223,7 +223,7 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
               className="p-1 rounded-md hover:bg-white/20 text-white/60 hover:text-white cursor-pointer"
               title={`Chuyển sang: ${prevColumn.title}`}
             >
-              <ArrowLeft className="w-3 h-3" />
+              <ArrowLeftIcon className="w-3 h-3" />
             </button>
           )}
           {nextColumn && (
@@ -232,7 +232,7 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
               className="p-1 rounded-md hover:bg-white/20 text-white/60 hover:text-white cursor-pointer"
               title={`Chuyển sang: ${nextColumn.title}`}
             >
-              <ArrowRight className="w-3 h-3" />
+              <ArrowRightIcon className="w-3 h-3" />
             </button>
           )}
         </div>

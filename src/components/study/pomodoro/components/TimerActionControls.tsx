@@ -1,6 +1,12 @@
 "use client";
 
-import { Play, Pause, RotateCcw, SkipForward, Flag } from "lucide-react";
+import {
+  PlayIcon,
+  PauseIcon,
+  ArrowCounterClockwiseIcon,
+  SkipForwardIcon,
+  FlagIcon,
+} from "@phosphor-icons/react";
 import { TimerTab } from "../types";
 
 interface TimerActionControlsProps {
@@ -40,7 +46,7 @@ export function TimerActionControls({
               className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
               title="Đặt lại từ đầu"
             >
-              <RotateCcw className="w-5 h-5 transition-transform duration-200 group-hover:-rotate-45" />
+              <ArrowCounterClockwiseIcon className="w-5 h-5 transition-transform duration-200 group-hover:-rotate-45" />
             </button>
           )}
 
@@ -52,9 +58,9 @@ export function TimerActionControls({
             title={isPomoRunning ? "Tạm dừng" : "Bắt đầu tập trung"}
           >
             {isPomoRunning ? (
-              <Pause className="w-7 h-7 fill-current" />
+              <PauseIcon weight="fill" className="w-7 h-7" />
             ) : (
-              <Play className="w-7 h-7 fill-current translate-x-0.5" />
+              <PlayIcon weight="fill" className="w-7 h-7" />
             )}
           </button>
 
@@ -66,7 +72,7 @@ export function TimerActionControls({
               className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
               title="Bỏ qua / Hoàn thành phiên"
             >
-              <SkipForward className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-0.5" />
+              <SkipForwardIcon className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-0.5" />
             </button>
           )}
         </>
@@ -79,7 +85,7 @@ export function TimerActionControls({
             className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
             title="Đặt lại từ đầu"
           >
-            <RotateCcw className="w-5 h-5 transition-transform duration-200 group-hover:-rotate-45" />
+            <ArrowCounterClockwiseIcon className="w-5 h-5 transition-transform duration-200 group-hover:-rotate-45" />
           </button>
 
           {/* Focal Hero Play / Pause Stopwatch */}
@@ -90,9 +96,9 @@ export function TimerActionControls({
             title={isStopwatchRunning ? "Tạm dừng" : "Bắt đầu bấm giờ"}
           >
             {isStopwatchRunning ? (
-              <Pause className="w-7 h-7 fill-current" />
+              <PauseIcon weight="fill" className="w-7 h-7" />
             ) : (
-              <Play className="w-7 h-7 fill-current translate-x-0.5" />
+              <PlayIcon weight="fill" className="w-7 h-7" />
             )}
           </button>
 
@@ -108,7 +114,7 @@ export function TimerActionControls({
             }`}
             title="Ghi vòng (Lap)"
           >
-            <Flag className="w-5 h-5" />
+            <FlagIcon className="w-5 h-5" />
           </button>
         </>
       ) : null}

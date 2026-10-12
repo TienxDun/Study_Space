@@ -1,6 +1,8 @@
 "use client";
 
-import { GripVertical } from "lucide-react";
+import {
+  DotsSixVerticalIcon,
+} from "@phosphor-icons/react";
 
 interface ResizableDividerProps {
   isResizing: boolean;
@@ -46,7 +48,7 @@ export function ResizableDivider({
               : "bg-panel/90 border border-line/25 group-hover/divider:border-white/50 text-slate-400 group-hover/divider:text-white shadow-md opacity-0 group-hover/divider:opacity-100"
           }`}
         >
-          <GripVertical className="w-2.5 h-2.5" />
+          <DotsSixVerticalIcon className="w-2.5 h-2.5" />
         </div>
       </div>
     </>

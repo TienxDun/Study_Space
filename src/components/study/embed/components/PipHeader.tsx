@@ -1,6 +1,9 @@
 "use client";
 
-import { Maximize2, X } from "lucide-react";
+import {
+  CornersOutIcon,
+  XIcon,
+} from "@phosphor-icons/react";
 import { StudyEmbedItem } from "../types";
 import { DragControls } from "framer-motion";
 
@@ -71,7 +74,7 @@ export function PipHeader({
           className="p-1 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
           title="Mở rộng ra Studio Modal đầy đủ"
         >
-          <Maximize2 className="w-3.5 h-3.5" />
+          <CornersOutIcon className="w-3.5 h-3.5" />
         </button>
         <button
           onPointerDown={(e) => e.stopPropagation()}
@@ -79,7 +82,7 @@ export function PipHeader({
           className="p-1 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
           title="Đóng cửa sổ nổi (Thu về thanh đáy)"
         >
-          <X className="w-3.5 h-3.5" />
+          <XIcon className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>

@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion", "sonner"],
+    optimizePackageImports: ["@phosphor-icons/react", "framer-motion", "sonner"],
   },
   trailingSlash: true,
 };

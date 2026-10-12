@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { X, BarChart3, ChevronDown, Timer } from "lucide-react";
+import {
+  XIcon,
+  ChartBarIcon,
+  CaretDownIcon,
+  TimerIcon,
+} from "@phosphor-icons/react";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { useFocusStats } from "@/lib/use-focus-stats";
 import { EVENT_OPEN_POMODORO } from "@/lib/use-focus-task";
@@ -68,7 +73,7 @@ export function FocusStatsModal({ isOpen, onClose }: FocusStatsModalProps) {
       >
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-sm font-bold">
-            <BarChart3 className="w-4 h-4 text-emerald-300" />
+            <ChartBarIcon className="w-4 h-4 text-emerald-300" />
             Thống kê tập trung
           </h2>
           <button
@@ -78,7 +83,7 @@ export function FocusStatsModal({ isOpen, onClose }: FocusStatsModalProps) {
             title="Đóng thống kê (Esc)"
             aria-label="Đóng thống kê"
           >
-            <X className="w-4 h-4" />
+            <XIcon className="w-4 h-4" />
           </button>
         </div>
 
@@ -96,7 +101,7 @@ export function FocusStatsModal({ isOpen, onClose }: FocusStatsModalProps) {
               }}
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-400/15 border border-emerald-400/30 text-emerald-300 hover:bg-emerald-400/25 hover:text-emerald-200 transition-colors cursor-pointer active:scale-[0.98] touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70"
             >
-              <Timer className="w-4 h-4" />
+              <TimerIcon className="w-4 h-4" />
               Mở Pomodoro ngay
             </button>
           </div>
@@ -207,7 +212,7 @@ export function FocusStatsModal({ isOpen, onClose }: FocusStatsModalProps) {
                             <span className="text-slate-400 tabular-nums">
                               {formatFocusDuration(day.totalSeconds)}
                             </span>
-                            <ChevronDown
+                            <CaretDownIcon
                               className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 motion-reduce:transition-none ${
                                 expanded ? "rotate-180" : ""
                               }`}

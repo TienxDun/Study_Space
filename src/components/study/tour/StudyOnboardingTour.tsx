@@ -2,7 +2,12 @@
 
 import { useState, useEffect, useCallback, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
+import {
+  XIcon,
+  CaretRightIcon,
+  CaretLeftIcon,
+  SparkleIcon,
+} from "@phosphor-icons/react";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 export interface TourStep {
@@ -298,7 +303,7 @@ export function StudyOnboardingTour({
           className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0 mt-0.5"
           title="Đóng / Bỏ qua hướng dẫn (Esc)"
         >
-          <X className="w-4 h-4" />
+          <XIcon className="w-4 h-4" />
         </button>
       </div>
 
@@ -326,7 +331,7 @@ export function StudyOnboardingTour({
             }`}
           >
             <span className="flex items-center gap-1">
-              <ChevronLeft className="w-3.5 h-3.5" />
+              <CaretLeftIcon className="w-3.5 h-3.5" />
               <span>Quay lại</span>
             </span>
           </button>
@@ -338,12 +343,12 @@ export function StudyOnboardingTour({
             {isLastStep ? (
               <>
                 <span>Bắt đầu ngay</span>
-                <Sparkles className="w-3.5 h-3.5" />
+                <SparkleIcon className="w-3.5 h-3.5" />
               </>
             ) : (
               <>
                 <span>Tiếp tục</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                <CaretRightIcon className="w-3.5 h-3.5" />
               </>
             )}
           </button>

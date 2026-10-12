@@ -1,6 +1,9 @@
 "use client";
 
-import { Maximize2, X } from "lucide-react";
+import {
+  CornersOutIcon,
+  XIcon,
+} from "@phosphor-icons/react";
 import { StudyEmbedItem } from "../types";
 import { MascotFace } from "@/components/study/mascot/MascotFace";
 
@@ -137,7 +140,7 @@ export function ExternalStreamBanner({
           title="Mở rộng đài phát (E)"
           aria-label="Mở rộng đài phát"
         >
-          <Maximize2 className="w-3.5 h-3.5" />
+          <CornersOutIcon className="w-3.5 h-3.5" />
         </button>
 
         <button
@@ -146,7 +149,7 @@ export function ExternalStreamBanner({
           title="Dừng phát đài ngoài"
           aria-label="Dừng phát đài ngoài"
         >
-          <X className="w-4 h-4" />
+          <XIcon className="w-4 h-4" />
         </button>
       </div>
     </>

@@ -10,7 +10,12 @@ import {
   useTracks,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
-import { LogOut, MessageSquareText, Send, X } from "lucide-react";
+import {
+  SignOutIcon,
+  ChatTextIcon,
+  PaperPlaneTiltIcon,
+  XIcon,
+} from "@phosphor-icons/react";
 
 interface StudyRoomViewProps {
   roomName: string;
@@ -81,7 +86,7 @@ export const StudyRoomView = ({ roomName, onLeave, sideBySide = true, onDragStar
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-200 text-xs font-bold transition-colors cursor-pointer shrink-0"
           title="Rời phòng"
         >
-          <LogOut className="w-3.5 h-3.5" /> Rời phòng
+          <SignOutIcon className="w-3.5 h-3.5" /> Rời phòng
         </button>
       </div>
 
@@ -114,7 +119,7 @@ export const StudyRoomView = ({ roomName, onLeave, sideBySide = true, onDragStar
                 className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                 title="Đóng chat"
               >
-                <X className="w-3.5 h-3.5" />
+                <XIcon className="w-3.5 h-3.5" />
               </button>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2.5 custom-study-scroll">
@@ -156,7 +161,7 @@ export const StudyRoomView = ({ roomName, onLeave, sideBySide = true, onDragStar
                 className="px-3 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-40 flex items-center gap-1"
                 title="Gửi"
               >
-                <Send className="w-3.5 h-3.5" />
+                <PaperPlaneTiltIcon className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Gửi</span>
               </button>
             </div>
@@ -198,7 +203,7 @@ export const StudyRoomView = ({ roomName, onLeave, sideBySide = true, onDragStar
             }`}
             title="Nhắn tin"
           >
-            <MessageSquareText className="w-5 h-5" />
+            <ChatTextIcon className="w-5 h-5" />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
                 {unreadCount > 9 ? "9+" : unreadCount}

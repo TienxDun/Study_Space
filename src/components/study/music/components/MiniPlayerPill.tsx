@@ -1,6 +1,11 @@
 "use client";
 
-import { Play, Pause, SkipForward, Maximize2 } from "lucide-react";
+import {
+  PlayIcon,
+  PauseIcon,
+  SkipForwardIcon,
+  CornersOutIcon,
+} from "@phosphor-icons/react";
 import { Track } from "../types";
 
 interface MiniPlayerPillProps {
@@ -56,9 +61,9 @@ export function MiniPlayerPill({
           title={isPlaying ? "Tạm dừng (Space)" : "Phát nhạc (Space)"}
         >
           {isPlaying ? (
-            <Pause className="w-3.5 h-3.5 fill-panel" />
+            <PauseIcon className="w-3.5 h-3.5 fill-panel" />
           ) : (
-            <Play className="w-3.5 h-3.5 fill-panel" />
+            <PlayIcon className="w-3.5 h-3.5 fill-panel" />
           )}
         </button>
 
@@ -67,7 +72,7 @@ export function MiniPlayerPill({
           className="p-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer"
           title="Bài tiếp theo"
         >
-          <SkipForward className="w-3.5 h-3.5" />
+          <SkipForwardIcon className="w-3.5 h-3.5" />
         </button>
 
         <button
@@ -75,7 +80,7 @@ export function MiniPlayerPill({
           className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer"
           title="Mở rộng đầy đủ"
         >
-          <Maximize2 className="w-3.5 h-3.5" />
+          <CornersOutIcon className="w-3.5 h-3.5" />
         </button>
       </div>
     </>
