@@ -251,19 +251,6 @@ export const StudyAboutModal = ({ isOpen, onClose }: StudyAboutModalProps) => {
         </div>
       </AboutSection>
 
-      {/* Phím tắt xem ở đâu */}
-      <AboutSection title="Phím tắt"
-      >
-        <p className="text-xs text-slate-300">
-          Mỗi tính năng ở trên đều có 1 phím bấm nhanh (chữ trong ô vuông).
-          Muốn xem đầy đủ thì bấm phím{" "}
-          <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-[11px] font-mono text-slate-200 font-semibold border border-white/10">
-            ?
-          </kbd>{" "}
-          trên thanh phía trên.
-        </p>
-      </AboutSection>
-
       {/* Điều cần biết */}
       <AboutSection
         icon={<WarningIcon className="w-3.5 h-3.5 text-amber-400" />}

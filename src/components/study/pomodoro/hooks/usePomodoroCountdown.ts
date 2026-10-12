@@ -350,15 +350,22 @@ export function usePomodoroCountdown({
     playPomodoroSound(soundType, soundEnabled);
   }, [soundType, soundEnabled]);
 
-  const switchPomoMode = useCallback(
+  // Bắt đầu phiên mới và chạy ngay (dùng khi hết giờ: học xong tự nghỉ,
+  // nghỉ xong tự học tiếp, khỏi bấm tay).
+  const startFreshMode = useCallback(
     (mode: PomodoroMode) => {
-      flushSpan(false); // giữ lại số phút đã chạy trước khi đổi mode
-      sessionRef.current = null;
+      const full = durations[mode] * 60;
+      sessionRef.current = {
+        startedAt: Date.now(),
+        plannedSeconds: full,
+        flushedSeconds: 0,
+      };
+      spanStartRef.current = Date.now();
       setPomoMode(mode);
-      setTimeLeft(durations[mode] * 60);
-      setIsRunning(false);
+      setTimeLeft(full);
+      setIsRunning(true);
     },
-    [durations, flushSpan]
+    [durations]
   );
 
   const finishSession = useCallback(
@@ -399,10 +406,10 @@ export function usePomodoroCountdown({
         // Đếm cả slot hiện tại (kể cả skip) để chu kỳ nghỉ ngắn/dài
         // không lệch — còn dots thì chỉ tính phiên chạy hết giờ.
         const nextBreak = getNextBreakType(completedSessions + 1);
-        switchPomoMode(nextBreak);
+        startFreshMode(nextBreak);
       } else {
         if (onSessionComplete) onSessionComplete(result);
-        switchPomoMode("focus");
+        startFreshMode("focus");
       }
     },
     [
@@ -412,7 +419,7 @@ export function usePomodoroCountdown({
       onSessionComplete,
       playChime,
       pomoMode,
-      switchPomoMode,
+      startFreshMode,
     ]
   );
 
