@@ -52,7 +52,7 @@ const SceneThumbnail = React.memo<{ scene: Scene }>(({ scene }) => {
       <img
         src={scene.thumbnailUrl}
         alt={scene.name}
-        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out ${
+        className={`w-full h-full object-cover transform-gpu [@media(hover:hover)]:group-hover:scale-105 [@media(hover:hover)]:transition-transform [@media(hover:hover)]:duration-500 [@media(hover:hover)]:ease-out ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
         loading="lazy"
@@ -184,6 +184,9 @@ export const SceneSelectorWidget = ({
 }: SceneSelectorWidgetProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  // Đợi khung chạy hình xong 1 nhịp rồi mới dựng lưới hình.
+  // Máy yếu (tablet) sẽ không bị vừa chạy hình vừa tải 30+ tấm cùng lúc.
+  const [isPanelReady, setIsPanelReady] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const gridScrollRef = useRef<HTMLDivElement>(null);
   const lastScrollTopRef = useRef<number>(0);
@@ -210,9 +213,35 @@ export const SceneSelectorWidget = ({
     } catch { }
   }, []);
 
+  // Đợi khung mở xong 1 nhịp rồi mới cho lưới hình hiện ra (mượt hơn trên tablet)
+  useEffect(() => {
+    if (!isOpen) {
+      setIsPanelReady(false);
+      return;
+    }
+    let cancelled = false;
+    let raf1 = 0;
+    let raf2 = 0;
+    const timer = window.setTimeout(() => {
+      if (!cancelled) setIsPanelReady(true);
+    }, 140);
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        if (!cancelled) setIsPanelReady(true);
+        window.clearTimeout(timer);
+      });
+    });
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [isOpen]);
+
   // Khôi phục chính xác vị trí cuộn mỗi khi mở lại modal (dùng flag isRestoringScrollRef chống ghi đè 0)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && isPanelReady) {
       isRestoringScrollRef.current = true;
       const frameId = requestAnimationFrame(() => {
         if (gridScrollRef.current && lastScrollTopRef.current > 0) {
@@ -233,7 +262,7 @@ export const SceneSelectorWidget = ({
         isRestoringScrollRef.current = false;
       };
     }
-  }, [isOpen]);
+  }, [isOpen, isPanelReady]);
 
   const handleGridScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (isRestoringScrollRef.current) return;
@@ -337,9 +366,10 @@ export const SceneSelectorWidget = ({
       isOpen={isOpen}
       onClose={onClose}
       panelKey="scene-selector"
-      initial={{ opacity: 0, x: -20, scale: 0.97 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: -16, scale: 0.97 }}
+      initial={{ opacity: 0, x: -14 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -10 }}
+      transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
       panelClassName="fixed top-16 bottom-20 left-20 sm:left-24 z-50 w-[410px] sm:w-[450px] max-w-[calc(100vw-96px)] flex flex-col glass-panel hover:bg-black/45 text-white overflow-hidden transform-gpu will-change-[transform,opacity]"
     >
       <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
@@ -486,7 +516,15 @@ export const SceneSelectorWidget = ({
         onScroll={handleGridScroll}
         className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-3.5 grid grid-cols-2 gap-2.5 sm:gap-3 auto-rows-max content-start custom-study-scroll"
       >
-        {filteredScenes.length === 0 ? (
+        {!isPanelReady ? (
+          // Khung xương nhẹ lúc mới mở: cho hình chạy mượt trước, lưới hình vào sau
+          Array.from({ length: 6 }).map((_, idx) => (
+            <div
+              key={`scene-skeleton-${idx}`}
+              className="aspect-[16/10] w-full rounded-2xl bg-white/5 animate-pulse border border-white/5"
+            />
+          ))
+        ) : filteredScenes.length === 0 ? (
           <EmptyState
             className="col-span-full py-12 px-4 text-center"
             icon={

@@ -225,6 +225,34 @@ export default function StudySpacePage() {
     };
   }, []);
 
+  // Làm nóng sẵn bảng Không gian (phím B) lúc máy rảnh sau khi vào trang.
+  // Lần bấm đầu tiên sẽ mở ngay, không phải vừa tải code vừa chạy hình.
+  useEffect(() => {
+    let cancelled = false;
+    const warmUp = () => {
+      if (cancelled) return;
+      void import("@/components/study/SceneSelectorWidget").catch(() => {});
+    };
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    let idleId = 0;
+    let timer = 0;
+    if (typeof w.requestIdleCallback === "function") {
+      idleId = w.requestIdleCallback(warmUp, { timeout: 3000 });
+    } else {
+      timer = window.setTimeout(warmUp, 2000);
+    }
+    return () => {
+      cancelled = true;
+      if (idleId && typeof w.cancelIdleCallback === "function") {
+        w.cancelIdleCallback(idleId);
+      }
+      if (timer) window.clearTimeout(timer);
+    };
+  }, []);
+
   const { supported: wakeLockSupported } = useWakeLock(
     keepAwake && (isTimerRunning || isMusicPlaying || isExternalStreamActive)
   );

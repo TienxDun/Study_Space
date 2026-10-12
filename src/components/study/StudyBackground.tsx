@@ -68,7 +68,7 @@ export const StudyBackground = ({ scene, isBlurActive = false }: StudyBackground
             transitionEnd: { visibility: "hidden" },
           },
         }}
-        className="absolute inset-0 bg-slate-950/45 backdrop-blur-md pointer-events-none will-change-[opacity]"
+        className="absolute inset-0 bg-slate-950/45 backdrop-blur-md [@media(pointer:coarse)]:backdrop-blur-[2px] [@media(pointer:coarse)]:bg-slate-950/55 pointer-events-none will-change-[opacity]"
       />
 
       {/* Cinematic Contrast Shield: Top Scrim Gradient (bảo vệ thanh TopBar) */}
