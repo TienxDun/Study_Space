@@ -52,6 +52,8 @@ export interface StudyPomodoroWidgetProps {
   onTabChange?: (tab: TimerTab) => void;
   onToggleVisibility?: () => void;
   onSessionComplete?: (result: PomodoroSessionResult) => void;
+  // Báo lên cha mỗi khi bắt đầu/dừng chạy (Pomodoro hoặc bấm giờ)
+  onRunningChange?: (running: boolean) => void;
   // External Settings
   showClockSeconds?: boolean;
   isClock12Hour?: boolean;

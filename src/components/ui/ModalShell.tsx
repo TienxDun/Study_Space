@@ -22,6 +22,8 @@ export interface ModalShellProps {
   transition?: Transition;
   /** Tên đọc cho máy đọc màn hình, mặc định "Hộp thoại". */
   ariaLabel?: string;
+  /** Vai trò modal: hộp thường hoặc hộp cảnh báo xóa. */
+  role?: "dialog" | "alertdialog";
 }
 
 const DEFAULT_TRANSITION: Transition = {
@@ -51,6 +53,7 @@ export const ModalShell = ({
   exit = { opacity: 0 },
   transition = DEFAULT_TRANSITION,
   ariaLabel = "Hộp thoại",
+  role = "dialog",
 }: ModalShellProps) => {
   const [mounted, setMounted] = useState(false);
   const innerRef = useRef<HTMLDivElement>(null);
@@ -132,7 +135,7 @@ export const ModalShell = ({
               (innerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
               setRef(panelRef, el);
             }}
-            role="dialog"
+            role={role}
             aria-modal="true"
             aria-label={ariaLabel}
             tabIndex={-1}

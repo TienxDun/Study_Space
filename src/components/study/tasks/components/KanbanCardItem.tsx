@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
 import {
   CheckSquare,
   CheckCircle2,
@@ -14,7 +15,6 @@ import {
 import { KanbanCard, KanbanColumn } from "../types";
 import { getDeadlineStatus } from "../utils/task-deadline";
 import { startFocusTask } from "@/lib/use-focus-task";
-import { useFocusStats } from "@/lib/use-focus-stats";
 import { formatFocusDuration } from "@/lib/focus-sessions";
 import { PrioritySignalIcon } from "./PrioritySignalIcon";
 
@@ -33,6 +33,8 @@ interface KanbanCardItemProps {
   onDragEnd: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
+  // Giờ focus do bảng tính 1 lần rồi chia xuống (khỏi mỗi thẻ nghe log riêng)
+  focusSeconds?: number;
 }
 
 export const KanbanCardItem = React.memo(function KanbanCardItem({
@@ -50,6 +52,7 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
   onDragEnd,
   onDragOver,
   onDrop,
+  focusSeconds = 0,
 }: KanbanCardItemProps) {
   const totalCheck = card.checklist.length;
   const doneCheck = card.checklist.filter((i) => i.completed).length;
@@ -58,14 +61,15 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
   const isDoneColumn = /xong|done|hoàn thành/i.test(column.title) || (totalColumns > 1 && colIdx === totalColumns - 1);
   const isCardCompleted = Boolean(card.completed) || isDoneColumn || isFullyDone;
 
-  // Tổng thời gian focus đã ghi nhận cho task này (tự refresh khi có phiên mới).
-  const allTimeStats = useFocusStats("all");
-  const focusEntry = allTimeStats.byTask.find((t) => t.taskId === card.id);
-  const focusSeconds = focusEntry?.focusSeconds ?? 0;
   const hasFooterMeta =
     Boolean(card.dueDate) || (card.pomodoros ?? 0) > 0 || focusSeconds > 0;
 
   return (
+    // Lớp ngoài chỉ lo trượt mượt lúc đổi chỗ; lớp trong giữ nguyên kéo-thả native.
+    <motion.div
+      layout
+      transition={{ type: "spring", stiffness: 550, damping: 45 }}
+    >
     <div
       draggable={!isCardDragging}
       onDragStart={onDragStart}
@@ -75,9 +79,11 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
       onClick={() => {
         if (!isCardDragging) onCardClick();
       }}
-      className={`group p-3 rounded-2xl backdrop-blur-md border shadow-sm transition-all select-none space-y-2 relative ${
+      // Không dùng transition-all ở đây để khỏi đánh nhau với hiệu ứng trượt:
+      // trượt do framer-motion lo, CSS chỉ lo mờ/sáng dần màu nền/viền.
+      className={`group p-3 rounded-2xl backdrop-blur-md border shadow-sm transition-[opacity,background-color,border-color] duration-200 select-none space-y-2 relative ${
         isCardDragging
-          ? "cursor-grabbing opacity-90 ring-1 ring-white/20 bg-white/[0.08] border-white/12"
+          ? "cursor-grabbing opacity-60 ring-1 ring-white/20 bg-white/[0.08] border-white/12"
           : "bg-white/[0.08] hover:bg-white/[0.14] border-white/12 hover:border-white/25 cursor-grab active:cursor-grabbing"
       }`}
     >
@@ -179,11 +185,7 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
           {focusSeconds > 0 ? (
             <span
               className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] leading-none bg-amber-500/15 border border-amber-500/30 text-amber-200 font-mono"
-              title={`Tổng thời gian tập trung: ${formatFocusDuration(focusSeconds)}${
-                focusEntry && focusEntry.sessions > 1
-                  ? ` • ${focusEntry.sessions} đoạn ghi nhận`
-                  : ""
-              }`}
+              title={`Tổng thời gian tập trung: ${formatFocusDuration(focusSeconds)}`}
             >
               <Timer className="w-2.5 h-2.5 shrink-0" />
               <span>{formatFocusDuration(focusSeconds)}</span>
@@ -236,5 +238,6 @@ export const KanbanCardItem = React.memo(function KanbanCardItem({
         </div>
       </div>
     </div>
+    </motion.div>
   );
 });

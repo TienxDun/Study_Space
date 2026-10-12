@@ -25,6 +25,8 @@ export interface StudyTopBarProps {
   isGlobalMuted: boolean;
   isSettingsOpen: boolean;
   isFullscreen: boolean;
+  showClockSeconds?: boolean;
+  isClock12Hour?: boolean;
   onToggleClock: () => void;
   onToggleShortcuts: () => void;
   onEnterZen: () => void;
@@ -39,13 +41,18 @@ const TopBarClockButton = ({
   isPomodoroVisible,
   centerTab,
   onToggleClock,
+  showClockSeconds = true,
+  isClock12Hour = false,
 }: {
   isPomodoroVisible: boolean;
   centerTab: TimerTab;
   onToggleClock: () => void;
+  showClockSeconds?: boolean;
+  isClock12Hour?: boolean;
 }) => {
   const [currentTime, setCurrentTime] = useState("");
 
+  // Định dạng theo đúng nút gạt trong Cài đặt (giây + 12/24h)
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
@@ -53,15 +60,15 @@ const TopBarClockButton = ({
         now.toLocaleTimeString("vi-VN", {
           hour: "2-digit",
           minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
+          ...(showClockSeconds ? { second: "2-digit" as const } : {}),
+          hour12: isClock12Hour,
         })
       );
     };
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [showClockSeconds, isClock12Hour]);
 
   return (
     <motion.button
@@ -81,7 +88,7 @@ const TopBarClockButton = ({
     >
       {/* Realtime Monospace Clock */}
       <span className="font-mono text-xs sm:text-sm font-semibold tracking-wider tabular-nums transition-colors">
-        {currentTime || "00:00:00"}
+        {currentTime || (showClockSeconds ? "00:00:00" : "00:00")}
       </span>
 
       {/* Subtle Status Hint without layout-thrashing reflows (chỉ mở rộng trên desktop/hover) */}
@@ -100,6 +107,8 @@ export const StudyTopBar = ({
   isGlobalMuted,
   isSettingsOpen,
   isFullscreen,
+  showClockSeconds = true,
+  isClock12Hour = false,
   onToggleClock,
   onToggleShortcuts,
   onEnterZen,
@@ -150,6 +159,8 @@ export const StudyTopBar = ({
               isPomodoroVisible={isPomodoroVisible}
               centerTab={centerTab}
               onToggleClock={onToggleClock}
+              showClockSeconds={showClockSeconds}
+              isClock12Hour={isClock12Hour}
             />
 
             {/* Right Action Icons - Floating Ghost HUD (Hoàn toàn không background, không viền) */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { X, BarChart3, ChevronDown, Timer } from "lucide-react";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { useFocusStats } from "@/lib/use-focus-stats";
@@ -25,37 +25,8 @@ export function FocusStatsModal({ isOpen, onClose }: FocusStatsModalProps) {
   const month = useFocusStats("month");
   const all = useFocusStats("all");
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    // Focus trap gọn cho modal: giữ Tab xoay vòng trong panel, Esc để đóng.
-    panelRef.current?.querySelector<HTMLElement>("button")?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-        return;
-      }
-      if (e.key !== "Tab") return;
-      const root = panelRef.current;
-      if (!root) return;
-      const items = [...root.querySelectorAll<HTMLElement>("button")].filter(
-        (el) => !el.hasAttribute("disabled")
-      );
-      if (items.length === 0) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen, onClose]);
+  // Bẫy Tab + Esc + trả focus do ModalShell lo chung
 
   const cards = [
     { label: "Hôm nay", summary: today },
@@ -87,10 +58,9 @@ export function FocusStatsModal({ isOpen, onClose }: FocusStatsModalProps) {
       isOpen={isOpen}
       onClose={onClose}
       panelKey="focus-stats-panel"
-      panelClassName="fixed top-[4.5rem] right-4 sm:right-6 z-50 w-full max-w-[340px] sm:max-w-[380px] rounded-3xl bg-black/40 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-5 text-white select-none max-h-[calc(100vh-92px)] overflow-y-auto overscroll-contain custom-study-scroll"
+      panelClassName="fixed top-[4.5rem] right-4 sm:right-6 z-50 w-full max-w-[340px] sm:max-w-[380px] glass-panel p-5 text-white select-none max-h-[calc(100vh-92px)] overflow-y-auto overscroll-contain custom-study-scroll"
     >
       <div
-        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label="Thống kê thời gian tập trung"

@@ -41,6 +41,7 @@ export const StudyPomodoroWidget = ({
   soundEnabled: externalSound,
   soundType: externalSoundType,
   showStopwatchMilliseconds: externalShowMs,
+  onRunningChange,
 }: StudyPomodoroWidgetProps) => {
   const [internalTab, setInternalTab] = useState<TimerTab>("clock");
   const currentTab = externalTab !== undefined ? externalTab : internalTab;
@@ -167,6 +168,11 @@ export const StudyPomodoroWidget = ({
     clearLaps,
   } = useStopwatchTimer(showStopwatchMilliseconds);
 
+  // Báo lên cha khi bắt đầu/dừng chạy để giữ màn hình sáng lúc đang học
+  useEffect(() => {
+    onRunningChange?.(isPomoRunning || isStopwatchRunning);
+  }, [isPomoRunning, isStopwatchRunning, onRunningChange]);
+
   if (!isVisible) return null;
 
   return (
@@ -270,7 +276,6 @@ export const StudyPomodoroWidget = ({
         onToggleStopwatch={toggleStopwatch}
         onResetStopwatch={resetStopwatch}
         onAddLap={addLap}
-        isRunning={isPomoRunning}
       />
 
       {/* 5b. Thống kê focus hôm nay / tuần này */}

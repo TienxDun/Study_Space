@@ -128,6 +128,13 @@ export function DiscoveryHub({
           )}
         </div>
 
+        {/* Link lạ không mở được: báo rõ thay vì im lặng */}
+        {!detectedEmbed && /^(https?:\/\/|www\.|spotify:)/i.test(searchOrUrl.trim()) && (
+          <p role="status" className="text-[11px] leading-relaxed text-amber-200/90 px-1">
+            Link này chưa mở được — hiện chỉ nhận YouTube, Spotify, Vimeo và SoundCloud.
+          </p>
+        )}
+
         {/* Filter Category Chips */}
         <div
           onWheel={handleHorizontalWheel}

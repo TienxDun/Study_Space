@@ -224,14 +224,26 @@ export function parseEmbedUrl(rawUrl: string): { embedUrl: string; platform: Emb
     };
   }
 
-  // 3. Fallback: If it's already an embeddable HTTPS iframe URL
-  if (trimmed.startsWith("https://") && (trimmed.includes("embed") || trimmed.includes("player"))) {
-    return {
-      embedUrl: trimmed,
-      platform: "custom",
-      title: "Custom Stream",
-      isLive: false
-    };
+  // 3. Fallback: chỉ chấp nhận link nhúng từ máy chủ quen thuộc.
+  // Không nhận link lạ (vd evil.com/embed) để khỏi bị nhúng trang giả mạo.
+  const TRUSTED_EMBED_HOSTS = [
+    "www.youtube-nocookie.com/embed/",
+    "www.youtube.com/embed/",
+    "open.spotify.com/embed/",
+    "player.vimeo.com/",
+    "w.soundcloud.com/player/",
+  ];
+  if (trimmed.startsWith("https://")) {
+    const withoutScheme = trimmed.slice("https://".length).toLowerCase();
+    const trusted = TRUSTED_EMBED_HOSTS.some((h) => withoutScheme.startsWith(h));
+    if (trusted) {
+      return {
+        embedUrl: trimmed,
+        platform: "custom",
+        title: "Custom Stream",
+        isLive: false
+      };
+    }
   }
 
   return null;

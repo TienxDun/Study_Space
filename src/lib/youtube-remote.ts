@@ -67,6 +67,20 @@ export function useYouTubeRemote(
     if (!isExternalActive || !isYouTubePlatform) return;
 
     const handleMessage = (e: MessageEvent) => {
+      // Chỉ nghe phản hồi từ YouTube, bỏ qua tin nhắn từ nơi khác
+      // (iframe lạ/extension) để khỏi đổi trạng thái oan.
+      try {
+        const origin = typeof e.origin === "string" ? e.origin : "";
+        const host = origin.replace(/^https?:\/\//, "").toLowerCase();
+        const isYouTube =
+          host === "www.youtube.com" ||
+          host === "www.youtube-nocookie.com" ||
+          host.endsWith(".youtube.com") ||
+          host.endsWith(".youtube-nocookie.com");
+        if (!isYouTube) return;
+      } catch {
+        return;
+      }
       try {
         const data = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
         if (data && data.event === "onStateChange") {

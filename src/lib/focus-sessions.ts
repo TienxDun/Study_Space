@@ -1,6 +1,7 @@
 "use client";
 
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { saveStorageJSON } from "@/lib/safe-storage";
 
 /**
  * Ghi nhận thời gian tập trung Pomodoro theo từng task cụ thể.
@@ -111,9 +112,7 @@ export class LocalStorageFocusSessionStore implements FocusSessionStore {
       next.length > MAX_STORED_SESSIONS
         ? next.slice(next.length - MAX_STORED_SESSIONS)
         : next;
-    try {
-      localStorage.setItem(STORAGE_KEYS.focusSessions, JSON.stringify(pruned));
-    } catch {}
+    saveStorageJSON(STORAGE_KEYS.focusSessions, pruned);
     return pruned;
   }
 

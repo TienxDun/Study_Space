@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { ActiveFormats } from "../types";
+import { sanitizeRichHtml } from "../utils/note-markdown";
 
 interface UseRichTextEditorProps {
   onContentChange: (newHtml: string) => void;
@@ -724,6 +725,26 @@ export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
     [handleRedo, handleUndo, pushExplicitSnapshot, triggerInputSave]
   );
 
+  // Dán vào là lọc sạch ngay: HTML lạ (Word/trang web) chỉ giữ chữ +
+  // định dạng cơ bản, bỏ script/hình/link độc. Không có HTML thì để
+  // trình duyệt dán chữ thường.
+  const handleEditorPaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      const html = e.clipboardData?.getData("text/html");
+      if (!html || !editorRef.current) return;
+      e.preventDefault();
+      pushExplicitSnapshot();
+      editorRef.current.focus();
+      try {
+        document.execCommand("insertHTML", false, sanitizeRichHtml(html));
+      } catch {
+        document.execCommand("insertText", false, e.clipboardData?.getData("text/plain") ?? "");
+      }
+      triggerInputSave();
+    },
+    [pushExplicitSnapshot, triggerInputSave]
+  );
+
   return {
     editorRef,
     undoStackRef,
@@ -744,6 +765,7 @@ export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
     toggleQuote,
     handleEditorClick,
     handleEditorKeyDown,
+    handleEditorPaste,
     handleSelectionOrFormatChange,
     triggerInputSave,
   };

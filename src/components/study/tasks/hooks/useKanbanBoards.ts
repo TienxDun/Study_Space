@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { saveStorageJSON } from "@/lib/safe-storage";
 import {
   KanbanBoard,
   KanbanCard,
@@ -107,9 +108,7 @@ export function useKanbanBoards() {
   // Save to localStorage
   const saveBoards = useCallback((updated: KanbanBoard[]) => {
     setBoards(updated);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch {}
+    saveStorageJSON(STORAGE_KEY, updated);
   }, []);
 
   const currentBoard = useMemo(() => {
@@ -121,9 +120,7 @@ export function useKanbanBoards() {
       setBoards((prevBoards) => {
         const activeBoard = prevBoards.find((b) => b.id === activeBoardId) || prevBoards[0] || DEFAULT_BOARDS[0];
         const updated = prevBoards.map((b) => (b.id === activeBoard.id ? mutator(b) : b));
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        } catch {}
+        saveStorageJSON(STORAGE_KEY, updated);
         return updated;
       });
     },
@@ -284,13 +281,16 @@ export function useKanbanBoards() {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
 
+    // Rê ngay trên cột đang cầm: giữ nguyên chỗ cũ, khỏi đảo qua đảo lại
+    if (targetColId === draggingColId) return;
+
     const targetRect = e.currentTarget.getBoundingClientRect();
     const offsetX = e.clientX - targetRect.left;
     const position = offsetX < targetRect.width / 2 ? "before" : "after";
 
     setDragOverColTargetId(targetColId);
     setDragOverColPosition(position);
-  }, []);
+  }, [draggingColId]);
 
   const handleColumnDrop = useCallback(
     (e: React.DragEvent, targetColId: string, overridePosition?: "before" | "after") => {
@@ -588,18 +588,27 @@ export function useKanbanBoards() {
     [updateCurrentBoard]
   );
 
-  // Create New Board
-  const handleCreateBoard = useCallback(() => {
-    const title = prompt("Nhập tên bảng học tập mới:");
-    if (!title || !title.trim()) return;
+  // Create New Board (tên nhập trong app, id ngẫu nhiên khỏi trùng)
+  const handleCreateBoard = useCallback((title?: string) => {
+    const name = (title ?? "").trim();
+    if (!name) return;
+    if (boards.some((b) => b.title.toLowerCase() === name.toLowerCase())) {
+      toast.error("Đã có bảng tên này rồi.");
+      return;
+    }
+    const uid = () =>
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const stamp = Date.now();
     const newBoard: KanbanBoard = {
-      id: "board-" + Date.now(),
-      title: title.trim(),
-      createdAt: Date.now(),
+      id: `board-${uid()}`,
+      title: name,
+      createdAt: stamp,
       columns: [
-        { id: "col-" + Date.now() + "-1", title: "Cần làm", order: 1 },
-        { id: "col-" + Date.now() + "-2", title: "Đang làm", order: 2 },
-        { id: "col-" + Date.now() + "-3", title: "Đã xong", order: 3 },
+        { id: `col-${uid()}-1`, title: "Cần làm", order: 1 },
+        { id: `col-${uid()}-2`, title: "Đang làm", order: 2 },
+        { id: `col-${uid()}-3`, title: "Đã xong", order: 3 },
       ],
       cards: [],
     };

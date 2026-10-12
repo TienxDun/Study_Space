@@ -13,8 +13,6 @@ interface TimerActionControlsProps {
   onToggleStopwatch: () => void;
   onResetStopwatch: () => void;
   onAddLap: () => void;
-  /** true khi đồng hồ focus đang chạy — chỉ giữ nút Play/Pause cho gọn. */
-  isRunning?: boolean;
 }
 
 export function TimerActionControls({
@@ -27,7 +25,6 @@ export function TimerActionControls({
   onToggleStopwatch,
   onResetStopwatch,
   onAddLap,
-  isRunning = false,
 }: TimerActionControlsProps) {
   if (currentTab === "clock") return null;
 
@@ -36,7 +33,7 @@ export function TimerActionControls({
       {currentTab === "pomodoro" ? (
         <>
           {/* Reset Ghost Button (ẩn khi đang chạy — pause trước rồi mới reset) */}
-          {!isRunning && (
+          {!isPomoRunning && (
             <button
               type="button"
               onClick={onResetPomo}
@@ -62,7 +59,7 @@ export function TimerActionControls({
           </button>
 
           {/* Skip Ghost Button (ẩn khi đang chạy — pause trước rồi mới bỏ qua) */}
-          {!isRunning && (
+          {!isPomoRunning && (
             <button
               type="button"
               onClick={onSkipPomo}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, CornerDownLeft } from "lucide-react";
 
 export interface CommandAction {
@@ -57,35 +57,45 @@ export function StudyCommandPalette({
     setSelected(0);
   }, [query]);
 
+  // Nghe phím 1 lần duy nhất: đọc qua ref để khỏi tháo/gắn
+  // listener + vẽ lại danh sách mỗi lần đổi lựa chọn.
+  const visibleRef = useRef(visible);
+  const selectedRef = useRef(selected);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    visibleRef.current = visible;
+    selectedRef.current = selected;
+    onCloseRef.current = onClose;
+  });
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
+      const list = visibleRef.current;
+      const count = Math.max(1, list.length);
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelected((prev) => (prev + 1) % Math.max(1, visible.length));
+        setSelected((prev) => (prev + 1) % count);
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelected((prev) =>
-          (prev - 1 + Math.max(1, visible.length)) % Math.max(1, visible.length)
-        );
+        setSelected((prev) => (prev - 1 + count) % count);
       } else if (e.key === "Enter") {
         e.preventDefault();
-        const action = visible[selected];
+        const action = list[selectedRef.current];
         if (action) {
           action.run();
-          onClose();
+          onCloseRef.current();
         }
       } else if (e.key === "Escape") {
-        onClose();
+        onCloseRef.current();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, visible, selected, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  let lastGroup = "";
   return (
     <div
       className="fixed inset-0 z-[99990] flex items-start justify-center p-4 pt-[18vh]"
@@ -96,7 +106,7 @@ export function StudyCommandPalette({
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-lg rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
+      <div className="relative w-full max-w-lg glass-panel hover:bg-black/45 overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
         <div className="flex items-center gap-2.5 px-4 border-b border-white/10">
           <Search className="w-4 h-4 text-slate-400 shrink-0" />
@@ -118,10 +128,8 @@ export function StudyCommandPalette({
               Không tìm thấy lệnh nào cho “{query}”
             </p>
           )}
-          {visible.map((action) => {
-            const showGroup = action.group !== lastGroup;
-            lastGroup = action.group;
-            const idx = visible.indexOf(action);
+          {visible.map((action, idx) => {
+            const showGroup = idx === 0 || visible[idx - 1].group !== action.group;
             const isActive = idx === selected;
             return (
               <div key={action.id}>
@@ -132,7 +140,7 @@ export function StudyCommandPalette({
                 )}
                 <button
                   type="button"
-                  onMouseMove={() => setSelected(idx)}
+                  onMouseEnter={() => setSelected((prev) => (prev === idx ? prev : idx))}
                   onClick={() => {
                     action.run();
                     onClose();

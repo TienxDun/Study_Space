@@ -41,7 +41,7 @@ interface KanbanColumnItemProps {
   dragOverCardId: string | null;
   dragOverCardPosition: "before" | "after" | null;
   isMeaningfulCardMove: (card: KanbanCard, pos: "before" | "after", currentCards: KanbanCard[]) => boolean;
-  renderCardPlaceholder?: (colId: string, cardId?: string, overridePos?: "before" | "after") => React.ReactNode;
+  focusSecondsByTask?: Map<string, number>;
   onSelectCard: (card: KanbanCard) => void;
   onToggleCardComplete: (cardId: string) => void;
   onMoveCard: (cardId: string, targetColId: string) => void;
@@ -103,6 +103,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
   draggingColId,
   dragOverColId,
   draggingCard,
+  focusSecondsByTask,
 }: KanbanColumnItemProps) {
   const prevColumn = colIdx > 0 ? columns[colIdx - 1] : null;
   const nextColumn = colIdx < totalColumns - 1 ? columns[colIdx + 1] : null;
@@ -312,6 +313,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                 colIdx={colIdx}
                 totalColumns={totalColumns}
                 isCardDragging={isCardDragging}
+                focusSeconds={focusSecondsByTask?.get(card.id) ?? 0}
                 onCardClick={() => onSelectCard(card)}
                 onToggleComplete={() => onToggleCardComplete(card.id)}
                 onMoveCard={(targetColId) => onMoveCard(card.id, targetColId)}

@@ -213,7 +213,7 @@ export const StudyEmbedPlayerWidget = ({
                     ? "shadow-[0_30px_80px_rgba(0,0,0,0.65)] ring-2 ring-emerald-500/40 cursor-grabbing"
                     : "shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
                 }`
-              : "pointer-events-auto relative w-full max-w-5xl h-[88vh] max-h-[820px] flex flex-col rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-slate-100 overflow-hidden transform-gpu will-change-transform"
+              : "pointer-events-auto relative w-full max-w-5xl h-[88vh] max-h-[820px] flex flex-col glass-panel hover:bg-black/45 text-slate-100 overflow-hidden transform-gpu will-change-transform"
           }
         >
           {/* Top Edge Brushed Metallic Reflection */}

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { useFloatingSize } from "@/lib/use-floating-size";
 import { StudyNotesWidgetProps } from "./types";
 import { useStudyNotes } from "./hooks/useStudyNotes";
 import { useRichTextEditor, flattenNestedTodos } from "./hooks/useRichTextEditor";
@@ -61,9 +62,16 @@ export const StudyNotesWidget = ({
   const [isMounted, setIsMounted] = useState(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [showQuickNoteList, setShowQuickNoteList] = useState<boolean>(false);
-  const [compactSize, setCompactSize] = useState<{ width: number; height: number }>({
-    width: DEFAULT_NOTE_W,
-    height: DEFAULT_NOTE_H,
+  // Cỡ khung do hook chung lo (nhớ + kẹp + kéo góc); chỗ đứng tự lo ở dưới
+  const {
+    size: compactSize,
+    beginResize: beginNoteResize,
+  } = useFloatingSize({
+    minWidth: 320,
+    minHeight: 240,
+    defaultWidth: DEFAULT_NOTE_W,
+    defaultHeight: DEFAULT_NOTE_H,
+    storageKey: STORAGE_COMPACT_SIZE_KEY,
   });
   // Lần đầu: nếu có chỗ cũ thì dùng, chưa có thì cho ra giữa màn hình
   const [compactPos, setCompactPos] = useState<{ x: number; y: number }>(() => {
@@ -99,7 +107,7 @@ export const StudyNotesWidget = ({
   }, [theme]);
 
 
-  // Load preferences from localStorage on mount
+  // Load preferences from localStorage on mount (cỡ do hook đọc, đây chỉ đọc chỗ)
   useEffect(() => {
     setIsMounted(true);
     try {
@@ -107,31 +115,17 @@ export const StudyNotesWidget = ({
       if (savedTheme === "light" || savedTheme === "dark") {
         setTheme(savedTheme);
       }
-      // Đọc cỡ trước, rồi mới tính chỗ cho đúng cỡ đó
-      let nextSize = { width: DEFAULT_NOTE_W, height: DEFAULT_NOTE_H };
-      const savedSize = localStorage.getItem(STORAGE_COMPACT_SIZE_KEY);
-      if (savedSize) {
-        const parsed = JSON.parse(savedSize);
-        if (parsed?.width && parsed?.height) {
-          const maxAllowedW = typeof window !== "undefined" ? Math.max(320, window.innerWidth - 48) : 500;
-          const maxAllowedH = typeof window !== "undefined" ? Math.max(260, window.innerHeight - 130) : 550;
-          const nextW = Math.max(320, Math.min(parsed.width, maxAllowedW));
-          const nextH = Math.max(240, Math.min(parsed.height, maxAllowedH));
-          nextSize = { width: nextW, height: nextH };
-          setCompactSize(nextSize);
-        }
-      }
       const savedPos = localStorage.getItem(STORAGE_COMPACT_POS_KEY);
       if (savedPos) {
         const parsed = JSON.parse(savedPos);
         if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
-          setCompactPos(clampNotePos(parsed.x, parsed.y, nextSize.width, nextSize.height));
+          setCompactPos(clampNotePos(parsed.x, parsed.y, compactSize.width, compactSize.height));
         } else {
-          setCompactPos(getCenterPos(nextSize.width, nextSize.height));
+          setCompactPos(getCenterPos(compactSize.width, compactSize.height));
         }
       } else {
         // Chưa từng mở/kéo thẻ thì luôn ở giữa
-        setCompactPos(getCenterPos(nextSize.width, nextSize.height));
+        setCompactPos(getCenterPos(compactSize.width, compactSize.height));
       }
     } catch {}
   }, []);
@@ -153,78 +147,29 @@ export const StudyNotesWidget = ({
         }
       } catch {}
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // Khi đổi cỡ màn hình (xoay điện thoại, thu nhỏ web): tự kéo thẻ vào trong
+  // (co cỡ do hook lo). Deps giữ nguyên để luôn kẹp bằng cỡ mới nhất.
   useEffect(() => {
     const handleWindowResize = () => {
-      setCompactSize((prevSize) => {
-        const maxAllowedW = Math.max(320, window.innerWidth - 32);
-        const maxAllowedH = Math.max(240, window.innerHeight - 120);
-        const nextW = Math.max(320, Math.min(prevSize.width, maxAllowedW));
-        const nextH = Math.max(240, Math.min(prevSize.height, maxAllowedH));
-        if (nextW === prevSize.width && nextH === prevSize.height) return prevSize;
-        return { width: nextW, height: nextH };
-      });
       setCompactPos((prev) => clampNotePos(prev.x, prev.y, compactSize.width, compactSize.height));
     };
     window.addEventListener("resize", handleWindowResize);
     return () => window.removeEventListener("resize", handleWindowResize);
   }, [compactSize.width, compactSize.height]);
 
-  // Resize handler for Compact Sticky Note with requestAnimationFrame
+  // Kéo góc đổi cỡ (logic gom trong hook chung, đây chỉ kẹp lại chỗ đứng)
   const handleResizePointerDown = useCallback((e: React.PointerEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startW = compactSize.width;
-    const startH = compactSize.height;
-
-    // Vị trí thật của thẻ lúc bắt đầu kéo to/nhỏ
-    const cardScreenLeft = compactPos.x;
-    const cardScreenTop = compactPos.y;
-
-    let latestSize = { width: startW, height: startH };
-    let rafId: number | null = null;
-
-    const onPointerMove = (moveEv: PointerEvent) => {
-      const maxW = typeof window !== "undefined" ? Math.max(320, window.innerWidth - cardScreenLeft - 16) : 700;
-      const maxH = typeof window !== "undefined" ? Math.max(240, window.innerHeight - cardScreenTop - 16) : 700;
-
-      const nextW = Math.round(Math.max(320, Math.min(maxW, startW + (moveEv.clientX - startX))));
-      const nextH = Math.round(Math.max(240, Math.min(maxH, startH + (moveEv.clientY - startY))));
-      latestSize = { width: nextW, height: nextH };
-
-      if (!rafId) {
-        rafId = requestAnimationFrame(() => {
-          setCompactSize(latestSize);
-          rafId = null;
-        });
-      }
-    };
-
-    const onPointerUp = () => {
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-        rafId = null;
-      }
-      setCompactSize(latestSize);
+    beginNoteResize(e, { x: compactPos.x, y: compactPos.y }, (latestSize) => {
       // Sau khi đổi cỡ thì kéo lại thẻ vào trong màn hình nếu bị lòi ra
-      const fixedPos = clampNotePos(cardScreenLeft, cardScreenTop, latestSize.width, latestSize.height);
+      const fixedPos = clampNotePos(compactPos.x, compactPos.y, latestSize.width, latestSize.height);
       setCompactPos(fixedPos);
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onPointerUp);
       try {
-        localStorage.setItem(STORAGE_COMPACT_SIZE_KEY, JSON.stringify(latestSize));
         localStorage.setItem(STORAGE_COMPACT_POS_KEY, JSON.stringify(fixedPos));
       } catch {}
-    };
-
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", onPointerUp);
-  }, [compactSize.width, compactSize.height, compactPos.x, compactPos.y]);
+    });
+  }, [beginNoteResize, compactPos.x, compactPos.y]);
 
   // Close quick note list on outside click
   useEffect(() => {
@@ -251,6 +196,7 @@ export const StudyNotesWidget = ({
     toggleHighlight,
     handleEditorClick,
     handleEditorKeyDown,
+    handleEditorPaste,
     handleSelectionOrFormatChange,
     triggerInputSave,
   } = useRichTextEditor({
@@ -401,6 +347,7 @@ export const StudyNotesWidget = ({
                 handleEditorInput={triggerInputSave}
                 handleEditorClick={handleEditorClick}
                 handleEditorKeyDown={handleEditorKeyDown}
+                handleEditorPaste={handleEditorPaste}
                 handleSelectionOrFormatChange={handleSelectionOrFormatChange}
               />
             </motion.div>

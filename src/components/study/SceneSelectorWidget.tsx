@@ -340,7 +340,7 @@ export const SceneSelectorWidget = ({
       initial={{ opacity: 0, x: -20, scale: 0.97 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
       exit={{ opacity: 0, x: -16, scale: 0.97 }}
-      panelClassName="fixed top-16 bottom-20 left-20 sm:left-24 z-50 w-[410px] sm:w-[450px] max-w-[calc(100vw-96px)] flex flex-col rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-white overflow-hidden transform-gpu will-change-[transform,opacity]"
+      panelClassName="fixed top-16 bottom-20 left-20 sm:left-24 z-50 w-[410px] sm:w-[450px] max-w-[calc(100vw-96px)] flex flex-col glass-panel hover:bg-black/45 text-white overflow-hidden transform-gpu will-change-[transform,opacity]"
     >
       <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
       {/* Header & Search Bar gọn gàng, tinh tế */}
@@ -368,7 +368,7 @@ export const SceneSelectorWidget = ({
 
         {/* Hàng 2: Thanh công cụ (hàng riêng nên không bao giờ chen tiêu đề) */}
         <div className="flex items-center gap-1.5">
-          {/* Nút Bật/Tắt slideshow tự xoay bối cảnh */}
+          {/* Nút Bật/Tắt tự xoay bối cảnh */}
           <button
             onClick={onToggleSlideshow}
             className={`p-1.5 px-2.5 rounded-xl transition-colors cursor-pointer border flex flex-1 items-center justify-center gap-1.5 text-xs active:scale-95 ${
@@ -378,8 +378,8 @@ export const SceneSelectorWidget = ({
             }`}
               title={
                 slideshowEnabled
-                  ? `Slideshow mỗi ${slideshowIntervalMin} phút (${slideshowPoolLabel}) — bấm để tắt`
-                  : "Slideshow bối cảnh — bấm để bật"
+                  ? `Tự xoay cảnh mỗi ${slideshowIntervalMin} phút (${slideshowPoolLabel}) — bấm để tắt`
+                  : "Tự xoay bối cảnh — bấm để bật"
               }
             >
               {slideshowEnabled ? (
@@ -387,10 +387,10 @@ export const SceneSelectorWidget = ({
               ) : (
                 <Play className="w-3.5 h-3.5 text-emerald-400" />
               )}
-              <span className="hidden sm:inline font-medium whitespace-nowrap">Slideshow</span>
+              <span className="hidden sm:inline font-medium whitespace-nowrap">Tự xoay cảnh</span>
           </button>
 
-          {/* Nút chọn thời gian mỗi lượt (chỉ hiện khi slideshow đang bật) */}
+          {/* Nút chọn thời gian mỗi lượt (chỉ hiện khi đang bật tự xoay) */}
           {slideshowEnabled && (
             <button
               onClick={onCycleSlideshowInterval}

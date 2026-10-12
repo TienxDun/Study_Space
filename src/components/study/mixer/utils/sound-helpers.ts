@@ -1,5 +1,8 @@
 import { AmbientSound } from "../types";
 
+// Giờ giấc dùng chung bản của nhạc (tránh 2 hàm giống hệt nhau)
+export { formatTime } from "../../music/utils/time-format";
+
 export interface SoundTheme {
   activeBg: string;
   activeIconBg: string;
@@ -45,16 +48,6 @@ export function getSoundTheme(sound: AmbientSound): SoundTheme {
     activeIconBg: "bg-purple-500/25 border-purple-400/50 text-purple-300",
     accentColor: "accent-purple-400",
   };
-}
-
-/**
- * Định dạng thời gian mm:ss
- */
-export function formatTime(sec: number): string {
-  if (!isFinite(sec) || isNaN(sec) || sec <= 0) return "0:00";
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${m}:${s < 10 ? "0" : ""}${s}`;
 }
 
 /**

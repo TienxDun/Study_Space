@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   CheckSquare,
   ChevronDown,
@@ -27,7 +27,7 @@ interface TaskHeaderProps {
   setEditingBoardTitleText: (text: string) => void;
   setActiveBoardId: (id: string) => void;
   updateCurrentBoard: (mutator: (b: KanbanBoard) => KanbanBoard) => void;
-  handleCreateBoard: () => void;
+  handleCreateBoard: (title: string) => void;
   promptDeleteBoard: (b: KanbanBoard) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -55,6 +55,16 @@ export const TaskHeader = React.memo(function TaskHeader({
   setViewMode,
   onClose,
 }: TaskHeaderProps) {
+  const [isCreatingBoard, setIsCreatingBoard] = useState(false);
+  const [newBoardTitle, setNewBoardTitle] = useState("");
+
+  const submitNewBoard = () => {
+    if (!newBoardTitle.trim()) return;
+    handleCreateBoard(newBoardTitle);
+    setNewBoardTitle("");
+    setIsCreatingBoard(false);
+  };
+
   return (
     <div className="flex items-center justify-between px-6 py-3.5 border-b border-white/10 z-20 bg-white/[0.02]">
       {/* Left: Board Selector Pill & Management */}
@@ -166,14 +176,59 @@ export const TaskHeader = React.memo(function TaskHeader({
         )}
 
         {/* Create Board Button in Header */}
-        <button
-          onClick={handleCreateBoard}
-          className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center gap-1.5 border border-emerald-400/30 transition-all cursor-pointer"
-          title="Tạo bảng mới"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Tạo bảng</span>
-        </button>
+        {isCreatingBoard ? (
+          <div className="flex items-center gap-1.5">
+            <input
+              type="text"
+              value={newBoardTitle}
+              onChange={(e) => setNewBoardTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  submitNewBoard();
+                } else if (e.key === "Escape") {
+                  setIsCreatingBoard(false);
+                  setNewBoardTitle("");
+                }
+              }}
+              placeholder="Tên bảng mới..."
+              maxLength={60}
+              autoFocus
+              className="w-36 sm:w-44 px-2.5 py-1.5 rounded-xl bg-black/40 border border-emerald-400/50 text-xs font-bold text-white placeholder-white/40 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={submitNewBoard}
+              disabled={!newBoardTitle.trim()}
+              className="px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 disabled:opacity-40 cursor-pointer"
+            >
+              Tạo
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsCreatingBoard(false);
+                setNewBoardTitle("");
+              }}
+              className="p-1.5 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              title="Hủy"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              setNewBoardTitle("");
+              setIsCreatingBoard(true);
+            }}
+            className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center gap-1.5 border border-emerald-400/30 transition-all cursor-pointer"
+            title="Tạo bảng mới"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Tạo bảng</span>
+          </button>
+        )}
       </div>
 
       {/* Right: Search, Views, Close */}

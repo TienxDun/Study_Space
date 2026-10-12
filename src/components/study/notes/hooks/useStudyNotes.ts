@@ -5,10 +5,40 @@ import { StudyNote } from "../types";
 import { DEFAULT_NOTES } from "../constants/default-notes";
 import { sanitizeStoredNoteContent, markdownToHtml } from "../utils/note-markdown";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { saveStorageJSON } from "@/lib/safe-storage";
 
 const STORAGE_MULTI_KEY = STORAGE_KEYS.multiNotes;
 const STORAGE_OLD_KEY = STORAGE_KEYS.oldNotes;
 const TEMPLATE_UPGRADE_KEY = "study_space_notes_v6_clean_streamlined";
+// Id của ghi chú mẫu kèm app — chỉ đúng mẫu gốc mới có id này
+const TEMPLATE_NOTE_IDS = new Set([
+  "note-1",
+  "note-2",
+  "note-study-hub",
+  "note-project-blueprint",
+  "note-cheat-sheet",
+  "note-wellness-habits",
+]);
+
+// Sao lưu đề phòng trước khi ghi đè/migrate: lỡ sai vẫn cứu được.
+// Chỉ giữ 1 bản mới nhất (xóa bản cũ để khỏi phình bộ nhớ).
+const backupNotesRaw = (raw: string) => {
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(`${STORAGE_MULTI_KEY}_backup_`)) {
+        localStorage.removeItem(key);
+      }
+    }
+    localStorage.setItem(`${STORAGE_MULTI_KEY}_backup_${Date.now()}`, raw);
+  } catch {}
+};
+
+const isValidNote = (n: unknown): n is StudyNote =>
+  typeof n === "object" &&
+  n !== null &&
+  typeof (n as StudyNote).id === "string" &&
+  typeof (n as StudyNote).content === "string";
 
 export function useStudyNotes() {
   const [notes, setNotes] = useState<StudyNote[]>([]);
@@ -21,13 +51,14 @@ export function useStudyNotes() {
   // Helper to persist notes to localStorage
   const saveNotesToStorage = useCallback((updatedNotes: StudyNote[]) => {
     setNotes(updatedNotes);
-    try {
-      localStorage.setItem(STORAGE_MULTI_KEY, JSON.stringify(updatedNotes));
+    const saved = saveStorageJSON(STORAGE_MULTI_KEY, updatedNotes);
+    // Chỉ báo giờ khi lưu thật sự xong, đầy bộ nhớ thì helper đã toast
+    if (saved) {
       const now = new Date();
       setLastSavedTime(
         `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`
       );
-    } catch {}
+    }
   }, []);
 
   // Load notes on mount with migration and template upgrade handling
@@ -40,30 +71,19 @@ export function useStudyNotes() {
         const parsed: StudyNote[] = JSON.parse(savedMulti);
         if (Array.isArray(parsed)) {
           if (parsed.length > 0) {
-            const isSampleOrCorrupted =
+            // Bỏ ghi chú hỏng cấu trúc, giữ lại cái lành
+            const valid = parsed.filter(isValidNote);
+            // Chỉ thay bằng mẫu mới khi CHẮC là mẫu gốc chưa ai động vào:
+            // mọi id đều là id mẫu. Không đoán bằng tên (dễ xóa nhầm
+            // ghi chú của người dùng đặt tên giống mẫu).
+            const isUntouchedTemplate =
               !hasUpgraded &&
-              (parsed.every(
-                (n) =>
-                  n.id === "note-1" ||
-                  n.id === "note-2" ||
-                  n.id === "note-study-hub" ||
-                  n.id === "note-project-blueprint" ||
-                  n.id === "note-cheat-sheet" ||
-                  n.id === "note-wellness-habits" ||
-                  n.title.includes("Kế hoạch") ||
-                  n.title.includes("Từ vựng") ||
-                  n.title.includes("Sổ tay") ||
-                  n.title.includes("Dự án") ||
-                  n.title.includes("Thói quen")
-              ) ||
-                parsed.some(
-                  (n) =>
-                    n.content.includes("&gt; 💡") ||
-                    n.content.includes("&gt; 🚀") ||
-                    n.content.includes("<pre><code>typescript")
-                ));
+              valid.length > 0 &&
+              valid.length === parsed.length &&
+              valid.every((n) => TEMPLATE_NOTE_IDS.has(n.id));
 
-            if (isSampleOrCorrupted) {
+            if (isUntouchedTemplate) {
+              backupNotesRaw(savedMulti);
               setNotes(DEFAULT_NOTES);
               setActiveNoteId(DEFAULT_NOTES[0].id);
               localStorage.setItem(STORAGE_MULTI_KEY, JSON.stringify(DEFAULT_NOTES));
@@ -71,10 +91,15 @@ export function useStudyNotes() {
               return;
             }
 
-            const formatted = parsed.map((n) => ({
+            const formatted = valid.map((n) => ({
               ...n,
               content: sanitizeStoredNoteContent(n.content),
             }));
+            if (formatted.length === 0) {
+              setNotes([]);
+              setActiveNoteId("");
+              return;
+            }
             setNotes(formatted);
             setActiveNoteId(formatted[0].id);
             localStorage.setItem(STORAGE_MULTI_KEY, JSON.stringify(formatted));

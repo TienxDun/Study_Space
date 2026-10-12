@@ -12,8 +12,11 @@ export function useEmbedSplitPane() {
   const [isResizing, setIsResizing] = useState(false);
   const splitContainerRef = useRef<HTMLDivElement | null>(null);
   const ratioRef = useRef(splitRatio);
-  ratioRef.current = splitRatio;
   const resizingRef = useRef(false);
+
+  useEffect(() => {
+    ratioRef.current = splitRatio;
+  }, [splitRatio]);
 
   // Khôi phục tỉ lệ chia cột từ LocalStorage khi mount
   useEffect(() => {

@@ -311,12 +311,15 @@ export function useAudioPlayer({
   const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) {
       const t = audioRef.current.currentTime;
-      if (Math.abs(t - lastReportedTimeRef.current) >= 0.25) {
+      // Chữ hiển thị giây thì 1 khung/giây là đủ — sóng nhạc đọc thẳng
+      // từ thẻ audio nên tick thưa không làm khựng tiến trình.
+      if (Math.abs(t - lastReportedTimeRef.current) >= 1) {
         lastReportedTimeRef.current = t;
         setCurrentTime(t);
       }
       if (isFinite(audioRef.current.duration) && audioRef.current.duration > 0) {
-        setDuration(audioRef.current.duration);
+        const d = audioRef.current.duration;
+        setDuration((prev) => (Math.abs(prev - d) < 0.01 ? prev : d));
       }
     }
   }, []);

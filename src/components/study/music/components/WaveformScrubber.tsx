@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Volume1, Volume2, VolumeX } from "lucide-react";
 import { formatTime } from "../utils/time-format";
 import { useSiriWaveform } from "../hooks/useSiriWaveform";
@@ -14,6 +14,9 @@ interface WaveformScrubberProps {
   onVolumeChange?: (val: number) => void;
   isGlobalMuted?: boolean;
   onToggleMute?: () => void;
+  // Đọc tiến trình thẳng từ thẻ audio để sóng mượt mà không cần
+  // cha vẽ lại liên tục (chữ hiển thị giây thì tick thưa vẫn đủ).
+  audioRef?: React.RefObject<HTMLAudioElement | null>;
 }
 
 export function WaveformScrubber({
@@ -25,13 +28,58 @@ export function WaveformScrubber({
   onVolumeChange,
   isGlobalMuted,
   onToggleMute,
+  audioRef,
 }: WaveformScrubberProps) {
   const [hoverTime, setHoverTime] = useState<number | null>(null);
   const [hoverPositionRatio, setHoverPositionRatio] = useState<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   // Mirror hover vào ref để vòng vẽ canvas đọc được mà không cần re-render.
   const hoverRatioRef = useRef<number | null>(null);
-  hoverRatioRef.current = hoverPositionRatio;
+  useEffect(() => {
+    hoverRatioRef.current = hoverPositionRatio;
+  }, [hoverPositionRatio]);
+
+  // Rê chuột gom theo khung hình: đo + vẽ lại tối đa 1 lần/khung,
+  // đứng yên thì không setState để khỏi vẽ lại vô ích.
+  const hoverRafRef = useRef(0);
+  const pendingHoverRef = useRef<{ x: number; el: HTMLDivElement } | null>(null);
+
+  useEffect(
+    () => () => {
+      if (hoverRafRef.current) cancelAnimationFrame(hoverRafRef.current);
+    },
+    []
+  );
+
+  const flushHover = () => {
+    hoverRafRef.current = 0;
+    const pending = pendingHoverRef.current;
+    pendingHoverRef.current = null;
+    if (!pending) return;
+    const rect = pending.el.getBoundingClientRect();
+    if (rect.width <= 0) return;
+    const x = Math.max(0, Math.min(pending.x - rect.left, rect.width));
+    const ratio = Math.round((x / rect.width) * 1000) / 1000;
+    setHoverPositionRatio((prev) =>
+      prev !== null && Math.abs(prev - ratio) < 0.001 ? prev : ratio
+    );
+    setHoverTime(ratio * maxSeek);
+  };
+
+  const handleWaveMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    pendingHoverRef.current = { x: e.clientX, el: e.currentTarget };
+    if (!hoverRafRef.current) hoverRafRef.current = requestAnimationFrame(flushHover);
+  };
+
+  const handleWaveMouseLeave = () => {
+    pendingHoverRef.current = null;
+    if (hoverRafRef.current) {
+      cancelAnimationFrame(hoverRafRef.current);
+      hoverRafRef.current = 0;
+    }
+    setHoverPositionRatio(null);
+    setHoverTime(null);
+  };
 
   const maxSeek = duration > 0 ? duration : 100;
   const hasVolumeControl = Boolean(onVolumeChange && onToggleMute);
@@ -39,7 +87,13 @@ export function WaveformScrubber({
   useSiriWaveform({
     canvasRef,
     isActive,
-    getProgress: () => (duration > 0 ? currentTime / duration : 0),
+    getProgress: () => {
+      const el = audioRef?.current;
+      if (el && isFinite(el.duration) && el.duration > 0) {
+        return Math.max(0, Math.min(1, el.currentTime / el.duration));
+      }
+      return duration > 0 ? currentTime / duration : 0;
+    },
     getHoverRatio: () => hoverRatioRef.current,
   });
 
@@ -52,17 +106,8 @@ export function WaveformScrubber({
 
       {/* Waveform Visualization Container with Hover Scrubber */}
       <div
-        onMouseMove={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-          const ratio = x / rect.width;
-          setHoverPositionRatio(ratio);
-          setHoverTime(ratio * maxSeek);
-        }}
-        onMouseLeave={() => {
-          setHoverPositionRatio(null);
-          setHoverTime(null);
-        }}
+        onMouseMove={handleWaveMouseMove}
+        onMouseLeave={handleWaveMouseLeave}
         className="relative flex-1 h-3.5 sm:h-4 px-0.5 group/waveform cursor-pointer"
       >
         {/* Siri waveform canvas: sóng thật từ analyser, fallback synth */}

@@ -26,7 +26,8 @@ export const StudyBackground = ({ scene, isBlurActive = false }: StudyBackground
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
+          // Đổi cảnh nhanh tay (0.5s): 2 video cùng giải mã càng ngắn càng đỡ giật
+          transition={{ duration: 0.5, ease: "easeInOut" }}
           className="absolute inset-0 w-full h-full will-change-[opacity]"
         >
           {scene.type === "VIDEO" && !hasVideoError ? (

@@ -6,6 +6,7 @@ import { LiveKitRoom } from "@livekit/components-react";
 import "@livekit/components-styles";
 import { Users, X, Loader2, RefreshCw, LogIn } from "lucide-react";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { useFloatingSize } from "@/lib/use-floating-size";
 import { StudyRoomView } from "./StudyRoomView";
 
 export interface StudyRoomsWidgetProps {
@@ -58,7 +59,18 @@ export const StudyRoomsWidget = ({ isOpen, onClose }: StudyRoomsWidgetProps) => 
   const [isMounted, setIsMounted] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
-  const [roomSize, setRoomSize] = useState({ width: DEFAULT_ROOM_W, height: DEFAULT_ROOM_H });
+  // Cỡ khung do hook chung lo (nhớ + kẹp + kéo góc); chỗ đứng tự lo ở dưới
+  const {
+    size: roomSize,
+    setSize: setRoomSize,
+    beginResize: beginRoomResize,
+  } = useFloatingSize({
+    minWidth: MIN_ROOM_W,
+    minHeight: MIN_ROOM_H,
+    defaultWidth: DEFAULT_ROOM_W,
+    defaultHeight: DEFAULT_ROOM_H,
+    storageKey: STORAGE_KEYS.roomsSize,
+  });
   const [roomPos, setRoomPos] = useState(() => {
     if (typeof window !== "undefined") {
       try {
@@ -82,41 +94,25 @@ export const StudyRoomsWidget = ({ isOpen, onClose }: StudyRoomsWidgetProps) => 
   useEffect(() => {
     setIsMounted(true);
     try {
-      let nextSize = { width: DEFAULT_ROOM_W, height: DEFAULT_ROOM_H };
-      const savedSize = localStorage.getItem(STORAGE_KEYS.roomsSize);
-      if (savedSize) {
-        const parsed = JSON.parse(savedSize);
-        if (parsed?.width && parsed?.height) {
-          nextSize = {
-            width: Math.max(MIN_ROOM_W, Math.min(parsed.width, window.innerWidth - 32)),
-            height: Math.max(MIN_ROOM_H, Math.min(parsed.height, window.innerHeight - 120)),
-          };
-          setRoomSize(nextSize);
-        }
-      }
       const savedPos = localStorage.getItem(STORAGE_KEYS.roomsPos);
       if (savedPos) {
         const parsed = JSON.parse(savedPos);
         if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
-          setRoomPos(clampRoom(parsed.x, parsed.y, nextSize.width, nextSize.height));
+          setRoomPos(clampRoom(parsed.x, parsed.y, roomSize.width, roomSize.height));
         } else {
-          setRoomPos(getCenter(nextSize.width, nextSize.height));
+          setRoomPos(getCenter(roomSize.width, roomSize.height));
         }
       } else {
-        setRoomPos(getCenter(nextSize.width, nextSize.height));
+        setRoomPos(getCenter(roomSize.width, roomSize.height));
       }
     } catch {}
   }, []);
 
-  // Thu nhỏ cửa sổ thì kéo thẻ vào trong
+  // Thu nhỏ cửa sổ thì kéo thẻ vào trong (co cỡ do hook lo)
+
+  // Thu nhỏ cửa sổ thì kéo thẻ vào trong (co cỡ do hook lo)
   useEffect(() => {
     const onResize = () => {
-      setRoomSize((prev) => {
-        const nextW = Math.max(MIN_ROOM_W, Math.min(prev.width, window.innerWidth - 32));
-        const nextH = Math.max(MIN_ROOM_H, Math.min(prev.height, window.innerHeight - 120));
-        if (nextW === prev.width && nextH === prev.height) return prev;
-        return { width: nextW, height: nextH };
-      });
       setRoomPos((prev) => clampRoom(prev.x, prev.y, roomSize.width, roomSize.height));
     };
     window.addEventListener("resize", onResize);
@@ -243,53 +239,18 @@ const getLiveKitEndpoints = () => {
     onClose();
   }, [onClose]);
 
-  // Kéo to/nhỏ ở góc dưới phải
+  // Kéo to/nhỏ ở góc dưới phải (logic gom trong hook chung, đây chỉ kẹp lại chỗ đứng)
   const handleResizePointerDown = useCallback(
     (e: React.PointerEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const startX = e.clientX;
-      const startY = e.clientY;
-      const startW = roomSize.width;
-      const startH = roomSize.height;
-      const cardLeft = roomPos.x;
-      const cardTop = roomPos.y;
-      let latest = { width: startW, height: startH };
-      let rafId: number | null = null;
-
-      const onMove = (ev: PointerEvent) => {
-        const maxW = Math.max(MIN_ROOM_W, window.innerWidth - cardLeft - 16);
-        const maxH = Math.max(MIN_ROOM_H, window.innerHeight - cardTop - 16);
-        latest = {
-          width: Math.round(Math.max(MIN_ROOM_W, Math.min(maxW, startW + (ev.clientX - startX)))),
-          height: Math.round(Math.max(MIN_ROOM_H, Math.min(maxH, startH + (ev.clientY - startY)))),
-        };
-        if (!rafId) {
-          rafId = requestAnimationFrame(() => {
-            setRoomSize(latest);
-            rafId = null;
-          });
-        }
-      };
-      const onUp = () => {
-        if (rafId) {
-          cancelAnimationFrame(rafId);
-          rafId = null;
-        }
-        setRoomSize(latest);
-        const fixedPos = clampRoom(cardLeft, cardTop, latest.width, latest.height);
+      beginRoomResize(e, { x: roomPos.x, y: roomPos.y }, (latest) => {
+        const fixedPos = clampRoom(roomPos.x, roomPos.y, latest.width, latest.height);
         setRoomPos(fixedPos);
         try {
-          localStorage.setItem(STORAGE_KEYS.roomsSize, JSON.stringify(latest));
           localStorage.setItem(STORAGE_KEYS.roomsPos, JSON.stringify(fixedPos));
         } catch {}
-        window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
-      };
-      window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp);
+      });
     },
-    [roomSize.width, roomSize.height, roomPos.x, roomPos.y]
+    [beginRoomResize, roomPos.x, roomPos.y]
   );
 
   const canJoin = displayName.trim().length > 0 && roomName.trim().length > 0 && !joining;

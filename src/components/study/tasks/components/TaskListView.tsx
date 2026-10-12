@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
 import {
   CheckSquare,
   CheckCircle2,
@@ -20,7 +21,6 @@ interface TaskListViewProps {
   dragOverCardId: string | null;
   dragOverCardPosition: "before" | "after" | null;
   isMeaningfulCardMove: (card: KanbanCard, pos: "before" | "after", currentCards: KanbanCard[]) => boolean;
-  renderCardPlaceholder?: (colId: string, cardId?: string, overridePos?: "before" | "after") => React.ReactNode;
   editingColumnId: string | null;
   setEditingColumnId: (id: string | null) => void;
   editingColumnTitle: string;
@@ -158,8 +158,12 @@ export const TaskListView = React.memo(function TaskListView({
                 const isCardDragging = draggingCardId === card.id;
 
                 return (
-                  <div
+                  <motion.div
                     key={card.id || `card-list-${cardIdx}`}
+                    layout
+                    transition={{ type: "spring", stiffness: 550, damping: 45 }}
+                  >
+                  <div
                     draggable={!isCardDragging}
                     onDragStart={(e) => handleCardDragStart(e, card.id, col.id)}
                     onDragEnd={handleCardDragEnd}
@@ -184,11 +188,11 @@ export const TaskListView = React.memo(function TaskListView({
                     onClick={() => {
                       if (!isCardDragging) onSelectCard(card);
                     }}
-                    className={`group p-3 rounded-2xl border transition-all duration-150 select-none bg-white/[0.05] hover:bg-white/[0.09] border-white/10 hover:border-white/20 shadow-sm ${
+                    className={`group p-3 rounded-2xl border transition-[opacity,background-color,border-color] duration-150 select-none bg-white/[0.05] hover:bg-white/[0.09] border-white/10 hover:border-white/20 shadow-sm ${
                       Boolean(card.description) ? "space-y-1.5" : ""
                     } ${
                       isCardDragging
-                        ? "cursor-grabbing opacity-90 ring-1 ring-white/20"
+                        ? "cursor-grabbing opacity-60 ring-1 ring-white/20"
                         : "cursor-grab active:cursor-grabbing"
                     }`}
                   >
@@ -279,6 +283,7 @@ export const TaskListView = React.memo(function TaskListView({
                       </div>
                     </div>
                   </div>
+                  </motion.div>
                 );
               })}
             </div>

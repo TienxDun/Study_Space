@@ -123,7 +123,9 @@ export const StudyMusicPlayer = ({
     toggleExternalPlay,
     isShowingExternalStream,
   });
-  musicBridgeRef.current = { togglePlay, toggleExternalPlay, isShowingExternalStream };
+  useEffect(() => {
+    musicBridgeRef.current = { togglePlay, toggleExternalPlay, isShowingExternalStream };
+  });
 
   useEffect(() => {
     const playing = isPlaying || (isExternalStreamActive && !isExternalPaused);
@@ -297,6 +299,7 @@ export const StudyMusicPlayer = ({
                 onVolumeChange={handleVolumeChange}
                 isGlobalMuted={isGlobalMuted}
                 onToggleMute={handleToggleMute}
+                audioRef={audioRef}
               />
             </>
           )}

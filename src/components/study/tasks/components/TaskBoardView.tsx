@@ -1,15 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
+import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { KanbanBoard, KanbanCard, KanbanColumn, CardPriority } from "../types";
 import { KanbanColumnItem } from "./KanbanColumnItem";
+import { useFocusStats } from "@/lib/use-focus-stats";
 
 interface TaskBoardViewProps {
   currentBoard: KanbanBoard;
   filterCards: (cards: KanbanCard[]) => KanbanCard[];
   draggingColId: string | null;
-  draggingCol: KanbanColumn | null;
   dragOverColTargetId: string | null;
   dragOverColPosition: "before" | "after" | null;
   dragOverColId: string | null;
@@ -19,8 +20,6 @@ interface TaskBoardViewProps {
   dragOverCardPosition: "before" | "after" | null;
   isMeaningfulColMove: (colId: string, pos: "before" | "after") => boolean;
   isMeaningfulCardMove: (card: KanbanCard, pos: "before" | "after", currentCards: KanbanCard[]) => boolean;
-  renderCardPlaceholder: (colId: string, cardId?: string, overridePos?: "before" | "after") => React.ReactNode;
-  renderColumnPlaceholder: (colId: string, overridePos: "before" | "after") => React.ReactNode;
   editingColumnId: string | null;
   setEditingColumnId: (id: string | null) => void;
   editingColumnTitle: string;
@@ -70,8 +69,6 @@ export const TaskBoardView = React.memo(function TaskBoardView({
   dragOverCardPosition,
   isMeaningfulColMove,
   isMeaningfulCardMove,
-  renderCardPlaceholder,
-  renderColumnPlaceholder,
   editingColumnId,
   setEditingColumnId,
   editingColumnTitle,
@@ -107,24 +104,51 @@ export const TaskBoardView = React.memo(function TaskBoardView({
   setNewColumnTitle,
   handleAddColumn,
 }: TaskBoardViewProps) {
+  // Giờ focus tính 1 lần cho cả bảng rồi chia xuống từng thẻ,
+  // khỏi mỗi thẻ nghe log + quét kho riêng (N thẻ = N lần việc).
+  const allTimeStats = useFocusStats("all");
+  const focusSecondsByTask = useMemo(
+    () => new Map(allTimeStats.byTask.map((t) => [t.taskId, t.focusSeconds] as const)),
+    [allTimeStats]
+  );
+
+  // Xếp cột trực tiếp lúc kéo (y như thẻ): cột đang kéo chèn ngay vào
+  // chỗ rê tới, không hiện hộp preview xanh nữa. Thả ra là chốt đúng đó.
+  let displayColumns = currentBoard.columns;
+  if (
+    draggingColId &&
+    dragOverColTargetId &&
+    dragOverColPosition &&
+    isMeaningfulColMove(dragOverColTargetId, dragOverColPosition)
+  ) {
+    const remaining = currentBoard.columns.filter((c) => c.id !== draggingColId);
+    const targetIdx = remaining.findIndex((c) => c.id === dragOverColTargetId);
+    const dragged = currentBoard.columns.find((c) => c.id === draggingColId);
+    if (targetIdx !== -1 && dragged) {
+      const insertIdx = dragOverColPosition === "after" ? targetIdx + 1 : targetIdx;
+      const reordered = [...remaining];
+      reordered.splice(insertIdx, 0, dragged);
+      displayColumns = reordered;
+    }
+  }
+
   return (
     <div className="flex items-start gap-5 min-w-max">
-      {currentBoard.columns.map((column, colIdx) => {
+      {displayColumns.map((column, colIdx) => {
         const colCards = filterCards(currentBoard.cards.filter((c) => c.columnId === column.id));
         const isColumnDragging = draggingColId === column.id;
-        const isColDragOverBefore =
-          dragOverColTargetId === column.id &&
-          dragOverColPosition === "before" &&
-          isMeaningfulColMove(column.id, "before");
         const isColCardDragOver =
           dragOverColId === column.id &&
           draggingCardId !== null &&
           draggingCard?.columnId !== column.id;
 
         return (
-          <div key={column.id || `col-${colIdx}`} className="flex items-start gap-5 flex-shrink-0">
-            {isColDragOverBefore && renderColumnPlaceholder(column.id, "before")}
-
+          <motion.div
+            key={column.id || `col-${colIdx}`}
+            layout
+            transition={{ type: "spring", stiffness: 500, damping: 42 }}
+            className="flex items-start gap-5 flex-shrink-0"
+          >
             <KanbanColumnItem
               column={column}
               colIdx={colIdx}
@@ -152,7 +176,7 @@ export const TaskBoardView = React.memo(function TaskBoardView({
               dragOverCardId={dragOverCardId}
               dragOverCardPosition={dragOverCardPosition}
               isMeaningfulCardMove={isMeaningfulCardMove}
-              renderCardPlaceholder={renderCardPlaceholder}
+              focusSecondsByTask={focusSecondsByTask}
               onSelectCard={onSelectCard}
               onToggleCardComplete={onToggleCardComplete}
               onMoveCard={onMoveCard}
@@ -171,12 +195,16 @@ export const TaskBoardView = React.memo(function TaskBoardView({
               dragOverColId={dragOverColId}
               draggingCard={draggingCard}
             />
-          </div>
+          </motion.div>
         );
       })}
 
       {/* Add Column Section */}
-      <div className="w-72 sm:w-80 flex-shrink-0">
+      <motion.div
+        layout
+        transition={{ type: "spring", stiffness: 500, damping: 42 }}
+        className="w-72 sm:w-80 flex-shrink-0"
+      >
         {isAddingColumn ? (
           <div className="p-3.5 rounded-3xl bg-black/40 border border-white/20 shadow-xl backdrop-blur-xl space-y-3">
             <input
@@ -224,7 +252,7 @@ export const TaskBoardView = React.memo(function TaskBoardView({
             <span>Thêm danh sách mới</span>
           </button>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 });

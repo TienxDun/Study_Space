@@ -10,8 +10,6 @@ import { TaskHeader } from "./components/TaskHeader";
 import { TaskBoardView } from "./components/TaskBoardView";
 import { TaskListView } from "./components/TaskListView";
 import { CardDetailModal } from "./components/CardDetailModal";
-import { PrioritySignalIcon } from "./components/PrioritySignalIcon";
-import { GripVertical } from "lucide-react";
 
 export { getDeadlineStatus };
 
@@ -67,7 +65,6 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
     dragOverColTargetId,
     dragOverColPosition,
     draggingCard,
-    draggingCol,
     handleAddCard,
     handleCardDragStart,
     handleCardDragEnd,
@@ -163,94 +160,6 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
     };
   }, [isOpen, isConfirmOpen, isCardDetailOpen, onClose]);
 
-  // Helper: Card Live Preview Placeholder
-  const renderCardPlaceholder = (
-    targetColId: string,
-    targetCardId?: string,
-    overridePos?: "before" | "after"
-  ) => (
-    <div
-      onDragOver={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.dataTransfer.dropEffect = "move";
-      }}
-      onDrop={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        handleCardDrop(e, targetColId, targetCardId, overridePos);
-      }}
-      className="p-3 rounded-2xl border-2 border-dashed border-emerald-400/60 bg-emerald-500/10 backdrop-blur-md space-y-2 select-none shadow-[0_0_15px_rgba(52,211,153,0.2)] animate-pulse cursor-pointer"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-xs font-bold text-emerald-200 line-clamp-2">
-          {draggingCard?.title || "Nhiệm vụ"}
-        </span>
-        {Boolean(draggingCard?.priority) && (
-          <span
-            className={`px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 ${
-              draggingCard?.priority === "high"
-                ? "bg-rose-500/30 text-rose-200 border border-rose-400/40"
-                : draggingCard?.priority === "medium"
-                ? "bg-amber-500/30 text-amber-200 border border-amber-400/40"
-                : "bg-emerald-500/30 text-emerald-200 border border-emerald-400/40"
-            }`}
-          >
-            <PrioritySignalIcon priority={draggingCard!.priority} className="w-2.5 h-2.5" />
-            <span>
-              {draggingCard?.priority === "high"
-                ? "Cao"
-                : draggingCard?.priority === "medium"
-                ? "Vừa"
-                : "Thấp"}
-            </span>
-          </span>
-        )}
-      </div>
-      <div className="text-xs text-emerald-300/70 font-semibold flex items-center gap-1">
-        <span>↓ Thả để đặt thẻ vào đây</span>
-      </div>
-    </div>
-  );
-
-  // Helper: Column Live Preview Placeholder
-  const renderColumnPlaceholder = (targetColId: string, overridePos: "before" | "after") => (
-    <div
-      onDragOver={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.dataTransfer.dropEffect = "move";
-      }}
-      onDrop={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        handleColumnDrop(e, targetColId, overridePos);
-      }}
-      className="w-72 sm:w-80 flex-shrink-0 flex flex-col rounded-3xl border-2 border-dashed border-emerald-400/60 bg-emerald-500/10 backdrop-blur-md p-3.5 min-h-[260px] shadow-[0_0_20px_rgba(52,211,153,0.2)] select-none animate-pulse cursor-pointer"
-    >
-      <div className="flex items-center justify-between pb-3 px-1 border-b border-emerald-400/20">
-        <div className="flex items-center gap-1.5">
-          <GripVertical className="w-3.5 h-3.5 text-emerald-400" />
-          <h3 className="text-sm font-bold text-emerald-100 tracking-wide">
-            {draggingCol?.title || "Danh sách"}
-          </h3>
-          <span className="px-2 py-0.5 rounded-full bg-emerald-400/20 text-[10px] font-extrabold text-emerald-300">
-            Vị trí mới
-          </span>
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col items-center justify-center py-8 text-center space-y-2">
-        <div className="p-2.5 rounded-2xl bg-emerald-400/15 border border-emerald-400/30 text-emerald-300">
-          <GripVertical className="w-5 h-5" />
-        </div>
-        <p className="text-xs font-semibold text-emerald-200">
-          Thả để di chuyển danh sách đến đây
-        </p>
-      </div>
-    </div>
-  );
-
   return (
     <>
       <AnimatePresence>
@@ -327,7 +236,6 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                     currentBoard={currentBoard}
                     filterCards={filterCards}
                     draggingColId={draggingColId}
-                    draggingCol={draggingCol}
                     dragOverColTargetId={dragOverColTargetId}
                     dragOverColPosition={dragOverColPosition}
                     dragOverColId={dragOverColId}
@@ -337,8 +245,6 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                     dragOverCardPosition={dragOverCardPosition}
                     isMeaningfulColMove={isMeaningfulColMove}
                     isMeaningfulCardMove={isMeaningfulCardMove}
-                    renderCardPlaceholder={renderCardPlaceholder}
-                    renderColumnPlaceholder={renderColumnPlaceholder}
                     editingColumnId={editingColumnId}
                     setEditingColumnId={setEditingColumnId}
                     editingColumnTitle={editingColumnTitle}
@@ -383,7 +289,6 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
                     dragOverCardId={dragOverCardId}
                     dragOverCardPosition={dragOverCardPosition}
                     isMeaningfulCardMove={isMeaningfulCardMove}
-                    renderCardPlaceholder={renderCardPlaceholder}
                     editingColumnId={editingColumnId}
                     setEditingColumnId={setEditingColumnId}
                     editingColumnTitle={editingColumnTitle}

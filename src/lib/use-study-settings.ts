@@ -25,6 +25,8 @@ export const useStudySettings = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundType, setSoundType] =
     useState<PomodoroSoundType>("classic_clock");
+  // Giữ màn hình sáng khi đang học (mặc định bật cho khỏi tắt giữa chừng)
+  const [keepAwake, setKeepAwake] = useState(true);
 
   useEffect(() => {
     try {
@@ -43,10 +45,12 @@ export const useStudySettings = () => {
       const savedSound = localStorage.getItem(STORAGE_KEYS.soundEnabled);
       if (savedSound !== null) setSoundEnabled(savedSound === "true");
 
+      const savedAwake = localStorage.getItem(STORAGE_KEYS.screenAwake);
+      if (savedAwake !== null) setKeepAwake(savedAwake === "true");
+
       const savedSoundType = localStorage.getItem(
         STORAGE_KEYS.pomoSoundType
-      ) as PomodoroSoundType;
-      const validSounds: PomodoroSoundType[] = [
+      ) as PomodoroSoundType;      const validSounds: PomodoroSoundType[] = [
         "classic_clock",
         "zen_bell",
         "birds",
@@ -107,6 +111,16 @@ export const useStudySettings = () => {
     });
   };
 
+  const toggleKeepAwake = () => {
+    setKeepAwake((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(STORAGE_KEYS.screenAwake, String(next));
+      } catch {}
+      return next;
+    });
+  };
+
   const selectSoundType = (type: PomodoroSoundType) => {
     setSoundType(type);
     try {
@@ -121,11 +135,13 @@ export const useStudySettings = () => {
     pomodoroDurations,
     soundEnabled,
     soundType,
+    keepAwake,
     toggleClockSeconds,
     toggleClock12Hour,
     toggleStopwatchMilliseconds,
     savePomodoroDurations,
     toggleSound,
+    toggleKeepAwake,
     selectSoundType,
   };
 };

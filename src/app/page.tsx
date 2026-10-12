@@ -20,7 +20,6 @@ import { StudyBackground } from "@/components/study/StudyBackground";
 import { useStudyKeyboard } from "@/lib/use-study-keyboard";
 import { StudyTopBar } from "@/components/study/StudyTopBar";
 import { StudyLeftDock } from "@/components/study/StudyLeftDock";
-import { StudyRoomsWidget } from "@/components/study/rooms/StudyRoomsWidget";
 import { StudyShortcutsModal } from "@/components/study/StudyShortcutsModal";
 import { StudyOnboardingTour } from "@/components/study/tour/StudyOnboardingTour";
 import {
@@ -30,7 +29,7 @@ import {
 import { StudySeoSemanticContent } from "@/components/study/seo/StudySeoSemanticContent";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useStudySettings } from "@/lib/use-study-settings";
-import { useGlobalHorizontalScroll } from "@/lib/use-horizontal-scroll";
+import { useWakeLock } from "@/lib/use-wake-lock";
 import { sendYouTubeCommand } from "@/lib/youtube-remote";
 
 // Lazy Load heavy widgets with code-splitting to optimize First Contentful Paint & bundle size
@@ -54,8 +53,13 @@ const StudyEmbedPlayerWidget = dynamic(
   { ssr: false }
 );
 
+// Phòng LiveKit nặng (livekit-client + styles): chỉ tải khi bấm mở phòng
+const StudyRoomsWidget = dynamic(
+  () => import("@/components/study/rooms/StudyRoomsWidget").then((mod) => mod.StudyRoomsWidget),
+  { ssr: false }
+);
+
 export default function StudySpacePage() {
-  useGlobalHorizontalScroll();
   const {
     currentScene,
     pendingScene,
@@ -130,7 +134,6 @@ export default function StudySpacePage() {
 
   // Unified Settings Modal State (Default: Tắt giây đồng hồ, Tắt .00 stopwatch, Bật chuông Pomodoro 25-5-15)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [savedTabBeforeSettings, setSavedTabBeforeSettings] = useState<TimerTab | null>(null);
   const {
     showClockSeconds,
     isClock12Hour,
@@ -144,6 +147,8 @@ export default function StudySpacePage() {
     savePomodoroDurations: handleSavePomodoroDurations,
     toggleSound: handleToggleSound,
     selectSoundType: handleSelectSoundType,
+    keepAwake,
+    toggleKeepAwake: handleToggleKeepAwake,
   } = useStudySettings();
 
   // Phục hồi Background Scene & Cài đặt cá nhân từ LocalStorage khi vào lại trang.
@@ -206,8 +211,25 @@ export default function StudySpacePage() {
     };
   }, []);
 
+  // Giữ màn hình sáng khi đang học: chạy giờ / phát nhạc / phát đài
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+
+  useEffect(() => {
+    const onMusicState = (e: Event) => {
+      setIsMusicPlaying(Boolean((e as CustomEvent).detail?.isPlaying));
+    };
+    window.addEventListener("zenstudy:music-state", onMusicState);
+    return () => {
+      window.removeEventListener("zenstudy:music-state", onMusicState);
+    };
+  }, []);
+
+  const { supported: wakeLockSupported } = useWakeLock(
+    keepAwake && (isTimerRunning || isMusicPlaying || isExternalStreamActive)
+  );
+
   const handleOpenSettings = () => {
-    setSavedTabBeforeSettings(centerTab);
     setIsSettingsOpen(true);
     setIsMixerOpen(false);
     setIsTasksOpen(false);
@@ -219,10 +241,6 @@ export default function StudySpacePage() {
 
   const handleCloseSettings = () => {
     setIsSettingsOpen(false);
-    if (savedTabBeforeSettings) {
-      setCenterTab(savedTabBeforeSettings);
-      setSavedTabBeforeSettings(null);
-    }
   };
 
   const handleToggleClock = () => {
@@ -298,11 +316,6 @@ export default function StudySpacePage() {
     setIsNotesOpen(false);
     setIsScenesOpen(false);
     setIsMixerOpen(false);
-  };
-
-  const handleActiveSectionChange = (section: TimerTab) => {
-    setIsPomodoroVisible(true);
-    setCenterTab(section);
   };
 
   const toggleGlobalMute = () => {
@@ -409,6 +422,8 @@ export default function StudySpacePage() {
         isGlobalMuted={isGlobalMuted}
         isSettingsOpen={isSettingsOpen}
         isFullscreen={isFullscreen}
+        showClockSeconds={showClockSeconds}
+        isClock12Hour={isClock12Hour}
         onToggleClock={handleToggleClock}
         onToggleShortcuts={handleToggleShortcutsHelp}
         onEnterZen={() => setIsZenMode(true)}
@@ -503,7 +518,6 @@ export default function StudySpacePage() {
       <StudySettingsModal
         isOpen={isSettingsOpen}
         onClose={handleCloseSettings}
-        onActiveSectionChange={handleActiveSectionChange}
         onOpenTour={() => setIsTourOpen(true)}
         showClockSeconds={showClockSeconds}
         onToggleClockSeconds={handleToggleClockSeconds}
@@ -517,8 +531,10 @@ export default function StudySpacePage() {
         onSelectSoundType={handleSelectSoundType}
         showStopwatchMilliseconds={showStopwatchMilliseconds}
         onToggleStopwatchMilliseconds={handleToggleStopwatchMilliseconds}
+        keepAwake={keepAwake}
+        onToggleKeepAwake={handleToggleKeepAwake}
+        wakeLockSupported={wakeLockSupported}
       />
-
       {/* Main Center Area: Ambient Centerpiece Pomodoro & Stopwatch hòa vào background */}
       <main className="relative z-10 w-full h-full flex flex-col items-center justify-center pointer-events-none px-4 pb-14">
         <StudySeoSemanticContent />
@@ -527,6 +543,7 @@ export default function StudySpacePage() {
           activeTab={centerTab}
           onTabChange={setCenterTab}
           onToggleVisibility={() => setIsPomodoroVisible(!isPomodoroVisible)}
+          onRunningChange={setIsTimerRunning}
           showClockSeconds={showClockSeconds}
           isClock12Hour={isClock12Hour}
           showStopwatchMilliseconds={showStopwatchMilliseconds}

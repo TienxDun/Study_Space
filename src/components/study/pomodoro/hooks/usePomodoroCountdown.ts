@@ -45,13 +45,18 @@ export function usePomodoroCountdown({
   // Mốc bắt đầu của ĐOẠN chạy hiện tại (set mỗi lần bấm chạy, clear khi dừng).
   const spanStartRef = useRef<number | null>(null);
   const timeLeftRef = useRef(timeLeft);
-  timeLeftRef.current = timeLeft;
   const pomoModeRef = useRef(pomoMode);
-  pomoModeRef.current = pomoMode;
   const isRunningRef = useRef(isRunning);
-  isRunningRef.current = isRunning;
   const onFocusSpanRef = useRef(onFocusSpan);
-  onFocusSpanRef.current = onFocusSpan;
+
+  // Đồng bộ ref sau render (không gán lúc render để khỏi lỗi lint):
+  // vòng đếm + flush log đọc qua ref nên luôn thấy số mới nhất.
+  useEffect(() => {
+    timeLeftRef.current = timeLeft;
+    pomoModeRef.current = pomoMode;
+    isRunningRef.current = isRunning;
+    onFocusSpanRef.current = onFocusSpan;
+  });
 
   const ensureSession = useCallback((plannedSeconds: number) => {
     if (!sessionRef.current) {
@@ -222,22 +227,21 @@ export function usePomodoroCountdown({
     ]
   );
 
-  // Vòng lặp đếm ngược mỗi giây
+  // Vòng lặp đếm ngược: 1 vòng duy nhất, chốt mốc giờ wall-clock nên
+  // ẩn tab lâu hay tick trễ cũng không trôi giờ; hết giờ là chốt ngay.
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-
-    if (isRunning && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (isRunning && timeLeft === 0) {
-      finishSession(true);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isRunning, timeLeft, finishSession]);
+    if (!isRunning) return;
+    const endAt = Date.now() + timeLeftRef.current * 1000;
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, Math.round((endAt - Date.now()) / 1000));
+      if (remaining <= 0) {
+        finishSession(true);
+      } else {
+        setTimeLeft((prev) => (prev === remaining ? prev : remaining));
+      }
+    }, 250);
+    return () => clearInterval(interval);
+  }, [isRunning, finishSession]);
 
   const toggleRunning = useCallback(() => {
     if (isRunningRef.current) {

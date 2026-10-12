@@ -41,7 +41,116 @@ export function sanitizeStoredNoteContent(rawContent: string): string {
   // Clean stray language identifier in <pre><code>
   sanitized = sanitized.replace(/<pre><code>typescript\s*\n?/gi, "<pre><code>");
   sanitized = sanitized.replace(/<pre><code>javascript\s*\n?/gi, "<pre><code>");
-  return sanitized;
+  // Ghi chú cũ có thể chứa HTML lạ (dán từ web khác): lọc lại cho sạch
+  return sanitizeRichHtml(sanitized);
+}
+
+// Thẻ cho phép trong ghi chú (giữ todo + định dạng cơ bản, bỏ hết cái khác)
+const ALLOWED_NOTE_TAGS = new Set([
+  "p", "br", "div", "span", "ul", "ol", "li",
+  "h1", "h2", "h3", "blockquote", "pre", "code",
+  "strong", "em", "u", "s", "b", "i", "a", "input", "mark",
+]);
+// Thẻ nguy hiểm: xóa cả thẻ lẫn nội dung bên trong
+const DROP_NOTE_TAGS = new Set([
+  "script", "style", "iframe", "object", "embed", "link", "meta",
+  "base", "form", "button", "select", "textarea", "video", "audio",
+  "img", "picture", "source", "canvas", "svg", "math", "noscript",
+  "template", "slot", "head", "html", "body",
+]);
+// Class giữ lại (todo của app); class rác từ Word/web khác bỏ hết
+const ALLOWED_NOTE_CLASSES = new Set(["todo-item", "todo-checkbox", "todo-checked-text", "study-highlight"]);
+const SAFE_URL_PATTERN = /^(https?:|mailto:)/i;
+const MAX_PASTE_CHARS = 100000;
+
+/**
+ * Lọc HTML bẩn (dán từ Word/trang web) theo danh sách cho phép:
+ * bỏ script/iframe/hình, bỏ sự kiện on*, bỏ link javascript:, bỏ style.
+ * Giữ nguyên todo + định dạng chữ của app.
+ */
+export function sanitizeRichHtml(dirty: string): string {
+  if (!dirty) return "<p><br></p>";
+  const html = dirty.length > MAX_PASTE_CHARS ? dirty.slice(0, MAX_PASTE_CHARS) : dirty;
+
+  if (typeof window === "undefined" || typeof DOMParser === "undefined") {
+    return html
+      .replace(/<(script|style|iframe|object|embed|link|meta|base|form|img|video|audio|svg)[\s\S]*?<\/\1\s*>/gi, "")
+      .replace(/<(script|style|iframe|object|embed|link|meta|base|form|img|video|audio|svg)[^>]*\/?>/gi, "")
+      .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
+  }
+
+  const doc = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
+  const root = doc.body.firstElementChild ?? doc.body;
+
+  const cleanElement = (el: Element): void => {
+    const tag = el.localName.toLowerCase();
+    const parent = el.parentNode;
+    if (!parent) return;
+
+    if (!ALLOWED_NOTE_TAGS.has(tag)) {
+      if (DROP_NOTE_TAGS.has(tag)) {
+        parent.removeChild(el);
+      } else {
+        // Thẻ lạ nhưng vô hại (font, o:p...): giữ chữ, bỏ vỏ —
+        // rồi lọc tiếp từng node vừa chuyển ra (khỏi lọt thẻ độc lồng bên trong)
+        const moved: ChildNode[] = [];
+        while (el.firstChild) {
+          moved.push(el.firstChild);
+          parent.insertBefore(el.firstChild, el);
+        }
+        parent.removeChild(el);
+        for (const m of moved) {
+          if (m instanceof Element) cleanElement(m);
+        }
+      }
+      return;
+    }
+
+    // Tô vàng kiểu cũ (span style nền vàng) → đổi sang mark của app cho gọn
+    if ((tag === "span" || tag === "font") && /background(-color)?\s*:[^;]*(250,\s*204,\s*21|251,\s*191,\s*36|254,\s*240,\s*138|yellow)/i.test(el.getAttribute("style") || "")) {
+      const mark = doc.createElement("mark");
+      mark.setAttribute("class", "study-highlight");
+      while (el.firstChild) mark.appendChild(el.firstChild);
+      parent.replaceChild(mark, el);
+      for (const child of Array.from(mark.children)) cleanElement(child);
+      return;
+    }
+
+    // input chỉ giữ checkbox của todo
+    if (tag === "input") {      const type = (el.getAttribute("type") || "").toLowerCase();
+      if (type !== "checkbox") {
+        parent.removeChild(el);
+        return;
+      }
+      for (const name of [...el.attributes].map((a) => a.name)) {
+        if (name !== "type" && name !== "checked" && name !== "class") el.removeAttribute(name);
+      }
+    } else if (tag === "a") {
+      const href = el.getAttribute("href") || "";
+      for (const name of [...el.attributes].map((a) => a.name)) el.removeAttribute(name);
+      if (SAFE_URL_PATTERN.test(href.trim())) el.setAttribute("href", href.trim());
+    } else {
+      for (const name of [...el.attributes].map((a) => a.name)) {
+        if (name === "class") continue;
+        el.removeAttribute(name);
+      }
+    }
+
+    // Lọc class: chỉ giữ class của app
+    if (el.hasAttribute("class")) {
+      const kept = (el.getAttribute("class") || "")
+        .split(/\s+/)
+        .filter((c) => ALLOWED_NOTE_CLASSES.has(c));
+      if (kept.length > 0) el.setAttribute("class", kept.join(" "));
+      else el.removeAttribute("class");
+    }
+
+    for (const child of Array.from(el.children)) cleanElement(child);
+  };
+
+  for (const child of Array.from(root.children)) cleanElement(child);
+  // Bỏ input[type=hidden]... (đề phòng) — thực tế đã chặn ở trên
+  return root.innerHTML.trim() || "<p><br></p>";
 }
 
 // Helper to convert legacy markdown text into clean rich HTML for Word-like rendering

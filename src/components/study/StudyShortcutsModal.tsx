@@ -84,7 +84,7 @@ export const StudyShortcutsModal = ({
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.95, y: 15 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-xl rounded-3xl bg-black/40 hover:bg-black/45 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-6 space-y-5 text-white overflow-hidden focus:outline-none"
+        className="relative w-full max-w-xl glass-panel hover:bg-black/45 p-6 space-y-5 text-white overflow-hidden focus:outline-none"
       >
         <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
         {/* Modal Header */}

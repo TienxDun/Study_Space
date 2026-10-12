@@ -49,6 +49,7 @@ interface CompactStickyNoteProps {
   handleEditorInput: () => void;
   handleEditorClick: (e: React.MouseEvent) => void;
   handleEditorKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
+  handleEditorPaste: (e: React.ClipboardEvent<HTMLDivElement>) => void;
   handleSelectionOrFormatChange: () => void;
   isDragging?: boolean;
 }
@@ -82,6 +83,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
   handleEditorInput,
   handleEditorClick,
   handleEditorKeyDown,
+  handleEditorPaste,
   handleSelectionOrFormatChange,
   isDragging = false,
 }: CompactStickyNoteProps) {
@@ -495,6 +497,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                 onInput={handleEditorInput}
                 onClick={handleEditorClick}
                 onKeyDown={handleEditorKeyDown}
+                onPaste={handleEditorPaste}
                 onKeyUp={handleSelectionOrFormatChange}
                 onMouseUp={handleSelectionOrFormatChange}
                 onSelect={handleSelectionOrFormatChange}
