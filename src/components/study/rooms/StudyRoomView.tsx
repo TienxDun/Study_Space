@@ -17,6 +17,8 @@ import {
   ChatTextIcon,
   PaperPlaneTiltIcon,
   XIcon,
+  CornersOutIcon,
+  CornersInIcon,
 } from "@phosphor-icons/react";
 
 interface StudyRoomViewProps {
@@ -25,6 +27,8 @@ interface StudyRoomViewProps {
   // true: chat đứng cạnh video, false: chat nằm dưới (thẻ hẹp)
   sideBySide?: boolean;
   onDragStart?: (e: React.PointerEvent) => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 const formatTime = (ts: number) =>
@@ -35,8 +39,15 @@ const formatTime = (ts: number) =>
   });
 
 // Khung gọi tiếng Việt: lưới mặt, hàng nút mic/cam/chia sẻ/nhắn tin,
-// bảng chat trượt bên phải. Chỉ giữ 1 nút rời phòng duy nhất.
-export const StudyRoomView = ({ roomName, onLeave, sideBySide = true, onDragStart }: StudyRoomViewProps) => {
+// bảng chat trượt bên phải.
+export const StudyRoomView = ({
+  roomName,
+  onLeave,
+  sideBySide = true,
+  onDragStart,
+  isFullscreen = false,
+  onToggleFullscreen,
+}: StudyRoomViewProps) => {
   const room = useRoomContext();
   const tracks = useTracks(
     [
@@ -80,30 +91,68 @@ export const StudyRoomView = ({ roomName, onLeave, sideBySide = true, onDragStar
         className="mx-3 mt-2 px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-semibold cursor-pointer transition-colors text-center shrink-0"
       />
 
-      {/* Đầu phòng: tên + nút rời duy nhất, cả thanh để kéo thẻ */}
+      {/* Đầu phòng: tên + nút toàn màn hình + nút rời, cả thanh để kéo thẻ */}
       <div
-        onPointerDown={onDragStart}
-        className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+        onPointerDown={isFullscreen ? undefined : onDragStart}
+        className={`flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 shrink-0 ${
+          isFullscreen ? "cursor-default" : "cursor-grab active:cursor-grabbing touch-none"
+        }`}
       >
         <div className="flex items-center gap-2 min-w-0">
           <h2 className="text-sm font-bold truncate">Phòng: {roomName}</h2>
           <span className="text-[11px] text-slate-400 shrink-0">
             {room.numParticipants} người
           </span>
+          {isFullscreen && (
+            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold border border-emerald-400/30">
+              Toàn màn hình
+            </span>
+          )}
         </div>
-        <button
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => {
-            try {
-              room.disconnect();
-            } catch {}
-            onLeave();
-          }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-200 text-xs font-bold transition-colors cursor-pointer shrink-0"
-          title="Rời phòng"
-        >
-          <SignOutIcon className="w-3.5 h-3.5" /> Rời phòng
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {onToggleFullscreen && (
+            <button
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={onToggleFullscreen}
+              className="group inline-flex items-center h-8 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white text-xs font-semibold transition-all duration-200 cursor-pointer overflow-hidden"
+              title={isFullscreen ? "Thu nhỏ cửa sổ" : "Mở toàn màn hình"}
+              aria-label={isFullscreen ? "Thu nhỏ cửa sổ" : "Mở toàn màn hình"}
+            >
+              {isFullscreen ? (
+                <>
+                  <CornersInIcon className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                  <span className="max-w-0 opacity-0 overflow-hidden whitespace-nowrap group-hover:max-w-28 group-hover:opacity-100 group-hover:ml-1.5 group-focus-visible:max-w-28 group-focus-visible:opacity-100 group-focus-visible:ml-1.5 transition-all duration-200 ease-out">
+                    Thu nhỏ
+                  </span>
+                </>
+              ) : (
+                <>
+                  <CornersOutIcon className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                  <span className="max-w-0 opacity-0 overflow-hidden whitespace-nowrap group-hover:max-w-32 group-hover:opacity-100 group-hover:ml-1.5 group-focus-visible:max-w-32 group-focus-visible:opacity-100 group-focus-visible:ml-1.5 transition-all duration-200 ease-out">
+                    Toàn màn hình
+                  </span>
+                </>
+              )}
+            </button>
+          )}
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => {
+              try {
+                room.disconnect();
+              } catch {}
+              onLeave();
+            }}
+            className="group inline-flex items-center h-8 px-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 active:scale-95 border border-rose-400/30 text-rose-200 text-xs font-bold transition-all duration-200 cursor-pointer overflow-hidden"
+            title="Rời phòng"
+            aria-label="Rời phòng"
+          >
+            <SignOutIcon className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+            <span className="max-w-0 opacity-0 overflow-hidden whitespace-nowrap group-hover:max-w-24 group-hover:opacity-100 group-hover:ml-1.5 group-focus-visible:max-w-24 group-focus-visible:opacity-100 group-focus-visible:ml-1.5 transition-all duration-200 ease-out">
+              Rời phòng
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Giữa: thẻ rộng thì chat đứng cạnh, thẻ hẹp thì chat nằm dưới */}

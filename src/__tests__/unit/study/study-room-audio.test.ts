@@ -44,4 +44,27 @@ describe("StudyRoomView Audio and Media Rendering", () => {
     expect(html).toContain('data-testid="livekit-start-audio"');
     expect(html).toContain("bật âm thanh phòng học");
   });
+
+  it("renders fullscreen toggle button and toggles state", () => {
+    const normalHtml = renderToString(
+      React.createElement(StudyRoomView, {
+        roomName: "toan-cao-cap",
+        onLeave: () => {},
+        isFullscreen: false,
+        onToggleFullscreen: () => {},
+      })
+    );
+    expect(normalHtml).toContain("Toàn màn hình");
+    expect(normalHtml).not.toContain("Thu nhỏ");
+
+    const fsHtml = renderToString(
+      React.createElement(StudyRoomView, {
+        roomName: "toan-cao-cap",
+        onLeave: () => {},
+        isFullscreen: true,
+        onToggleFullscreen: () => {},
+      })
+    );
+    expect(fsHtml).toContain("Thu nhỏ");
+  });
 });

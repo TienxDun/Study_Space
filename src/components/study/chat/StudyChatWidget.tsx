@@ -18,6 +18,7 @@ export interface StudyChatWidgetProps {
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   onClose?: () => void;
+  isZenMode?: boolean;
 }
 
 /** Bong bóng chat góc phải: đăng nhập Google mới chat được, lịch sử lưu Firestore. */
@@ -25,6 +26,7 @@ export function StudyChatWidget({
   isOpen: controlledOpen,
   onOpenChange,
   onClose: controlledClose,
+  isZenMode = false,
 }: StudyChatWidgetProps = {}) {
   const { user, loading, redirectError, signIn, signOut, getToken } = useAuth();
   const [internalOpen, setInternalOpen] = useState(false);
@@ -184,10 +186,10 @@ export function StudyChatWidget({
 
   return (
     <>
-      {!open && <ChatFab hasNew={hasNew} onOpen={() => setOpen(true)} />}
+      {!open && !isZenMode && <ChatFab hasNew={hasNew} onOpen={() => setOpen(true)} />}
 
       <AnimatePresence>
-        {open && (
+        {open && !isZenMode && (
           <motion.div
             id="study-chat-panel"
             ref={panelRef}

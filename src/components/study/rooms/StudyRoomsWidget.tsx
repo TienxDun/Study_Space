@@ -75,6 +75,35 @@ export const StudyRoomsWidget = ({ isOpen, onClose }: StudyRoomsWidgetProps) => 
   const [openRooms, setOpenRooms] = useState<{ name: string; count: number }[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen((prev) => {
+      const next = !prev;
+      if (typeof document !== "undefined") {
+        if (next) {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          }
+        } else {
+          if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          }
+        }
+      }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    const onFsChange = () => {
+      if (!document.fullscreenElement && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, [isFullscreen]);
 
   // Tự động gán tên từ tài khoản đăng nhập khi user có sẵn
   useEffect(() => {
@@ -261,6 +290,10 @@ const getLiveKitEndpoints = () => {
   };
 
   const handleLeave = useCallback(() => {
+    if (typeof document !== "undefined" && document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+    setIsFullscreen(false);
     setToken(null);
     setServerUrl("");
     setJoinedRoom("");
@@ -293,13 +326,14 @@ const getLiveKitEndpoints = () => {
           <motion.div
             ref={panelRef}
             key="rooms-panel"
-            drag
+            drag={!isFullscreen}
             dragControls={dragControls}
             dragListener={false}
             dragMomentum={false}
             dragElastic={0}
             onDragStart={() => setIsDragging(true)}
             onDragEnd={(_, info) => {
+              if (isFullscreen) return;
               setIsDragging(false);
               if (Math.hypot(info.offset.x, info.offset.y) < 2) return;
               // Đo cỡ thật của thẻ lúc thả để kẹp cho khít
@@ -322,37 +356,55 @@ const getLiveKitEndpoints = () => {
               opacity: { duration: 0.16, ease: "easeOut" },
               scale: { duration: 0.16, ease: "easeOut" },
             }}
-            style={{
-              top: 0,
-              left: 0,
-              x: roomPos.x,
-              y: roomPos.y,
-              // Bảng chờ nhỏ gọn cố định, vào phòng mới theo cỡ đã lưu
-              width: token ? roomSize.width : 400,
-              height: token ? roomSize.height : "auto",
-            }}
-            className={`pointer-events-auto fixed min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] flex flex-col rounded-3xl bg-black/60 backdrop-blur-2xl border overflow-hidden select-none transform-gpu will-change-transform z-[70] ${
-              isDragging
-                ? "shadow-[0_30px_80px_rgba(0,0,0,0.65)] ring-2 ring-emerald-500/40 cursor-grabbing border-white/15"
-                : "shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-white/15"
+            style={
+              isFullscreen
+                ? {
+                    top: 0,
+                    left: 0,
+                    x: 0,
+                    y: 0,
+                    width: "100vw",
+                    height: "100vh",
+                  }
+                : {
+                    top: 0,
+                    left: 0,
+                    x: roomPos.x,
+                    y: roomPos.y,
+                    width: token ? roomSize.width : 400,
+                    height: token ? roomSize.height : "auto",
+                  }
+            }
+            className={`pointer-events-auto fixed flex flex-col select-none transform-gpu will-change-transform ${
+              isFullscreen
+                ? "inset-0 w-screen h-screen rounded-none bg-slate-950/95 backdrop-blur-3xl z-[90] border-none shadow-none"
+                : `min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] rounded-3xl bg-black/60 backdrop-blur-2xl border overflow-hidden z-[70] ${
+                    isDragging
+                      ? "shadow-[0_30px_80px_rgba(0,0,0,0.65)] ring-2 ring-emerald-500/40 cursor-grabbing border-white/15"
+                      : "shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-white/15"
+                  }`
             }`}
           >
-            <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
+            {!isFullscreen && (
+              <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
+            )}
 
             {/* Vạch kéo ở giữa mép trên cho biết thẻ di chuyển được */}
-            <div
-              onPointerDown={(e) => dragControls.start(e)}
-              className="absolute top-1 left-1/2 -translate-x-1/2 z-20 h-5 px-3 flex items-start justify-center cursor-grab active:cursor-grabbing touch-none group/grab"
-              title="Kéo để di chuyển"
-            >
-              <span
-                className={`block h-1 rounded-full transition-all duration-150 ${
-                  isDragging
-                    ? "w-14 bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]"
-                    : "w-10 bg-white/30 group-hover/grab:w-12 group-hover/grab:bg-white/60"
-                }`}
-              />
-            </div>
+            {!isFullscreen && (
+              <div
+                onPointerDown={(e) => dragControls.start(e)}
+                className="absolute top-1 left-1/2 -translate-x-1/2 z-20 h-5 px-3 flex items-start justify-center cursor-grab active:cursor-grabbing touch-none group/grab"
+                title="Kéo để di chuyển"
+              >
+                <span
+                  className={`block h-1 rounded-full transition-all duration-150 ${
+                    isDragging
+                      ? "w-14 bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]"
+                      : "w-10 bg-white/30 group-hover/grab:w-12 group-hover/grab:bg-white/60"
+                  }`}
+                />
+              </div>
+            )}
 
             {!token ? (
               <div className="flex-1 min-h-0 overflow-y-auto custom-study-scroll flex flex-col">
@@ -530,7 +582,7 @@ const getLiveKitEndpoints = () => {
                           className="w-full px-3 py-2 rounded-xl bg-black/50 border border-white/20 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:border-white/30"
                         />
                         <p className="text-[11px] text-slate-500 mt-1">
-                          Ai gõ cùng tên phòng là vào chung. Trình duyệt sẽ hỏi bật mic và camera.
+                          Ai gõ cùng tên phòng là vào chung. Mic và camera mặc định tắt khi vào phòng.
                         </p>
                       </div>
                     </div>
@@ -562,22 +614,24 @@ const getLiveKitEndpoints = () => {
                 token={token}
                 serverUrl={serverUrl}
                 connect
-                audio
-                video
+                audio={false}
+                video={false}
                 className="flex flex-col h-full min-h-0"
                 onDisconnected={handleLeave}
               >
                 <StudyRoomView
                   roomName={joinedRoom}
                   onLeave={handleLeave}
-                  sideBySide={wide}
+                  sideBySide={isFullscreen || wide}
                   onDragStart={(e) => dragControls.start(e)}
+                  isFullscreen={isFullscreen}
+                  onToggleFullscreen={toggleFullscreen}
                 />
               </LiveKitRoom>
             )}
 
-            {/* Tay kéo to/nhỏ: chỉ hiện khi đã vào phòng */}
-            {token && (
+            {/* Tay kéo to/nhỏ: chỉ hiện khi đã vào phòng và không toàn màn hình */}
+            {token && !isFullscreen && (
               <div
                 onPointerDown={handleResizePointerDown}
                 className="absolute bottom-1 right-1 w-6 h-6 cursor-nwse-resize touch-none z-20 flex items-end justify-end opacity-60 hover:opacity-100 transition-opacity"

@@ -482,7 +482,17 @@ export default function StudySpacePage() {
         isClock12Hour={isClock12Hour}
         onToggleClock={handleToggleClock}
         onToggleShortcuts={handleToggleShortcutsHelp}
-        onEnterZen={() => setIsZenMode(true)}
+        onEnterZen={() => {
+          setIsZenMode(true);
+          setIsTasksOpen(false);
+          setIsNotesOpen(false);
+          setIsScenesOpen(false);
+          setIsMixerOpen(false);
+          setIsEmbedPlayerOpen(false);
+          setIsRoomsOpen(false);
+          setIsChatOpen(false);
+          setIsSettingsOpen(false);
+        }}
         onExitZen={() => setIsZenMode(false)}
         onToggleMute={toggleGlobalMute}
         onToggleSettings={handleToggleSettings}
@@ -667,6 +677,7 @@ export default function StudySpacePage() {
         isOpen={isChatOpen}
         onOpenChange={setIsChatOpen}
         onClose={() => setIsChatOpen(false)}
+        isZenMode={isZenMode}
       />
 
       {/* First-time Onboarding Tour & Interactive Spotlight Walkthrough */}      <StudyOnboardingTour
