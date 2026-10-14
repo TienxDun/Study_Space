@@ -1,0 +1,84 @@
+rules_version = '2';
+
+// ZenSpace — xem docs/firestore-rules.md (R4.1–R4.4).
+// Dán vào Firebase console > Firestore Database > Rules rồi Publish,
+// hoặc: firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Hồ sơ: chính chủ đọc/ghi.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Phiên chat + tin nhắn: 1 đường duy nhất conversations/{cid}/sessions/{sid}/messages.
+    // Chính chủ đọc/ghi, text là chuỗi ≤ 8000 ký tự. Luồng cũ đã bỏ (xây lại từ đầu).
+    match /conversations/{cid} {
+      allow read: if request.auth != null && (
+        request.auth.uid == cid ||
+        (resource != null && resource.data.ownerUid == request.auth.uid)
+      );
+      allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+
+      // Tin nhắn trong phiên: chính chủ (cid == uid) thì khỏi đọc thêm
+      // document cha để đỡ tốn lượt đọc của Rules.
+      match /sessions/{sid} {
+        allow read: if request.auth != null && (
+          request.auth.uid == cid ||
+          (exists(/databases/$(database)/documents/conversations/$(cid)) &&
+           get(/databases/$(database)/documents/conversations/$(cid)).data.ownerUid == request.auth.uid)
+        );
+        allow create: if request.auth != null && (
+          request.auth.uid == cid ||
+          (exists(/databases/$(database)/documents/conversations/$(cid)) &&
+           get(/databases/$(database)/documents/conversations/$(cid)).data.ownerUid == request.auth.uid)
+        ) && request.resource.data.ownerUid == request.auth.uid;
+        // Sửa/xóa phiên: chính chủ, không được đổi chủ sở hữu sang người khác.
+        allow update: if request.auth != null && (
+          request.auth.uid == cid ||
+          (exists(/databases/$(database)/documents/conversations/$(cid)) &&
+           get(/databases/$(database)/documents/conversations/$(cid)).data.ownerUid == request.auth.uid)
+        ) && request.resource.data.ownerUid == resource.data.ownerUid;
+        allow delete: if request.auth != null && (
+          request.auth.uid == cid ||
+          (exists(/databases/$(database)/documents/conversations/$(cid)) &&
+           get(/databases/$(database)/documents/conversations/$(cid)).data.ownerUid == request.auth.uid)
+        );
+
+        // Tin nhắn trong phiên: cùng quyền như tin luồng chính.
+        match /messages/{mid} {
+          allow read: if request.auth != null && (
+            request.auth.uid == cid ||
+            (exists(/databases/$(database)/documents/conversations/$(cid)/sessions/$(sid)) &&
+             get(/databases/$(database)/documents/conversations/$(cid)/sessions/$(sid)).data.ownerUid == request.auth.uid)
+          );
+          allow create: if request.auth != null && (
+            request.auth.uid == cid ||
+            (exists(/databases/$(database)/documents/conversations/$(cid)/sessions/$(sid)) &&
+             get(/databases/$(database)/documents/conversations/$(cid)/sessions/$(sid)).data.ownerUid == request.auth.uid)
+          ) && request.resource.data.text is string
+            && request.resource.data.text.size() <= 8000;
+          allow update: if request.auth != null && (
+            request.auth.uid == cid ||
+            (exists(/databases/$(database)/documents/conversations/$(cid)/sessions/$(sid)) &&
+             get(/databases/$(database)/documents/conversations/$(cid)/sessions/$(sid)).data.ownerUid == request.auth.uid)
+          ) && request.resource.data.text is string
+            && request.resource.data.text.size() <= 8000
+            && request.resource.data.role == resource.data.role;
+          allow delete: if request.auth != null && (
+            request.auth.uid == cid ||
+            (exists(/databases/$(database)/documents/conversations/$(cid)/sessions/$(sid)) &&
+             get(/databases/$(database)/documents/conversations/$(cid)/sessions/$(sid)).data.ownerUid == request.auth.uid)
+          );
+        }
+      }
+    }
+
+    // Sổ lượt dùng: client chỉ đọc của mình, cấm ghi (Worker cộng).
+    match /usage/{uid}/{day} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+  }
+}

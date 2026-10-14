@@ -5,7 +5,6 @@ export const DEFAULT_NOTES: StudyNote[] = [
   {
     id: "note-study-hub",
     title: "🎯 Kế hoạch Deep Work & Mục tiêu tuần",
-    category: "Học tập",
     isPinned: true,
     content: markdownToHtml(`> *"Sự tập trung sâu (Deep Work) là siêu năng lực của thời đại số. 2 giờ tập trung cao độ sẽ mang lại kết quả vượt trội hơn 8 giờ bận rộn nửa vời."*
 
@@ -23,7 +22,6 @@ export const DEFAULT_NOTES: StudyNote[] = [
   {
     id: "note-project-blueprint",
     title: "🚀 Dự án StudySpace: Kiến trúc & Kế hoạch",
-    category: "Dự án",
     isPinned: false,
     content: markdownToHtml(`> **StudySpace** là không gian học tập nhập vai đa giác quan kết hợp video 4K, âm thanh thư giãn 3D và trình ghi chú tối giản.
 
@@ -42,7 +40,6 @@ export const DEFAULT_NOTES: StudyNote[] = [
   {
     id: "note-cheat-sheet",
     title: "📐 Sổ tay Công thức & Ngữ pháp",
-    category: "Công thức",
     isPinned: false,
     content: markdownToHtml(`## Cấu trúc Ngữ pháp (Conditionals)
 - **Các trường hợp không lùi thì:**
@@ -63,7 +60,6 @@ export const DEFAULT_NOTES: StudyNote[] = [
   {
     id: "note-wellness-habits",
     title: "🌿 Thói quen Tự chăm sóc & Cân bằng",
-    category: "Cá nhân",
     isPinned: false,
     content: markdownToHtml(`## Quy tắc 3-2-1 để học tập bền vững
 - **3 phút:** Khởi động tinh thần, sắp xếp góc bàn học trước khi mở máy.

@@ -9,7 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "ZenStudy Space - Không Gian Học Tập Tương Tác & Tập Trung",
     short_name: "ZenStudy",
     description:
-      "Không gian học tập tương tác nhập vai tại zenstudy.space với 30+ bối cảnh Video 4K, 20 âm thanh môi trường thư giãn, Pomodoro và Lo-fi chill.",
+      "Không gian học tập tương tác nhập vai tại zenstudy.space với 30+ bối cảnh video sống động, 20 âm thanh môi trường thư giãn, Pomodoro và Lo-fi chill.",
     start_url: `${basePath}/`,
     display: "standalone",
     background_color: "#090d16",
@@ -24,6 +24,13 @@ export default function manifest(): MetadataRoute.Manifest {
         src: `${basePath}/icon.svg`,
         sizes: "any",
         type: "image/svg+xml",
+        purpose: "any",
+      },
+      {
+        src: `${basePath}/icon.svg`,
+        sizes: "any",
+        type: "image/svg+xml",
+        purpose: "maskable",
       },
       {
         src: `${basePath}/og-image.png`,

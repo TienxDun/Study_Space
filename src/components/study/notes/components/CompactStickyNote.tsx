@@ -16,9 +16,11 @@ import {
   CheckSquareIcon,
   HighlighterIcon,
   ArrowUUpLeftIcon,
+  SparkleIcon,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence, DragControls } from "framer-motion";
 import { StudyNote, ActiveFormats } from "../types";
+import { NoteChatPromptMenu } from "./NoteChatPromptMenu";
 
 interface CompactStickyNoteProps {
   width?: number;
@@ -88,6 +90,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
   isDragging = false,
 }: CompactStickyNoteProps) {
   const [showMoreMenu, setShowMoreMenu] = React.useState(false);
+  const [showAiPromptMenu, setShowAiPromptMenu] = React.useState(false);
   const moreMenuRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -310,6 +313,23 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                       : "bg-black/75 border-white/15 text-white shadow-[0_20px_50px_rgba(0,0,0,0.65)] backdrop-blur-2xl"
                   }`}
                 >
+                  {/* Hỏi Trợ lý AI */}
+                  {activeNote && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        setShowAiPromptMenu(true);
+                      }}
+                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
+                        isLight ? "hover:bg-slate-100 text-slate-700" : "hover:bg-white/10 text-slate-200"
+                      }`}
+                    >
+                      <SparkleIcon weight="fill" className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Hỏi Trợ lý AI</span>
+                    </button>
+                  )}
+
                   {/* Đổi giao diện Sáng / Tối */}
                   <button
                     type="button"
@@ -464,6 +484,37 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                 <ArrowUUpLeftIcon className="w-3.5 h-3.5" />
               </button>
             </div>
+
+            {/* Nút Hỏi AI về ghi chú kèm Menu lựa chọn Prompt */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowAiPromptMenu((prev) => !prev)}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
+                  showAiPromptMenu
+                    ? "bg-emerald-500/25 border-emerald-500/40 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.3)]"
+                    : isLight
+                    ? "bg-emerald-50 hover:bg-emerald-100 border-emerald-200/90 text-emerald-700 shadow-2xs"
+                    : "bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/20 hover:border-emerald-500/40 text-emerald-400"
+                }`}
+                title="Gửi nội dung ghi chú này vào Chatbot để hỏi"
+              >
+                <SparkleIcon weight="fill" className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Hỏi AI</span>
+                <CaretDownIcon
+                  className={`w-3 h-3 opacity-70 transition-transform duration-200 ${
+                    showAiPromptMenu ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              <NoteChatPromptMenu
+                activeNote={activeNote}
+                isLight={isLight}
+                isOpen={showAiPromptMenu}
+                onClose={() => setShowAiPromptMenu(false)}
+              />
+            </div>
           </div>
 
           {/* 3. Document Surface */}
@@ -532,7 +583,6 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
 
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 opacity-75">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span>Đã lưu {lastSavedTime}</span>
               </div>
 

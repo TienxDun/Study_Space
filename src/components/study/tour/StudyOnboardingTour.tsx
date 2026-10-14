@@ -24,63 +24,95 @@ const TOUR_STEPS: TourStep[] = [
     title: "Chào bạn tới ZenStudy Space",
     emoji: "🌿",
     description:
-      "Nghe nhạc, học bài, làm việc ở một chỗ. Đi dạo một vòng nhỏ để biết các nút chính nhé!",
+      "Không gian học tập và làm việc tập trung tất-cả-trong-một. Cùng khám phá nhanh các công cụ chính nhé!",
     placement: "center",
   },
   {
     targetId: "tour-dock-scenes",
-    title: "Đổi bối cảnh",
+    title: "Đổi không gian bối cảnh",
     emoji: "🎬",
-    description: "Nút này đổi không gian quán cafe, thư viện, anime cho có cảm hứng.",
+    description:
+      "Chọn hơn 40 bối cảnh tĩnh và động (quán cafe, trời mưa, thư viện cổ, anime...) tạo cảm hứng học tập (Phím tắt: B).",
     placement: "right",
   },
   {
     targetId: "tour-music-player",
-    title: "Cụm phát nhạc",
+    title: "Cụm phát nhạc & Âm lượng",
     emoji: "🎵",
-    description: "Bấm chạy/dừng, kéo dải sóng để tua bài đang nghe.",
+    description:
+      "Dừng/phát nhạc, chuyển bài, chỉnh âm lượng hoặc kéo dải sóng âm để tua đến đoạn bạn yêu thích.",
     placement: "top",
   },
   {
     targetId: "tour-music-tab-btn",
-    title: "Nút Nhạc",
+    title: "Kho nhạc tập trung",
     emoji: "🎧",
-    description: "Mở danh sách nhạc Chill, Lofi, Piano để đổi bài.",
+    description:
+      "Tuyển tập các danh sách phát Lofi Chill, Nhạc không lời Piano, Jazz giúp kích thích sóng não học bài.",
     placement: "top",
   },
   {
     targetId: "tour-music-mixer-btn",
-    title: "Nút Âm nền",
+    title: "Bộ trộn âm thanh thiên nhiên",
     emoji: "🌧️",
-    description: "Trộn tiếng mưa, sóng biển, bếp lửa khi cần yên tĩnh.",
+    description:
+      "Trộn hơn 20 loại âm thanh tự nhiên như tiếng mưa rơi, sóng biển, tiếng chim hót, lửa bập bùng (Phím tắt: P).",
     placement: "top",
   },
   {
     targetId: "tour-dock-embed",
-    title: "Đài phát",
+    title: "Đài phát YouTube & Spotify",
     emoji: "📻",
-    description: "Mở nhạc YouTube, Spotify, tách cửa sổ nổi vừa học vừa xem.",
+    description:
+      "Dán liên kết hoặc chọn luồng phát nhạc bạn quen thuộc từ YouTube, Spotify và thu nhỏ góc màn hình (Phím tắt: E).",
     placement: "right",
   },
   {
     targetId: "tour-pomodoro-widget",
-    title: "Hẹn giờ Pomodoro",
+    title: "Đồng hồ hẹn giờ Pomodoro",
     emoji: "⏱️",
-    description: "Bấm giờ học 25 phút, nghỉ 5 phút để giữ nhịp.",
+    description:
+      "Rèn luyện tính kỷ luật với phương pháp 25 phút tập trung sâu, 5 phút nghỉ ngơi (Phím tắt: T).",
     placement: "bottom",
   },
   {
     targetId: "tour-dock-tasks",
-    title: "Việc & ghi chép",
+    title: "Kế hoạch học tập Kanban",
     emoji: "📋",
-    description: "Nút này mở việc cần làm, nút bên dưới mở sổ ghi nhanh.",
+    description:
+      "Quản lý công việc cần làm, đang làm và hoàn thành dưới dạng bảng kéo thả trực quan (Phím tắt: K).",
     placement: "right",
   },
   {
+    targetId: "tour-dock-notes",
+    title: "Sổ ghi chép nhanh",
+    emoji: "📝",
+    description:
+      "Ghi chú ý tưởng bài học với định dạng Markdown, hỗ trợ ghim cố định trên màn hình (Phím tắt: N).",
+    placement: "right",
+  },
+  {
+    targetId: "tour-dock-rooms",
+    title: "Phòng học nhóm trực tuyến",
+    emoji: "👥",
+    description:
+      "Tạo hoặc tham gia phòng học trực tuyến cùng bạn bè, cùng bật Pomodoro và trò chuyện giữ động lực (Phím tắt: G).",
+    placement: "right",
+  },
+  {
+    targetId: "tour-chat-fab",
+    title: "Trợ lý học tập AI ZenBot",
+    emoji: "🌱",
+    description:
+      "Người bạn đồng hành giải đáp thắc mắc, tóm tắt tài liệu và gợi ý phương pháp học tập hiệu quả (Phím tắt: C).",
+    placement: "left",
+  },
+  {
     targetId: "tour-topbar-actions",
-    title: "Điều khiển chung",
+    title: "Chế độ Zen & Phím tắt",
     emoji: "🧘",
-    description: "Phím Z ẩn giao diện để tập trung, M tắt tiếng, ? xem phím tắt.",
+    description:
+      "Bấm Z để ẩn sạch thanh công cụ bước vào chế độ siêu tập trung, bấm ? để xem toàn bộ danh mục phím tắt.",
     placement: "bottom",
   },
 ];
@@ -95,6 +127,27 @@ interface TargetRect {
   left: number;
   width: number;
   height: number;
+}
+
+// Tự động nhận diện và làm nổi bật các ký hiệu phím tắt (Z, ?, B, P, E, T, K, N, G, C) trong mô tả
+function renderFormattedDescription(text: string) {
+  const regex = /((?:Bấm|bấm)\s+[A-Z?]|Phím tắt:\s*[A-Z?])/g;
+  const parts = text.split(regex);
+
+  return parts.map((part, index) => {
+    const match = part.match(/^(Bấm|bấm|Phím tắt:)\s*([A-Z?])$/i);
+    if (match) {
+      return (
+        <span key={index} className="inline-flex items-center gap-1">
+          <span>{match[1]}</span>
+          <kbd className="px-1.5 py-0.5 rounded-md bg-white/15 text-white font-mono text-[11px] font-semibold border border-white/25 shadow-xs">
+            {match[2]}
+          </kbd>
+        </span>
+      );
+    }
+    return part;
+  });
 }
 
 export function StudyOnboardingTour({
@@ -309,13 +362,13 @@ export function StudyOnboardingTour({
 
       {/* Body Description */}
       <p className="text-slate-300 text-sm leading-relaxed mt-2.5 min-h-[56px]">
-        {currentStep.description}
+        {renderFormattedDescription(currentStep.description)}
       </p>
 
       {/* Footer Controls */}
-      <div className="flex items-center justify-between mt-5 pt-3 border-t border-white/10">
+      <div className="flex items-center justify-between mt-5 pt-3.5 border-t border-white/10">
         {/* Step Counter Badge */}
-        <span className="font-mono text-xs font-semibold text-slate-400 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">
+        <span className="font-mono text-xs font-semibold text-slate-400 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full shadow-inner select-none">
           {`${currentStepIndex + 1} / ${TOUR_STEPS.length}`}
         </span>
 
@@ -324,33 +377,35 @@ export function StudyOnboardingTour({
           <button
             onClick={handlePrev}
             disabled={currentStepIndex === 0}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ${
               currentStepIndex === 0
-                ? "opacity-30 cursor-not-allowed text-slate-500"
-                : "text-slate-300 hover:text-white hover:bg-white/10 cursor-pointer active:scale-95"
+                ? "opacity-25 cursor-not-allowed text-slate-500 border border-transparent"
+                : "text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 cursor-pointer active:scale-95 shadow-xs"
             }`}
           >
-            <span className="flex items-center gap-1">
-              <CaretLeftIcon className="w-3.5 h-3.5" />
-              <span>Quay lại</span>
-            </span>
+            <CaretLeftIcon className="w-3.5 h-3.5" />
+            <span>Quay lại</span>
           </button>
 
           <button
             onClick={handleNext}
-            className="px-4 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-accent-music to-accent-music-bright hover:from-accent-music-glow hover:to-accent-music-pale text-panel shadow-[0_0_16px_rgba(52,211,153,0.4)] transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
+            className="relative group overflow-hidden px-4.5 py-1.5 rounded-full text-xs font-bold text-emerald-950 bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 bg-[length:200%_auto] hover:bg-right transition-[background-position,transform,box-shadow] duration-500 cursor-pointer active:scale-95 flex items-center gap-1.5 shadow-[0_0_18px_rgba(52,211,153,0.5),inset_0_1px_1px_rgba(255,255,255,0.7)] hover:shadow-[0_0_26px_rgba(52,211,153,0.75),inset_0_1px_1px_rgba(255,255,255,0.9)] border border-emerald-100/50 hover:scale-105"
           >
-            {isLastStep ? (
-              <>
-                <span>Bắt đầu ngay</span>
-                <SparkleIcon className="w-3.5 h-3.5" />
-              </>
-            ) : (
-              <>
-                <span>Tiếp tục</span>
-                <CaretRightIcon className="w-3.5 h-3.5" />
-              </>
-            )}
+            {/* Vệt sáng lấp lánh (Shimmer glint) lướt qua định kỳ */}
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 -translate-x-full animate-[shimmer_2.5s_infinite] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none"
+            />
+
+            {/* Nội dung nút */}
+            <span className="relative z-10 flex items-center gap-1.5">
+              <span>{isLastStep ? "Bắt đầu ngay" : "Tiếp tục"}</span>
+              {isLastStep ? (
+                <SparkleIcon className="w-3.5 h-3.5 text-emerald-950 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12 animate-pulse" />
+              ) : (
+                <CaretRightIcon className="w-3.5 h-3.5 text-emerald-950 transition-transform duration-200 group-hover:translate-x-0.5" />
+              )}
+            </span>
           </button>
         </div>
       </div>

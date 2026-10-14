@@ -18,11 +18,13 @@ export function StudyJsonLd({
         "Lofi Virtual Study Space",
       ],
       url: `${siteUrl}/`,
-      applicationCategory: "EducationalApplication",
+      applicationCategory: "EducationalApplication, ProductivityApplication",
       operatingSystem: "All (Web Browser)",
       browserRequirements: "Requires JavaScript. Requires HTML5.",
+      inLanguage: "vi-VN",
+      isAccessibleForFree: true,
       description:
-        "Không gian học tập tương tác nhập vai tại ZenStudy Space (zenstudy.space) với 30+ bối cảnh Video 4K, 20 âm thanh môi trường thư giãn, danh sách nhạc Lo-fi/Jazz, đồng hồ Pomodoro, quản lý công việc và ghi chú nhanh.",
+        "Không gian học tập tương tác nhập vai tại ZenStudy Space (zenstudy.space) với 30+ bối cảnh video sống động, 20 âm thanh môi trường thư giãn, danh sách nhạc Lo-fi/Jazz, đồng hồ Pomodoro, quản lý công việc và ghi chú nhanh.",
       image: `${siteUrl}/og-image.png`,
       screenshot: `${siteUrl}/og-image.png`,
       offers: {
@@ -32,7 +34,7 @@ export function StudyJsonLd({
         availability: "https://schema.org/InStock",
       },
       featureList: [
-        "30+ Bối cảnh Video 4K & Ảnh nền học tập độ nét cao",
+        "30+ Bối cảnh video và ảnh nền sống động độ nét cao",
         "Bộ trộn 20 âm thanh môi trường thư giãn (mưa, sấm chớp, sóng biển, gió, tiếng lật sách, lò sưởi, quán cafe)",
         "Trình phát nhạc Lo-fi, Jazz và thư giãn không giới hạn",
         "Hỗ trợ nhúng video nhạc YouTube và playlist Spotify",
@@ -46,6 +48,14 @@ export function StudyJsonLd({
         name: "TienxDun",
         url: "https://github.com/TienxDun",
       },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "ZenStudy Space",
+      url: `${siteUrl}/`,
+      logo: `${siteUrl}/icon.svg`,
+      sameAs: ["https://github.com/TienxDun/Study_Space"],
     },
     {
       "@context": "https://schema.org",
@@ -65,7 +75,7 @@ export function StudyJsonLd({
           name: "ZenStudy Space là gì?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "ZenStudy Space (zenstudy.space) là không gian học tập trực tuyến nhập vai (virtual study space) kết hợp bối cảnh 4K, âm thanh thiên nhiên, nhạc Lo-fi, Pomodoro timer và các công cụ ghi chú giúp bạn tập trung học bài và làm việc hiệu quả nhất.",
+            text: "ZenStudy Space (zenstudy.space) là không gian học tập trực tuyến nhập vai (virtual study space) kết hợp bối cảnh sống động, âm thanh thiên nhiên, nhạc Lo-fi, Pomodoro timer và các công cụ ghi chú giúp bạn tập trung học bài và làm việc hiệu quả nhất.",
           },
         },
         {
@@ -98,6 +108,22 @@ export function StudyJsonLd({
           acceptedAnswer: {
             "@type": "Answer",
             text: "Có. Ngoài danh sách nhạc Lo-fi và Jazz tích hợp sẵn, bạn có thể sử dụng công cụ Embed Player để nhúng trực tiếp bất kỳ video YouTube hoặc danh sách nhạc Spotify nào vào không gian học tập.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "ZenStudy Space có dùng được trên điện thoại và máy tính bảng không?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Có, ZenStudy Space được tối ưu giao diện đáp ứng (responsive), hoạt động mượt mà trên mọi thiết bị từ máy tính, laptop đến điện thoại iOS và Android.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Dữ liệu công việc và ghi chú của tôi có được bảo mật không?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Toàn bộ danh sách công việc và ghi chú của bạn được lưu an toàn trực tiếp trên trình duyệt cá nhân của bạn (LocalStorage), hoàn toàn bảo mật và không bị gửi đi bất kỳ đâu.",
           },
         },
       ],

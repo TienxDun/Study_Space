@@ -50,12 +50,16 @@ const SceneThumbnail = React.memo<{ scene: Scene }>(({ scene }) => {
         <div className="absolute inset-0 bg-white/5 animate-pulse" />
       )}
       <img
+        ref={(el) => {
+          if (el && el.complete && el.naturalWidth > 0 && !isLoaded) {
+            setIsLoaded(true);
+          }
+        }}
         src={scene.thumbnailUrl}
         alt={scene.name}
-        className={`w-full h-full object-cover transform-gpu [@media(hover:hover)]:group-hover:scale-105 [@media(hover:hover)]:transition-transform [@media(hover:hover)]:duration-500 [@media(hover:hover)]:ease-out ${
+        className={`w-full h-full object-cover transform-gpu [@media(hover:hover)]:group-hover:scale-105 [@media(hover:hover)]:transition-transform [@media(hover:hover)]:duration-500 [@media(hover:hover)]:ease-out transition-opacity duration-300 ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
-        loading="lazy"
         decoding="async"
         onLoad={() => setIsLoaded(true)}
       />
@@ -87,10 +91,6 @@ const SceneCardItem = React.memo<SceneCardItemProps>(
             e.preventDefault();
             onSelect(scene);
           }
-        }}
-        style={{
-          contentVisibility: "auto",
-          containIntrinsicSize: "200px 125px",
         }}
         className={`group relative aspect-[16/10] w-full rounded-2xl overflow-hidden border transition-all duration-300 text-left cursor-pointer shrink-0 shadow-sm hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-emerald-400/50 ${
           isPending

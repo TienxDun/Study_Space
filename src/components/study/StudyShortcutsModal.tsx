@@ -75,7 +75,7 @@ export const StudyShortcutsModal = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
+      className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
       onClick={() => onClose()}
       aria-hidden="true"
     >
@@ -196,6 +196,10 @@ export const StudyShortcutsModal = ({
               <div className="flex items-center justify-between">
                 <span className="text-slate-300">Phòng học nhóm</span>
                 <kbd className="px-2 py-1 rounded-lg bg-black/50 border border-white/20 font-mono text-[11px] font-bold text-slate-200">G</kbd>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-300">Trợ lý học tập AI (Chatbot)</span>
+                <kbd className="px-2 py-1 rounded-lg bg-black/50 border border-white/20 font-mono text-[11px] font-bold text-slate-200">C</kbd>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-300">Mở nhanh lệnh</span>

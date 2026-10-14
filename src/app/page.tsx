@@ -61,6 +61,12 @@ const StudyRoomsWidget = dynamic(
   { ssr: false }
 );
 
+// Chat AI (firebase + fetch Worker): chỉ chạy ở trình duyệt
+const StudyChatWidget = dynamic(
+  () => import("@/components/study/chat/StudyChatWidget").then((mod) => mod.StudyChatWidget),
+  { ssr: false }
+);
+
 export default function StudySpacePage() {
   const {
     currentScene,
@@ -91,6 +97,11 @@ export default function StudySpacePage() {
   const [isTourOpen, setIsTourOpen] = useState(false);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isRoomsOpen, setIsRoomsOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  const handleToggleChat = () => {
+    setIsChatOpen((prev) => !prev);
+  };
 
   // Slideshow tự xoay bối cảnh (mặc định bật 5 phút, nhớ lựa chọn vào LocalStorage)
   const [isSlideshowOn, setIsSlideshowOn] = useState(true);
@@ -393,7 +404,19 @@ export default function StudySpacePage() {
     setZenMode: setIsZenMode,
     setCommandOpen: setIsCommandOpen,
     setRoomsOpen: setIsRoomsOpen,
+    setChatOpen: setIsChatOpen,
   });
+
+  // Lắng nghe sự kiện mở Takenote từ các component khác (như nút Lưu note từ Chatbot)
+  useEffect(() => {
+    const handleOpenNotes = () => {
+      setIsNotesOpen(true);
+    };
+    window.addEventListener("study-space:open-notes", handleOpenNotes);
+    return () => {
+      window.removeEventListener("study-space:open-notes", handleOpenNotes);
+    };
+  }, []);
 
   // Mở 1 panel duy nhất (đóng settings + các panel khác)
   const openPanelOnly = (
@@ -405,6 +428,8 @@ export default function StudySpacePage() {
     setIsScenesOpen(false);
     setIsMixerOpen(false);
     setIsEmbedPlayerOpen(false);
+    setIsRoomsOpen(false);
+    setIsChatOpen(false);
     setter(true);
   };
 
@@ -416,6 +441,7 @@ export default function StudySpacePage() {
       { id: "nav-scenes", group: "Mở nhanh", label: "Không gian làm việc", hint: "B", run: () => openPanelOnly(setIsScenesOpen) },
       { id: "nav-embed", group: "Mở nhanh", label: "Đài phát YouTube & Spotify", hint: "E", run: () => openPanelOnly(setIsEmbedPlayerOpen) },
       { id: "nav-mixer", group: "Mở nhanh", label: "Bộ trộn âm thanh", hint: "P", run: () => openPanelOnly(setIsMixerOpen) },
+      { id: "nav-chat", group: "Mở nhanh", label: "Trợ lý học tập AI", hint: "C", run: () => openPanelOnly(setIsChatOpen) },
       { id: "nav-settings", group: "Mở nhanh", label: "Cài đặt không gian", run: () => handleOpenSettings() },
       { id: "nav-tour", group: "Mở nhanh", label: "Xem lại tour hướng dẫn", run: () => setIsTourOpen(true) },
       { id: "act-zen", group: "Hành động", label: "Bật/tắt chế độ Zen", hint: "Z", run: () => setIsZenMode((prev) => !prev) },
@@ -635,6 +661,13 @@ export default function StudySpacePage() {
 
       {/* Phòng học nhóm (video call) */}
       <StudyRoomsWidget isOpen={isRoomsOpen} onClose={() => setIsRoomsOpen(false)} />
+
+      {/* Trợ lý chat AI (góc phải, cần đăng nhập Google) */}
+      <StudyChatWidget
+        isOpen={isChatOpen}
+        onOpenChange={setIsChatOpen}
+        onClose={() => setIsChatOpen(false)}
+      />
 
       {/* First-time Onboarding Tour & Interactive Spotlight Walkthrough */}      <StudyOnboardingTour
         isOpen={isTourOpen ? true : undefined}

@@ -184,8 +184,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
 
               {/* Quick Actions (Auto-save, Delete & Close) */}
               <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
-                <span className="text-xs text-emerald-400/90 flex items-center gap-1 font-medium mr-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                <span className="text-xs text-emerald-400/90 font-medium mr-1">
                   Tự động lưu
                 </span>
                 <button

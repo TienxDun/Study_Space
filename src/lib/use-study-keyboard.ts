@@ -16,6 +16,7 @@ export interface StudyKeyboardApi {
   setZenMode: Dispatch<SetStateAction<boolean>>;
   setCommandOpen: Dispatch<SetStateAction<boolean>>;
   setRoomsOpen: Dispatch<SetStateAction<boolean>>;
+  setChatOpen?: Dispatch<SetStateAction<boolean>>;
 }
 
 /** Phím tắt toàn cục của StudySpace. Mọi nhánh chỉ dùng functional
@@ -46,6 +47,8 @@ export const useStudyKeyboard = (api: StudyKeyboardApi) => {
         a.setMixerOpen(false);
         a.setEmbedOpen(false);
         a.setShortcutsOpen(false);
+        a.setRoomsOpen(false);
+        a.setChatOpen?.(false);
         a.setZenMode(false);
         return;
       }
@@ -83,6 +86,8 @@ export const useStudyKeyboard = (api: StudyKeyboardApi) => {
             a.setScenesOpen(false);
             a.setMixerOpen(false);
             a.setEmbedOpen(false);
+            a.setRoomsOpen(false);
+            a.setChatOpen?.(false);
             a.closeSettings();
           }
           return next;
@@ -156,6 +161,13 @@ export const useStudyKeyboard = (api: StudyKeyboardApi) => {
       } else if (e.key === "g" || e.key === "G") {
         e.preventDefault();
         a.setRoomsOpen((prev) => !prev);
+      } else if (e.key === "c" || e.key === "C") {
+        e.preventDefault();
+        a.setChatOpen?.((prev) => {
+          const next = !prev;
+          if (next) a.closeSettings();
+          return next;
+        });
       }
     };
 

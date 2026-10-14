@@ -69,7 +69,6 @@ export const StudyRoomView = ({ roomName, onLeave, sideBySide = true, onDragStar
         className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 shrink-0 cursor-grab active:cursor-grabbing touch-none"
       >
         <div className="flex items-center gap-2 min-w-0">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] shrink-0" />
           <h2 className="text-sm font-bold truncate">Phòng: {roomName}</h2>
           <span className="text-[11px] text-slate-400 shrink-0">
             {room.numParticipants} người

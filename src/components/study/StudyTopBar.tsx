@@ -18,6 +18,7 @@ import {
 import { ZenStudyLogo } from "./brand/ZenStudyLogo";
 import { FocusStatsModal } from "./stats/FocusStatsModal";
 import { StudyAboutModal } from "./StudyAboutModal";
+import { TopBarUserProfile } from "./auth";
 import type { TimerTab } from "./pomodoro/types";
 
 export interface StudyTopBarProps {
@@ -244,6 +245,12 @@ export const StudyTopBar = ({
               >
                 {isFullscreen ? <CornersInIcon className="w-4 h-4" /> : <CornersOutIcon className="w-4 h-4" />}
               </button>
+
+              {/* Vạch chia ngăn cách */}
+              <div className="w-[1px] h-4 bg-white/15 mx-0.5 sm:mx-1 shrink-0" />
+
+              {/* Unified User Profile Pill / Button */}
+              <TopBarUserProfile />
             </div>
           </motion.header>
         )}

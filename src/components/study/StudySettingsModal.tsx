@@ -204,11 +204,11 @@ export const StudySettingsModal = ({
       isOpen={isOpen}
       onClose={onClose}
       panelKey="settings-modal"
-      backdropClassName="bg-transparent"
+      backdropClassName="z-[60] bg-transparent"
       initial={{ opacity: 0, scale: 0.96, y: -6, x: 6 }}
       animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
       exit={{ opacity: 0, scale: 0.96, y: -6, x: 6 }}
-      panelClassName="fixed top-[4.5rem] right-4 sm:right-6 z-50 w-full max-w-[340px] sm:max-w-[380px] glass-panel hover:bg-black/45 p-5 space-y-4 text-white select-none max-h-[min(480px,calc(100vh-100px))] overflow-y-auto custom-study-scroll"
+      panelClassName="fixed top-[4.5rem] right-4 sm:right-6 z-[70] w-full max-w-[340px] sm:max-w-[380px] glass-panel hover:bg-black/45 p-5 space-y-4 text-white select-none max-h-[min(480px,calc(100vh-100px))] overflow-y-auto custom-study-scroll"
     >
       {/* Header (Đã xóa icon thừa, tinh gọn & thanh lịch) */}
       <div className="flex items-center justify-between pb-3 border-b border-white/10">

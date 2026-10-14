@@ -44,7 +44,6 @@ export function useStudyNotes() {
   const [notes, setNotes] = useState<StudyNote[]>([]);
   const [activeNoteId, setActiveNoteId] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Tất cả");
   const [lastSavedTime, setLastSavedTime] = useState<string>("Vừa xong");
   const [noteToDelete, setNoteToDelete] = useState<StudyNote | null>(null);
 
@@ -119,7 +118,6 @@ export function useStudyNotes() {
         const migratedNote: StudyNote = {
           id: `note-${Date.now()}`,
           title: "Ghi chú nhanh",
-          category: "Học tập",
           isPinned: true,
           content: markdownToHtml(oldNote),
           updatedAt: Date.now(),
@@ -140,6 +138,31 @@ export function useStudyNotes() {
       setNotes(DEFAULT_NOTES);
       setActiveNoteId(DEFAULT_NOTES[0].id);
     }
+  }, []);
+
+  // Lắng nghe cập nhật ghi chú từ các widget khác (như Chatbot tạo Takenote mới)
+  useEffect(() => {
+    const onNotesUpdated = (e: Event) => {
+      try {
+        const customEvt = e as CustomEvent<{ noteId?: string }>;
+        const savedMulti = localStorage.getItem(STORAGE_MULTI_KEY);
+        if (savedMulti) {
+          const parsed: StudyNote[] = JSON.parse(savedMulti);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setNotes(parsed);
+            if (customEvt.detail?.noteId) {
+              setActiveNoteId(customEvt.detail.noteId);
+            }
+          }
+        }
+      } catch {}
+    };
+    window.addEventListener("study-space:notes-updated", onNotesUpdated);
+    window.addEventListener("storage", onNotesUpdated);
+    return () => {
+      window.removeEventListener("study-space:notes-updated", onNotesUpdated);
+      window.removeEventListener("storage", onNotesUpdated);
+    };
   }, []);
 
   // Active note lookup
@@ -178,27 +201,25 @@ export function useStudyNotes() {
   const filteredNotes = useMemo(() => {
     return notes
       .filter((n) => {
-        const matchCat = selectedCategory === "Tất cả" || n.category === selectedCategory;
+        if (!searchQuery.trim()) return true;
         const strippedContent = n.content.replace(/<[^>]*>/g, " ").toLowerCase();
-        const matchQuery =
-          !searchQuery.trim() ||
+        return (
           n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          strippedContent.includes(searchQuery.toLowerCase());
-        return matchCat && matchQuery;
+          strippedContent.includes(searchQuery.toLowerCase())
+        );
       })
       .sort((a, b) => {
         if (a.isPinned && !b.isPinned) return -1;
         if (!a.isPinned && b.isPinned) return 1;
         return b.updatedAt - a.updatedAt;
       });
-  }, [notes, selectedCategory, searchQuery]);
+  }, [notes, searchQuery]);
 
   // Actions
   const handleCreateNote = useCallback(() => {
     const newNote: StudyNote = {
       id: `note-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       title: "Ghi chú không tên",
-      category: selectedCategory === "Tất cả" ? "Học tập" : selectedCategory,
       isPinned: false,
       content: "<p>Bắt đầu ghi chép nội dung...</p>",
       updatedAt: Date.now(),
@@ -207,7 +228,7 @@ export function useStudyNotes() {
     saveNotesToStorage(updated);
     setActiveNoteId(newNote.id);
     return newNote;
-  }, [notes, selectedCategory, saveNotesToStorage]);
+  }, [notes, saveNotesToStorage]);
 
   const handleResetDefaultNotes = useCallback(() => {
     setNotes(DEFAULT_NOTES);
@@ -235,18 +256,6 @@ export function useStudyNotes() {
       saveNotesToStorage(updated);
     },
     [notes, saveNotesToStorage]
-  );
-
-  const handleUpdateCategory = useCallback(
-    (newCat: string, targetNoteId?: string) => {
-      const noteId = targetNoteId || activeNote?.id;
-      if (!noteId) return;
-      const updated = notes.map((n) =>
-        n.id === noteId ? { ...n, category: newCat, updatedAt: Date.now() } : n
-      );
-      saveNotesToStorage(updated);
-    },
-    [activeNote, notes, saveNotesToStorage]
   );
 
   const updateNoteContent = useCallback(
@@ -283,8 +292,6 @@ export function useStudyNotes() {
     activeNote,
     searchQuery,
     setSearchQuery,
-    selectedCategory,
-    setSelectedCategory,
     lastSavedTime,
     noteToDelete,
     setNoteToDelete,
@@ -295,7 +302,6 @@ export function useStudyNotes() {
     handleResetDefaultNotes,
     handleUpdateTitle,
     handleTogglePin,
-    handleUpdateCategory,
     updateNoteContent,
     promptDeleteNote,
     handleConfirmDeleteNote,

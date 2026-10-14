@@ -1,0 +1,99 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+import { firebaseConfigured, getFirebaseAuth } from "@/lib/firebase";
+
+const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+
+// Nút Google chính chủ (Google Identity Services): bấm ngay trong web,
+// Google trả vé thẳng về trang, không chuyển trang, không qua trang trung gian.
+// Tải script 1 lần duy nhất cho cả web.
+let scriptPromise: Promise<void> | null = null;
+function loadGis(): Promise<void> {
+  if (typeof window !== "undefined" && (window as unknown as { google?: { accounts?: { id?: unknown } } }).google?.accounts?.id) {
+    return Promise.resolve();
+  }
+  if (!scriptPromise) {
+    scriptPromise = new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://accounts.google.com/gsi/client";
+      s.async = true;
+      s.defer = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error("gis"));
+      document.head.appendChild(s);
+    });
+  }
+  return scriptPromise;
+}
+
+type GisWindow = Window & {
+  google?: {
+    accounts?: {
+      id?: {
+        initialize: (opts: Record<string, unknown>) => void;
+        renderButton: (el: HTMLElement, opts: Record<string, unknown>) => void;
+        cancel: () => void;
+      };
+    };
+  };
+};
+
+/** Nút "Sign in with Google" thật của Google. Chưa có CLIENT_ID thì ẩn. */
+export function GoogleSignInButton() {
+  const divRef = useRef<HTMLDivElement>(null);
+  const [failed, setFailed] = useState("");
+
+  useEffect(() => {
+    if (!CLIENT_ID || !firebaseConfigured) return;
+    let cancelled = false;
+    loadGis()
+      .then(() => {
+        if (cancelled || !divRef.current) return;
+        const gid = (window as GisWindow).google?.accounts?.id;
+        if (!gid) {
+          setFailed("Không tải được nút Google, kiểm tra mạng nhé.");
+          return;
+        }
+        gid.initialize({
+          client_id: CLIENT_ID,
+          callback: async (resp: { credential?: string }) => {
+            try {
+              if (!resp?.credential) throw new Error("empty");
+              await signInWithCredential(
+                getFirebaseAuth(),
+                GoogleAuthProvider.credential(resp.credential)
+              );
+            } catch {
+              setFailed("Đăng nhập lỗi, bạn thử lại nhé.");
+            }
+          },
+        });
+        gid.renderButton(divRef.current, {
+          theme: "outline",
+          size: "large",
+          text: "signin_with",
+          shape: "rectangular",
+          locale: "vi",
+        });
+      })
+      .catch(() => setFailed("Không tải được nút Google, kiểm tra mạng nhé."));
+    return () => {
+      cancelled = true;
+      try {
+        (window as GisWindow).google?.accounts?.id?.cancel();
+      } catch {
+        /* bỏ qua */
+      }
+    };
+  }, []);
+
+  if (!CLIENT_ID) return null;
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div ref={divRef} className="min-h-10" />
+      {failed && <p className="text-xs text-amber-300 leading-relaxed text-center">{failed}</p>}
+    </div>
+  );
+}

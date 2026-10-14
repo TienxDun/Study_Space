@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { ActiveFormats } from "../types";
-import { sanitizeRichHtml } from "../utils/note-markdown";
+import { sanitizeRichHtml, markdownToHtml, looksLikeMarkdown } from "../utils/note-markdown";
 
 interface UseRichTextEditorProps {
   onContentChange: (newHtml: string) => void;
@@ -725,12 +725,25 @@ export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
     [handleRedo, handleUndo, pushExplicitSnapshot, triggerInputSave]
   );
 
-  // Dán vào là lọc sạch ngay: HTML lạ (Word/trang web) chỉ giữ chữ +
-  // định dạng cơ bản, bỏ script/hình/link độc. Không có HTML thì để
-  // trình duyệt dán chữ thường.
+  // Dán vào là lọc sạch ngay: có HTML lạ (Word/trang web) thì giữ chữ +
+  // định dạng cơ bản; không có HTML mà chữ là markdown (copy từ chatbot)
+  // thì đổi sang định dạng rồi mới dán; chữ thường thì để trình duyệt dán.
   const handleEditorPaste = useCallback(
     (e: React.ClipboardEvent) => {
       const html = e.clipboardData?.getData("text/html");
+      const plain = e.clipboardData?.getData("text/plain") ?? "";
+      if ((!html && looksLikeMarkdown(plain)) && editorRef.current) {
+        e.preventDefault();
+        pushExplicitSnapshot();
+        editorRef.current.focus();
+        try {
+          document.execCommand("insertHTML", false, sanitizeRichHtml(markdownToHtml(plain)));
+        } catch {
+          document.execCommand("insertText", false, plain);
+        }
+        triggerInputSave();
+        return;
+      }
       if (!html || !editorRef.current) return;
       e.preventDefault();
       pushExplicitSnapshot();

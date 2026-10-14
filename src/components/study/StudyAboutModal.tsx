@@ -55,12 +55,16 @@ const FEATURES: { name: string; desc: string; shortcut?: string }[] = [
   { name: "Kế hoạch học tập", desc: "Ghi việc cần làm, bấm theo dõi từng việc", shortcut: "K" },
   { name: "Ghi chép nhanh", desc: "Ghi chú lẹ, tự lưu trên máy của bạn", shortcut: "N" },
   { name: "Phòng học nhóm", desc: "Học chung với bạn bè qua gọi video", shortcut: "G" },
+  { name: "Trợ lý học tập AI", desc: "Hỏi đáp bài tập, gợi ý ôn thi và tóm tắt", shortcut: "C" },
   { name: "Chế độ Zen", desc: "Ẩn hết nút để chỉ còn bạn và bài học", shortcut: "Z" },
   { name: "Toàn màn hình", desc: "Phóng to hết cỡ cho đỡ xao nhãng", shortcut: "F" },
 ];
 
 const NOTES: string[] = [
   "Mọi cài đặt, ghi chú, việc cần làm đều lưu trên máy của bạn. Đổi sang máy khác thì không mang theo được.",
+  "Trợ lý AI trả lời độc lập từng câu để phản hồi siêu nhanh (khác với ChatGPT/Gemini nhớ đoạn chat dài). Hãy bật nút [🧠 Nhớ hội thoại] trên góc chat khi cần AI kết nối câu trước để giải tiếp.",
+  "Thông tin do AI cung cấp có thể có sai sót hoặc nhầm lẫn, bạn hãy luôn đối chiếu lại với sách giáo khoa và tài liệu học tập chính thống.",
+  "Trợ lý học tập AI cần đăng nhập Google để hỏi bài và lưu lịch sử hội thoại an toàn.",
   "Đồng hồ Pomodoro đang chạy mà lỡ tải lại trang (F5) thì vẫn chạy tiếp, không mất giờ.",
   "Xem video nền và nghe nhạc cần có mạng. Mạng yếu thì nên chọn hình tĩnh cho nhẹ.",
   "Muốn biết hết phím bấm, mở bảng phím tắt trong thanh trên cùng.",
@@ -99,12 +103,12 @@ export const StudyAboutModal = ({ isOpen, onClose }: StudyAboutModalProps) => {
       isOpen={isOpen}
       onClose={onClose}
       panelKey="about-modal"
-      backdropClassName="bg-black/60 backdrop-blur-md"
+      backdropClassName="z-[60] bg-black/60 backdrop-blur-md"
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 10 }}
       transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-      panelClassName="fixed inset-0 m-auto z-50 w-[calc(100%-2rem)] max-w-[560px] h-fit max-h-[min(680px,calc(100vh-64px))] glass-panel hover:bg-black/45 text-white overflow-y-auto custom-study-scroll p-5 sm:p-6 space-y-4 transform-gpu will-change-[transform,opacity]"
+      panelClassName="fixed inset-0 m-auto z-[70] w-[calc(100%-2rem)] max-w-[560px] h-fit max-h-[min(680px,calc(100vh-64px))] glass-panel hover:bg-black/45 text-white overflow-y-auto custom-study-scroll p-5 sm:p-6 space-y-4 transform-gpu will-change-[transform,opacity]"
       ariaLabel="Giới thiệu website"
     >
       <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
@@ -155,7 +159,7 @@ export const StudyAboutModal = ({ isOpen, onClose }: StudyAboutModalProps) => {
             aria-modal="true"
             aria-label="Ảnh to của Lều Tiến Dũng"
             onClick={() => setIsAvatarOpen(false)}
-            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6 cursor-zoom-out"
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6 cursor-zoom-out"
           >
             <div
               className="relative"

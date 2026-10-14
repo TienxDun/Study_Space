@@ -10,9 +10,11 @@ import {
   CircleNotchIcon,
   ArrowClockwiseIcon,
   SignInIcon,
+  LockKeyIcon,
 } from "@phosphor-icons/react";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useFloatingSize } from "@/lib/use-floating-size";
+import { useAuth, GoogleIcon } from "@/components/study/auth";
 import { StudyRoomView } from "./StudyRoomView";
 
 export interface StudyRoomsWidgetProps {
@@ -53,7 +55,17 @@ const getCenter = (w: number, h: number) => {
 // Phòng học nhóm dạng thẻ bay: kéo đi được, đổi cỡ được,
 // nhớ chỗ y như thẻ ghi chú.
 export const StudyRoomsWidget = ({ isOpen, onClose }: StudyRoomsWidgetProps) => {
-  const [displayName, setDisplayName] = useState("");
+  const {
+    user,
+    loading: authLoading,
+    isSigningIn,
+    authError,
+    signIn,
+  } = useAuth();
+
+  const [displayName, setDisplayName] = useState(
+    () => user?.displayName || user?.email?.split("@")[0] || ""
+  );
   const [roomName, setRoomName] = useState("");
   const [token, setToken] = useState<string | null>(null);
   const [serverUrl, setServerUrl] = useState("");
@@ -62,8 +74,17 @@ export const StudyRoomsWidget = ({ isOpen, onClose }: StudyRoomsWidgetProps) => 
   const [error, setError] = useState<string | null>(null);
   const [openRooms, setOpenRooms] = useState<{ name: string; count: number }[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Tự động gán tên từ tài khoản đăng nhập khi user có sẵn
+  useEffect(() => {
+    if (user) {
+      const preferred = user.displayName || user.email?.split("@")[0] || "";
+      if (preferred && !displayName) {
+        setDisplayName(preferred);
+      }
+    }
+  }, [user, displayName]);
 
   // Cỡ khung do hook chung lo (nhớ + kẹp + kéo góc); chỗ đứng tự lo ở dưới
   const {
@@ -98,7 +119,6 @@ export const StudyRoomsWidget = ({ isOpen, onClose }: StudyRoomsWidgetProps) => 
   const wide = roomSize.width >= 600;
 
   useEffect(() => {
-    setIsMounted(true);
     try {
       const savedPos = localStorage.getItem(STORAGE_KEYS.roomsPos);
       if (savedPos) {
@@ -168,7 +188,7 @@ const getLiveKitEndpoints = () => {
       const res = await fetch(tokenUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ room, name }),
+        body: JSON.stringify({ room, name, userId: user?.uid }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Vào phòng thất bại.");
@@ -199,12 +219,15 @@ const getLiveKitEndpoints = () => {
     } finally {
       setJoining(false);
     }
-  }, [roomSize]);
+  }, [roomSize, user]);
+
+  const resolvedDisplayName =
+    displayName.trim() || user?.displayName || user?.email?.split("@")[0] || "";
 
   const handleJoin = useCallback(async () => {
-    if (!displayName.trim() || !roomName.trim() || joining) return;
-    await doJoin(roomName.trim(), displayName.trim());
-  }, [displayName, roomName, joining, doJoin]);
+    if (!resolvedDisplayName || !roomName.trim() || joining) return;
+    await doJoin(roomName.trim(), resolvedDisplayName);
+  }, [resolvedDisplayName, roomName, joining, doJoin]);
 
   // Lấy phòng đang mở mỗi lần mở bảng + bấm tải lại
   const loadOpenRooms = useCallback(async () => {
@@ -229,12 +252,12 @@ const getLiveKitEndpoints = () => {
   }, [isOpen, token, loadOpenRooms]);
 
   const handleJoinListed = (name: string) => {
-    if (!displayName.trim()) {
-      setError("Nhập tên của bạn ở dưới trước rồi bấm Vào.");
+    if (!resolvedDisplayName) {
+      setError("Nhập tên hiển thị của bạn ở dưới trước rồi bấm Vào.");
       return;
     }
     setRoomName(name);
-    doJoin(name, displayName.trim());
+    doJoin(name, resolvedDisplayName);
   };
 
   const handleLeave = useCallback(() => {
@@ -259,8 +282,9 @@ const getLiveKitEndpoints = () => {
     [beginRoomResize, roomPos.x, roomPos.y]
   );
 
-  const canJoin = displayName.trim().length > 0 && roomName.trim().length > 0 && !joining;
-  if (!isMounted) return null;
+  const canJoin = Boolean(
+    user && resolvedDisplayName.length > 0 && roomName.trim().length > 0 && !joining
+  );
 
   return (
     <AnimatePresence>
@@ -331,135 +355,207 @@ const getLiveKitEndpoints = () => {
             </div>
 
             {!token ? (
-              <div className="flex-1 min-h-0 overflow-y-auto custom-study-scroll">
-                {/* Thanh kéo */}
+              <div className="flex-1 min-h-0 overflow-y-auto custom-study-scroll flex flex-col">
+                {/* Thanh kéo / Header */}
                 <div
                   onPointerDown={(e) => dragControls.start(e)}
-                  className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 cursor-grab active:cursor-grabbing touch-none"
+                  className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 cursor-grab active:cursor-grabbing touch-none shrink-0"
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="p-2 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300">
                       <UsersIcon className="w-5 h-5" />
                     </span>
                     <div>
-                      <h2 className="text-sm font-bold">Phòng học nhóm</h2>
+                      <h2 className="text-sm font-bold text-white">Phòng học nhóm</h2>
                       <p className="text-xs text-slate-400">Vào phòng là thấy nhau, tối đa 10 người</p>
                     </div>
                   </div>
-                  <button
-                    onClick={onClose}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                    title="Đóng (Esc)"
-                  >
-                    <XIcon className="w-4 h-4" />
-                  </button>
-                </div>
 
-                <div className="p-5 sm:p-6 space-y-4">
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs font-semibold text-slate-300 mb-1">Tên của bạn</p>
-                      <input
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleJoin();
-                        }}
-                        placeholder="Ví dụ: An"
-                        maxLength={30}
-                        className="w-full px-3 py-2 rounded-xl bg-black/50 border border-white/20 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:border-white/30"
-                      />
-                    </div>
-
-                    {/* Phòng đang mở: bấm Vào là xong, khỏi gõ tên */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <p className="text-xs font-semibold text-slate-300">
-                          Phòng đang mở ({openRooms.length})
-                        </p>
-                        <button
-                          onClick={loadOpenRooms}
-                          disabled={loadingRooms}
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
-                          title="Tải lại danh sách"
-                        >
-                          <ArrowClockwiseIcon className={`w-3 h-3 ${loadingRooms ? "animate-spin" : ""}`} />
-                          Tải lại
-                        </button>
-                      </div>
-                      {openRooms.length === 0 ? (
-                        <p className="text-[11px] text-slate-500 px-1 py-2">
-                          {loadingRooms
-                            ? "Đang tìm..."
-                            : !getLiveKitEndpoints().isAvailable
-                            ? "Chưa cấu hình Cloudflare Worker cho phòng học (NEXT_PUBLIC_LIVEKIT_TOKEN_URL)."
-                            : "Chưa có phòng nào mở. Tạo phòng mới ở dưới nhé."}
-                        </p>
-                      ) : (
-                        <div className="space-y-1.5 max-h-36 overflow-y-auto custom-study-scroll pr-0.5">
-                          {openRooms.map((r) => (
-                            <div
-                              key={r.name}
-                              className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-colors"
-                            >
-                              <div className="min-w-0">
-                                <p className="text-xs font-bold truncate">{r.name}</p>
-                                <p className="text-[11px] text-emerald-300/90">
-                                  {r.count} người đang học
-                                </p>
-                              </div>
-                              <button
-                                onClick={() => handleJoinListed(r.name)}
-                                disabled={joining}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-40 shrink-0"
-                              >
-                                <SignInIcon className="w-3.5 h-3.5" /> Vào
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-semibold text-slate-300 mb-1">Hoặc tạo phòng mới</p>
-                      <input
-                        value={roomName}
-                        onChange={(e) => setRoomName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleJoin();
-                        }}
-                        placeholder="Ví dụ: on-thi-cuoi-ky"
-                        maxLength={32}
-                        className="w-full px-3 py-2 rounded-xl bg-black/50 border border-white/20 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:border-white/30"
-                      />
-                      <p className="text-[11px] text-slate-500 mt-1">
-                        Ai gõ cùng tên phòng là vào chung. Trình duyệt sẽ hỏi bật mic và camera.
-                      </p>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={onClose}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                      title="Đóng (Esc)"
+                    >
+                      <XIcon className="w-4 h-4" />
+                    </button>
                   </div>
-
-                  {error && (
-                    <p className="text-xs text-rose-300 bg-rose-500/10 border border-rose-400/30 rounded-xl px-3 py-2">
-                      {error}
-                    </p>
-                  )}
-
-                  <button
-                    onClick={handleJoin}
-                    disabled={!canJoin}
-                    className="w-full py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-40 flex items-center justify-center gap-2"
-                  >
-                    {joining ? (
-                      <>
-                        <CircleNotchIcon className="w-4 h-4 animate-spin" /> Đang vào...
-                      </>
-                    ) : (
-                      "Vào phòng học"
-                    )}
-                  </button>
                 </div>
+
+                {authLoading ? (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400 text-xs my-auto">
+                    <CircleNotchIcon className="w-6 h-6 animate-spin text-emerald-400 mb-2.5" />
+                    <span>Đang kiểm tra tài khoản...</span>
+                  </div>
+                ) : !user ? (
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 text-center select-none my-auto">
+                    <div className="relative mb-4">
+                      <div className="w-16 h-16 rounded-3xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-300 shadow-[0_0_28px_rgba(52,211,153,0.35)]">
+                        <UsersIcon className="w-8 h-8" />
+                      </div>
+                      <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-slate-900 flex items-center justify-center text-slate-950 shadow-md">
+                        <LockKeyIcon className="w-3.5 h-3.5" />
+                      </span>
+                    </div>
+
+                    <h3 className="text-base sm:text-lg font-bold text-white mb-1.5 tracking-tight">
+                      Đăng nhập để vào phòng học nhóm
+                    </h3>
+                    <p className="text-xs text-slate-300 max-w-sm leading-relaxed mb-6">
+                      Để giữ môi trường học tập an toàn, văn minh và tự động nhận diện thành viên, bạn cần đăng nhập tài khoản Google trước khi tham gia lớp học.
+                    </p>
+
+                    <div className="w-full max-w-xs space-y-2 mb-6 text-left">
+                      <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-200">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                        <span>Bật camera & micro cùng bạn bè tập trung</span>
+                      </div>
+                      <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-200">
+                        <span className="w-2 h-2 rounded-full bg-teal-400 shrink-0" />
+                        <span>Đồng bộ đồng hồ Pomodoro nhóm cùng học</span>
+                      </div>
+                      <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-200">
+                        <span className="w-2 h-2 rounded-full bg-sky-400 shrink-0" />
+                        <span>Tự động định danh thành viên, chống người lạ</span>
+                      </div>
+                    </div>
+
+                    {authError && (
+                      <p className="text-xs text-rose-300 bg-rose-500/10 border border-rose-400/30 rounded-xl px-3.5 py-2 mb-4 max-w-xs">
+                        {authError}
+                      </p>
+                    )}
+
+                    <button
+                      onClick={signIn}
+                      disabled={isSigningIn}
+                      className="relative group overflow-hidden w-full max-w-xs px-5 py-2.5 rounded-full text-xs font-bold text-slate-950 bg-white hover:bg-slate-100 shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-95 disabled:opacity-60"
+                    >
+                      {isSigningIn ? (
+                        <>
+                          <CircleNotchIcon className="w-4 h-4 animate-spin text-slate-700" />
+                          <span>Đang mở Google...</span>
+                        </>
+                      ) : (
+                        <>
+                          <GoogleIcon />
+                          <span>Đăng nhập với Google</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-5 sm:p-6 space-y-4">
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-semibold text-slate-300">Tên hiển thị trong phòng</p>
+                          <span className="text-[11px] text-emerald-300/80 truncate max-w-[200px]">
+                            {user.email}
+                          </span>
+                        </div>
+                        <input
+                          value={displayName}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleJoin();
+                          }}
+                          placeholder="Ví dụ: An"
+                          maxLength={30}
+                          className="w-full px-3 py-2 rounded-xl bg-black/50 border border-white/20 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:border-white/30"
+                        />
+                      </div>
+
+                      {/* Phòng đang mở: bấm Vào là xong, khỏi gõ tên */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <p className="text-xs font-semibold text-slate-300">
+                            Phòng đang mở ({openRooms.length})
+                          </p>
+                          <button
+                            onClick={loadOpenRooms}
+                            disabled={loadingRooms}
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                            title="Tải lại danh sách"
+                          >
+                            <ArrowClockwiseIcon className={`w-3 h-3 ${loadingRooms ? "animate-spin" : ""}`} />
+                            Tải lại
+                          </button>
+                        </div>
+                        {openRooms.length === 0 ? (
+                          <p className="text-[11px] text-slate-500 px-1 py-2">
+                            {loadingRooms
+                              ? "Đang tìm..."
+                              : !getLiveKitEndpoints().isAvailable
+                              ? "Chưa cấu hình Cloudflare Worker cho phòng học (NEXT_PUBLIC_LIVEKIT_TOKEN_URL)."
+                              : "Chưa có phòng nào mở. Tạo phòng mới ở dưới nhé."}
+                          </p>
+                        ) : (
+                          <div className="space-y-1.5 max-h-36 overflow-y-auto custom-study-scroll pr-0.5">
+                            {openRooms.map((r) => (
+                              <div
+                                key={r.name}
+                                className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-colors"
+                              >
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold truncate">{r.name}</p>
+                                  <p className="text-[11px] text-emerald-300/90">
+                                    {r.count} người đang học
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => handleJoinListed(r.name)}
+                                  disabled={joining}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-40 shrink-0"
+                                >
+                                  <SignInIcon className="w-3.5 h-3.5" /> Vào
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-semibold text-slate-300 mb-1">Hoặc tạo phòng mới</p>
+                        <input
+                          value={roomName}
+                          onChange={(e) => setRoomName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleJoin();
+                          }}
+                          placeholder="Ví dụ: on-thi-cuoi-ky"
+                          maxLength={32}
+                          className="w-full px-3 py-2 rounded-xl bg-black/50 border border-white/20 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:border-white/30"
+                        />
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          Ai gõ cùng tên phòng là vào chung. Trình duyệt sẽ hỏi bật mic và camera.
+                        </p>
+                      </div>
+                    </div>
+
+                    {error && (
+                      <p className="text-xs text-rose-300 bg-rose-500/10 border border-rose-400/30 rounded-xl px-3 py-2">
+                        {error}
+                      </p>
+                    )}
+
+                    <button
+                      onClick={handleJoin}
+                      disabled={!canJoin}
+                      className="w-full py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-40 flex items-center justify-center gap-2"
+                    >
+                      {joining ? (
+                        <>
+                          <CircleNotchIcon className="w-4 h-4 animate-spin" /> Đang vào...
+                        </>
+                      ) : (
+                        "Vào phòng học"
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <LiveKitRoom

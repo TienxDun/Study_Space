@@ -29,18 +29,57 @@ public/study/
 # Environment Variables & Secrets (NEVER COMMIT SENSITIVE DATA)
 # ------------------------------------------------------------------------------
 .env
+.env.*
 .env*.local
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Allow committing example environment file if present
+!.env.example
+!.env*.example
+
+# Private Keys, Certificates & Keystores
 *.pem
 *.key
 *.cert
 *.crt
+*.p12
+*.pfx
+*.pkcs12
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
 
-# Allow committing example environment file if present
-!.env.example
+# Credentials & Tokens
+*.secret
+*.secrets
+secrets/
+*.credentials
+credentials.json
+token.json
+
+# Cloudflare Workers & Wrangler Secrets / Cache
+.dev.vars
+.dev.vars.*
+.wrangler/
+
+# Firebase & GCP Service Accounts / Local State
+*serviceAccountKey*.json
+*firebase-adminsdk*.json
+*-adminsdk-*.json
+google-services.json
+GoogleService-Info.plist
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# Package Manager Auth Tokens (prevents leaking registry credentials)
+.npmrc
+.yarnrc
 
 # ------------------------------------------------------------------------------
 # Logs & Debugging
@@ -73,6 +112,29 @@ test-results/
 next-env.d.ts
 
 # ------------------------------------------------------------------------------
+# Databases, Local Dumps & Backups
+# ------------------------------------------------------------------------------
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.dump
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+
+# ------------------------------------------------------------------------------
+# Archives & Compressed Files
+# ------------------------------------------------------------------------------
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# ------------------------------------------------------------------------------
 # Python (AG Kit Scripts & Virtual Environments)
 # ------------------------------------------------------------------------------
 __pycache__/
@@ -91,6 +153,8 @@ venv/
 # ------------------------------------------------------------------------------
 .idea/
 .vscode/
+.cursor/
+.zed/
 *.sublime-project
 *.sublime-workspace
 *.suo
@@ -125,6 +189,8 @@ $RECYCLE.BIN/
 # AI & Tooling Session Caches / Local Overrides
 # ------------------------------------------------------------------------------
 .agent/
+.agents/
+.agents
 .gemini/
 .claude/
 .antigravity/
@@ -136,8 +202,6 @@ $RECYCLE.BIN/
 # Hosting & Deployment
 # ------------------------------------------------------------------------------
 .vercel
-
-.agents
 
 # ------------------------------------------------------------------------------
 # Local Admin Studio & Local Backups (Offline Development Only)

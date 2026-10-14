@@ -104,6 +104,8 @@ Mọi thao tác đều có thể thực hiện nhanh chóng thông qua bàn phí
 |          <kbd>B</kbd>          | Mở / Đóng kho bối cảnh hình nền (Scenes)                         |
 |          <kbd>P</kbd>          | Mở / Đóng bộ trộn âm thanh môi trường (Sound Mixer)            |
 |          <kbd>E</kbd>          | Mở / Đóng đài phát nhúng (Embed Player YouTube / Spotify)        |
+|          <kbd>G</kbd>          | Mở / Đóng phòng học nhóm trực tuyến (Study Rooms)               |
+|          <kbd>C</kbd>          | Mở / Đóng Trợ lý học tập AI (Study Chatbot)                     |
 | <kbd>?</kbd> hoặc <kbd>H</kbd> | Mở bảng tra cứu phím tắt                                           |
 |         <kbd>Esc</kbd>         | Đóng mọi cửa sổ modal đang mở / Thoát Zen mode                  |
 

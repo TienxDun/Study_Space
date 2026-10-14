@@ -3,6 +3,8 @@ import {
   getNoteExcerpt,
   sanitizeStoredNoteContent,
   markdownToHtml,
+  looksLikeMarkdown,
+  noteHtmlToPlainText,
 } from "../../../components/study/notes/utils/note-markdown";
 
 describe("Study Notes Markdown & Excerpt Utilities", () => {
@@ -96,6 +98,66 @@ describe("Study Notes Markdown & Excerpt Utilities", () => {
       const md = "```\nconst x = 42;\n```";
       const html = markdownToHtml(md);
       expect(html).toContain("<pre><code>const x = 42;\n</code></pre>");
+    });
+
+    it("should convert ordered lists into ol", () => {
+      const md = "1. Bước một\n2. Bước hai\n3. Bước ba";
+      const html = markdownToHtml(md);
+      expect(html).toContain("<ol>");
+      expect(html).toContain("<li>Bước một</li>");
+      expect(html).toContain("<li>Bước ba</li>");
+    });
+
+    it("should convert star and plus bullets into ul", () => {
+      const md = "* Việc một\n+ Việc hai";
+      const html = markdownToHtml(md);
+      expect(html).toContain("<ul>");
+      expect(html).toContain("<li>Việc một</li>");
+      expect(html).toContain("<li>Việc hai</li>");
+    });
+
+    it("should convert GFM tables into table elements", () => {
+      const md = "| Tên | Tuổi |\n| --- | --- |\n| An | 20 |";
+      const html = markdownToHtml(md);
+      expect(html).toContain("<table>");
+      expect(html).toContain("<th>Tên</th>");
+      expect(html).toContain("<td>20</td>");
+    });
+
+    it("should convert hr and strikethrough", () => {
+      const html = markdownToHtml("---\n~~xóa~~");
+      expect(html).toContain("<hr>");
+      expect(html).toContain("<s>xóa</s>");
+    });
+  });
+
+  describe("looksLikeMarkdown", () => {
+    it("should detect markdown syntax", () => {
+      expect(looksLikeMarkdown("# Tiêu đề")).toBe(true);
+      expect(looksLikeMarkdown("- Việc 1\n- Việc 2")).toBe(true);
+      expect(looksLikeMarkdown("1. Bước một\n2. Bước hai")).toBe(true);
+      expect(looksLikeMarkdown("Chào **bạn** nhé")).toBe(true);
+      expect(looksLikeMarkdown("| A | B |\n| --- | --- |")).toBe(true);
+    });
+
+    it("should leave plain text alone", () => {
+      expect(looksLikeMarkdown("")).toBe(false);
+      expect(looksLikeMarkdown("Hôm nay trời đẹp quá")).toBe(false);
+      expect(looksLikeMarkdown("Mua 2 quả trứng và sữa")).toBe(false);
+    });
+  });
+
+  describe("noteHtmlToPlainText", () => {
+    it("should return empty string for empty input", () => {
+      expect(noteHtmlToPlainText("")).toBe("");
+    });
+
+    it("should convert rich note HTML with headers, lists, and checklists into clean plain text for AI", () => {
+      const html = "<h1>Ôn tập Toán</h1><p>Khái niệm ma trận.</p><div class=\"todo-item\"><input type=\"checkbox\" checked=\"true\" class=\"todo-checkbox\" /><span class=\"todo-checked-text\">Làm bài tập trang 20</span></div>";
+      const plain = noteHtmlToPlainText(html);
+      expect(plain).toContain("# Ôn tập Toán");
+      expect(plain).toContain("Khái niệm ma trận.");
+      expect(plain).toContain("- [x] Làm bài tập trang 20");
     });
   });
 });

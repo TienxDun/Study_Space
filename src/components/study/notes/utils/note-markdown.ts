@@ -28,6 +28,99 @@ export function getNoteExcerpt(content: string, maxLength: number = 55): string 
   return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
 }
 
+/**
+ * Chuyển đổi nội dung HTML của ghi chú thành văn bản sạch sẽ (giữ checklist, đề mục, ngắt dòng)
+ * dùng để gửi cho AI Chatbot.
+ */
+export function noteHtmlToPlainText(html: string): string {
+  if (!html) return "";
+
+  if (typeof window === "undefined" || typeof DOMParser === "undefined") {
+    return html
+      .replace(/<h1[^>]*>(.*?)<\/h1>/gi, "\n# $1\n")
+      .replace(/<h2[^>]*>(.*?)<\/h2>/gi, "\n## $1\n")
+      .replace(/<h3[^>]*>(.*?)<\/h3>/gi, "\n### $1\n")
+      .replace(/<div class="todo-item"[^>]*>[\s\S]*?checked[\s\S]*?<span[^>]*>(.*?)<\/span><\/div>/gi, "\n- [x] $1\n")
+      .replace(/<div class="todo-item"[^>]*>[\s\S]*?<span[^>]*>(.*?)<\/span><\/div>/gi, "\n- [ ] $1\n")
+      .replace(/<li[^>]*>(.*?)<\/li>/gi, "\n- $1\n")
+      .replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gi, "\n> $1\n")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n\n")
+      .replace(/<\/div>/gi, "\n")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/\n\s*\n+/g, "\n\n")
+      .trim();
+  }
+
+  const doc = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
+  const root = doc.body.firstElementChild ?? doc.body;
+
+  // 1. Checklist
+  root.querySelectorAll(".todo-item").forEach((todo) => {
+    const input = todo.querySelector("input[type='checkbox']") as HTMLInputElement | null;
+    const isChecked = input?.checked || input?.hasAttribute("checked") || input?.getAttribute("checked") === "true";
+    const checkSign = isChecked ? "[x]" : "[ ]";
+    const text = todo.textContent?.trim() || "";
+    const p = doc.createElement("div");
+    p.textContent = `\n- ${checkSign} ${text}\n`;
+    todo.replaceWith(p);
+  });
+
+  // 2. Headings
+  root.querySelectorAll("h1, h2, h3").forEach((h) => {
+    const prefix = h.tagName.toLowerCase() === "h1" ? "# " : h.tagName.toLowerCase() === "h2" ? "## " : "### ";
+    const text = h.textContent?.trim() || "";
+    const p = doc.createElement("div");
+    p.textContent = `\n${prefix}${text}\n`;
+    h.replaceWith(p);
+  });
+
+  // 3. Lists
+  root.querySelectorAll("li").forEach((li) => {
+    const text = li.textContent?.trim() || "";
+    const p = doc.createElement("div");
+    p.textContent = `\n- ${text}\n`;
+    li.replaceWith(p);
+  });
+
+  // 4. Blockquotes
+  root.querySelectorAll("blockquote").forEach((bq) => {
+    const text = bq.textContent?.trim() || "";
+    const p = doc.createElement("div");
+    p.textContent = `\n> ${text}\n`;
+    bq.replaceWith(p);
+  });
+
+  // 5. Code blocks
+  root.querySelectorAll("pre").forEach((pre) => {
+    const code = pre.textContent?.trim() || "";
+    const p = doc.createElement("div");
+    p.textContent = `\n\`\`\`\n${code}\n\`\`\`\n`;
+    pre.replaceWith(p);
+  });
+
+  // 6. Paragraphs & br
+  root.querySelectorAll("p, br").forEach((el) => {
+    if (el.tagName.toLowerCase() === "br") {
+      el.replaceWith(doc.createTextNode("\n"));
+    } else {
+      el.prepend(doc.createTextNode("\n"));
+      el.append(doc.createTextNode("\n"));
+    }
+  });
+
+  return (root.textContent || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+}
+
 // Helper to sanitize and fix notes stored previously with unrendered blockquotes or language identifiers
 export function sanitizeStoredNoteContent(rawContent: string): string {
   if (!rawContent) return "<p><br></p>";
@@ -50,6 +143,7 @@ const ALLOWED_NOTE_TAGS = new Set([
   "p", "br", "div", "span", "ul", "ol", "li",
   "h1", "h2", "h3", "blockquote", "pre", "code",
   "strong", "em", "u", "s", "b", "i", "a", "input", "mark",
+  "table", "thead", "tbody", "tr", "th", "td", "hr",
 ]);
 // Thẻ nguy hiểm: xóa cả thẻ lẫn nội dung bên trong
 const DROP_NOTE_TAGS = new Set([
@@ -209,22 +303,48 @@ export function markdownToHtml(md: string): string {
     '<div class="todo-item"><input type="checkbox" class="todo-checkbox" /><span>$1</span></div>'
   );
 
-  // Bold, Italic, Inline Code
+  // Bold, Italic, Inline Code, Strikethrough
   text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   text = text.replace(/\*([^*]+)\*/g, "<em>$1</em>");
   text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
+  text = text.replace(/~~([^~]+)~~/g, "<s>$1</s>");
 
-  // Nested bullets (sub-levels with 2 or 4 spaces indent)
-  text = text.replace(
-    /^ {2,4}- (.*$)/gim,
-    '<ul style="list-style-type:circle;padding-left:1.4rem;margin:0.2rem 0;"><li>$1</li></ul>'
-  );
+  // Gạch ngang --- / ***
+  text = text.replace(/^\s*(---|\*\*\*)\s*$/gim, "<hr>");
 
-  // Top-level bullet items
-  text = text.replace(/^- (.*$)/gim, "<li>$1</li>");
+  // Bảng GFM: các dòng | ... | liên tiếp, dòng 2 là vạch | --- |
+  text = text.replace(/((?:^\s*\|.*\|\s*$\n?){2,})/gim, (block) => {
+    const rows = block
+      .trim()
+      .split(/\r?\n/)
+      .map((r) =>
+        r
+          .trim()
+          .replace(/^\||\|$/g, "")
+          .split("|")
+          .map((c) => c.trim())
+      );
+    if (rows.length < 2 || !rows[1].every((c) => /^:?-{1,}:?$/.test(c))) return block;
+    const head = rows[0].map((c) => `<th>${c}</th>`).join("");
+    const body = rows
+      .slice(2)
+      .map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`)
+      .join("");
+    return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+  });
 
-  // Group consecutive loose <li> items into <ul>
-  text = text.replace(/(?:<li>[\s\S]*?<\/li>\n?)+/gim, (match) => `<ul>${match}</ul>`);
+  // List theo cụm dòng liên tiếp: cùng có thứ tự -> <ol>, còn lại -> <ul>
+  // Dấu đầu dòng chấp nhận -, *, + (giữ chỗ checklist - [ ] đã đổi ở trên)
+  text = text.replace(/((?:^\s*(?:[-*+]|\d+\.)\s+.*$\n?)+)/gim, (block) => {
+    const lines = block.trim().split(/\r?\n/);
+    const ordered = lines.every((l) => /^\s*\d+\.\s+/.test(l));
+    const items = lines
+      .map((l) => l.replace(/^\s*(?:[-*+]|\d+\.)\s+/, "").trim())
+      .filter(Boolean)
+      .map((c) => `<li>${c}</li>`)
+      .join("");
+    return ordered ? `<ol>${items}</ol>` : `<ul>${items}</ul>`;
+  });
 
   // Restore code blocks
   codeBlocks.forEach((cb, idx) => {
@@ -244,11 +364,29 @@ export function markdownToHtml(md: string): string {
         trimmed.startsWith("<div") ||
         trimmed.startsWith("<ul") ||
         trimmed.startsWith("<ol") ||
-        trimmed.startsWith("<li")
+        trimmed.startsWith("<li") ||
+        trimmed.startsWith("<table") ||
+        trimmed.startsWith("<hr")
       ) {
         return trimmed;
       }
       return `<p>${trimmed.replace(/\n/g, "<br>")}</p>`;
     })
     .join("");
+}
+
+// Đoán văn bản dán vào có phải markdown không (để đổi sang định dạng,
+// chứ chữ thường thì giữ nguyên không động vào).
+export function looksLikeMarkdown(text: string): boolean {
+  if (!text) return false;
+  return (
+    /^#{1,3}\s+\S/m.test(text) || // # Tiêu đề
+    /^>\s*\S/m.test(text) || // > Trích dẫn
+    /```/.test(text) || // khối code
+    /^\s*[-*+]\s+\S/m.test(text) || // gạch đầu dòng
+    /^\s*\d+\.\s+\S/m.test(text) || // danh sách số
+    /^\s*[-*+]\s+\[[ xX]\]/m.test(text) || // checklist
+    /^\s*\|.*\|\s*$/m.test(text) || // bảng
+    /\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|~~[^~]+~~/.test(text) // đậm/nghiêng/code/gạch
+  );
 }

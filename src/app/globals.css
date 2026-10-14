@@ -214,6 +214,16 @@
   }
 }
 
+/* Chu shimmer kieu shadcn: chu chay sang khi AI dang tra loi. */
+@keyframes shimmer-text {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
 @layer utilities {
   .vertical-text {
     writing-mode: vertical-rl;
@@ -492,6 +502,31 @@ summary {
   font-weight: normal !important;
 }
 
+.study-editor-content table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 0.75rem 0 !important;
+  font-size: 0.875rem !important;
+}
+
+.study-editor-content th,
+.study-editor-content td {
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  padding: 0.4rem 0.6rem !important;
+  text-align: left !important;
+}
+
+.study-editor-content th {
+  background: rgba(255, 255, 255, 0.06) !important;
+  font-weight: 700 !important;
+}
+
+.study-editor-content hr {
+  border: none !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+  margin: 0.85rem 0 !important;
+}
+
 .study-editor-content mark {
   background-color: rgba(250, 204, 21, 0.35) !important;
   color: #fef08a !important;
@@ -659,6 +694,31 @@ summary {
   color: #854d0e !important;
   padding: 0.1rem 0.25rem !important;
   border-radius: 0.25rem !important;
+}
+
+.study-editor-content-light table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 0.75rem 0 !important;
+  font-size: 0.875rem !important;
+}
+
+.study-editor-content-light th,
+.study-editor-content-light td {
+  border: 1px solid #e2e8f0 !important;
+  padding: 0.4rem 0.6rem !important;
+  text-align: left !important;
+}
+
+.study-editor-content-light th {
+  background: #f8fafc !important;
+  font-weight: 700 !important;
+}
+
+.study-editor-content-light hr {
+  border: none !important;
+  border-top: 1px solid #e2e8f0 !important;
+  margin: 0.85rem 0 !important;
 }
 
 /* IMPORTANT-ALLOWED-END (ly do o banner tren) — tu day tro xuong cam !important. */

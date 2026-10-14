@@ -63,7 +63,8 @@ export function FocusStatsModal({ isOpen, onClose }: FocusStatsModalProps) {
       isOpen={isOpen}
       onClose={onClose}
       panelKey="focus-stats-panel"
-      panelClassName="fixed top-[4.5rem] right-4 sm:right-6 z-50 w-full max-w-[340px] sm:max-w-[380px] glass-panel p-5 text-white select-none max-h-[calc(100vh-92px)] overflow-y-auto overscroll-contain custom-study-scroll"
+      backdropClassName="z-[60] bg-transparent"
+      panelClassName="fixed top-[4.5rem] right-4 sm:right-6 z-[70] w-full max-w-[340px] sm:max-w-[380px] glass-panel p-5 text-white select-none max-h-[calc(100vh-92px)] overflow-y-auto overscroll-contain custom-study-scroll"
     >
       <div
         role="dialog"

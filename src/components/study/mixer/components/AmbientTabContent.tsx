@@ -69,7 +69,6 @@ export function AmbientTabContent({
         </span>
         {activeCount > 0 ? (
           <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs font-medium text-emerald-300">
               Đang phối <b className="font-bold">{activeCount}</b> âm thanh
             </span>
