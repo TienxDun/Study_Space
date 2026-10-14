@@ -8,6 +8,8 @@ import {
   useChat,
   useRoomContext,
   useTracks,
+  RoomAudioRenderer,
+  StartAudio,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import {
@@ -36,7 +38,13 @@ const formatTime = (ts: number) =>
 // bảng chat trượt bên phải. Chỉ giữ 1 nút rời phòng duy nhất.
 export const StudyRoomView = ({ roomName, onLeave, sideBySide = true, onDragStart }: StudyRoomViewProps) => {
   const room = useRoomContext();
-  const tracks = useTracks([Track.Source.Camera, Track.Source.ScreenShare]);
+  const tracks = useTracks(
+    [
+      { source: Track.Source.Camera, withPlaceholder: true },
+      { source: Track.Source.ScreenShare, withPlaceholder: false },
+    ],
+    { onlySubscribed: false }
+  );
   const { chatMessages, send } = useChat();
   const [chatOpen, setChatOpen] = useState(false);
   const [draft, setDraft] = useState("");
@@ -63,6 +71,15 @@ export const StudyRoomView = ({ roomName, onLeave, sideBySide = true, onDragStar
 
   return (
     <div className="flex flex-col h-full">
+      {/* Phát âm thanh của các thành viên khác trong phòng */}
+      <RoomAudioRenderer />
+
+      {/* Hiển thị nút bật tiếng nếu trình duyệt chặn tự động phát âm thanh */}
+      <StartAudio
+        label="🔊 Nhấn vào đây để bật âm thanh phòng học (Trình duyệt đang chặn tự động phát)"
+        className="mx-3 mt-2 px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-semibold cursor-pointer transition-colors text-center shrink-0"
+      />
+
       {/* Đầu phòng: tên + nút rời duy nhất, cả thanh để kéo thẻ */}
       <div
         onPointerDown={onDragStart}
@@ -173,14 +190,14 @@ export const StudyRoomView = ({ roomName, onLeave, sideBySide = true, onDragStar
         <div className="flex flex-col items-center gap-1">
           <TrackToggle
             source={Track.Source.Microphone}
-            className="w-11 h-11 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-white flex items-center justify-center cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.6)] [&_svg]:w-5 [&_svg]:h-5"
+            className="w-11 h-11 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-white flex items-center justify-center cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.6)] [&_svg]:w-5 [&_svg]:h-5 aria-pressed:bg-emerald-500/25 aria-pressed:border-emerald-400/40 aria-pressed:text-emerald-300"
           />
           <span className="text-[10px] text-slate-400 font-medium">Mic</span>
         </div>
         <div className="flex flex-col items-center gap-1">
           <TrackToggle
             source={Track.Source.Camera}
-            className="w-11 h-11 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-white flex items-center justify-center cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.6)] [&_svg]:w-5 [&_svg]:h-5"
+            className="w-11 h-11 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-white flex items-center justify-center cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.6)] [&_svg]:w-5 [&_svg]:h-5 aria-pressed:bg-emerald-500/25 aria-pressed:border-emerald-400/40 aria-pressed:text-emerald-300"
           />
           <span className="text-[10px] text-slate-400 font-medium">Cam</span>
         </div>
@@ -188,7 +205,7 @@ export const StudyRoomView = ({ roomName, onLeave, sideBySide = true, onDragStar
           <TrackToggle
             source={Track.Source.ScreenShare}
             captureOptions={{ audio: true }}
-            className="w-11 h-11 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-white flex items-center justify-center cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.6)] [&_svg]:w-5 [&_svg]:h-5"
+            className="w-11 h-11 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 text-white flex items-center justify-center cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.6)] [&_svg]:w-5 [&_svg]:h-5 aria-pressed:bg-emerald-500/25 aria-pressed:border-emerald-400/40 aria-pressed:text-emerald-300"
           />
           <span className="text-[10px] text-slate-400 font-medium">Chia sẻ</span>
         </div>
