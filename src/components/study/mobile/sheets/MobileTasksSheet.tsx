@@ -6,11 +6,8 @@ import {
   CircleIcon,
   PlusIcon,
   CheckSquareIcon,
-  DotsThreeVerticalIcon,
   MagnifyingGlassIcon,
   XIcon,
-  TrashIcon,
-  ArrowRightIcon,
   TimerIcon,
 } from "@phosphor-icons/react";
 import { useKanbanBoards } from "../../tasks/hooks/useKanbanBoards";
@@ -24,6 +21,7 @@ import { KanbanCard, CardPriority } from "../../tasks/types";
 import { useFocusStats } from "@/lib/use-focus-stats";
 import { formatFocusDuration } from "@/lib/focus-sessions";
 import { startFocusTask } from "@/lib/use-focus-task";
+import { MobileTaskBubbleMenu } from "./MobileTaskBubbleMenu";
 
 interface MobileTasksSheetProps {
   isOpen: boolean;
@@ -66,6 +64,25 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
   const [quickPriority, setQuickPriority] = useState<CardPriority>("medium");
   const [activeMenuCardId, setActiveMenuCardId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const startLongPress = (cardId: string) => {
+    longPressTimerRef.current = setTimeout(() => {
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        try {
+          navigator.vibrate(30);
+        } catch {}
+      }
+      setActiveMenuCardId(cardId);
+    }, 450);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
 
   // Thống kê thời gian tập trung Pomodoro tích lũy theo từng task
   const allTimeStats = useFocusStats("all");
@@ -164,7 +181,10 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
   const handleQuickAdd = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const title = quickTitle.trim();
-    if (!title) return;
+    if (!title) {
+      inputRef.current?.focus();
+      return;
+    }
 
     // Nếu đang lọc một cột cụ thể thì thêm vào cột đó, ngược lại thêm vào cột đầu tiên
     const targetColId =
@@ -215,47 +235,45 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
           /* Cụm điều khiển ngón tay cái Thumb-Zone: Bộ lọc trạng thái + Thanh thêm nhanh */
           <div className="p-2.5 space-y-2 select-none">
             {/* Bộ lọc trạng thái dạng viên nhộng (Status Pills cuộn ngang) */}
-            <div className="overflow-x-auto no-scrollbar flex items-center gap-1.5 pb-0.5">
-              <button
-                ref={(el) => {
-                  if (el) pillRefs.current.set("all", el);
-                  else pillRefs.current.delete("all");
-                }}
-                type="button"
-                onClick={() => setSelectedColumnFilter("all")}
-                className={`h-7 px-3 rounded-full text-xs font-medium whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 ${
-                  selectedColumnFilter === "all"
-                    ? "bg-white text-black font-semibold shadow-md"
-                    : "bg-white/[0.06] hover:bg-white/[0.12] text-white/75 border border-white/[0.08]"
-                }`}
-              >
-                <span>Tất cả</span>
-                <span className="text-[10px] opacity-75">({allCardsWithColumn.length})</span>
-              </button>
+            <div className="overflow-x-auto no-scrollbar pb-0.5">
+              <div className="flex items-center justify-center gap-1.5 min-w-full w-max px-1">
+                <button
+                  ref={(el) => {
+                    if (el) pillRefs.current.set("all", el);
+                    else pillRefs.current.delete("all");
+                  }}
+                  type="button"
+                  onClick={() => setSelectedColumnFilter("all")}
+                  className={`h-7 px-3 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer ${
+                    selectedColumnFilter === "all" ? "lg-tab-active" : "lg-tab-inactive"
+                  }`}
+                >
+                  <span>Tất cả</span>
+                  <span className="text-[10px] opacity-75">({allCardsWithColumn.length})</span>
+                </button>
 
-              {columns.map((col) => {
-                const isActive = selectedColumnFilter === col.id;
-                const count = cards.filter((c) => c.columnId === col.id).length;
-                return (
-                  <button
-                    ref={(el) => {
-                      if (el) pillRefs.current.set(col.id, el);
-                      else pillRefs.current.delete(col.id);
-                    }}
-                    key={col.id}
-                    type="button"
-                    onClick={() => setSelectedColumnFilter(col.id)}
-                    className={`h-7 px-3 rounded-full text-xs font-medium whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 ${
-                      isActive
-                        ? "bg-white text-black font-semibold shadow-md"
-                        : "bg-white/[0.06] hover:bg-white/[0.12] text-white/75 border border-white/[0.08]"
-                    }`}
-                  >
-                    <span className="truncate max-w-[120px]">{col.title}</span>
-                    <span className="text-[10px] opacity-75">({count})</span>
-                  </button>
-                );
-              })}
+                {columns.map((col) => {
+                  const isActive = selectedColumnFilter === col.id;
+                  const count = cards.filter((c) => c.columnId === col.id).length;
+                  return (
+                    <button
+                      ref={(el) => {
+                        if (el) pillRefs.current.set(col.id, el);
+                        else pillRefs.current.delete(col.id);
+                      }}
+                      key={col.id}
+                      type="button"
+                      onClick={() => setSelectedColumnFilter(col.id)}
+                      className={`h-7 px-3 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer ${
+                        isActive ? "lg-tab-active" : "lg-tab-inactive"
+                      }`}
+                    >
+                      <span className="truncate max-w-[120px]">{col.title}</span>
+                      <span className="text-[10px] opacity-75">({count})</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Thanh nhập việc nhanh ở đáy (Quick Add Bar) */}
@@ -272,10 +290,10 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                     : "Vừa"
                 } - Chạm để đổi`}
                 aria-label="Chọn độ ưu tiên"
-                className="h-9 px-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.1] flex items-center gap-1 text-[11px] font-medium text-white/80 active:scale-95 transition-all shrink-0"
+                className="h-9 px-2.5 rounded-xl lg-btn-action flex items-center gap-1 text-[11px] font-medium shrink-0 cursor-pointer"
               >
                 <PrioritySignalIcon priority={quickPriority} className="w-3.5 h-3.5 shrink-0" />
-                <span className="text-[10px] text-white/70">
+                <span className="text-[10px] text-white/80">
                   {quickPriority === "high" ? "Gấp" : quickPriority === "low" ? "Thấp" : "Vừa"}
                 </span>
               </button>
@@ -286,16 +304,15 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                 value={quickTitle}
                 onChange={(e) => setQuickTitle(e.target.value)}
                 placeholder="Nhập việc cần làm..."
-                className="flex-1 h-9 px-3 rounded-xl bg-white/[0.06] border border-white/[0.1] text-xs text-white placeholder-white/40 focus:outline-none focus:border-white/30 transition-colors min-w-0"
+                className="flex-1 h-9 px-3 rounded-xl bg-white/[0.04] border border-white/[0.1] text-xs text-white placeholder-white/40 focus:outline-none focus:border-white/30 transition-colors min-w-0"
               />
               <button
                 type="submit"
-                disabled={!quickTitle.trim()}
                 aria-label="Thêm việc"
-                className="h-9 px-3 rounded-xl bg-white/20 hover:bg-white/30 disabled:opacity-30 disabled:pointer-events-none text-white text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 shrink-0 shadow-sm"
+                className="h-9 px-3.5 rounded-xl lg-btn-action text-white text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 shrink-0 cursor-pointer"
               >
-                <PlusIcon className="w-4 h-4" weight="bold" />
-                <span>Thêm</span>
+                <PlusIcon className="w-4 h-4 relative z-10" weight="bold" />
+                <span className="relative z-10">Thêm</span>
               </button>
             </form>
           </div>
@@ -349,6 +366,10 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                 return (
                   <div
                     key={card.id}
+                    onTouchStart={() => startLongPress(card.id)}
+                    onTouchMove={cancelLongPress}
+                    onTouchEnd={cancelLongPress}
+                    onTouchCancel={cancelLongPress}
                     className={`group relative rounded-2xl border transition-all select-none p-3 ${
                       isCompleted
                         ? "bg-white/[0.02] border-emerald-500/20 opacity-80"
@@ -464,91 +485,27 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                         </div>
                       </div>
 
-                      {/* Menu chuyển cột nhanh */}
-                      <div className="relative shrink-0">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setActiveMenuCardId((prev) =>
-                              prev === card.id ? null : card.id
-                            )
-                          }
-                          aria-label="Tùy chọn thẻ"
-                          className="w-8.5 h-8.5 -mr-1.5 -mt-1 rounded-xl flex items-center justify-center hover:bg-white/10 text-white/40 hover:text-white active:scale-90 transition-all cursor-pointer"
-                        >
-                          <DotsThreeVerticalIcon className="w-4 h-4" />
-                        </button>
-
-                        {/* Dropdown chuyển cột nhanh */}
-                        {isMenuOpen && (
-                          <>
-                            {/* Backdrop vô hình che toàn màn hình để bắt click ra ngoài tự động đóng */}
-                            <div
-                              className="fixed inset-0 z-40 bg-transparent"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveMenuCardId(null);
-                              }}
-                            />
-                            <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-2xl bg-neutral-900/95 backdrop-blur-xl border border-white/15 shadow-2xl p-1.5 text-left space-y-0.5 animate-in fade-in zoom-in-95 duration-100">
-                              {/* Tùy chọn Bắt đầu phiên Pomodoro tập trung vào thẻ này */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  startFocusTask({ id: card.id, title: card.title });
-                                  setActiveMenuCardId(null);
-                                }}
-                                className="w-full px-2.5 py-2 rounded-xl text-xs font-semibold text-amber-300 hover:text-amber-200 hover:bg-amber-500/15 text-left flex items-center justify-between transition-colors active:scale-[0.98]"
-                              >
-                                <span className="flex items-center gap-2 whitespace-nowrap min-w-0">
-                                  <TimerIcon className="w-4 h-4 text-amber-400 shrink-0" weight="fill" />
-                                  <span className="truncate">Học với Pomodoro</span>
-                                </span>
-                                {hasFocusTime && (
-                                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-200 shrink-0 whitespace-nowrap ml-2">
-                                    {formattedFocusTime}
-                                  </span>
-                                )}
-                              </button>
-
-                              <div className="my-1 border-t border-white/10" />
-
-                              <p className="px-2 py-1 text-[10px] font-semibold text-white/40 uppercase">
-                                Chuyển sang:
-                              </p>
-                              {columns
-                                .filter((c) => c.id !== colId)
-                                .map((c) => (
-                                  <button
-                                    key={c.id}
-                                    type="button"
-                                    onClick={() => {
-                                      handleMoveCard(card.id, c.id);
-                                      setActiveMenuCardId(null);
-                                    }}
-                                    className="w-full px-2 py-1.5 rounded-lg text-xs text-white/80 hover:text-white hover:bg-white/10 text-left flex items-center justify-between"
-                                  >
-                                    <span className="truncate">{c.title}</span>
-                                    <ArrowRightIcon className="w-3 h-3 text-white/40" />
-                                  </button>
-                                ))}
-                              <div className="pt-1 border-t border-white/10">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    promptDeleteCard(card);
-                                    setActiveMenuCardId(null);
-                                  }}
-                                  className="w-full px-2 py-1.5 rounded-lg text-xs text-rose-300 hover:text-rose-200 hover:bg-rose-500/15 text-left flex items-center gap-1.5"
-                                >
-                                  <TrashIcon className="w-3.5 h-3.5" />
-                                  <span>Xóa việc này</span>
-                                </button>
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </div>
+                      {/* Bubble Menu: Thao tác nhanh dạng bong bóng nổi */}
+                      <MobileTaskBubbleMenu
+                        card={card}
+                        columns={columns}
+                        currentColId={colId}
+                        isOpen={isMenuOpen}
+                        onToggle={() =>
+                          setActiveMenuCardId((prev) =>
+                            prev === card.id ? null : card.id
+                          )
+                        }
+                        onClose={() => setActiveMenuCardId(null)}
+                        onStartFocus={() => {
+                          startFocusTask({ id: card.id, title: card.title });
+                        }}
+                        onSelectDetail={() => setSelectedCard(card)}
+                        onMoveCard={(targetColId) => handleMoveCard(card.id, targetColId)}
+                        onDeleteCard={() => promptDeleteCard(card)}
+                        hasFocusTime={hasFocusTime}
+                        formattedFocusTime={formattedFocusTime}
+                      />
                     </div>
                   </div>
                 );

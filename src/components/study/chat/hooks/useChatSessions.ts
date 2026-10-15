@@ -64,9 +64,9 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
       (snap) => {
         const data = snap.data() as { activeSid?: string | null; updatedAt?: { toMillis?: () => number } } | undefined;
         const pending = switchingSidRef.current;
-        // Nếu người dùng vừa chủ động đổi phiên trong 3s qua, không để snapshot cũ ghi đè
+        // Nếu người dùng vừa chủ động đổi/tạo phiên trong 3s qua, không để snapshot cũ ghi đè
         if (pending && Date.now() < pending.until) {
-          if (data?.activeSid === pending.sid) {
+          if (data?.activeSid === pending.sid || (!data?.activeSid && !pending.sid)) {
             switchingSidRef.current = null;
           }
         } else {
@@ -87,8 +87,9 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
 
   // Chọn phiên khi mở: đang chọn thì thôi, chưa có thì lấy phiên mới nhất,
   // trắng tinh thì để trống (câu gửi đầu sẽ tạo). Tốn tối đa 1 lượt đọc.
+  // CHỈ chạy lần đầu khi mở widget (resolved === false), không chạy lại khi người dùng bấm tạo mới (activeSid = null).
   useEffect(() => {
-    if (!open || !user || !parentLoaded || activeSid !== null) return;
+    if (!open || !user || !parentLoaded || activeSid !== null || resolved) return;
     let cancelled = false;
     (async () => {
       try {
@@ -123,7 +124,7 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
     return () => {
       cancelled = true;
     };
-  }, [open, user, parentLoaded, activeSid]);
+  }, [open, user, parentLoaded, activeSid, resolved]);
 
   // Mở khung thì đánh dấu đã xem.
   useEffect(() => {
@@ -243,19 +244,40 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
     }
   };
 
-  // Tạo phiên mới: chỉ khi phiên hiện tại đã có tin nhắn.
-  // Đưa về trạng thái phiên mới (activeSid = null), câu hỏi đầu mới ghi DB để không sinh rác.
+  // Tạo phiên mới: đưa về trạng thái phiên mới (activeSid = null), câu hỏi đầu mới ghi DB để không sinh rác.
   const createSession = (hasMessages: boolean, busy: boolean, onSwitched: () => void) => {
-    if (!user || busy) return;
-    if (!hasMessages || activeSid === null) {
-      setNotice("Đoạn chat hiện tại chưa có tin nhắn, bạn hãy gửi câu hỏi nhé!");
+    if (!user) {
+      setNotice("Bạn hãy đăng nhập để bắt đầu trò chuyện nhé!");
+      return;
+    }
+    if (busy) {
+      setNotice("Trợ lý đang trả lời câu hỏi, bạn đợi một lát nhé.");
+      return;
+    }
+    // Nếu người dùng ĐÃ đang ở phiên mới tinh và chưa có tin nhắn nào
+    if (activeSid === null && !hasMessages) {
+      setNotice("Bạn đang ở đoạn chat mới rồi, hãy gửi câu hỏi nhé!");
       setDrawerOpen(false);
       return;
     }
+    // Khóa snapshot không cho đè lại phiên cũ trong 3.5s
+    switchingSidRef.current = { sid: "", until: Date.now() + 3500 };
     setActiveSid(null);
+    freshTitleRef.current = true;
     onSwitched();
     setDrawerOpen(false);
     setConfirmDelSid(null);
+
+    // Đồng bộ trạng thái activeSid: null lên Firestore ngầm để lưu lại vị trí phiên
+    try {
+      void setDoc(
+        doc(getFirebaseDb(), "conversations", user.uid),
+        { ownerUid: user.uid, activeSid: null, updatedAt: serverTimestamp() },
+        { merge: true }
+      );
+    } catch {
+      /* bỏ qua */
+    }
   };
 
   // Chuyển phiên: Optimistic update ngay lập tức, lưu ngầm không chặn UI.

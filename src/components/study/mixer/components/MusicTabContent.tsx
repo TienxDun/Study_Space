@@ -65,10 +65,10 @@ export function MusicTabContent({
               <button
                 key={mood.key}
                 onClick={() => onSelectMood(mood.key as MoodType)}
-                className={`flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl border transition-all active:scale-95 cursor-pointer ${
+                className={`flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl transition-all active:scale-95 cursor-pointer ${
                   isSelected
-                    ? "bg-emerald-600/90 text-white border-emerald-400 shadow-lg shadow-emerald-500/20 font-bold"
-                    : "bg-white/5 hover:bg-white/10 text-slate-300 border-white/10 font-medium"
+                    ? "lg-tab-active !border-emerald-400/50 shadow-[0_4px_20px_rgba(52,211,153,0.3)]"
+                    : "lg-tab-inactive"
                 }`}
               >
                 <Icon className={`w-5 h-5 ${isSelected ? "text-white" : mood.color}`} />

@@ -63,21 +63,29 @@ export function useChatMessages({
   const pendingSeqRef = useRef(0);
   const lastUidRef = useRef<string | null>(null);
 
-  // Chuyển phiên: Nạp cache ngay lập tức (0 lượt đọc), nếu chưa có cache thì bật loading
+  // Chuyển phiên: Nạp cache ngay lập tức (0 lượt đọc), nếu chưa có cache thì nạp từ listener
   useEffect(() => {
     if (!open || !user || !activeSid) {
-      if (activeSid === null && resolved) setMsgs([]);
+      if (activeSid === null && resolved) {
+        setMsgs((prev) => prev.filter((m) => m.id.startsWith("pending-")));
+      }
       setLoading(false);
       return;
     }
     const cached = loadCache(user.uid, activeSid);
     if (cached && cached.length > 0) {
-      setMsgs(cached);
+      setMsgs((prev) => {
+        const pendings = prev.filter((m) => m.id.startsWith("pending-"));
+        if (pendings.length === 0) return cached;
+        const kept = pendings.filter((p) => !cached.some((m) => m.role === "user" && m.text === p.text));
+        return [...cached, ...kept];
+      });
       prevLenRef.current = cached.length;
       setLoading(false);
     } else {
-      setMsgs([]);
-      setLoading(true);
+      // Giữ lại các tin pending đang gửi, không xóa trắng màn hình
+      setMsgs((prev) => prev.filter((m) => m.id.startsWith("pending-")));
+      setLoading(false);
     }
   }, [open, user, activeSid, resolved]);
 
@@ -151,12 +159,12 @@ export function useChatMessages({
                 });
                 applySnapList(sortedDocs);
               } else {
-                setMsgs([]);
+                setMsgs((prev) => prev.filter((m) => m.id.startsWith("pending-")));
                 setLoading(false);
               }
             })
             .catch(() => {
-              setMsgs([]);
+              setMsgs((prev) => prev.filter((m) => m.id.startsWith("pending-")));
               setLoading(false);
             });
           return;
@@ -292,28 +300,36 @@ export function useChatMessages({
       ...(a.kind === "image" && a.dataUrl ? { originalUrl: a.dataUrl } : {}),
     }));
     if ((!text && meta.length === 0) || sending || regenerating || !user) return;
+
+    // 1. Hiện câu hỏi ngay lập tức trên UI (Optimistic UI - không đợi bất kỳ lệnh await nào)
+    pendingSeqRef.current += 1;
+    const pendingId = `pending-${pendingSeqRef.current}`;
+    const newPendingMsg: Msg = {
+      id: pendingId,
+      role: "user" as const,
+      text,
+      ...(localMeta.length > 0 ? { attachments: localMeta } : {}),
+    };
+    setMsgs((prev) => [...prev, newPendingMsg]);
     setSending(true);
     setNotice("");
-    // Chưa có phiên nào thì tạo 1 phiên mới để ghi vào.
+    stickRef.current = true;
+    setIsAtBottom(true);
+    setPanelNewCount(0);
+
+    const dropPending = () =>
+      setMsgs((prev) => prev.filter((m) => m.id !== pendingId));
+
+    // 2. Chưa có phiên nào thì tạo 1 phiên mới ngầm để ghi vào.
     const sid = await ensureSession().catch(() => null);
     if (!sid) {
+      dropPending();
       setNotice("Mạng chập chờn, bạn thử lại nhé.");
       setSending(false);
       return;
     }
-    // Tin mình gửi thì luôn dính đáy để thấy ngay.
-    stickRef.current = true;
-    setIsAtBottom(true);
-    setPanelNewCount(0);
-    // Hiện câu hỏi ngay lập tức (tin tạm), snapshot Firestore về sau sẽ thay bằng tin thật.
-    pendingSeqRef.current += 1;
-    const pendingId = `pending-${pendingSeqRef.current}`;
-    setMsgs((prev) => [
-      ...prev,
-      { id: pendingId, role: "user" as const, text, ...(localMeta.length > 0 ? { attachments: localMeta } : {}) },
-    ]);
-    const dropPending = () =>
-      setMsgs((prev) => prev.filter((m) => m.id !== pendingId));
+
+    // 3. Gọi API AI
     const res = await callChatApi(getToken, text, recentHistory(), extras);
     if (!res.ok) {
       dropPending();
@@ -404,10 +420,10 @@ export function useChatMessages({
     sendWithText,
     regenerate,
     copyMsg,
-    // Dọn view khi chuyển/xóa phiên (listener phiên mới nạp lại).
+    // Dọn view khi chuyển/xóa/tạo phiên mới (listener phiên mới sẽ nạp lại nếu có activeSid).
     resetView: () => {
       setMsgs([]);
-      setLoading(true);
+      setLoading(false);
       prevLenRef.current = 0;
       stickRef.current = true;
       setIsAtBottom(true);

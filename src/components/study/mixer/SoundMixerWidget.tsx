@@ -175,14 +175,12 @@ export const SoundMixerWidget = ({
         footer={
           /* Bộ chuyển Tab lớn công thái học Thumb-Zone ghim ở đáy */
           <div className="p-2.5 select-none">
-            <div className="grid grid-cols-2 p-1 rounded-2xl bg-white/[0.06] border border-white/[0.1] shadow-inner">
+            <div className="grid grid-cols-2 p-1 rounded-2xl bg-black/40 border border-white/[0.1] shadow-inner backdrop-blur-md">
               <button
                 type="button"
                 onClick={() => setActiveTab("music")}
-                className={`py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
-                  activeTab === "music"
-                    ? "bg-white text-black font-bold shadow-md"
-                    : "text-white/70 hover:text-white"
+                className={`py-2 rounded-xl text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer ${
+                  activeTab === "music" ? "lg-tab-active" : "lg-tab-inactive"
                 }`}
               >
                 <MusicNotesIcon className="w-4 h-4" />
@@ -191,10 +189,8 @@ export const SoundMixerWidget = ({
               <button
                 type="button"
                 onClick={() => setActiveTab("ambience")}
-                className={`py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
-                  activeTab === "ambience"
-                    ? "bg-white text-black font-bold shadow-md"
-                    : "text-white/70 hover:text-white"
+                className={`py-2 rounded-xl text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer ${
+                  activeTab === "ambience" ? "lg-tab-active" : "lg-tab-inactive"
                 }`}
               >
                 <CloudRainIcon className="w-4 h-4" />

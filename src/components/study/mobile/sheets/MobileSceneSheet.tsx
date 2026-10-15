@@ -250,10 +250,8 @@ export const MobileSceneSheet = React.memo(function MobileSceneSheet({
                 key={cat.key}
                 type="button"
                 onClick={() => setSelectedCategory(cat.key)}
-                className={`h-8 px-3.5 rounded-full text-xs font-medium whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 ${
-                  isActive
-                    ? "bg-white text-black font-semibold shadow-md"
-                    : "bg-white/[0.06] hover:bg-white/[0.12] text-white/75 border border-white/[0.08]"
+                className={`h-8 px-3.5 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer ${
+                  isActive ? "lg-tab-active" : "lg-tab-inactive"
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />

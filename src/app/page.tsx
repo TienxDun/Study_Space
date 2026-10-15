@@ -29,7 +29,7 @@ import { MobileSceneSheet } from "@/components/study/mobile/sheets/MobileSceneSh
 import { MobileTasksSheet } from "@/components/study/mobile/sheets/MobileTasksSheet";
 import { MobileNotesSheet } from "@/components/study/mobile/sheets/MobileNotesSheet";
 import { FocusStatsModal } from "@/components/study/stats/FocusStatsModal";
-import { MobileChatBubble } from "@/components/study/mobile/chat/MobileChatBubble";
+import { MobileRadialBubbleMenu } from "@/components/study/mobile/navigation/MobileRadialBubbleMenu";
 import { MobilePomodoroView } from "@/components/study/mobile/pomodoro/MobilePomodoroView";
 import type { MobileNavId } from "@/components/study/mobile/navigation/types";
 import { StudyShortcutsModal } from "@/components/study/StudyShortcutsModal";
@@ -907,7 +907,12 @@ export default function StudySpacePage() {
         !isSettingsOpen &&
         !isStatsOpen && (
           <div className="sm:hidden">
-            <MobileChatBubble hasNew={false} onOpen={() => setIsChatOpen(true)} />
+            <MobileRadialBubbleMenu
+              onOpenChat={() => setIsChatOpen(true)}
+              onOpenMixer={() => setIsMixerOpen(true)}
+              onOpenNotes={() => setIsNotesOpen(true)}
+              onOpenScenes={() => setIsScenesOpen(true)}
+            />
           </div>
         )}
     </div>
