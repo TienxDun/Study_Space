@@ -483,7 +483,7 @@ export default function StudySpacePage() {
     isShortcutsHelpOpen;
 
   return (
-    <div className="relative w-screen h-dvh overflow-hidden bg-slate-950 text-white select-none font-sans">
+    <div className="fixed inset-0 sm:relative sm:w-screen sm:h-dvh overflow-hidden bg-slate-950 text-white select-none font-sans">
       <StudyBackground scene={currentScene} isBlurActive={isAnyModalOpen} />
 
       {/* Top Navigation Bar: desktop giữ nguyên, mobile dùng bản gọn */}

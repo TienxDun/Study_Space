@@ -198,7 +198,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden text-white">
           {/* ======================= CHẾ ĐỘ 1: XEM/SỬA GHI CHÚ CHI TIẾT ======================= */}
           {currentEditingNote ? (
-            <div className="flex-1 min-h-0 flex flex-col p-4 space-y-3 overflow-y-auto custom-study-scroll overscroll-contain touch-pan-y">
+            <div className="flex-1 min-h-0 flex flex-col p-4 space-y-3 overflow-y-auto custom-study-scroll overscroll-contain touch-pan-y no-scrollbar">
               {/* Thanh điều hướng quay lại danh sách */}
               <div className="flex items-center justify-between pb-2 border-b border-white/10">
                 <button
@@ -264,7 +264,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
               )}
 
               {/* Danh sách các card ghi chú */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-study-scroll overscroll-contain touch-pan-y">
+              <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-study-scroll overscroll-contain touch-pan-y no-scrollbar">
                 {filteredNotes.length > 0 ? (
                   filteredNotes.map((note) => {
                     const snippet = extractPlainText(note.content);

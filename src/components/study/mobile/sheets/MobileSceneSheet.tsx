@@ -49,6 +49,7 @@ const MobileSceneCard = React.memo<{
       role="button"
       tabIndex={0}
       onClick={() => onSelect(scene)}
+      style={{ contentVisibility: "auto", containIntrinsicSize: "0 110px" }}
       className={`group relative aspect-[16/10] w-full rounded-2xl overflow-hidden border transition-all text-left cursor-pointer shrink-0 select-none active:scale-[0.98] ${
         isPending
           ? "border-amber-400 ring-2 ring-amber-400/50 shadow-[0_0_15px_rgba(251,191,36,0.35)] animate-pulse"
@@ -92,7 +93,7 @@ const MobileSceneCard = React.memo<{
         </div>
       )}
 
-      {/* Nút thả tim yêu thích dạng kính lỏng tối giản */}
+      {/* Nút thả tim: dùng nền đen mờ 60% thay vì backdrop-blur để giảm tải nặng cho GPU mobile */}
       <button
         type="button"
         onClick={(e) => {
@@ -100,7 +101,7 @@ const MobileSceneCard = React.memo<{
           onToggleFavorite(scene.id);
         }}
         aria-label={isFav ? "Bỏ yêu thích" : "Yêu thích"}
-        className="absolute top-1.5 right-1.5 z-10 w-7 h-7 rounded-full bg-black/35 hover:bg-black/55 backdrop-blur-md border border-white/10 flex items-center justify-center text-white active:scale-90 transition-all"
+        className="absolute top-1.5 right-1.5 z-10 w-7 h-7 rounded-full bg-black/60 hover:bg-black/80 border border-white/15 flex items-center justify-center text-white active:scale-90 transition-all shadow-sm"
       >
         <HeartIcon
           weight={isFav ? "fill" : "regular"}
@@ -137,6 +138,7 @@ export const MobileSceneSheet = React.memo(function MobileSceneSheet({
 }: MobileSceneSheetProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isFullListReady, setIsFullListReady] = useState(false);
   const { isFavorite, toggleFavorite, count: favoriteCount } = useFavoriteScenes();
 
   const categories = useMemo(() => [
@@ -205,6 +207,25 @@ export const MobileSceneSheet = React.memo(function MobileSceneSheet({
       el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
     }
   }, [selectedCategory]);
+
+  // Kỹ thuật Render 2 giai đoạn (Staged Rendering):
+  // Trong lúc Sheet đang chạy hiệu ứng trượt 220ms, chỉ render 6 cảnh đầu tiên để main thread 60fps mượt mà
+  // Ngay khi trượt xong, nạp đầy đủ toàn bộ danh sách
+  useEffect(() => {
+    if (!isOpen) {
+      setIsFullListReady(false);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setIsFullListReady(true);
+    }, 200);
+    return () => window.clearTimeout(timer);
+  }, [isOpen]);
+
+  const displayedScenes = useMemo(() => {
+    if (isFullListReady || filteredScenes.length <= 6) return filteredScenes;
+    return filteredScenes.slice(0, 6);
+  }, [filteredScenes, isFullListReady]);
 
   return (
     <MobileSheetShell
@@ -323,8 +344,8 @@ export const MobileSceneSheet = React.memo(function MobileSceneSheet({
 
         {/* Lưới hiển thị các bối cảnh (2 cột) */}
         <div className="flex-1 px-3 grid grid-cols-2 gap-2.5 pb-4 content-start">
-          {filteredScenes.length > 0 ? (
-            filteredScenes.map((scene) => (
+          {displayedScenes.length > 0 ? (
+            displayedScenes.map((scene) => (
               <MobileSceneCard
                 key={scene.id}
                 scene={scene}

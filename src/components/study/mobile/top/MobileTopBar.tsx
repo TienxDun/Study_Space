@@ -33,8 +33,8 @@ export const MobileTopBar = React.memo(function MobileTopBar({
   if (isZenMode) return null;
 
   return (
-    <header className="absolute top-0 inset-x-0 z-40 sm:hidden pt-safe">
-      <div className="relative flex items-center justify-between px-4 h-14">
+    <header className="fixed top-0 inset-x-0 z-40 sm:hidden pt-safe pointer-events-none">
+      <div className="relative flex items-center justify-between px-4 h-14 pointer-events-auto">
         <Link href="/" aria-label="ZenStudy" className="w-11 h-11 grid place-items-center shrink-0 active:scale-95">
           <ZenStudyLogo variant="icon" className="h-9 w-9" priority />
         </Link>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import { ModalShell } from "@/components/ui/ModalShell";
 import {
   XIcon,
   CaretDownIcon,
@@ -111,26 +112,28 @@ export const CardDetailModal = React.memo(function CardDetailModal({
   const deadlineInfo = selectedCard.dueDate ? getDeadlineStatus(selectedCard.dueDate) : null;
 
   return (
-    <AnimatePresence>
+    <ModalShell
+      isOpen={Boolean(selectedCard)}
+      onClose={() => {
+        setSelectedCard(null);
+        closeAllPopovers();
+      }}
+      panelKey={`card-details-modal-${selectedCard.id}`}
+      ariaLabel={selectedCard.title || "Chi tiết nhiệm vụ"}
+      backdropClassName="z-[90] bg-black/75 backdrop-blur-sm"
+      panelClassName="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 pointer-events-none"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
       <motion.div
-        key={`card-details-modal-${selectedCard.id}`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
-        onClick={() => {
-          setSelectedCard(null);
-          closeAllPopovers();
-        }}
+        initial={{ scale: 0.96, y: 12, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.96, y: 12, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 360, damping: 28 }}
+        onClick={(e) => e.stopPropagation()}
+        className="relative pointer-events-auto w-full max-w-[660px] max-h-[92dvh] sm:max-h-[88vh] flex flex-col rounded-3xl bg-neutral-950/95 backdrop-blur-2xl border border-white/20 shadow-[0_24px_60px_rgba(0,0,0,0.85)] text-white overflow-hidden"
       >
-        <motion.div
-          initial={{ scale: 0.96, y: 12, opacity: 0 }}
-          animate={{ scale: 1, y: 0, opacity: 1 }}
-          exit={{ scale: 0.96, y: 12, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 360, damping: 28 }}
-          onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-[660px] max-h-[88vh] flex flex-col rounded-3xl bg-black/60 hover:bg-black/65 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-white overflow-hidden"
-        >
           <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
           {/* Header: Title, Board Info & Action Bar */}
           <div className="px-5 sm:px-6 pt-5 pb-3.5 border-b border-white/10 space-y-3 bg-white/[0.01]">
@@ -793,7 +796,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
             </div>
           </div>
         </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-});
+      </ModalShell>
+    );
+  }
+);

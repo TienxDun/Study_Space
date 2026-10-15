@@ -152,6 +152,6 @@ export const ModalShell = ({
     </AnimatePresence>
   );
 
-  if (!mounted) return null;
+  if (!mounted || typeof document === "undefined" || !document.body) return null;
   return createPortal(content, document.body);
 };

@@ -36,48 +36,71 @@ export const MobileNavItem = React.memo(function MobileNavItem({
       onClick={handleClick}
       aria-label={label}
       aria-current={isActive ? "page" : undefined}
-      className="lg-nav-btn group relative flex-1 h-full flex flex-col items-center justify-center py-0.5 focus:outline-none select-none cursor-pointer"
+      className="lg-nav-btn group relative flex-1 h-full flex flex-col items-center justify-center focus:outline-none select-none cursor-pointer"
     >
-      {/* Viên kính của nút đang chọn: đặc hơn thanh ngoài 1 nấc */}
-      {isActive && (
-        <motion.div
-          layoutId="liquid-glass-active-pill"
-          transition={{
-            type: "spring",
-            stiffness: 420,
-            damping: 32,
-          }}
-          className="absolute inset-y-0.5 inset-x-0.5 lg-pill"
-        />
-      )}
-
-      {/* Biểu tượng: 24px, nút chọn trắng phát sáng nhẹ, nút thường 2 lớp chìm */}
-      <span
-        className={cn(
-          "relative z-10 flex h-6 w-6 items-center justify-center transition-colors duration-200",
-          isActive
-            ? "text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.35)]"
-            : "text-white/70 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]"
-        )}
-      >
-        {icon}
-      </span>
-
-      {/* Dòng chữ (Label) - CHỈ hiển thị khi nút được chọn, nhỏ gọn 10px */}
-      <AnimatePresence mode="wait">
+      {/* Viên kính của nút đang chọn: có AnimatePresence để khi BỎ CHỌN viên kính tan biến êm dịu thay vì biến mất đột ngột */}
+      <AnimatePresence>
         {isActive && (
-          <motion.span
-            key={`label-${label}`}
-            initial={{ opacity: 0, y: 2, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 1, scale: 0.9 }}
-            transition={{ duration: 0.16, ease: "easeOut" }}
-            className="relative z-10 text-[10px] font-semibold leading-none mt-0.5 text-white tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]"
-          >
-            {label}
-          </motion.span>
+          <motion.div
+            key="liquid-glass-active-pill"
+            layoutId="liquid-glass-active-pill"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{
+              opacity: 0,
+              scale: 0.88,
+              transition: { duration: 0.18, ease: "easeOut" },
+            }}
+            transition={{
+              type: "spring",
+              stiffness: 420,
+              damping: 32,
+            }}
+            className="absolute inset-y-0.5 inset-x-0.5 lg-pill pointer-events-none"
+          />
         )}
       </AnimatePresence>
+
+      {/* Cụm Icon & Label trung tâm: Tịnh tiến mượt mà bằng transition CSS thay vì layout shift đột ngột */}
+      <div
+        className={cn(
+          "relative z-10 flex flex-col items-center justify-center transition-transform duration-200 ease-out",
+          isActive ? "-translate-y-0.5" : "translate-y-0"
+        )}
+      >
+        {/* Biểu tượng: 22px, nút chọn sáng rực trắng, nút thường mờ kính */}
+        <span
+          className={cn(
+            "flex h-6 w-6 items-center justify-center transition-all duration-200 ease-out",
+            isActive
+              ? "text-white scale-105 drop-shadow-[0_0_8px_rgba(255,255,255,0.45)]"
+              : "text-slate-300/80 scale-100 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]"
+          )}
+        >
+          {icon}
+        </span>
+
+        {/* Dòng chữ (Label): Bỏ mode="wait" để không bị nghẽn render khi unmount */}
+        <AnimatePresence>
+          {isActive && (
+            <motion.span
+              key={`label-${label}`}
+              initial={{ opacity: 0, y: 3, scale: 0.85 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{
+                opacity: 0,
+                y: 1.5,
+                scale: 0.85,
+                transition: { duration: 0.14, ease: "easeIn" },
+              }}
+              transition={{ duration: 0.16, ease: "easeOut" }}
+              className="text-[10px] font-semibold leading-none mt-0.5 text-white tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] whitespace-nowrap"
+            >
+              {label}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </div>
     </button>
   );
 });

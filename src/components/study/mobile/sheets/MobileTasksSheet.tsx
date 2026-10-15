@@ -11,6 +11,7 @@ import {
   XIcon,
   TrashIcon,
   ArrowRightIcon,
+  TimerIcon,
 } from "@phosphor-icons/react";
 import { useKanbanBoards } from "../../tasks/hooks/useKanbanBoards";
 import { getDeadlineStatus } from "../../tasks/utils/task-deadline";
@@ -20,6 +21,9 @@ import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { MobileUndoSnackbar } from "../feedback/MobileUndoSnackbar";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { KanbanCard, CardPriority } from "../../tasks/types";
+import { useFocusStats } from "@/lib/use-focus-stats";
+import { formatFocusDuration } from "@/lib/focus-sessions";
+import { startFocusTask } from "@/lib/use-focus-task";
 
 interface MobileTasksSheetProps {
   isOpen: boolean;
@@ -62,6 +66,18 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
   const [quickPriority, setQuickPriority] = useState<CardPriority>("medium");
   const [activeMenuCardId, setActiveMenuCardId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Thống kê thời gian tập trung Pomodoro tích lũy theo từng task
+  const allTimeStats = useFocusStats("all");
+  const focusSecondsByTask = useMemo(
+    () => new Map(allTimeStats.byTask.map((t) => [t.taskId, t.focusSeconds] as const)),
+    [allTimeStats]
+  );
+
+  // Tự động đóng popup con khi đổi bộ lọc hoặc gõ tìm kiếm
+  React.useEffect(() => {
+    setActiveMenuCardId(null);
+  }, [selectedColumnFilter, searchQuery]);
 
   const cycleQuickPriority = () => {
     setQuickPriority((prev) => {
@@ -313,7 +329,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
           )}
 
           {/* Danh sách các công việc cuộn dọc */}
-          <div className="flex-1 px-3 space-y-2 overflow-y-auto custom-study-scroll pb-2 overscroll-contain touch-pan-y">
+          <div className="flex-1 px-3 space-y-2 overflow-y-auto custom-study-scroll pb-2 overscroll-contain touch-pan-y no-scrollbar">
             {displayedCards.length > 0 ? (
               displayedCards.map(({ card, colId, colTitle }) => {
                 const deadline = getDeadlineStatus(card.dueDate);
@@ -323,6 +339,12 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                 const checklistDone =
                   card.checklist?.filter((i) => i.completed).length || 0;
                 const isMenuOpen = activeMenuCardId === card.id;
+
+                const focusSeconds = focusSecondsByTask.get(card.id) ?? 0;
+                const hasFocusTime = focusSeconds > 0 || (card.pomodoros !== undefined && card.pomodoros > 0);
+                const formattedFocusTime = focusSeconds > 0
+                  ? formatFocusDuration(focusSeconds)
+                  : `${card.pomodoros} phiên`;
 
                 return (
                   <div
@@ -369,7 +391,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                           {card.title}
                         </p>
 
-                        {/* Thông tin phụ: Nhãn cột, Mức độ ưu tiên, Deadline, Checklist */}
+                        {/* Thông tin phụ: Nhãn cột, Mức độ ưu tiên, Pomodoro, Deadline, Checklist */}
                         <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                           {/* Nhãn cột hiện tại */}
                           <span
@@ -401,6 +423,17 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                                   ? "Thấp"
                                   : "Vừa"}
                               </span>
+                            </span>
+                          )}
+
+                          {/* Thời gian tập trung Pomodoro đã ghi nhận */}
+                          {hasFocusTime && (
+                            <span
+                              className="text-[10px] px-1.5 py-0.5 rounded-md font-medium font-mono flex items-center gap-1 bg-amber-500/15 text-amber-200 border border-amber-400/30 shadow-xs"
+                              title={`Thời gian tập trung Pomodoro: ${formattedFocusTime}`}
+                            >
+                              <TimerIcon className="w-2.5 h-2.5 shrink-0 text-amber-300" weight="fill" />
+                              <span>{formattedFocusTime}</span>
                             </span>
                           )}
 
@@ -448,40 +481,72 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
 
                         {/* Dropdown chuyển cột nhanh */}
                         {isMenuOpen && (
-                          <div className="absolute right-0 top-full mt-1 z-30 w-36 rounded-xl bg-neutral-900/95 backdrop-blur-xl border border-white/15 shadow-xl p-1 text-left space-y-0.5 animate-in fade-in zoom-in-95 duration-100">
-                            <p className="px-2 py-1 text-[10px] font-semibold text-white/40 uppercase">
-                              Chuyển sang:
-                            </p>
-                            {columns
-                              .filter((c) => c.id !== colId)
-                              .map((c) => (
-                                <button
-                                  key={c.id}
-                                  type="button"
-                                  onClick={() => {
-                                    handleMoveCard(card.id, c.id);
-                                    setActiveMenuCardId(null);
-                                  }}
-                                  className="w-full px-2 py-1.5 rounded-lg text-xs text-white/80 hover:text-white hover:bg-white/10 text-left flex items-center justify-between"
-                                >
-                                  <span className="truncate">{c.title}</span>
-                                  <ArrowRightIcon className="w-3 h-3 text-white/40" />
-                                </button>
-                              ))}
-                            <div className="pt-1 border-t border-white/10">
+                          <>
+                            {/* Backdrop vô hình che toàn màn hình để bắt click ra ngoài tự động đóng */}
+                            <div
+                              className="fixed inset-0 z-40 bg-transparent"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuCardId(null);
+                              }}
+                            />
+                            <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-2xl bg-neutral-900/95 backdrop-blur-xl border border-white/15 shadow-2xl p-1.5 text-left space-y-0.5 animate-in fade-in zoom-in-95 duration-100">
+                              {/* Tùy chọn Bắt đầu phiên Pomodoro tập trung vào thẻ này */}
                               <button
                                 type="button"
                                 onClick={() => {
-                                  promptDeleteCard(card);
+                                  startFocusTask({ id: card.id, title: card.title });
                                   setActiveMenuCardId(null);
                                 }}
-                                className="w-full px-2 py-1.5 rounded-lg text-xs text-rose-300 hover:text-rose-200 hover:bg-rose-500/15 text-left flex items-center gap-1.5"
+                                className="w-full px-2.5 py-2 rounded-xl text-xs font-semibold text-amber-300 hover:text-amber-200 hover:bg-amber-500/15 text-left flex items-center justify-between transition-colors active:scale-[0.98]"
                               >
-                                <TrashIcon className="w-3.5 h-3.5" />
-                                <span>Xóa việc này</span>
+                                <span className="flex items-center gap-2 whitespace-nowrap min-w-0">
+                                  <TimerIcon className="w-4 h-4 text-amber-400 shrink-0" weight="fill" />
+                                  <span className="truncate">Học với Pomodoro</span>
+                                </span>
+                                {hasFocusTime && (
+                                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-200 shrink-0 whitespace-nowrap ml-2">
+                                    {formattedFocusTime}
+                                  </span>
+                                )}
                               </button>
+
+                              <div className="my-1 border-t border-white/10" />
+
+                              <p className="px-2 py-1 text-[10px] font-semibold text-white/40 uppercase">
+                                Chuyển sang:
+                              </p>
+                              {columns
+                                .filter((c) => c.id !== colId)
+                                .map((c) => (
+                                  <button
+                                    key={c.id}
+                                    type="button"
+                                    onClick={() => {
+                                      handleMoveCard(card.id, c.id);
+                                      setActiveMenuCardId(null);
+                                    }}
+                                    className="w-full px-2 py-1.5 rounded-lg text-xs text-white/80 hover:text-white hover:bg-white/10 text-left flex items-center justify-between"
+                                  >
+                                    <span className="truncate">{c.title}</span>
+                                    <ArrowRightIcon className="w-3 h-3 text-white/40" />
+                                  </button>
+                                ))}
+                              <div className="pt-1 border-t border-white/10">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    promptDeleteCard(card);
+                                    setActiveMenuCardId(null);
+                                  }}
+                                  className="w-full px-2 py-1.5 rounded-lg text-xs text-rose-300 hover:text-rose-200 hover:bg-rose-500/15 text-left flex items-center gap-1.5"
+                                >
+                                  <TrashIcon className="w-3.5 h-3.5" />
+                                  <span>Xóa việc này</span>
+                                </button>
+                              </div>
                             </div>
-                          </div>
+                          </>
                         )}
                       </div>
                     </div>

@@ -46,18 +46,43 @@
   }
 }
 
-/* Tối ưu hóa cuộn mượt mà và ẩn thanh cuộn thô trên thiết bị cảm ứng di động */
-@media (pointer: coarse) {
+/* Tiện ích ẩn thanh cuộn chuẩn đa trình duyệt (Chrome, Safari, Firefox, Edge) */
+.no-scrollbar,
+.scrollbar-none {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Tối ưu hóa UI Mobile (< 640px) & màn hình cảm ứng:
+   Hạn chế tối đa việc hiển thị thanh scroll thô kệch trên mobile,
+   tạo cảm giác ứng dụng native phẳng mượt mà nhưng vẫn duy trì momentum touch scrolling */
+@media (max-width: 639px), (pointer: coarse) {
   .custom-study-scroll,
-  .custom-scrollbar {
+  .custom-scrollbar,
+  .no-scrollbar,
+  .scrollbar-none,
+  [class*="overflow-y-auto"],
+  [class*="overflow-x-auto"] {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    scrollbar-width: none;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
   }
+
   .custom-study-scroll::-webkit-scrollbar,
-  .custom-scrollbar::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
+  .custom-scrollbar::-webkit-scrollbar,
+  .no-scrollbar::-webkit-scrollbar,
+  .scrollbar-none::-webkit-scrollbar,
+  [class*="overflow-y-auto"]::-webkit-scrollbar,
+  [class*="overflow-x-auto"]::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
 }

@@ -6,12 +6,14 @@
     @apply font-sans;
     min-height: 100%;
     background: var(--background);
+    overscroll-behavior: none;
   }
   body {
     @apply bg-background text-foreground;
     min-height: 100dvh;
     scrollbar-gutter: stable;
     -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
   }
 }
 
