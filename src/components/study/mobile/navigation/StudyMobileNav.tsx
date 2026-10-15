@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useRef } from "react";
 import { TimerIcon, CheckSquareIcon, ImageIcon, MusicNoteIcon, DotsThreeIcon } from "@phosphor-icons/react";
 import type { MobileNavId } from "./types";
 import { MobileNavItem } from "./MobileNavItem";
@@ -64,13 +65,40 @@ const ITEMS: { id: MobileNavId; label: string; icon: (active: boolean) => React.
 ];
 
 // Thanh điều hướng kính lỏng (bản web phỏng theo, không phải API chính thức của Apple)
-export function StudyMobileNav({ active, onSelect }: StudyMobileNavProps) {
-  // Đốm sáng đi theo ngón tay (học từ mẫu 001 Lucianlabs): chạm đâu sáng đó
-  const handleSpot = (e: React.PointerEvent<HTMLDivElement>) => {
+export const StudyMobileNav = React.memo(function StudyMobileNav({
+  active,
+  onSelect,
+}: StudyMobileNavProps) {
+  const cachedRectRef = useRef<DOMRect | null>(null);
+  const rafRef = useRef<number | null>(null);
+
+  // Đốm sáng đi theo ngón tay: cache rect khi chạm để không gây layout reflow
+  const updateSpot = (clientX: number, clientY: number, el: HTMLDivElement) => {
+    if (!cachedRectRef.current) {
+      cachedRectRef.current = el.getBoundingClientRect();
+    }
+    const rect = cachedRectRef.current;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      el.style.setProperty("--mx", `${((clientX - rect.left) / rect.width) * 100}%`);
+      el.style.setProperty("--my", `${((clientY - rect.top) / rect.height) * 100}%`);
+    });
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
-    const rect = el.getBoundingClientRect();
-    el.style.setProperty("--mx", `${((e.clientX - rect.left) / rect.width) * 100}%`);
-    el.style.setProperty("--my", `${((e.clientY - rect.top) / rect.height) * 100}%`);
+    cachedRectRef.current = el.getBoundingClientRect();
+    updateSpot(e.clientX, e.clientY, el);
+    el.classList.add("is-touching");
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    updateSpot(e.clientX, e.clientY, e.currentTarget);
+  };
+
+  const handlePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    cachedRectRef.current = null;
+    e.currentTarget.classList.remove("is-touching");
   };
 
   return (
@@ -82,14 +110,11 @@ export function StudyMobileNav({ active, onSelect }: StudyMobileNavProps) {
         {/* Thanh capsule kính lỏng: mờ + đậm màu nền, viền sáng trên, bóng trung tính */}
         <div
           className="lg-bar p-1 flex items-stretch h-[58px]"
-          onPointerMove={handleSpot}
-          onPointerDown={(e) => {
-            handleSpot(e);
-            e.currentTarget.classList.add("is-touching");
-          }}
-          onPointerUp={(e) => e.currentTarget.classList.remove("is-touching")}
-          onPointerLeave={(e) => e.currentTarget.classList.remove("is-touching")}
-          onPointerCancel={(e) => e.currentTarget.classList.remove("is-touching")}
+          onPointerMove={handlePointerMove}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerEnd}
+          onPointerLeave={handlePointerEnd}
+          onPointerCancel={handlePointerEnd}
         >
           {/* Danh sách 5 nút điều hướng */}
           {ITEMS.map((item) => {
@@ -110,4 +135,4 @@ export function StudyMobileNav({ active, onSelect }: StudyMobileNavProps) {
       </div>
     </nav>
   );
-}
+});

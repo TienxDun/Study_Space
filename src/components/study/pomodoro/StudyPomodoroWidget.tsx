@@ -104,9 +104,76 @@ export const StudyPomodoroWidget = ({
     [logFocusTime]
   );
 
-  const switchTab = (tab: TimerTab) => {
-    if (onTabChange) onTabChange(tab);
-    setInternalTab(tab);
+const TIMER_TABS: TimerTab[] = ["clock", "pomodoro", "stopwatch"];
+
+  const switchTab = useCallback(
+    (tab: TimerTab) => {
+      if (onTabChange) onTabChange(tab);
+      setInternalTab(tab);
+    },
+    [onTabChange]
+  );
+
+  // Vuốt sang trái: chuyển chế độ tiếp theo (Đồng hồ -> Pomodoro -> Stopwatch -> Đồng hồ)
+  const handleNextTab = useCallback(() => {
+    const currentIndex = TIMER_TABS.indexOf(currentTab);
+    const nextTab = TIMER_TABS[(currentIndex + 1) % TIMER_TABS.length];
+    switchTab(nextTab);
+    pokeTabs();
+    if (typeof window !== "undefined" && "vibrate" in navigator) {
+      try {
+        navigator.vibrate(10);
+      } catch {}
+    }
+  }, [currentTab, switchTab, pokeTabs]);
+
+  // Vuốt sang phải: chuyển chế độ trước đó (Stopwatch -> Pomodoro -> Đồng hồ -> Stopwatch)
+  const handlePrevTab = useCallback(() => {
+    const currentIndex = TIMER_TABS.indexOf(currentTab);
+    const prevTab = TIMER_TABS[(currentIndex - 1 + TIMER_TABS.length) % TIMER_TABS.length];
+    switchTab(prevTab);
+    pokeTabs();
+    if (typeof window !== "undefined" && "vibrate" in navigator) {
+      try {
+        navigator.vibrate(10);
+      } catch {}
+    }
+  }, [currentTab, switchTab, pokeTabs]);
+
+  // Nhận diện cử chỉ quẹt ngang trên màn hình cảm ứng
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    // Không nhận vuốt chuyển tab nếu chạm vào các nút điều khiển (Play/Pause, Reset, Skip, Laps...)
+    if (target.closest("button") || target.closest("a") || target.closest(".custom-study-scroll")) {
+      return;
+    }
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+
+    // Ngưỡng vuốt ngang dứt khoát: khoảng cách ngang > 35px và góc ngang trội hơn dọc
+    if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+      if (deltaX < 0) {
+        handleNextTab();
+      } else {
+        handlePrevTab();
+      }
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
+  const handleTouchCancel = () => {
+    touchStartX.current = null;
+    touchStartY.current = null;
   };
 
   // Clock internal options
@@ -197,9 +264,12 @@ export const StudyPomodoroWidget = ({
   return (
     <div
       id="tour-pomodoro-widget"
-      className="group relative flex flex-col items-center justify-start text-white select-none pointer-events-auto w-full max-w-xl min-h-[300px] sm:min-h-[320px]"
+      className="group relative flex flex-col items-center justify-start text-white select-none pointer-events-auto w-full max-w-xl min-h-[300px] sm:min-h-[320px] touch-pan-y"
       onPointerDown={pokeTabs}
       onPointerEnter={pokeTabs}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
     >
       {/* 1. Hàng nút chuyển chế độ: desktop bản cũ, mobile bản kính riêng */}
       <div className="hidden sm:block">

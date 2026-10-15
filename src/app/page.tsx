@@ -43,6 +43,7 @@ import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useStudySettings } from "@/lib/use-study-settings";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { sendYouTubeCommand } from "@/lib/youtube-remote";
+import { useIsMobile } from "@/components/study/mobile/hooks/useIsMobile";
 
 // Lazy Load heavy widgets with code-splitting to optimize First Contentful Paint & bundle size
 const StudyTasksWidget = dynamic(
@@ -91,6 +92,7 @@ export default function StudySpacePage() {
   const [isGlobalMuted, setIsGlobalMuted] = useState(false);
 
   const [isZenMode, setIsZenMode] = useState(false);
+  const isMobile = useIsMobile();
 
   // Widget States
   const [isPomodoroVisible, setIsPomodoroVisible] = useState(true);
@@ -524,44 +526,75 @@ export default function StudySpacePage() {
       />
 
       {/* Floating Left Dock: chỉ hiện trên máy tính, mobile dùng thanh dưới */}
-      <div className="hidden sm:block">
-        <StudyLeftDock
-          isZenMode={isZenMode}
-          isPomodoroVisible={isPomodoroVisible}
-          isTasksOpen={isTasksOpen}
-          isNotesOpen={isNotesOpen}
-          isScenesOpen={isScenesOpen}
-          isEmbedPlayerOpen={isEmbedPlayerOpen && !isPipActive}
-          isExternalStreamActive={isExternalStreamActive}
-          onTogglePomodoro={handleTogglePomodoroVisibility}
-          onToggleTasks={handleToggleTasks}
-          onToggleNotes={handleToggleNotes}
-          onToggleScenes={handleToggleScenes}
-          onToggleEmbed={handleToggleEmbed}
-          isRoomsOpen={isRoomsOpen}
-          onToggleRooms={() => setIsRoomsOpen((prev) => !prev)}
-        />
-      </div>
+      {!isMobile && (
+        <div className="hidden sm:block">
+          <StudyLeftDock
+            isZenMode={isZenMode}
+            isPomodoroVisible={isPomodoroVisible}
+            isTasksOpen={isTasksOpen}
+            isNotesOpen={isNotesOpen}
+            isScenesOpen={isScenesOpen}
+            isEmbedPlayerOpen={isEmbedPlayerOpen && !isPipActive}
+            isExternalStreamActive={isExternalStreamActive}
+            onTogglePomodoro={handleTogglePomodoroVisibility}
+            onToggleTasks={handleToggleTasks}
+            onToggleNotes={handleToggleNotes}
+            onToggleScenes={handleToggleScenes}
+            onToggleEmbed={handleToggleEmbed}
+            isRoomsOpen={isRoomsOpen}
+            onToggleRooms={() => setIsRoomsOpen((prev) => !prev)}
+          />
+        </div>
+      )}
 
-      {/* Tasks Widget (Desktop & Mobile) */}
-      <StudyTasksWidget isOpen={isTasksOpen} onClose={() => setIsTasksOpen(false)} />
-      <MobileTasksSheet isOpen={isTasksOpen} onClose={() => setIsTasksOpen(false)} />
-      <StudyNotesWidget 
-        isOpen={isNotesOpen} 
-        onClose={() => setIsNotesOpen(false)} 
-      />
-      <MobileNotesSheet
-        isOpen={isNotesOpen}
-        onClose={() => setIsNotesOpen(false)}
-      />
+      {/* Tasks Widget: Phân ly rõ ràng Mobile & Desktop */}
+      {!isMobile && <StudyTasksWidget isOpen={isTasksOpen} onClose={() => setIsTasksOpen(false)} />}
+      {isMobile && <MobileTasksSheet isOpen={isTasksOpen} onClose={() => setIsTasksOpen(false)} />}
+
+      {/* Notes Widget: Phân ly rõ ràng Mobile & Desktop */}
+      {!isMobile && (
+        <StudyNotesWidget 
+          isOpen={isNotesOpen} 
+          onClose={() => setIsNotesOpen(false)} 
+        />
+      )}
+      {isMobile && (
+        <MobileNotesSheet
+          isOpen={isNotesOpen}
+          onClose={() => setIsNotesOpen(false)}
+        />
+      )}
+
       {/* Desktop Scene Selector */}
-      <div className="hidden sm:contents">
-        <SceneSelectorWidget 
-          isOpen={isScenesOpen} 
-          onClose={() => setIsScenesOpen(false)} 
+      {!isMobile && (
+        <div className="hidden sm:contents">
+          <SceneSelectorWidget 
+            isOpen={isScenesOpen} 
+            onClose={() => setIsScenesOpen(false)} 
+            currentScene={currentScene}
+            pendingScene={pendingScene}
+            isPreloading={isPreloadingScene}
+            onSelectScene={handleSelectScene}
+            slideshowEnabled={isSlideshowOn}
+            slideshowIntervalMin={slideshowIntervalMin}
+            slideshowPoolLabel={
+              isSlideshowPoolFavorites
+                ? `${slideshowPool.length} cảnh yêu thích`
+                : `tất cả ${slideshowPool.length} cảnh`
+            }
+            onToggleSlideshow={handleToggleSlideshow}
+            onCycleSlideshowInterval={handleCycleSlideshowInterval}
+          />
+        </div>
+      )}
+
+      {/* Mobile Scene Selector Sheet */}
+      {isMobile && (
+        <MobileSceneSheet
+          isOpen={isScenesOpen}
+          onClose={() => setIsScenesOpen(false)}
           currentScene={currentScene}
           pendingScene={pendingScene}
-          isPreloading={isPreloadingScene}
           onSelectScene={handleSelectScene}
           slideshowEnabled={isSlideshowOn}
           slideshowIntervalMin={slideshowIntervalMin}
@@ -573,25 +606,7 @@ export default function StudySpacePage() {
           onToggleSlideshow={handleToggleSlideshow}
           onCycleSlideshowInterval={handleCycleSlideshowInterval}
         />
-      </div>
-
-      {/* Mobile Scene Selector Sheet */}
-      <MobileSceneSheet
-        isOpen={isScenesOpen}
-        onClose={() => setIsScenesOpen(false)}
-        currentScene={currentScene}
-        pendingScene={pendingScene}
-        onSelectScene={handleSelectScene}
-        slideshowEnabled={isSlideshowOn}
-        slideshowIntervalMin={slideshowIntervalMin}
-        slideshowPoolLabel={
-          isSlideshowPoolFavorites
-            ? `${slideshowPool.length} cảnh yêu thích`
-            : `tất cả ${slideshowPool.length} cảnh`
-        }
-        onToggleSlideshow={handleToggleSlideshow}
-        onCycleSlideshowInterval={handleCycleSlideshowInterval}
-      />
+      )}
 
       {/* Floating Scene Preload Status Capsule (Hiển thị khi nạp bối cảnh mới lúc mạng yếu) */}
       <AnimatePresence>
@@ -740,20 +755,23 @@ export default function StudySpacePage() {
         isZenMode={isZenMode}
       />
 
-      {/* First-time Onboarding Tour & Interactive Spotlight Walkthrough */}      <StudyOnboardingTour
+      {/* First-time Onboarding Tour & Interactive Spotlight Walkthrough */}
+      <StudyOnboardingTour
         isOpen={isTourOpen ? true : undefined}
         onClose={() => setIsTourOpen(false)}
       />
 
-      {/* Command Palette mở nhanh (Cmd/Ctrl+K) */}
-      <StudyCommandPalette
-        isOpen={isCommandOpen}
-        onClose={() => setIsCommandOpen(false)}
-        actions={commandActions}
-      />
+      {/* Command Palette mở nhanh (Cmd/Ctrl+K) - Chỉ dành cho Máy tính */}
+      {!isMobile && (
+        <StudyCommandPalette
+          isOpen={isCommandOpen}
+          onClose={() => setIsCommandOpen(false)}
+          actions={commandActions}
+        />
+      )}
 
       {/* Mobile: thanh dưới 5 nút */}
-      {!isZenMode && (
+      {isMobile && !isZenMode && (
         <StudyMobileNav
           active={
             isMoreOpen
@@ -764,14 +782,22 @@ export default function StudySpacePage() {
                   ? "scenes"
                   : isMixerOpen
                     ? "music"
-                    : "pomodoro"
+                    : isPomodoroVisible
+                      ? "pomodoro"
+                      : ""
           }
           onSelect={(id: MobileNavId) => {
-            const isCurrentlyActive =
-              (id === "more" && isMoreOpen) ||
-              (id === "tasks" && isTasksOpen) ||
-              (id === "scenes" && isScenesOpen) ||
-              (id === "music" && isMixerOpen);
+            const isAnySheetOpen =
+              isMoreOpen ||
+              isTasksOpen ||
+              isNotesOpen ||
+              isScenesOpen ||
+              isMixerOpen ||
+              isEmbedPlayerOpen ||
+              isRoomsOpen ||
+              isChatOpen ||
+              isStatsOpen ||
+              isSettingsOpen;
 
             const closeAll = () => {
               setIsMoreOpen(false);
@@ -786,6 +812,25 @@ export default function StudySpacePage() {
               handleCloseSettings();
             };
 
+            // Nếu người dùng bấm vào nút "Giờ":
+            if (id === "pomodoro") {
+              // 1. Nếu đang mở bảng nào đó (Việc, Cảnh, Nhạc, Thêm...) -> đóng bảng đó lại và mở đồng hồ
+              if (isAnySheetOpen) {
+                closeAll();
+                setIsPomodoroVisible(true);
+                return;
+              }
+              // 2. Nếu đang ở màn hình chính -> Bật / Tắt (Toggle) đồng hồ
+              handleTogglePomodoroVisibility();
+              return;
+            }
+
+            const isCurrentlyActive =
+              (id === "more" && isMoreOpen) ||
+              (id === "tasks" && isTasksOpen) ||
+              (id === "scenes" && isScenesOpen) ||
+              (id === "music" && isMixerOpen);
+
             // Nếu chạm lại chính tab đang mở thì đóng lại
             if (isCurrentlyActive) {
               closeAll();
@@ -797,9 +842,6 @@ export default function StudySpacePage() {
 
             if (id === "more") {
               setIsMoreOpen(true);
-            } else if (id === "pomodoro") {
-              setIsPomodoroVisible(true);
-              setCenterTab("pomodoro");
             } else if (id === "tasks") {
               setIsTasksOpen(true);
             } else if (id === "scenes") {
@@ -812,45 +854,48 @@ export default function StudySpacePage() {
       )}
 
       {/* Mobile: bảng Thêm 3 cụm */}
-      <MobileMoreSheet
-        isOpen={isMoreOpen}
-        onClose={() => setIsMoreOpen(false)}
-        onSelect={(id) => {
-          setIsMoreOpen(false);
-          if (id === "notes") {
-            setIsTasksOpen(false);
-            setIsScenesOpen(false);
-            setIsMixerOpen(false);
-            setIsStatsOpen(false);
-            setIsNotesOpen(true);
-          } else if (id === "embed") {
-            setIsTasksOpen(false);
-            setIsNotesOpen(false);
-            setIsScenesOpen(false);
-            setIsMixerOpen(false);
-            setIsStatsOpen(false);
-            setIsEmbedPlayerOpen(true);
-          } else if (id === "rooms") {
-            setIsRoomsOpen(true);
-          } else if (id === "chat") {
-            setIsChatOpen(true);
-          } else if (id === "settings") {
-            handleOpenSettings();
-          } else if (id === "stats") {
-            setIsTasksOpen(false);
-            setIsNotesOpen(false);
-            setIsScenesOpen(false);
-            setIsMixerOpen(false);
-            setIsEmbedPlayerOpen(false);
-            handleCloseSettings();
-            setIsStatsOpen(true);
-          }
-        }}
-      />
+      {isMobile && (
+        <MobileMoreSheet
+          isOpen={isMoreOpen}
+          onClose={() => setIsMoreOpen(false)}
+          onSelect={(id) => {
+            setIsMoreOpen(false);
+            if (id === "notes") {
+              setIsTasksOpen(false);
+              setIsScenesOpen(false);
+              setIsMixerOpen(false);
+              setIsStatsOpen(false);
+              setIsNotesOpen(true);
+            } else if (id === "embed") {
+              setIsTasksOpen(false);
+              setIsNotesOpen(false);
+              setIsScenesOpen(false);
+              setIsMixerOpen(false);
+              setIsStatsOpen(false);
+              setIsEmbedPlayerOpen(true);
+            } else if (id === "rooms") {
+              setIsRoomsOpen(true);
+            } else if (id === "chat") {
+              setIsChatOpen(true);
+            } else if (id === "settings") {
+              handleOpenSettings();
+            } else if (id === "stats") {
+              setIsTasksOpen(false);
+              setIsNotesOpen(false);
+              setIsScenesOpen(false);
+              setIsMixerOpen(false);
+              setIsEmbedPlayerOpen(false);
+              handleCloseSettings();
+              setIsStatsOpen(true);
+            }
+          }}
+        />
+      )}
 
       {/* Mobile: bong bóng chat kéo tự do, bấm mở full.
           Ẩn khi có bảng nào đang mở để khỏi đè lên nội dung. */}
-      {!isZenMode &&
+      {isMobile &&
+        !isZenMode &&
         !isMoreOpen &&
         !isTasksOpen &&
         !isNotesOpen &&

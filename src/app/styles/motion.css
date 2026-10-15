@@ -17,16 +17,6 @@
   }
 }
 
-/* Dải sáng chạy 1 lần mỗi khi viên nút được chọn (học từ mẫu 001 Lucianlabs) */
-@keyframes lg-sheen-sweep {
-  from {
-    transform: translateX(-160%) skewX(-12deg);
-  }
-  to {
-    transform: translateX(320%) skewX(-12deg);
-  }
-}
-
 /* Thanh hoàn tác mobile trượt lên 1 lần khi hiện */
 @keyframes mobile-undo-in {
   from {
@@ -55,8 +45,7 @@
 
 /* Người dùng chọn giảm chuyển động: tắt hết hiệu ứng chạy */
 @media (prefers-reduced-motion: reduce) {
-  .lg-spot,
-  .lg-sheen {
+  .lg-spot {
     display: none;
   }
   .mobile-undo-enter {

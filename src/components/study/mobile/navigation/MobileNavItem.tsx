@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import React, { type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -11,8 +11,13 @@ interface MobileNavItemProps {
   icon: ReactNode;
 }
 
-// 1 nút bấm thanh điều hướng kính lỏng (bản web phỏng theo)
-export function MobileNavItem({ label, isActive, onClick, icon }: MobileNavItemProps) {
+// 1 nút bấm thanh điều hướng kính lỏng với hiệu ứng nảy giọt nước đàn hồi (Droplet Squash & Stretch)
+export const MobileNavItem = React.memo(function MobileNavItem({
+  label,
+  isActive,
+  onClick,
+  icon,
+}: MobileNavItemProps) {
   const handleClick = () => {
     // Phản hồi rung nhẹ (Haptic feedback) tạo cảm giác bấm phím vật lý trên điện thoại
     if (typeof window !== "undefined" && "vibrate" in navigator) {
@@ -26,13 +31,12 @@ export function MobileNavItem({ label, isActive, onClick, icon }: MobileNavItemP
   };
 
   return (
-    <motion.button
+    <button
       type="button"
       onClick={handleClick}
-      whileTap={{ scale: 0.92 }}
       aria-label={label}
       aria-current={isActive ? "page" : undefined}
-      className="group relative flex-1 h-full flex flex-col items-center justify-center py-0.5 focus:outline-none select-none"
+      className="lg-nav-btn group relative flex-1 h-full flex flex-col items-center justify-center py-0.5 focus:outline-none select-none cursor-pointer"
     >
       {/* Viên kính của nút đang chọn: đặc hơn thanh ngoài 1 nấc */}
       {isActive && (
@@ -42,16 +46,13 @@ export function MobileNavItem({ label, isActive, onClick, icon }: MobileNavItemP
             type: "spring",
             stiffness: 420,
             damping: 32,
-            mass: 0.8,
           }}
           className="absolute inset-y-0.5 inset-x-0.5 lg-pill"
         />
       )}
 
       {/* Biểu tượng: 24px, nút chọn trắng phát sáng nhẹ, nút thường 2 lớp chìm */}
-      <motion.span
-        layout
-        transition={{ type: "spring", stiffness: 450, damping: 35 }}
+      <span
         className={cn(
           "relative z-10 flex h-6 w-6 items-center justify-center transition-colors duration-200",
           isActive
@@ -60,7 +61,7 @@ export function MobileNavItem({ label, isActive, onClick, icon }: MobileNavItemP
         )}
       >
         {icon}
-      </motion.span>
+      </span>
 
       {/* Dòng chữ (Label) - CHỈ hiển thị khi nút được chọn, nhỏ gọn 10px */}
       <AnimatePresence mode="wait">
@@ -77,8 +78,8 @@ export function MobileNavItem({ label, isActive, onClick, icon }: MobileNavItemP
           </motion.span>
         )}
       </AnimatePresence>
-    </motion.button>
+    </button>
   );
-}
+});
 
 

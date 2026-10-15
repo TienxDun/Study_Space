@@ -67,10 +67,7 @@ export function MobileTimerTabBar({ currentTab, onSelectTab, visible }: MobileTi
                   layoutId="mobile-timer-seg-pill"
                   transition={{ type: "spring", stiffness: 420, damping: 32 }}
                   className="absolute inset-0 lg-seg-active"
-                >
-                  {/* Dải sáng chạy 1 lần mỗi khi đổi nút */}
-                  <span key={currentTab} aria-hidden="true" className="lg-sheen" />
-                </motion.span>
+                />
               )}
               <span className="relative z-10 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                 {tab.label}

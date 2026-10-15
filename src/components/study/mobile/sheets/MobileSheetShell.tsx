@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, type ReactNode } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { XIcon, ArrowsInSimpleIcon, ArrowsOutSimpleIcon } from "@phosphor-icons/react";
 import { ModalShell } from "@/components/ui/ModalShell";
 
@@ -35,21 +35,93 @@ export function MobileSheetShell({
   children,
 }: MobileSheetShellProps) {
   const [isZenMode, setIsZenMode] = useState(defaultZenMode);
+  const localPanelRef = useRef<HTMLDivElement | null>(null);
   const touchStartY = useRef<number | null>(null);
+  const isDraggingDown = useRef(false);
 
-  // Kéo xuống trên thanh nắm tay để đóng bảng
+  // Khi mở bảng, reset sạch vị trí transform
+  useEffect(() => {
+    if (isOpen && localPanelRef.current) {
+      localPanelRef.current.style.transform = "";
+      localPanelRef.current.style.opacity = "";
+      localPanelRef.current.style.transition = "";
+    }
+  }, [isOpen]);
+
+  // Hợp nhất ref bên ngoài và ref nội bộ để điều khiển trực tiếp chuyển động trượt
+  const setCombinedRef = (el: HTMLDivElement | null) => {
+    localPanelRef.current = el;
+    if (panelRef) {
+      if (typeof panelRef === "function") panelRef(el);
+      else (panelRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+    }
+  };
+
+  // Kéo xuống trên vùng đỉnh: bảng bám sát ngón tay 1:1 theo thời gian thực (tới đâu đóng tới đó)
   const handleTouchStart = (e: React.TouchEvent) => {
+    // Không kích hoạt kéo vuốt nếu người dùng chạm vào các nút chức năng trên header
+    if ((e.target as HTMLElement).closest("button")) return;
     touchStartY.current = e.touches[0].clientY;
+    isDraggingDown.current = true;
+    if (localPanelRef.current) {
+      localPanelRef.current.style.transition = "none";
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDraggingDown.current || touchStartY.current === null) return;
+    const diff = e.touches[0].clientY - touchStartY.current;
+    if (diff > 0) {
+      // Bám sát 1:1 theo vị trí ngón tay của người dùng: ngón tay kéo tới đâu, thẻ hạ xuống tới đó
+      if (localPanelRef.current) {
+        localPanelRef.current.style.transform = `translateY(${diff}px)`;
+        localPanelRef.current.style.opacity = `${Math.max(0.3, 1 - diff / (window.innerHeight || 800))}`;
+      }
+    } else {
+      if (localPanelRef.current) {
+        localPanelRef.current.style.transform = "translateY(0px)";
+        localPanelRef.current.style.opacity = "1";
+      }
+    }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartY.current === null) return;
+    if (!isDraggingDown.current || touchStartY.current === null) return;
     const diff = e.changedTouches[0].clientY - touchStartY.current;
-    // Nếu vuốt xuống hơn 50px thì kích hoạt đóng bảng
-    if (diff > 50) {
-      onClose();
-    }
+    isDraggingDown.current = false;
     touchStartY.current = null;
+
+    if (diff > 75) {
+      // Đủ ngưỡng -> Bảng trượt tiếp xuống đáy màn hình theo đà ngón tay và đóng
+      if (localPanelRef.current) {
+        localPanelRef.current.style.transition =
+          "transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease-out";
+        localPanelRef.current.style.transform = "translateY(100%)";
+        localPanelRef.current.style.opacity = "0";
+      }
+      setTimeout(() => {
+        onClose();
+      }, 180);
+    } else {
+      // Chưa đủ ngưỡng -> Đàn hồi bật nảy dội về vị trí ban đầu
+      if (localPanelRef.current) {
+        localPanelRef.current.style.transition =
+          "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease-out";
+        localPanelRef.current.style.transform = "translateY(0px)";
+        localPanelRef.current.style.opacity = "1";
+      }
+    }
+  };
+
+  const handleTouchCancel = () => {
+    isDraggingDown.current = false;
+    touchStartY.current = null;
+    if (localPanelRef.current) {
+      localPanelRef.current.style.transition =
+        "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease-out";
+      localPanelRef.current.style.transform = "translateY(0px)";
+      localPanelRef.current.style.opacity = "1";
+    }
   };
 
   // Cử chỉ vuốt ngang trái / phải bao phủ 100% diện tích nội dung & khoảng trống
@@ -84,17 +156,17 @@ export function MobileSheetShell({
       isOpen={isOpen}
       onClose={onClose}
       panelKey={`mobile-sheet-${title}`}
-      panelRef={panelRef}
+      panelRef={setCombinedRef}
       ariaLabel={title}
       initial={{ opacity: 0, y: 40, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 40, scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
       backdropClassName="sm:hidden"
       panelClassName={
         isZenMode
-          ? "fixed inset-x-2 top-2.5 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] z-50 flex flex-col rounded-[32px] bg-neutral-950/92 backdrop-blur-3xl backdrop-saturate-150 border border-white/[0.18] shadow-[0_32px_80px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.3)] text-white overflow-hidden sm:hidden transition-all duration-300"
-          : `fixed inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] z-50 flex flex-col rounded-[28px] bg-neutral-950/85 backdrop-blur-2xl backdrop-saturate-150 border border-white/[0.16] shadow-[0_24px_60px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.25)] text-white overflow-hidden sm:hidden transition-all duration-300 ${
+          ? "fixed inset-x-2 top-2.5 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] z-50 flex flex-col rounded-[32px] bg-neutral-950/94 backdrop-blur-xl border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)] text-white overflow-hidden sm:hidden transform-gpu"
+          : `fixed inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] z-50 flex flex-col rounded-[28px] bg-neutral-950/90 backdrop-blur-lg border border-white/[0.16] shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.2)] text-white overflow-hidden sm:hidden transform-gpu ${
               heightClassName || maxHeightClassName || "max-h-[72dvh]"
             }`
       }
@@ -105,23 +177,27 @@ export function MobileSheetShell({
         className="absolute inset-x-12 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none"
       />
 
-      {/* Vùng kéo gạt trên đỉnh: hỗ trợ vuốt ngón tay xuống để đóng bảng */}
+      {/* Vùng kéo gạt trên đỉnh & Tiêu đề: hỗ trợ ngón tay kéo xuống 1:1 mượt mà để đóng bảng */}
       <div
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="pt-2 pb-1 flex flex-col items-center justify-center shrink-0 cursor-grab active:cursor-grabbing select-none"
+        onTouchCancel={handleTouchCancel}
+        className="shrink-0 select-none cursor-grab active:cursor-grabbing"
       >
-        <span
-          aria-hidden="true"
-          className="w-12 h-1.5 rounded-full bg-white/30 hover:bg-white/50 active:bg-white/60 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.4)]"
-        />
-      </div>
+        {/* Thanh nắm tay kéo (Pill Handle) tối giản chuẩn Apple Sheet */}
+        <div className="pt-2.5 pb-1 flex items-center justify-center">
+          <span
+            aria-hidden="true"
+            className="h-1.5 w-12 rounded-full bg-white/30 hover:bg-white/50 active:bg-white/60 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.4)]"
+          />
+        </div>
 
-      {/* Tiêu đề & Nút thao tác dạng kính */}
-      <div className="flex items-center justify-between px-4 pb-2.5 pt-0.5 border-b border-white/[0.12] shrink-0">
-        <h3 className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate">
-          {title}
-        </h3>
+        {/* Tiêu đề & Nút thao tác dạng kính */}
+        <div className="flex items-center justify-between px-4 pb-2.5 pt-0.5 border-b border-white/[0.12]">
+          <h3 className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate">
+            {title}
+          </h3>
         <div className="flex items-center gap-1.5">
           {headerRight}
 
@@ -151,19 +227,20 @@ export function MobileSheetShell({
           </button>
         </div>
       </div>
+    </div>
 
       {/* Nội dung cuộn bên trong - nhận diện vuốt ở toàn bộ 100% diện tích gồm cả khoảng trống */}
       <div
         onTouchStart={handleContentTouchStart}
         onTouchEnd={handleContentTouchEnd}
-        className="flex-1 min-h-0 overflow-y-auto flex flex-col custom-study-scroll pb-2 touch-pan-y"
+        className="flex-1 min-h-0 overflow-y-auto flex flex-col custom-study-scroll pb-2 touch-pan-y overscroll-contain"
       >
         {children}
       </div>
 
       {/* Cụm điều khiển cố định ở đáy (Thumb-Zone) */}
       {footer && (
-        <div className="shrink-0 border-t border-white/[0.12] bg-neutral-950/70 backdrop-blur-xl">
+        <div className="shrink-0 border-t border-white/[0.12] bg-neutral-950/85">
           {footer}
         </div>
       )}

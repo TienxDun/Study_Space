@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { FileTextIcon, RadioIcon, ChartBarIcon, UsersIcon, SparkleIcon, SlidersIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { MobileAccountCard } from "./MobileAccountCard";
@@ -29,7 +30,11 @@ function MoreButton({ label, onClick, icon }: { label: string; onClick: () => vo
 }
 
 // Bảng Thêm: gom các nút còn lại thành các cụm rõ ràng theo chuẩn Liquid Glass
-export function MobileMoreSheet({ isOpen, onClose, onSelect }: MobileMoreSheetProps) {
+export const MobileMoreSheet = React.memo(function MobileMoreSheet({
+  isOpen,
+  onClose,
+  onSelect,
+}: MobileMoreSheetProps) {
   const go = (id: MobilePanelId) => {
     onClose();
     onSelect(id);
@@ -72,4 +77,4 @@ export function MobileMoreSheet({ isOpen, onClose, onSelect }: MobileMoreSheetPr
       </div>
     </MobileSheetShell>
   );
-}
+});

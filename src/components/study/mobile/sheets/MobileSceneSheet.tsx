@@ -75,7 +75,7 @@ const MobileSceneCard = React.memo<{
 
       {/* Chỉ báo trạng thái đang phát tinh tế (Living Pulse Indicator) - Không che ảnh */}
       {isSelected && (
-        <div className="absolute top-1.5 left-1.5 z-10 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-emerald-400/40 flex items-center gap-1.5 shadow-sm">
+        <div className="absolute top-1.5 left-1.5 z-10 px-2 py-0.5 rounded-full bg-black/85 border border-emerald-400/40 flex items-center gap-1.5 shadow-sm">
           <span className="relative flex h-1.5 w-1.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
@@ -86,7 +86,7 @@ const MobileSceneCard = React.memo<{
 
       {/* Trạng thái đang tải chuyển cảnh */}
       {isPending && (
-        <div className="absolute top-1.5 left-1.5 z-10 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-amber-400/40 flex items-center gap-1.5 shadow-sm">
+        <div className="absolute top-1.5 left-1.5 z-10 px-2 py-0.5 rounded-full bg-black/85 border border-amber-400/40 flex items-center gap-1.5 shadow-sm">
           <span className="animate-spin h-1.5 w-1.5 rounded-full border border-amber-400 border-t-transparent" />
           <span className="text-[10px] font-semibold text-amber-300">Đang tải...</span>
         </div>
@@ -124,7 +124,7 @@ const MobileSceneCard = React.memo<{
 });
 MobileSceneCard.displayName = "MobileSceneCard";
 
-export function MobileSceneSheet({
+export const MobileSceneSheet = React.memo(function MobileSceneSheet({
   isOpen,
   onClose,
   currentScene,
@@ -380,4 +380,4 @@ export function MobileSceneSheet({
       </div>
     </MobileSheetShell>
   );
-}
+});

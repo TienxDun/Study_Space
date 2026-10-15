@@ -172,24 +172,6 @@
   --spot: 1;
 }
 
-/* Dải sáng chạy 1 lần mỗi khi viên nút được chọn (học từ mẫu 001 Lucianlabs).
-   Keyframes nằm ở motion.css. */
-.lg-sheen {
-  position: absolute;
-  top: -40%;
-  bottom: -40%;
-  left: 0;
-  width: 35%;
-  pointer-events: none;
-  background: linear-gradient(
-    100deg,
-    transparent,
-    rgba(255, 255, 255, 0.32) 50%,
-    transparent
-  );
-  animation: lg-sheen-sweep 0.9s ease;
-}
-
 /* Viên kính cho nút đang chọn trong cụm nút gạt (học từ mẫu 001 Lucianlabs) */
 .lg-seg-active {
   position: absolute;
@@ -218,4 +200,15 @@
 
 .lg-seg:active {
   transform: scale(1.04, 0.94);
+}
+
+/* Nút bấm thanh điều hướng: hiệu ứng nén lún giọt nước đàn hồi mạnh hơn + lò xo overshoot */
+.lg-nav-btn {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center center;
+}
+
+.lg-nav-btn:active {
+  transform: scale(1.08, 0.88);
+  transition-duration: 0.06s;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { CornersOutIcon, CornersInIcon } from "@phosphor-icons/react";
 import { ZenStudyLogo } from "@/components/study/brand/ZenStudyLogo";
@@ -12,7 +12,11 @@ interface MobileTopBarProps {
 }
 
 // Thanh trên mobile: logo, giờ, toàn màn hình. Tài khoản nằm trong bảng Thêm cho thoáng.
-export function MobileTopBar({ isZenMode, isFullscreen, onToggleFullscreen }: MobileTopBarProps) {
+export const MobileTopBar = React.memo(function MobileTopBar({
+  isZenMode,
+  isFullscreen,
+  onToggleFullscreen,
+}: MobileTopBarProps) {
   const [time, setTime] = useState("");
 
   useEffect(() => {
@@ -53,4 +57,4 @@ export function MobileTopBar({ isZenMode, isFullscreen, onToggleFullscreen }: Mo
       </div>
     </header>
   );
-}
+});

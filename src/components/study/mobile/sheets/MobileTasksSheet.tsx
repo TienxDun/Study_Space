@@ -26,7 +26,10 @@ interface MobileTasksSheetProps {
   onClose: () => void;
 }
 
-export function MobileTasksSheet({ isOpen, onClose }: MobileTasksSheetProps) {
+export const MobileTasksSheet = React.memo(function MobileTasksSheet({
+  isOpen,
+  onClose,
+}: MobileTasksSheetProps) {
   const {
     currentBoard,
     updateCurrentBoard,
@@ -310,7 +313,7 @@ export function MobileTasksSheet({ isOpen, onClose }: MobileTasksSheetProps) {
           )}
 
           {/* Danh sách các công việc cuộn dọc */}
-          <div className="flex-1 px-3 space-y-2 overflow-y-auto custom-study-scroll pb-2">
+          <div className="flex-1 px-3 space-y-2 overflow-y-auto custom-study-scroll pb-2 overscroll-contain touch-pan-y">
             {displayedCards.length > 0 ? (
               displayedCards.map(({ card, colId, colTitle }) => {
                 const deadline = getDeadlineStatus(card.dueDate);
@@ -559,4 +562,4 @@ export function MobileTasksSheet({ isOpen, onClose }: MobileTasksSheetProps) {
       )}
     </>
   );
-}
+});

@@ -9,7 +9,7 @@ describe("SessionDrawer Modern UI", () => {
     {
       id: "session-1",
       title: "Giải tích hàm số đạo hàm",
-      createdAt: Date.now() - 1000 * 60 * 10, // 10 mins ago (Today)
+      createdAt: Date.now(), // Just now (Today)
     },
     {
       id: "session-2",
