@@ -20,10 +20,10 @@ export function PomoProgressRing({ progress, size = 340 }: PomoProgressRingProps
   return (
     <div
       aria-hidden="true"
-      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-      style={{ width: size, height: size }}
+      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none h-full w-full"
+      style={{ maxWidth: size, maxHeight: size }}
     >
-      <svg width={size} height={size}>
+      <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
         <defs>
           <linearGradient id="pomo-ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#34d399" />

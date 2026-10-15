@@ -24,6 +24,7 @@ import { useRealtimeClock } from "./hooks/useRealtimeClock";
 import { usePomodoroCountdown } from "./hooks/usePomodoroCountdown";
 import { useStopwatchTimer } from "./hooks/useStopwatchTimer";
 import { TimerTabPillBar } from "./components/TimerTabPillBar";
+import { MobileTimerTabBar } from "@/components/study/mobile/pomodoro/MobileTimerTabBar";
 import { GiantDigitsDisplay } from "./components/GiantDigitsDisplay";
 import { PomoProgressRing } from "./components/PomoProgressRing";
 import { SubmodeBar } from "./components/SubmodeBar";
@@ -48,6 +49,22 @@ export const StudyPomodoroWidget = ({
   const [internalTab, setInternalTab] = useState<TimerTab>("clock");
   const currentTab = externalTab !== undefined ? externalTab : internalTab;
   const { focusTask, clearFocus, completeSession, logFocusTime } = useFocusTask();
+
+  // Hàng nút chuyển chế độ tự ẩn sau 4 giây không đụng tới.
+  // Chạm vào cụm đồng hồ là hiện lại ngay.
+  const [tabsVisible, setTabsVisible] = useState(true);
+  const tabsTimer = useRef(0);
+  const pokeTabs = useCallback(() => {
+    setTabsVisible(true);
+    if (tabsTimer.current) window.clearTimeout(tabsTimer.current);
+    tabsTimer.current = window.setTimeout(() => setTabsVisible(false), 4000);
+  }, []);
+  useEffect(() => {
+    pokeTabs();
+    return () => {
+      if (tabsTimer.current) window.clearTimeout(tabsTimer.current);
+    };
+  }, [pokeTabs]);
 
   // Mirror để handler ghi log (kể cả beforeunload) luôn thấy task mới nhất.
   const focusTaskRef = useRef(focusTask);
@@ -181,13 +198,25 @@ export const StudyPomodoroWidget = ({
     <div
       id="tour-pomodoro-widget"
       className="group relative flex flex-col items-center justify-start text-white select-none pointer-events-auto w-full max-w-xl min-h-[300px] sm:min-h-[320px]"
+      onPointerDown={pokeTabs}
+      onPointerEnter={pokeTabs}
     >
-      {/* 1. Sleek Floating Mode Pill Bar */}
-      <TimerTabPillBar currentTab={currentTab} onSelectTab={switchTab} />
+      {/* 1. Hàng nút chuyển chế độ: desktop bản cũ, mobile bản kính riêng */}
+      <div className="hidden sm:block">
+        <TimerTabPillBar currentTab={currentTab} onSelectTab={switchTab} />
+      </div>
+      <MobileTimerTabBar
+        currentTab={currentTab}
+        onSelectTab={(tab) => {
+          switchTab(tab);
+          pokeTabs();
+        }}
+        visible={tabsVisible}
+      />
 
       {/* 2. Vòng tròn focus: mục tiêu + số đếm + phase xếp đều 1 cột giữa vòng */}
       {currentTab === "pomodoro" ? (
-        <div className="relative flex items-center justify-center w-[340px] h-[340px] mb-2 shrink-0">
+        <div className="relative flex items-center justify-center w-[min(76vw,340px)] h-[min(76vw,340px)] min-[380px]:w-[min(80vw,340px)] min-[380px]:h-[min(80vw,340px)] sm:w-[340px] sm:h-[340px] mb-2 shrink-0">
           {(() => {
             const total = durations[pomoMode] * 60;
             const progress = total > 0 ? 1 - timeLeft / total : 0;

@@ -91,8 +91,7 @@ const fullLogoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 146 36
           stroke-width="2" 
           stroke-linecap="round"/>
 
-    <!-- Điểm nhấn mầm lá xanh may mắn & đốm sáng -->
-    <path d="M 25 6 C 26.5 4.5, 29 5.5, 28 7.5 C 26.5 8.5, 25 6, 25 6 Z" fill="#34d399"/>
+    <!-- Đốm sáng -->
     <circle cx="2" cy="17" r="1" fill="#fde047"/>
     <circle cx="28" cy="11" r="0.8" fill="#fbbf24"/>
   </g>
@@ -149,7 +148,6 @@ const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 34" wid
     <circle cx="19.6" cy="20.4" r="1.3" fill="#fb7185" opacity="0.85"/>
     <path d="M 10 9.8 C 8.5 6.8, 11 4.8, 9.5 2" fill="none" stroke="url(#steamWarm)" stroke-width="2" stroke-linecap="round"/>
     <path d="M 16.5 9.8 C 15 6.5, 17.5 4.5, 16 1.8" fill="none" stroke="url(#steamWarm)" stroke-width="2" stroke-linecap="round"/>
-    <path d="M 26 7 C 27.5 5.5, 30 6.5, 29 8.5 C 27.5 9.5, 26 7, 26 7 Z" fill="#34d399"/>
     <circle cx="3" cy="18" r="1" fill="#fde047"/>
   </g>
 </svg>`;

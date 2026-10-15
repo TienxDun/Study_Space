@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 interface StudySproutMascotProps {
@@ -22,6 +22,10 @@ export const StudySproutMascot = ({
   isThinking = false,
 }: StudySproutMascotProps) => {
   const reduceMotion = useReducedMotion();
+  // Mỗi icon cần tên màu riêng, nếu không 2 icon cùng trang sẽ giành nhau và 1 bên mất màu.
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
+  const bodyGradId = `sprout-body-${uid}`;
+  const leafGradId = `sprout-leaf-${uid}`;
   const [blinking, setBlinking] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const leftPupilRef = useRef<SVGGElement>(null);
@@ -90,11 +94,11 @@ export const StudySproutMascot = ({
       >
         <defs>
           {/* Gradient màu xanh tươi mát của mầm cây tri thức */}
-          <linearGradient id="sprout-body-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <linearGradient id={bodyGradId} x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#86efac" />
             <stop offset="100%" stopColor="#4ade80" />
           </linearGradient>
-          <linearGradient id="sprout-leaf-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={leafGradId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#4ade80" />
             <stop offset="100%" stopColor="#22c55e" />
           </linearGradient>
@@ -115,7 +119,7 @@ export const StudySproutMascot = ({
         {/* Lá mầm chính (phải) */}
         <path
           d="M34 6 C43 3 46 11 39 14 C35 15 34 10 34 6 Z"
-          fill="url(#sprout-leaf-grad)"
+          fill={`url(#${leafGradId})`}
           stroke="#15803d"
           strokeWidth="1.5"
           strokeLinejoin="round"
@@ -141,7 +145,7 @@ export const StudySproutMascot = ({
         {/* Thân mầm hạt giống tròn trĩnh bầu bĩnh */}
         <path
           d="M32 18 C45 18 52 27 52 39 C52 50 43 56 32 56 C21 56 12 50 12 39 C12 27 19 18 32 18 Z"
-          fill="url(#sprout-body-grad)"
+          fill={`url(#${bodyGradId})`}
           stroke="#166534"
           strokeWidth="2"
           strokeLinejoin="round"

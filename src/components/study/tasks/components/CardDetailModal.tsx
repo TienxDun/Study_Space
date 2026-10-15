@@ -117,7 +117,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
+        className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
         onClick={() => {
           setSelectedCard(null);
           closeAllPopovers();

@@ -202,7 +202,7 @@ export const StudyMusicPlayer = ({
             pointerEvents: isZenMode ? "none" : "auto",
           }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="fixed bottom-3 left-3 sm:bottom-3.5 sm:left-3.5 z-40 max-w-[calc(50vw-24px)] sm:max-w-xs md:max-w-sm select-none"
+          className="fixed bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+1rem)] left-3 sm:bottom-3.5 sm:left-3.5 z-40 hidden sm:block max-w-[calc(50vw-24px)] sm:max-w-xs md:max-w-sm select-none"
         >
           <div
             onClick={handleOpenMusicTab}
@@ -232,8 +232,8 @@ export const StudyMusicPlayer = ({
               </div>
             </div>
 
-            {/* Metadata: Title & Artist & Genre (Nổi thẳng lên hình nền với drop-shadow) */}
-            <div className="min-w-0 flex-1 space-y-0.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            {/* Metadata: chỉ hiện từ màn vừa trở lên, màn nhỏ chỉ giữ đĩa nhạc */}
+            <div className="hidden min-[400px]:block sm:block min-w-0 flex-1 space-y-0.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
               <h4 className="text-xs sm:text-sm font-bold text-white truncate leading-tight group-hover/art:text-accent-music-bright transition-colors">
                 {currentTrack?.title || "Chưa phát nhạc"}
               </h4>
@@ -262,14 +262,14 @@ export const StudyMusicPlayer = ({
           pointerEvents: isZenMode ? "none" : "auto",
         }}
         transition={{ duration: 0.25, ease: "easeOut" }}
-        className="fixed bottom-3 left-1/2 -translate-x-1/2 sm:bottom-3.5 z-40 max-w-[calc(100vw-24px)] select-none will-change-transform"
+        className="fixed bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+1rem)] left-1/2 -translate-x-1/2 sm:bottom-3.5 z-40 max-w-[calc(100vw-24px)] select-none will-change-transform"
       >
 
         <div
           className={`relative h-[60px] sm:h-[62px] text-white ${
             isShowingExternalStream && externalStreamItem
-              ? "flex items-center justify-between gap-3 sm:gap-4 px-2 py-1 min-w-[min(320px,100%)] sm:min-w-[380px] md:min-w-[420px] drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]"
-              : "flex flex-col items-center justify-center gap-1.5 sm:gap-2 px-1 py-1 min-w-[min(270px,100%)] sm:min-w-[290px] drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]"
+              ? "flex items-center justify-between gap-2 sm:gap-4 px-2 py-1 min-w-0 w-[calc(100vw-32px)] max-w-[340px] sm:max-w-none sm:w-auto sm:min-w-[380px] md:min-w-[420px] drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]"
+              : "flex flex-col items-center justify-center gap-1.5 sm:gap-2 px-1 py-1 min-w-0 sm:min-w-[290px] drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]"
           }`}
         >
           {isShowingExternalStream && externalStreamItem ? (
@@ -292,8 +292,9 @@ export const StudyMusicPlayer = ({
                 onToggleLoop={handleToggleLoop}
               />
 
-              {/* Row 2: Waveform Scrubber with timing and Volume Control on the right */}
-              <WaveformScrubber
+              {/* Row 2: sóng nhạc và âm lượng chỉ hiện trên màn lớn, mobile bấm vào đĩa để mở */}
+              <div className="hidden sm:block w-full">
+                <WaveformScrubber
                 currentTime={currentTime}
                 duration={duration}
                 isActive={isPlaying || isExternalStreamActive}
@@ -303,7 +304,8 @@ export const StudyMusicPlayer = ({
                 isGlobalMuted={isGlobalMuted}
                 onToggleMute={handleToggleMute}
                 audioRef={audioRef}
-              />
+                />
+              </div>
             </>
           )}
         </div>
@@ -319,7 +321,7 @@ export const StudyMusicPlayer = ({
               pointerEvents: isZenMode ? "none" : "auto",
             }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="fixed bottom-3 right-3 sm:bottom-3.5 sm:right-3.5 z-40"
+            className="fixed bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+1rem)] right-3 sm:bottom-3.5 sm:right-3.5 z-40 hidden min-[400px]:block sm:block"
           >
             {/* Minimalist Floating Ghost Audio Dock (Hoàn toàn không background, không viền) */}
             <div

@@ -106,10 +106,27 @@ export function useAudioPlayer({
     }
   }, [effectiveVolume]);
 
-  // Tự động phát nhạc ngay khi vào trang StudySpace (kèm fallback interaction)
+  // Chỉ tự động phát nhạc ở lần đầu tiên truy cập web; các lần sau mở web thì tắt
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
+
+    // Kiểm tra xem đã từng vào web trước đây chưa
+    const hasVisited =
+      typeof window !== "undefined" &&
+      Boolean(localStorage.getItem(STORAGE_KEYS.musicAutoplayVisited));
+
+    if (hasVisited) {
+      // Các lần truy cập sau: Mặc định tắt nhạc, người dùng tự bật khi muốn nghe
+      return;
+    }
+
+    // Đánh dấu đã truy cập lần đầu
+    try {
+      localStorage.setItem(STORAGE_KEYS.musicAutoplayVisited, "true");
+    } catch {
+      // Bỏ qua lỗi quota hoặc môi trường chặn localStorage
+    }
 
     const attemptAutoplay = () => {
       // Đài ngoài đang chiếm sóng thì không tự phát nhạc nội bộ

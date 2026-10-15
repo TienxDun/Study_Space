@@ -17,7 +17,7 @@ export function ChatFab({ hasNew, onOpen }: ChatFabProps) {
       aria-label="Mở trợ lý học tập (Phím tắt: C)"
       aria-expanded={false}
       aria-controls="study-chat-panel"
-      className="group fixed right-3 sm:right-3.5 bottom-15 sm:bottom-16 max-sm:bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+4rem)] z-40 flex items-center p-1 rounded-full drop-shadow-[0_4px_14px_rgba(0,0,0,0.85)] hover:scale-105 active:scale-95 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none motion-reduce:transform-none touch-manipulation cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+      className="group fixed right-3 sm:right-3.5 bottom-15 sm:bottom-16 max-sm:bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+4rem)] z-40 hidden sm:flex items-center p-1 rounded-full drop-shadow-[0_4px_14px_rgba(0,0,0,0.85)] hover:scale-105 active:scale-95 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none motion-reduce:transform-none touch-manipulation cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
     >
       <span className="shrink-0 grid place-items-center transition-transform duration-200 group-hover:scale-110">
         <StudySproutMascot size={44} />

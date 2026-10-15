@@ -45,11 +45,11 @@ export function PlayerControls({
   };
 
   return (
-    <div className="flex items-center justify-center gap-1 select-none w-full max-w-[270px] sm:max-w-[290px] px-1">
+    <div className="flex items-center justify-center gap-2 sm:gap-1 select-none w-full max-w-[270px] sm:max-w-[290px] px-1">
       {/* 1. Xáo trộn bài hát */}
       <button
         onClick={onToggleShuffle}
-        className={`w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
+        className={`w-11 h-11 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
           isShuffle
             ? "text-accent-music-glow bg-accent-music/20 shadow-sm"
             : "text-slate-400 hover:text-white hover:bg-white/10"
@@ -62,7 +62,7 @@ export function PlayerControls({
       {/* 2. Bài trước đó */}
       <button
         onClick={onPrevTrack}
-        className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer"
+        className="w-11 h-11 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer"
         title="Bài trước đó (←)"
       >
         <SkipBackIcon weight="fill" className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -103,7 +103,7 @@ export function PlayerControls({
       {/* 4. Bài tiếp theo */}
       <button
         onClick={onNextTrack}
-        className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer"
+        className="w-11 h-11 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer"
         title="Bài tiếp theo (→)"
       >
         <SkipForwardIcon weight="fill" className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -112,7 +112,7 @@ export function PlayerControls({
       {/* 5. Lặp lại danh sách */}
       <button
         onClick={onToggleLoop}
-        className={`w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
+        className={`w-11 h-11 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
           isLooping
             ? "text-accent-music-glow bg-accent-music/20 shadow-sm"
             : "text-slate-400 hover:text-white hover:bg-white/10"

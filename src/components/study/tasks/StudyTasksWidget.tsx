@@ -164,7 +164,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
     <>
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-x-0 top-16 bottom-24 z-40 flex items-center justify-center px-3 sm:px-6 pointer-events-none">
+          <div className="hidden sm:flex fixed inset-x-0 top-16 bottom-24 z-40 items-center justify-center px-3 sm:px-6 pointer-events-none">
             {/* Backdrop */}
             <motion.div
               key="tasks-widget-backdrop"

@@ -23,6 +23,7 @@ export const STORAGE_KEYS = {
   volume: "huflit_study_volume",
   shuffle: "huflit_study_shuffle",
   loop: "huflit_study_loop",
+  musicAutoplayVisited: "study_space_music_autoplay_visited",
   // Ambient mixer
   ambientVols: "huflit_study_ambient_vols",
   // Tasks kanban

@@ -22,6 +22,14 @@ import { StudyBackground } from "@/components/study/StudyBackground";
 import { useStudyKeyboard } from "@/lib/use-study-keyboard";
 import { StudyTopBar } from "@/components/study/StudyTopBar";
 import { StudyLeftDock } from "@/components/study/StudyLeftDock";
+import { MobileTopBar } from "@/components/study/mobile/top/MobileTopBar";
+import { StudyMobileNav } from "@/components/study/mobile/navigation/StudyMobileNav";
+import { MobileMoreSheet } from "@/components/study/mobile/sheets/MobileMoreSheet";
+import { MobileSceneSheet } from "@/components/study/mobile/sheets/MobileSceneSheet";
+import { MobileTasksSheet } from "@/components/study/mobile/sheets/MobileTasksSheet";
+import { MobileChatBubble } from "@/components/study/mobile/chat/MobileChatBubble";
+import { MobilePomodoroView } from "@/components/study/mobile/pomodoro/MobilePomodoroView";
+import type { MobileNavId } from "@/components/study/mobile/navigation/types";
 import { StudyShortcutsModal } from "@/components/study/StudyShortcutsModal";
 import { StudyOnboardingTour } from "@/components/study/tour/StudyOnboardingTour";
 import {
@@ -98,6 +106,7 @@ export default function StudySpacePage() {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isRoomsOpen, setIsRoomsOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
 
   const handleToggleChat = () => {
     setIsChatOpen((prev) => !prev);
@@ -470,65 +479,96 @@ export default function StudySpacePage() {
     <div className="relative w-screen h-dvh overflow-hidden bg-slate-950 text-white select-none font-sans">
       <StudyBackground scene={currentScene} isBlurActive={isAnyModalOpen} />
 
-      {/* Top Navigation Bar */}
-      <StudyTopBar
+      {/* Top Navigation Bar: desktop giữ nguyên, mobile dùng bản gọn */}
+      <div className="hidden sm:block">
+        <StudyTopBar
+          isZenMode={isZenMode}
+          isPomodoroVisible={isPomodoroVisible}
+          centerTab={centerTab}
+          isGlobalMuted={isGlobalMuted}
+          isSettingsOpen={isSettingsOpen}
+          isFullscreen={isFullscreen}
+          showClockSeconds={showClockSeconds}
+          isClock12Hour={isClock12Hour}
+          onToggleClock={handleToggleClock}
+          onToggleShortcuts={handleToggleShortcutsHelp}
+          onEnterZen={() => {
+            setIsZenMode(true);
+            setIsTasksOpen(false);
+            setIsNotesOpen(false);
+            setIsScenesOpen(false);
+            setIsMixerOpen(false);
+            setIsEmbedPlayerOpen(false);
+            setIsRoomsOpen(false);
+            setIsChatOpen(false);
+            setIsSettingsOpen(false);
+          }}
+          onExitZen={() => setIsZenMode(false)}
+          onToggleMute={toggleGlobalMute}
+          onToggleSettings={handleToggleSettings}
+          onToggleFullscreen={toggleFullscreen}
+        />
+      </div>
+      <MobileTopBar
         isZenMode={isZenMode}
-        isPomodoroVisible={isPomodoroVisible}
-        centerTab={centerTab}
-        isGlobalMuted={isGlobalMuted}
-        isSettingsOpen={isSettingsOpen}
         isFullscreen={isFullscreen}
-        showClockSeconds={showClockSeconds}
-        isClock12Hour={isClock12Hour}
-        onToggleClock={handleToggleClock}
-        onToggleShortcuts={handleToggleShortcutsHelp}
-        onEnterZen={() => {
-          setIsZenMode(true);
-          setIsTasksOpen(false);
-          setIsNotesOpen(false);
-          setIsScenesOpen(false);
-          setIsMixerOpen(false);
-          setIsEmbedPlayerOpen(false);
-          setIsRoomsOpen(false);
-          setIsChatOpen(false);
-          setIsSettingsOpen(false);
-        }}
-        onExitZen={() => setIsZenMode(false)}
-        onToggleMute={toggleGlobalMute}
-        onToggleSettings={handleToggleSettings}
         onToggleFullscreen={toggleFullscreen}
       />
 
-      {/* Floating Left Dock Control Bar (Tasks, Notes, Scenes) */}
-      <StudyLeftDock
-        isZenMode={isZenMode}
-        isPomodoroVisible={isPomodoroVisible}
-        isTasksOpen={isTasksOpen}
-        isNotesOpen={isNotesOpen}
-        isScenesOpen={isScenesOpen}
-        isEmbedPlayerOpen={isEmbedPlayerOpen && !isPipActive}
-        isExternalStreamActive={isExternalStreamActive}
-        onTogglePomodoro={handleTogglePomodoroVisibility}
-        onToggleTasks={handleToggleTasks}
-        onToggleNotes={handleToggleNotes}
-        onToggleScenes={handleToggleScenes}
-        onToggleEmbed={handleToggleEmbed}
-        isRoomsOpen={isRoomsOpen}
-        onToggleRooms={() => setIsRoomsOpen((prev) => !prev)}
-      />
+      {/* Floating Left Dock: chỉ hiện trên máy tính, mobile dùng thanh dưới */}
+      <div className="hidden sm:block">
+        <StudyLeftDock
+          isZenMode={isZenMode}
+          isPomodoroVisible={isPomodoroVisible}
+          isTasksOpen={isTasksOpen}
+          isNotesOpen={isNotesOpen}
+          isScenesOpen={isScenesOpen}
+          isEmbedPlayerOpen={isEmbedPlayerOpen && !isPipActive}
+          isExternalStreamActive={isExternalStreamActive}
+          onTogglePomodoro={handleTogglePomodoroVisibility}
+          onToggleTasks={handleToggleTasks}
+          onToggleNotes={handleToggleNotes}
+          onToggleScenes={handleToggleScenes}
+          onToggleEmbed={handleToggleEmbed}
+          isRoomsOpen={isRoomsOpen}
+          onToggleRooms={() => setIsRoomsOpen((prev) => !prev)}
+        />
+      </div>
 
-      {/* Popout Widgets */}
+      {/* Tasks Widget (Desktop & Mobile) */}
       <StudyTasksWidget isOpen={isTasksOpen} onClose={() => setIsTasksOpen(false)} />
+      <MobileTasksSheet isOpen={isTasksOpen} onClose={() => setIsTasksOpen(false)} />
       <StudyNotesWidget 
         isOpen={isNotesOpen} 
         onClose={() => setIsNotesOpen(false)} 
       />
-      <SceneSelectorWidget 
-        isOpen={isScenesOpen} 
-        onClose={() => setIsScenesOpen(false)} 
+      {/* Desktop Scene Selector */}
+      <div className="hidden sm:contents">
+        <SceneSelectorWidget 
+          isOpen={isScenesOpen} 
+          onClose={() => setIsScenesOpen(false)} 
+          currentScene={currentScene}
+          pendingScene={pendingScene}
+          isPreloading={isPreloadingScene}
+          onSelectScene={handleSelectScene}
+          slideshowEnabled={isSlideshowOn}
+          slideshowIntervalMin={slideshowIntervalMin}
+          slideshowPoolLabel={
+            isSlideshowPoolFavorites
+              ? `${slideshowPool.length} cảnh yêu thích`
+              : `tất cả ${slideshowPool.length} cảnh`
+          }
+          onToggleSlideshow={handleToggleSlideshow}
+          onCycleSlideshowInterval={handleCycleSlideshowInterval}
+        />
+      </div>
+
+      {/* Mobile Scene Selector Sheet */}
+      <MobileSceneSheet
+        isOpen={isScenesOpen}
+        onClose={() => setIsScenesOpen(false)}
         currentScene={currentScene}
         pendingScene={pendingScene}
-        isPreloading={isPreloadingScene}
         onSelectScene={handleSelectScene}
         slideshowEnabled={isSlideshowOn}
         slideshowIntervalMin={slideshowIntervalMin}
@@ -602,21 +642,23 @@ export default function StudySpacePage() {
         wakeLockSupported={wakeLockSupported}
       />
       {/* Main Center Area: Ambient Centerpiece Pomodoro & Stopwatch hòa vào background */}
-      <main className="relative z-10 w-full h-full flex flex-col items-center justify-center pointer-events-none px-4 pb-14">
+      <main className="relative z-10 w-full h-full flex flex-col items-center justify-center pointer-events-none px-4 pb-14 mobile-content-safe">
         <StudySeoSemanticContent />
-        <StudyPomodoroWidget 
-          isVisible={isPomodoroVisible}
-          activeTab={centerTab}
-          onTabChange={setCenterTab}
-          onToggleVisibility={() => setIsPomodoroVisible(!isPomodoroVisible)}
-          onRunningChange={setIsTimerRunning}
-          showClockSeconds={showClockSeconds}
-          isClock12Hour={isClock12Hour}
-          showStopwatchMilliseconds={showStopwatchMilliseconds}
-          durations={pomodoroDurations}
-          soundEnabled={soundEnabled}
-          soundType={soundType}
-        />
+        <MobilePomodoroView>
+          <StudyPomodoroWidget
+            isVisible={isPomodoroVisible}
+            activeTab={centerTab}
+            onTabChange={setCenterTab}
+            onToggleVisibility={() => setIsPomodoroVisible(!isPomodoroVisible)}
+            onRunningChange={setIsTimerRunning}
+            showClockSeconds={showClockSeconds}
+            isClock12Hour={isClock12Hour}
+            showStopwatchMilliseconds={showStopwatchMilliseconds}
+            durations={pomodoroDurations}
+            soundEnabled={soundEnabled}
+            soundType={soundType}
+          />
+        </MobilePomodoroView>
       </main>
 
       {/* Bottom Floating Music Player & Controls (Giữ luôn mounted để nhạc không bao giờ bị dừng khi Ẩn UI) */}
@@ -691,6 +733,110 @@ export default function StudySpacePage() {
         onClose={() => setIsCommandOpen(false)}
         actions={commandActions}
       />
+
+      {/* Mobile: thanh dưới 5 nút */}
+      {!isZenMode && (
+        <StudyMobileNav
+          active={
+            isMoreOpen
+              ? "more"
+              : isTasksOpen
+                ? "tasks"
+                : isScenesOpen
+                  ? "scenes"
+                  : isMixerOpen
+                    ? "music"
+                    : "pomodoro"
+          }
+          onSelect={(id: MobileNavId) => {
+            const isCurrentlyActive =
+              (id === "more" && isMoreOpen) ||
+              (id === "tasks" && isTasksOpen) ||
+              (id === "scenes" && isScenesOpen) ||
+              (id === "music" && isMixerOpen);
+
+            const closeAll = () => {
+              setIsMoreOpen(false);
+              setIsTasksOpen(false);
+              setIsNotesOpen(false);
+              setIsScenesOpen(false);
+              setIsMixerOpen(false);
+              setIsEmbedPlayerOpen(false);
+              setIsRoomsOpen(false);
+              setIsChatOpen(false);
+              handleCloseSettings();
+            };
+
+            // Nếu chạm lại chính tab đang mở thì đóng lại
+            if (isCurrentlyActive) {
+              closeAll();
+              return;
+            }
+
+            // Chuyển đổi tức thì: đóng bảng cũ và mở ngay bảng mới
+            closeAll();
+
+            if (id === "more") {
+              setIsMoreOpen(true);
+            } else if (id === "pomodoro") {
+              setIsPomodoroVisible(true);
+              setCenterTab("pomodoro");
+            } else if (id === "tasks") {
+              setIsTasksOpen(true);
+            } else if (id === "scenes") {
+              setIsScenesOpen(true);
+            } else if (id === "music") {
+              setIsMixerOpen(true);
+            }
+          }}
+        />
+      )}
+
+      {/* Mobile: bảng Thêm 3 cụm */}
+      <MobileMoreSheet
+        isOpen={isMoreOpen}
+        onClose={() => setIsMoreOpen(false)}
+        onSelect={(id) => {
+          setIsMoreOpen(false);
+          if (id === "notes") {
+            setIsTasksOpen(false);
+            setIsScenesOpen(false);
+            setIsMixerOpen(false);
+            setIsNotesOpen(true);
+          } else if (id === "embed") {
+            setIsTasksOpen(false);
+            setIsNotesOpen(false);
+            setIsScenesOpen(false);
+            setIsMixerOpen(false);
+            setIsEmbedPlayerOpen(true);
+          } else if (id === "rooms") {
+            setIsRoomsOpen(true);
+          } else if (id === "chat") {
+            setIsChatOpen(true);
+          } else if (id === "settings") {
+            handleOpenSettings();
+          } else if (id === "stats") {
+            handleOpenSettings();
+          }
+        }}
+      />
+
+      {/* Mobile: bong bóng chat kéo tự do, bấm mở full.
+          Ẩn khi có bảng nào đang mở để khỏi đè lên nội dung. */}
+      {!isZenMode &&
+        !isMoreOpen &&
+        !isTasksOpen &&
+        !isNotesOpen &&
+        !isScenesOpen &&
+        !isMixerOpen &&
+        !isEmbedPlayerOpen &&
+        !isRoomsOpen &&
+        !isChatOpen &&
+        !isSettingsOpen && (
+          <div className="sm:hidden">
+            <MobileChatBubble hasNew={false} onOpen={() => setIsChatOpen(true)} />
+          </div>
+        )}
     </div>
   );
 }

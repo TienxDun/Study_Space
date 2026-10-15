@@ -87,4 +87,12 @@ describe("Study Music Player Utilities", () => {
       expect(getPrevTrackIndex(0, 0)).toBe(0);
     });
   });
+
+  describe("First-visit Autoplay Flag", () => {
+    it("has correct storage key defined", async () => {
+      const { STORAGE_KEYS } = await import("@/lib/storage-keys");
+      expect(STORAGE_KEYS.musicAutoplayVisited).toBe("study_space_music_autoplay_visited");
+    });
+  });
 });
+
