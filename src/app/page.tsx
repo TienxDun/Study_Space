@@ -27,6 +27,8 @@ import { StudyMobileNav } from "@/components/study/mobile/navigation/StudyMobile
 import { MobileMoreSheet } from "@/components/study/mobile/sheets/MobileMoreSheet";
 import { MobileSceneSheet } from "@/components/study/mobile/sheets/MobileSceneSheet";
 import { MobileTasksSheet } from "@/components/study/mobile/sheets/MobileTasksSheet";
+import { MobileNotesSheet } from "@/components/study/mobile/sheets/MobileNotesSheet";
+import { FocusStatsModal } from "@/components/study/stats/FocusStatsModal";
 import { MobileChatBubble } from "@/components/study/mobile/chat/MobileChatBubble";
 import { MobilePomodoroView } from "@/components/study/mobile/pomodoro/MobilePomodoroView";
 import type { MobileNavId } from "@/components/study/mobile/navigation/types";
@@ -107,6 +109,7 @@ export default function StudySpacePage() {
   const [isRoomsOpen, setIsRoomsOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
 
   const handleToggleChat = () => {
     setIsChatOpen((prev) => !prev);
@@ -469,7 +472,9 @@ export default function StudySpacePage() {
 
   const isAnyModalOpen =
     isSettingsOpen ||
+    isStatsOpen ||
     isTasksOpen ||
+    isNotesOpen ||
     isScenesOpen ||
     (isEmbedPlayerOpen && !isPipActive) ||
     isMixerOpen ||
@@ -488,6 +493,8 @@ export default function StudySpacePage() {
           isGlobalMuted={isGlobalMuted}
           isSettingsOpen={isSettingsOpen}
           isFullscreen={isFullscreen}
+          isStatsOpen={isStatsOpen}
+          onToggleStats={() => setIsStatsOpen((prev) => !prev)}
           showClockSeconds={showClockSeconds}
           isClock12Hour={isClock12Hour}
           onToggleClock={handleToggleClock}
@@ -502,6 +509,7 @@ export default function StudySpacePage() {
             setIsRoomsOpen(false);
             setIsChatOpen(false);
             setIsSettingsOpen(false);
+            setIsStatsOpen(false);
           }}
           onExitZen={() => setIsZenMode(false)}
           onToggleMute={toggleGlobalMute}
@@ -541,6 +549,10 @@ export default function StudySpacePage() {
       <StudyNotesWidget 
         isOpen={isNotesOpen} 
         onClose={() => setIsNotesOpen(false)} 
+      />
+      <MobileNotesSheet
+        isOpen={isNotesOpen}
+        onClose={() => setIsNotesOpen(false)}
       />
       {/* Desktop Scene Selector */}
       <div className="hidden sm:contents">
@@ -640,6 +652,12 @@ export default function StudySpacePage() {
         keepAwake={keepAwake}
         onToggleKeepAwake={handleToggleKeepAwake}
         wakeLockSupported={wakeLockSupported}
+      />
+
+      {/* Focus Stats Modal (Dùng chung cho cả Desktop & Mobile) */}
+      <FocusStatsModal
+        isOpen={isStatsOpen}
+        onClose={() => setIsStatsOpen(false)}
       />
       {/* Main Center Area: Ambient Centerpiece Pomodoro & Stopwatch hòa vào background */}
       <main className="relative z-10 w-full h-full flex flex-col items-center justify-center pointer-events-none px-4 pb-14 mobile-content-safe">
@@ -764,6 +782,7 @@ export default function StudySpacePage() {
               setIsEmbedPlayerOpen(false);
               setIsRoomsOpen(false);
               setIsChatOpen(false);
+              setIsStatsOpen(false);
               handleCloseSettings();
             };
 
@@ -802,12 +821,14 @@ export default function StudySpacePage() {
             setIsTasksOpen(false);
             setIsScenesOpen(false);
             setIsMixerOpen(false);
+            setIsStatsOpen(false);
             setIsNotesOpen(true);
           } else if (id === "embed") {
             setIsTasksOpen(false);
             setIsNotesOpen(false);
             setIsScenesOpen(false);
             setIsMixerOpen(false);
+            setIsStatsOpen(false);
             setIsEmbedPlayerOpen(true);
           } else if (id === "rooms") {
             setIsRoomsOpen(true);
@@ -816,7 +837,13 @@ export default function StudySpacePage() {
           } else if (id === "settings") {
             handleOpenSettings();
           } else if (id === "stats") {
-            handleOpenSettings();
+            setIsTasksOpen(false);
+            setIsNotesOpen(false);
+            setIsScenesOpen(false);
+            setIsMixerOpen(false);
+            setIsEmbedPlayerOpen(false);
+            handleCloseSettings();
+            setIsStatsOpen(true);
           }
         }}
       />
@@ -832,7 +859,8 @@ export default function StudySpacePage() {
         !isEmbedPlayerOpen &&
         !isRoomsOpen &&
         !isChatOpen &&
-        !isSettingsOpen && (
+        !isSettingsOpen &&
+        !isStatsOpen && (
           <div className="sm:hidden">
             <MobileChatBubble hasNew={false} onOpen={() => setIsChatOpen(true)} />
           </div>

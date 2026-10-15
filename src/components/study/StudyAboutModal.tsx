@@ -103,12 +103,12 @@ export const StudyAboutModal = ({ isOpen, onClose }: StudyAboutModalProps) => {
       isOpen={isOpen}
       onClose={onClose}
       panelKey="about-modal"
-      backdropClassName="z-[60] bg-black/60 backdrop-blur-md"
+      backdropClassName="hidden sm:block z-[60] bg-black/60 backdrop-blur-md"
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 10 }}
       transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-      panelClassName="fixed inset-0 m-auto z-[70] w-[calc(100%-2rem)] max-w-[560px] h-fit max-h-[min(680px,calc(100vh-64px))] glass-panel hover:bg-black/45 text-white overflow-y-auto custom-study-scroll p-5 sm:p-6 space-y-4 transform-gpu will-change-[transform,opacity]"
+      panelClassName="hidden sm:block fixed inset-0 m-auto z-[70] w-[calc(100%-2rem)] max-w-[560px] h-fit max-h-[min(680px,calc(100vh-64px))] glass-panel hover:bg-black/45 text-white overflow-y-auto custom-study-scroll p-5 sm:p-6 space-y-4 transform-gpu will-change-[transform,opacity]"
       ariaLabel="Giới thiệu website"
     >
       <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />

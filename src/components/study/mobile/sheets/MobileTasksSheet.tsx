@@ -16,6 +16,8 @@ import { useKanbanBoards } from "../../tasks/hooks/useKanbanBoards";
 import { getDeadlineStatus } from "../../tasks/utils/task-deadline";
 import { CardDetailModal } from "../../tasks/components/CardDetailModal";
 import { PrioritySignalIcon } from "../../tasks/components/PrioritySignalIcon";
+import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
+import { MobileUndoSnackbar } from "../feedback/MobileUndoSnackbar";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { KanbanCard, CardPriority } from "../../tasks/types";
 
@@ -37,6 +39,12 @@ export function MobileTasksSheet({ isOpen, onClose }: MobileTasksSheetProps) {
     handleToggleCardComplete,
     handleMoveCard,
     promptDeleteCard,
+    cardToDelete,
+    setCardToDelete,
+    handleConfirmDeleteCard,
+    lastDeletedCard,
+    undoDeleteCard,
+    clearDeletedCard,
     handleUpdateCardDueDate,
     handleToggleChecklist,
     handleAddChecklistItem,
@@ -525,6 +533,28 @@ export function MobileTasksSheet({ isOpen, onClose }: MobileTasksSheetProps) {
           handleUpdateChecklistItemText={handleUpdateChecklistItemText}
           handleDeleteChecklistItem={handleDeleteChecklistItem}
           promptDeleteCard={promptDeleteCard}
+        />
+      )}
+
+      {/* Modal xác nhận xóa thẻ công việc */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(cardToDelete)}
+        onClose={() => setCardToDelete(null)}
+        onConfirm={handleConfirmDeleteCard}
+        title="Xác nhận xóa thẻ công việc"
+        description="Bạn có chắc chắn muốn xóa việc này không?"
+        itemName={cardToDelete?.title}
+        confirmText="Xóa việc"
+        cancelText="Hủy bỏ"
+      />
+
+      {/* Thanh hoàn tác sau khi xóa thẻ */}
+      {lastDeletedCard && (
+        <MobileUndoSnackbar
+          key={lastDeletedCard.deletedAt}
+          message={`Đã xóa "${lastDeletedCard.card.title}"`}
+          onUndo={undoDeleteCard}
+          onTimeout={clearDeletedCard}
         />
       )}
     </>

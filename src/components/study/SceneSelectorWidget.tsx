@@ -371,7 +371,8 @@ export const SceneSelectorWidget = ({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -10 }}
       transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-      panelClassName="fixed top-16 bottom-20 left-20 sm:left-24 z-50 w-[410px] sm:w-[450px] max-w-[calc(100vw-96px)] flex flex-col glass-panel hover:bg-black/45 text-white overflow-hidden transform-gpu will-change-[transform,opacity]"
+      backdropClassName="hidden sm:block"
+      panelClassName="hidden sm:flex fixed top-16 bottom-20 left-20 sm:left-24 z-50 w-[410px] sm:w-[450px] max-w-[calc(100vw-96px)] flex-col glass-panel hover:bg-black/45 text-white overflow-hidden transform-gpu will-change-[transform,opacity]"
     >
       <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
       {/* Header & Search Bar gọn gàng, tinh tế */}

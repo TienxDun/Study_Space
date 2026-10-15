@@ -322,7 +322,7 @@ const getLiveKitEndpoints = () => {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[70] pointer-events-none overflow-hidden">
+        <div className="hidden sm:block fixed inset-0 z-[70] pointer-events-none overflow-hidden">
           <motion.div
             ref={panelRef}
             key="rooms-panel"
@@ -375,7 +375,7 @@ const getLiveKitEndpoints = () => {
                     height: token ? roomSize.height : "auto",
                   }
             }
-            className={`pointer-events-auto fixed flex flex-col select-none transform-gpu will-change-transform ${
+            className={`hidden sm:flex pointer-events-auto fixed flex-col select-none transform-gpu will-change-transform ${
               isFullscreen
                 ? "inset-0 w-screen h-screen rounded-none bg-slate-950/95 backdrop-blur-3xl z-[90] border-none shadow-none"
                 : `min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] rounded-3xl bg-black/60 backdrop-blur-2xl border overflow-hidden z-[70] ${

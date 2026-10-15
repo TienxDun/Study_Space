@@ -37,6 +37,8 @@ export interface StudyTopBarProps {
   onToggleMute: () => void;
   onToggleSettings: () => void;
   onToggleFullscreen: () => void;
+  isStatsOpen?: boolean;
+  onToggleStats?: () => void;
 }
 
 /** Nút đồng hồ giữa: tự tick mỗi giây, tách riêng để khỏi vẽ lại cả thanh */
@@ -119,9 +121,12 @@ export const StudyTopBar = ({
   onToggleMute,
   onToggleSettings,
   onToggleFullscreen,
+  isStatsOpen: controlledStatsOpen,
+  onToggleStats,
 }: StudyTopBarProps) => {
-  const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [internalStatsOpen, setInternalStatsOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const isStatsOpen = controlledStatsOpen !== undefined ? controlledStatsOpen : internalStatsOpen;
 
   return (
     <>
@@ -194,7 +199,7 @@ export const StudyTopBar = ({
 
               {/* Focus Stats Button */}
               <button
-                onClick={() => setIsStatsOpen(true)}
+                onClick={() => (onToggleStats ? onToggleStats() : setInternalStatsOpen(true))}
                 className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-200 hover:text-white glass-hover transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
                 title="Thống kê thời gian tập trung"
                 aria-label="Mở thống kê thời gian tập trung"
@@ -271,8 +276,10 @@ export const StudyTopBar = ({
         </motion.button>
       )}
 
-      {/* Focus Stats Modal (portal ra body, tự quản lý state) */}
-      <FocusStatsModal isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} />
+      {/* Focus Stats Modal (portal ra body, tự quản lý state nếu không có prop ngoài) */}
+      {controlledStatsOpen === undefined && (
+        <FocusStatsModal isOpen={isStatsOpen} onClose={() => setInternalStatsOpen(false)} />
+      )}
 
       {/* Giới thiệu website (portal ra body, tự quản lý state) */}
       <StudyAboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />

@@ -264,7 +264,7 @@ export const StudyNotesWidget = ({
         {isOpen && (
           <div
             ref={dragContainerRef}
-            className="fixed inset-0 z-[60] pointer-events-none overflow-hidden"
+            className="hidden sm:block fixed inset-0 z-[60] pointer-events-none overflow-hidden"
           >
             {/* Window Container */}
             <motion.div
@@ -307,7 +307,7 @@ export const StudyNotesWidget = ({
                 width: compactSize.width,
                 height: compactSize.height,
               }}
-              className={`pointer-events-auto fixed min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] flex flex-col rounded-3xl backdrop-blur-2xl border overflow-hidden select-none transform-gpu will-change-transform z-[60] group/compact ${
+              className={`hidden sm:flex pointer-events-auto fixed min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] flex-col rounded-3xl backdrop-blur-2xl border overflow-hidden select-none transform-gpu will-change-transform z-[60] group/compact ${
                 isDragging
                   ? "shadow-[0_30px_80px_rgba(0,0,0,0.65)] ring-2 ring-emerald-500/40 cursor-grabbing"
                   : "transition-colors duration-150"

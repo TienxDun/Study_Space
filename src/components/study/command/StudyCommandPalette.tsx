@@ -101,7 +101,7 @@ export function StudyCommandPalette({
 
   return (
     <div
-      className="fixed inset-0 z-[99990] flex items-start justify-center p-4 pt-[18vh]"
+      className="hidden sm:flex fixed inset-0 z-[99990] items-start justify-center p-4 pt-[18vh]"
       role="dialog"
       aria-label="Mở nhanh"
     >

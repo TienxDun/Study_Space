@@ -26,6 +26,14 @@ export function useKanbanBoards() {
   const [columnToDelete, setColumnToDelete] = useState<KanbanColumn | null>(null);
   const [cardToDelete, setCardToDelete] = useState<KanbanCard | null>(null);
 
+  // Thẻ vừa xóa để hoàn tác (chỉ nhớ 1 thẻ gần nhất)
+  const [lastDeletedCard, setLastDeletedCard] = useState<{
+    boardId: string;
+    card: KanbanCard;
+    index: number;
+    deletedAt: number;
+  } | null>(null);
+
   // Search, Views & Selection
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("board");
@@ -373,13 +381,42 @@ export function useKanbanBoards() {
   const handleConfirmDeleteCard = useCallback(() => {
     if (!cardToDelete) return;
     const cardId = cardToDelete.id;
+    const boardId = activeBoardId;
+    const index = currentBoard.cards.findIndex((c) => c.id === cardId);
+    setLastDeletedCard({
+      boardId,
+      card: cardToDelete,
+      index: index < 0 ? 0 : index,
+      deletedAt: Date.now(),
+    });
     updateCurrentBoard((board) => ({
       ...board,
       cards: board.cards.filter((c) => c.id !== cardId),
     }));
     setSelectedCard((prev) => (prev?.id === cardId ? null : prev));
     setCardToDelete(null);
-  }, [cardToDelete, updateCurrentBoard]);
+  }, [cardToDelete, currentBoard.cards, activeBoardId, updateCurrentBoard]);
+
+  // Đặt lại thẻ vừa xóa về đúng chỗ cũ
+  const undoDeleteCard = useCallback(() => {
+    if (!lastDeletedCard) return;
+    const stash = lastDeletedCard;
+    setBoards((prevBoards) => {
+      const updated = prevBoards.map((b) => {
+        if (b.id !== stash.boardId) return b;
+        const cards = [...b.cards];
+        cards.splice(Math.min(stash.index, cards.length), 0, stash.card);
+        return { ...b, cards };
+      });
+      saveStorageJSON(STORAGE_KEY, updated);
+      return updated;
+    });
+    setLastDeletedCard(null);
+  }, [lastDeletedCard]);
+
+  const clearDeletedCard = useCallback(() => {
+    setLastDeletedCard(null);
+  }, []);
 
   // Column CRUD
   const handleAddColumn = useCallback(() => {
@@ -788,6 +825,9 @@ export function useKanbanBoards() {
     handleMoveCard,
     promptDeleteCard,
     handleConfirmDeleteCard,
+    lastDeletedCard,
+    undoDeleteCard,
+    clearDeletedCard,
     handleAddColumn,
     promptDeleteColumn,
     handleConfirmDeleteColumn,

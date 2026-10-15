@@ -1,0 +1,71 @@
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Chu shimmer kieu shadcn: chu chay sang khi AI dang tra loi. */
+@keyframes shimmer-text {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Dải sáng chạy 1 lần mỗi khi viên nút được chọn (học từ mẫu 001 Lucianlabs) */
+@keyframes lg-sheen-sweep {
+  from {
+    transform: translateX(-160%) skewX(-12deg);
+  }
+  to {
+    transform: translateX(320%) skewX(-12deg);
+  }
+}
+
+/* Thanh hoàn tác mobile trượt lên 1 lần khi hiện */
+@keyframes mobile-undo-in {
+  from {
+    opacity: 0;
+    transform: translateY(130%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobile-undo-enter {
+  animation: mobile-undo-in 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Thanh thời gian dưới đáy toast thông báo */
+@keyframes sonner-timebar {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* Người dùng chọn giảm chuyển động: tắt hết hiệu ứng chạy */
+@media (prefers-reduced-motion: reduce) {
+  .lg-spot,
+  .lg-sheen {
+    display: none;
+  }
+  .mobile-undo-enter {
+    animation: none;
+  }
+  .lg-seg {
+    transition: none;
+  }
+  .lg-seg:active {
+    transform: none;
+  }
+}

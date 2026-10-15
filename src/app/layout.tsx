@@ -132,7 +132,9 @@ export default function RootLayout({
         <Toaster
           theme="dark"
           position="top-right"
-          duration={3500}
+          duration={1500}
+          closeButton
+          swipeDirections={["left", "right", "bottom"]}
           offset={{ top: 72, right: 24 }}
           style={{ "--width": "390px" } as React.CSSProperties}
           toastOptions={{

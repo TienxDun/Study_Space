@@ -321,7 +321,7 @@ export const StudyMusicPlayer = ({
               pointerEvents: isZenMode ? "none" : "auto",
             }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="fixed bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+1rem)] right-3 sm:bottom-3.5 sm:right-3.5 z-40 hidden min-[400px]:block sm:block"
+            className="fixed bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+1rem)] right-3 sm:bottom-3.5 sm:right-3.5 z-40 hidden sm:block"
           >
             {/* Minimalist Floating Ghost Audio Dock (Hoàn toàn không background, không viền) */}
             <div

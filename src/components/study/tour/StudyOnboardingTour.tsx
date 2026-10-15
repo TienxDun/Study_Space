@@ -414,7 +414,7 @@ export function StudyOnboardingTour({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[99990] select-none">
+      <div className="hidden sm:block fixed inset-0 z-[99990] select-none">
         {/* Spotlight SVG Mask Overlay */}
         <svg
           className="absolute inset-0 w-full h-full pointer-events-auto transition-all duration-300"

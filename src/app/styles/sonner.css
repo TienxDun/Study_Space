@@ -1,0 +1,178 @@
+/* Premium Glassmorphic Toast Notifications (Sonner)
+   IMPORTANT-ALLOWED-START: sonner-override
+   Ly do giu !important: Sonner inject runtime style + inline style,
+   chi !important moi thang duoc. Khong mo rong ra ngoai block nay. */
+[data-sonner-toaster] {
+  font-family: var(--font-be-vietnam), sans-serif !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] {
+  background: rgba(0, 0, 0, 0.55) !important;
+  backdrop-filter: blur(40px) !important;
+  -webkit-backdrop-filter: blur(40px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  border-radius: 1rem !important;
+  padding: 1rem !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.75rem !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-icon] {
+  margin-top: 2px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  flex-shrink: 0 !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-content] {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.15rem !important;
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-title] {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 0.8125rem !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.4 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-description] {
+  color: #cbd5e1 !important;
+  font-size: 0.75rem !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+  margin-top: 0.25rem !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="success"] [data-icon] {
+  color: #34d399 !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="info"] [data-icon] {
+  color: #a855f7 !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="error"] [data-icon] {
+  color: #f87171 !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="warning"] [data-icon] {
+  color: #fbbf24 !important;
+}
+
+/* Nút tương tác trong toast (đóng/vuốt) luôn có vòng focus thấy rõ */
+[data-sonner-toaster] [data-sonner-toast] button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8) !important;
+  outline-offset: 2px !important;
+  border-radius: 0.5rem !important;
+}
+
+/* Màn hình nhỏ: toast co theo viewport, không tràn 390px cố định.
+   Thư viện đặt khung rộng 100%, chêm lề 2 bên sẽ tràn mép phải
+   nên phải bẻ rộng về auto để khung nằm gọn giữa 2 lề. */
+@media (max-width: 640px) {
+  [data-sonner-toaster] {
+    left: 1rem !important;
+    right: 1rem !important;
+    width: auto !important;
+    max-width: calc(100vw - 2rem) !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast] {
+    width: auto !important;
+    position: relative !important;
+    padding-right: 2.75rem !important;
+  }
+
+  /* Nút tắt chỉ hiện trên mobile: dấu x tối giản, không nền tròn, căn giữa theo chiều dọc */
+  [data-sonner-toaster] [data-sonner-toast] [data-close-button],
+  [data-sonner-toaster] [data-sonner-toast] button[data-close-button] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    top: 50% !important;
+    right: 10px !important;
+    left: auto !important;
+    bottom: auto !important;
+    transform: translateY(-50%) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0.5rem !important;
+    box-shadow: none !important;
+    color: rgba(255, 255, 255, 0.65) !important;
+    transition: color 0.15s ease, opacity 0.15s ease !important;
+    opacity: 1 !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast] [data-close-button]:hover,
+  [data-sonner-toaster] [data-sonner-toast] button[data-close-button]:hover,
+  [data-sonner-toaster] [data-sonner-toast] [data-close-button]:active,
+  [data-sonner-toaster] [data-sonner-toast] button[data-close-button]:active {
+    color: #ffffff !important;
+    background: transparent !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast] [data-close-button] svg,
+  [data-sonner-toaster] [data-sonner-toast] button[data-close-button] svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  /* Thanh thời gian dưới đáy toast (học từ mẫu 070 Lucianlabs).
+     1.5s khớp duration của Toaster trong layout.tsx, chỉ đúng khi
+     toast dùng thời gian mặc định, toast riêng lẻ có thể lệch.
+     Keyframes sonner-timebar nằm ở motion.css. */
+  [data-sonner-toaster] [data-sonner-toast]::after {
+    content: "" !important;
+    position: absolute !important;
+    left: 1rem !important;
+    right: 1rem !important;
+    bottom: 0.5rem !important;
+    height: 2px !important;
+    border-radius: 2px !important;
+    background: rgba(255, 255, 255, 0.35) !important;
+    transform-origin: 0 50% !important;
+    animation: sonner-timebar 1.5s linear forwards !important;
+  }
+}
+
+/* Máy tính giữ nguyên như cũ: không hiện nút tắt */
+@media (min-width: 640px) {
+  [data-sonner-toaster] [data-sonner-toast] [data-close-button],
+  [data-sonner-toaster] [data-sonner-toast] button[data-close-button] {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toaster] [data-sonner-toast]::after {
+    display: none !important;
+  }
+}
+
+/* Tôn trọng prefers-reduced-motion: tắt animation nảy của toast */
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toaster] [data-sonner-toast] {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+/* IMPORTANT-ALLOWED-END */

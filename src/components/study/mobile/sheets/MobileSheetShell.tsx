@@ -90,6 +90,7 @@ export function MobileSheetShell({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 40, scale: 0.98 }}
       transition={{ type: "spring", stiffness: 380, damping: 30 }}
+      backdropClassName="sm:hidden"
       panelClassName={
         isZenMode
           ? "fixed inset-x-2 top-2.5 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] z-50 flex flex-col rounded-[32px] bg-neutral-950/92 backdrop-blur-3xl backdrop-saturate-150 border border-white/[0.18] shadow-[0_32px_80px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.3)] text-white overflow-hidden sm:hidden transition-all duration-300"
