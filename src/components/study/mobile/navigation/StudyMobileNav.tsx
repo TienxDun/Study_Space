@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { TimerIcon, CheckSquareIcon, ImageIcon, MusicNoteIcon, DotsThreeIcon } from "@phosphor-icons/react";
 import type { MobileNavId } from "./types";
 import { MobileNavItem } from "./MobileNavItem";
@@ -101,10 +102,15 @@ export const StudyMobileNav = React.memo(function StudyMobileNav({
     e.currentTarget.classList.remove("is-touching");
   };
 
-  return (
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const navContent = (
     <nav
       aria-label="Điều hướng mobile"
-      className="fixed inset-x-0 bottom-0 z-[60] sm:hidden bottom-nav-safe pointer-events-none"
+      className="fixed inset-x-0 bottom-0 z-[70] sm:hidden bottom-nav-safe pointer-events-none"
     >
       <div className="relative mx-3 pointer-events-auto">
         {/* Thanh capsule kính lỏng: mờ + đậm màu nền, viền sáng trên, bóng trung tính */}
@@ -135,4 +141,10 @@ export const StudyMobileNav = React.memo(function StudyMobileNav({
       </div>
     </nav>
   );
+
+  if (!mounted || typeof document === "undefined" || !document.body) {
+    return null;
+  }
+
+  return createPortal(navContent, document.body);
 });

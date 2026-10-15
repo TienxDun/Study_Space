@@ -135,6 +135,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
     <>
       <MobileSheetShell
         isOpen={isOpen}
+        sheetId="notes"
         onClose={() => {
           setEditingNoteId(null);
           onClose();

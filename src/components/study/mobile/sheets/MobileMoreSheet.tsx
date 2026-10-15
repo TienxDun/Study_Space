@@ -41,7 +41,7 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
   };
 
   return (
-    <MobileSheetShell isOpen={isOpen} onClose={onClose} title="Thêm">
+    <MobileSheetShell isOpen={isOpen} onClose={onClose} sheetId="more" title="Thêm">
       <div className="px-3 pt-2 pb-1 space-y-3.5">
         <section>
           <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/50">Tài khoản</p>

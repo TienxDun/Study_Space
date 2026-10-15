@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useRef, useEffect, type ReactNode } from "react";
+import { useState, useRef, useEffect, useCallback, type ReactNode } from "react";
 import { XIcon, ArrowsInSimpleIcon, ArrowsOutSimpleIcon } from "@phosphor-icons/react";
 import { ModalShell } from "@/components/ui/ModalShell";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { saveStorage } from "@/lib/safe-storage";
 
 interface MobileSheetShellProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
+  sheetId?: string;
   headerRight?: ReactNode;
   maxHeightClassName?: string;
   heightClassName?: string;
@@ -19,30 +22,59 @@ interface MobileSheetShellProps {
   children: ReactNode;
 }
 
+function assignRef<T>(ref: React.Ref<T> | undefined, el: T | null) {
+  if (!ref) return;
+  if (typeof ref === "function") ref(el);
+  else (ref as React.MutableRefObject<T | null>).current = el;
+}
+
 // Khung bảng đáy Liquid Glass & Full-Screen Zen Overlay cho mobile
 export function MobileSheetShell({
   isOpen,
   onClose,
   title,
+  sheetId,
   headerRight,
   maxHeightClassName,
   heightClassName,
-  defaultZenMode = true,
+  defaultZenMode = false,
   footer,
   panelRef,
   onSwipeLeft,
   onSwipeRight,
   children,
 }: MobileSheetShellProps) {
-  const [isZenMode, setIsZenMode] = useState(defaultZenMode);
+  const effectiveSheetId =
+    sheetId ||
+    title
+      .replace(/\s*\([^)]*\)\s*/g, "")
+      .trim()
+      .toLowerCase();
+
+  const getSavedZenMode = useCallback((): boolean => {
+    if (typeof window === "undefined") return defaultZenMode;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.mobileSheetZenMap);
+      if (raw) {
+        const map = JSON.parse(raw);
+        if (typeof map[effectiveSheetId] === "boolean") {
+          return map[effectiveSheetId];
+        }
+      }
+    } catch {}
+    return defaultZenMode;
+  }, [defaultZenMode, effectiveSheetId]);
+
+  const [isZenMode, setIsZenMode] = useState<boolean>(defaultZenMode);
   const [isClosingByDrag, setIsClosingByDrag] = useState(false);
   const localPanelRef = useRef<HTMLDivElement | null>(null);
   const touchStartY = useRef<number | null>(null);
   const isDraggingDown = useRef(false);
 
-  // Khi mở bảng, reset sạch vị trí transform và cờ đóng bằng cử chỉ
+  // Khi mở bảng, đồng bộ chế độ xem theo lựa chọn đã lưu của người dùng và reset chuyển động
   useEffect(() => {
     if (isOpen) {
+      setIsZenMode(getSavedZenMode());
       setIsClosingByDrag(false);
       if (localPanelRef.current) {
         localPanelRef.current.style.removeProperty("display");
@@ -51,15 +83,25 @@ export function MobileSheetShell({
         localPanelRef.current.style.transition = "";
       }
     }
-  }, [isOpen]);
+  }, [isOpen, getSavedZenMode]);
+
+  const handleToggleZenMode = () => {
+    setIsZenMode((prev) => {
+      const next = !prev;
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.mobileSheetZenMap);
+        const map = raw ? JSON.parse(raw) : {};
+        map[effectiveSheetId] = next;
+        saveStorage(STORAGE_KEYS.mobileSheetZenMap, JSON.stringify(map));
+      } catch {}
+      return next;
+    });
+  };
 
   // Hợp nhất ref bên ngoài và ref nội bộ để điều khiển trực tiếp chuyển động trượt
   const setCombinedRef = (el: HTMLDivElement | null) => {
     localPanelRef.current = el;
-    if (panelRef) {
-      if (typeof panelRef === "function") panelRef(el);
-      else (panelRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-    }
+    assignRef(panelRef, el);
   };
 
   // Kéo xuống trên vùng đỉnh: bảng bám sát ngón tay 1:1 theo thời gian thực (tới đâu đóng tới đó)
@@ -218,7 +260,7 @@ export function MobileSheetShell({
           {/* Nút chuyển chế độ Full-Screen Zen Overlay / Khay đáy */}
           <button
             type="button"
-            onClick={() => setIsZenMode((prev) => !prev)}
+            onClick={handleToggleZenMode}
             title={isZenMode ? "Thu gọn về dạng khay đáy" : "Mở rộng không gian Zen (Toàn màn hình)"}
             aria-label="Chuyển chế độ xem"
             className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all shadow-sm"

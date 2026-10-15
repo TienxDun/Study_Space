@@ -59,6 +59,8 @@ export const STORAGE_KEYS = {
   focusSessions: "study_space_focus_sessions_v1",
   // Onboarding Tour
   tourCompleted: "zenstudy_tour_completed",
+  // Cấu hình chế độ xem Mobile Sheet (Toàn màn hình Zen vs Dạng thu nhỏ/khay đáy)
+  mobileSheetZenMap: "study_space_mobile_sheet_zen_map",
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

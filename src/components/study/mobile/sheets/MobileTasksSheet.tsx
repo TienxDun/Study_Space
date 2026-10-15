@@ -213,6 +213,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
       <MobileSheetShell
         isOpen={isOpen}
         onClose={onClose}
+        sheetId="tasks"
         title={`Việc cần làm (${allCardsWithColumn.length})`}
         heightClassName="h-[80dvh] max-h-[85dvh]"
         onSwipeLeft={goToNextFilter}

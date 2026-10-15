@@ -231,6 +231,7 @@ export const MobileSceneSheet = React.memo(function MobileSceneSheet({
     <MobileSheetShell
       isOpen={isOpen}
       onClose={onClose}
+      sheetId="scenes"
       title="Không gian bối cảnh"
       heightClassName="h-[80dvh] max-h-[85dvh]"
       onSwipeLeft={goToNextCategory}

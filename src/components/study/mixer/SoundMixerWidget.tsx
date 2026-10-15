@@ -154,6 +154,7 @@ export const SoundMixerWidget = ({
         <MobileSheetShell
           isOpen={isOpen}
           onClose={onClose}
+          sheetId="mixer"
           title="Âm thanh & Nhạc Chill"
           panelRef={mobileSheetRef}
           heightClassName="h-[80dvh] max-h-[85dvh]"
