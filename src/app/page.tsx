@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -34,7 +34,7 @@ import { FocusStatsModal } from "@/components/study/stats/FocusStatsModal";
 import { MobileRadialBubbleMenu } from "@/components/study/mobile/navigation/MobileRadialBubbleMenu";
 import { MobilePomodoroView } from "@/components/study/mobile/pomodoro/MobilePomodoroView";
 import type { MobileNavId } from "@/components/study/mobile/navigation/types";
-import { useMobileStack } from "@/components/study/mobile/navigation/useMobileStack";
+import { useMobileStack, type MobileStackItem } from "@/components/study/mobile/navigation/useMobileStack";
 import { StudyShortcutsModal } from "@/components/study/StudyShortcutsModal";
 import { StudyOnboardingTour } from "@/components/study/tour/StudyOnboardingTour";
 import {
@@ -125,19 +125,8 @@ export default function StudySpacePage() {
     setIsChatOpen((prev) => !prev);
   };
 
-  // Stack navigation cho mobile
-  const {
-    canGoBack: mobileCanGoBack,
-    previousScreen: mobilePrevScreen,
-    push: mobilePush,
-    pop: mobilePop,
-    closeAll: mobileCloseAll,
-    openRoot: mobileOpenRoot,
-  } = useMobileStack();
-
-  const handleMobileCloseAllSheets = () => {
-    mobileCloseAll();
-    setIsMoreOpen(false);
+  // Đồng bộ mở đúng Sheet theo màn hình đỉnh stack
+  const syncScreenToStates = useCallback((screen: MobileStackItem | null) => {
     setIsTasksOpen(false);
     setIsNotesOpen(false);
     setIsScenesOpen(false);
@@ -147,38 +136,47 @@ export default function StudySpacePage() {
     setIsChatOpen(false);
     setIsStatsOpen(false);
     handleCloseSettings();
-  };
+    setIsMoreOpen(false);
 
-  const handleMobileBack = () => {
+    if (!screen) return;
+    if (screen.id === "more") setIsMoreOpen(true);
+    else if (screen.id === "tasks") setIsTasksOpen(true);
+    else if (screen.id === "notes") setIsNotesOpen(true);
+    else if (screen.id === "scenes") setIsScenesOpen(true);
+    else if (screen.id === "stats") setIsStatsOpen(true);
+    else if (screen.id === "settings") setIsSettingsOpen(true);
+    else if (screen.id === "rooms") setIsRoomsOpen(true);
+    else if (screen.id === "chat") setIsChatOpen(true);
+    else if (screen.id === "embed") setIsEmbedPlayerOpen(true);
+    else if (screen.id === "music") setIsMixerOpen(true);
+  }, []);
+
+  // Stack navigation cho mobile với đồng bộ hai chiều (Back button cứng & giao diện)
+  const {
+    canGoBack: mobileCanGoBack,
+    previousScreen: mobilePrevScreen,
+    push: mobilePush,
+    pop: mobilePop,
+    closeAll: mobileCloseAll,
+    openRoot: mobileOpenRoot,
+  } = useMobileStack({
+    onStackChange: (current) => {
+      syncScreenToStates(current);
+    },
+  });
+
+  const handleMobileCloseAllSheets = useCallback(() => {
+    mobileCloseAll();
+    syncScreenToStates(null);
+  }, [mobileCloseAll, syncScreenToStates]);
+
+  const handleMobileBack = useCallback(() => {
     if (mobileCanGoBack) {
-      const prev = mobilePrevScreen;
       mobilePop();
-
-      setIsTasksOpen(false);
-      setIsNotesOpen(false);
-      setIsScenesOpen(false);
-      setIsMixerOpen(false);
-      setIsEmbedPlayerOpen(false);
-      setIsRoomsOpen(false);
-      setIsChatOpen(false);
-      setIsStatsOpen(false);
-      handleCloseSettings();
-      setIsMoreOpen(false);
-
-      if (prev?.id === "more") setIsMoreOpen(true);
-      else if (prev?.id === "tasks") setIsTasksOpen(true);
-      else if (prev?.id === "notes") setIsNotesOpen(true);
-      else if (prev?.id === "scenes") setIsScenesOpen(true);
-      else if (prev?.id === "stats") setIsStatsOpen(true);
-      else if (prev?.id === "settings") setIsSettingsOpen(true);
-      else if (prev?.id === "rooms") setIsRoomsOpen(true);
-      else if (prev?.id === "chat") setIsChatOpen(true);
-      else if (prev?.id === "embed") setIsEmbedPlayerOpen(true);
-      else if (prev?.id === "music") setIsMixerOpen(true);
     } else {
       handleMobileCloseAllSheets();
     }
-  };
+  }, [mobileCanGoBack, mobilePop, handleMobileCloseAllSheets]);
 
   // Slideshow tự xoay bối cảnh (mặc định bật 5 phút, nhớ lựa chọn vào LocalStorage)
   const [isSlideshowOn, setIsSlideshowOn] = useState(true);

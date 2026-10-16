@@ -231,12 +231,18 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
         backLabel={currentEditingNote ? "Ghi chú" : backLabel}
         title={
           currentEditingNote
-            ? "Chi tiết ghi chú"
+            ? ""
             : `Ghi chú (${sortedNotes.length})`
         }
         heightClassName="h-[82dvh] max-h-[85dvh]"
         headerRight={
-          currentEditingNote ? undefined : (
+          currentEditingNote ? (
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-full bg-white/[0.08] border border-white/10 text-[11px] font-medium text-slate-300">
+                {richWordCount} từ
+              </span>
+            </div>
+          ) : (
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
@@ -266,23 +272,6 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
           {/* ======================= CHẾ ĐỘ 1: XEM/SỬA GHI CHÚ CHI TIẾT ======================= */}
           {currentEditingNote ? (
             <div className="flex-1 min-h-0 flex flex-col p-4 space-y-3 overflow-y-auto custom-study-scroll overscroll-contain touch-pan-y no-scrollbar">
-              {/* Thanh điều hướng quay lại danh sách */}
-              <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAiPromptMenu(false);
-                    setEditingNoteId(null);
-                  }}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300 active:scale-95 transition-all"
-                >
-                  <CaretLeftIcon className="w-4 h-4" />
-                  <span>Danh sách ghi chú</span>
-                </button>
-                <span className="text-xs text-slate-300">
-                  {richWordCount} từ
-                </span>
-              </div>
 
               {/* Ô sửa tiêu đề: rộng hết màn hình, dài tự xuống 2 hàng, không cắt chữ */}
               <textarea
@@ -413,7 +402,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                 onMouseUp={richSelChange}
                 onSelect={richSelChange}
                 data-placeholder="Chạm vào đây để ghi chú bài học, ý tưởng, công thức..."
-                className="flex-1 min-h-[220px] focus:outline-none text-sm text-white/90 leading-relaxed space-y-2 select-text"
+                className="study-editor-content flex-1 min-h-[220px] focus:outline-none text-sm text-slate-100 leading-relaxed space-y-2 select-text"
               />
 
               {/* Gợi ý khi note còn trống để bớt khoảng đen */}
