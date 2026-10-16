@@ -5,15 +5,21 @@ import {
   PlusIcon,
   MagnifyingGlassIcon,
   PushPinIcon,
-  TrashIcon,
   CaretLeftIcon,
+  CaretDownIcon,
   CheckSquareIcon,
   FileTextIcon,
   DotsThreeVerticalIcon,
   XIcon,
-  PencilLineIcon,
+  TextBIcon,
+  TextItalicIcon,
+  HighlighterIcon,
+  ArrowUUpLeftIcon,
+  SparkleIcon,
 } from "@phosphor-icons/react";
 import { useStudyNotes } from "../../notes/hooks/useStudyNotes";
+import { useRichTextEditor, flattenNestedTodos } from "../../notes/hooks/useRichTextEditor";
+import { NoteChatPromptMenu } from "../../notes/components/NoteChatPromptMenu";
 import { StudyNote } from "../../notes/types";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
@@ -23,6 +29,8 @@ import { MobileNoteBubbleMenu } from "./MobileNoteBubbleMenu";
 interface MobileNotesSheetProps {
   isOpen: boolean;
   onClose: () => void;
+  onBack?: () => void;
+  backLabel?: string;
 }
 
 // Chuyển HTML thành text thuần để hiển thị trích dẫn ngắn trong danh sách
@@ -49,6 +57,8 @@ function parseChecklistStats(html: string) {
 export const MobileNotesSheet = React.memo(function MobileNotesSheet({
   isOpen,
   onClose,
+  onBack,
+  backLabel,
 }: MobileNotesSheetProps) {
   const {
     sortedNotes,
@@ -69,14 +79,38 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [activeMenuNoteId, setActiveMenuNoteId] = useState<string | null>(null);
+  const [showAiPromptMenu, setShowAiPromptMenu] = useState(false);
 
   // Undo delete snackbar
   const [lastDeletedNote, setLastDeletedNote] = useState<StudyNote | null>(null);
 
-  const editorRef = useRef<HTMLDivElement>(null);
-  const titleInputRef = useRef<HTMLInputElement>(null);
+  const titleInputRef = useRef<HTMLTextAreaElement>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isLongPressTriggeredRef = useRef(false);
+  const prevEditingIdRef = useRef<string | null>(null);
+
+  // Dùng chung bộ gõ giàu tính năng như desktop (đậm, nghiêng, checklist, tô sáng, hoàn tác)
+  const {
+    editorRef: richEditorRef,
+    wordCount: richWordCount,
+    activeFormats: richActiveFormats,
+    updateCountsFromDom,
+    handleUndo: richUndo,
+    execFormat: richExec,
+    insertChecklist: richChecklist,
+    toggleHighlight: richHighlight,
+    handleEditorClick: richClick,
+    handleEditorKeyDown: richKeyDown,
+    handleEditorPaste: richPaste,
+    handleSelectionOrFormatChange: richSelChange,
+    triggerInputSave: richInputSave,
+    undoStackRef,
+    redoStackRef,
+  } = useRichTextEditor({
+    onContentChange: (newHtml) => {
+      if (editingNoteId) updateNoteContent(editingNoteId, newHtml);
+    },
+  });
 
   const startLongPress = (noteId: string) => {
     isLongPressTriggeredRef.current = false;
@@ -101,12 +135,15 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
   // Giữ nút đóng ổn định: gõ tiêu đề hay nội dung vẽ lại cũng không giật mất chỗ gõ
   const handleCloseSheet = useCallback(() => {
     setEditingNoteId(null);
+    setShowAiPromptMenu(false);
+    prevEditingIdRef.current = null;
     onClose();
   }, [onClose]);
 
   // Tự động đóng menu ngữ cảnh khi đóng bảng hoặc tìm kiếm
   useEffect(() => {
     setActiveMenuNoteId(null);
+    setShowAiPromptMenu(false);
   }, [searchQuery, isSearchOpen, isOpen]);
 
   // Tìm kiếm ghi chú theo tiêu đề hoặc nội dung
@@ -126,14 +163,39 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
     return sortedNotes.find((n) => n.id === editingNoteId) || null;
   }, [editingNoteId, sortedNotes]);
 
-  // Khi mở note để sửa, đồng bộ nội dung HTML vào editorRef
+  // Khi mở note để sửa, đồng bộ nội dung HTML vào khung gõ (chỉ đồng bộ khi đổi note, gõ chữ không nạp lại để khỏi mất chỗ gõ)
   useEffect(() => {
-    if (editingNoteId && currentEditingNote && editorRef.current) {
-      if (editorRef.current.innerHTML !== currentEditingNote.content) {
-        editorRef.current.innerHTML = currentEditingNote.content || "<p><br></p>";
+    if (!editingNoteId || !currentEditingNote) return;
+    if (prevEditingIdRef.current === editingNoteId) return;
+    prevEditingIdRef.current = editingNoteId;
+    setShowAiPromptMenu(false);
+    const syncDom = () => {
+      if (richEditorRef.current) {
+        richEditorRef.current.innerHTML = currentEditingNote.content || "<p><br></p>";
+        const changed = flattenNestedTodos(richEditorRef.current);
+        const finalHtml = richEditorRef.current.innerHTML;
+        undoStackRef.current = [finalHtml];
+        redoStackRef.current = [];
+        if (changed) updateNoteContent(currentEditingNote.id, finalHtml);
       }
+      updateCountsFromDom(currentEditingNote.content);
+    };
+    if (richEditorRef.current) {
+      syncDom();
+    } else {
+      const timer = setTimeout(syncDom, 30);
+      return () => clearTimeout(timer);
     }
-  }, [editingNoteId, currentEditingNote]);
+  }, [editingNoteId, currentEditingNote, richEditorRef, undoStackRef, redoStackRef, updateCountsFromDom, updateNoteContent]);
+
+  // Tiêu đề dài thì tự cao lên tối đa 2 hàng khi mới mở note
+  useEffect(() => {
+    if (!editingNoteId) return;
+    const el = titleInputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 64)}px`;
+  }, [editingNoteId, currentEditingNote?.title]);
 
   // Tạo ghi chú mới và mở ngay chế độ chỉnh sửa
   const handleAddNewNote = () => {
@@ -147,13 +209,6 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
       // Chỉ mở nếu người dùng vừa mới bấm tạo note
     }
   }, [activeNoteId, editingNoteId]);
-
-  // Lưu nội dung từ editor
-  const handleContentInput = () => {
-    if (!currentEditingNote || !editorRef.current) return;
-    const newHtml = editorRef.current.innerHTML;
-    updateNoteContent(currentEditingNote.id, newHtml);
-  };
 
   // Xác nhận xóa
   const confirmDelete = () => {
@@ -172,6 +227,8 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
         isOpen={isOpen}
         sheetId="notes"
         onClose={handleCloseSheet}
+        onBack={currentEditingNote ? () => setEditingNoteId(null) : onBack}
+        backLabel={currentEditingNote ? "Ghi chú" : backLabel}
         title={
           currentEditingNote
             ? "Chi tiết ghi chú"
@@ -179,30 +236,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
         }
         heightClassName="h-[82dvh] max-h-[85dvh]"
         headerRight={
-          currentEditingNote ? (
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleTogglePin(currentEditingNote.id)}
-                aria-label={currentEditingNote.isPinned ? "Bỏ ghim" : "Ghim ghi chú"}
-                className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all active:scale-90 ${
-                  currentEditingNote.isPinned
-                    ? "bg-amber-400/20 border-amber-400/40 text-amber-300"
-                    : "bg-white/10 hover:bg-white/15 border-white/15 text-white/70 hover:text-white"
-                }`}
-              >
-                <PushPinIcon weight={currentEditingNote.isPinned ? "fill" : "regular"} className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => promptDeleteNote(currentEditingNote)}
-                aria-label="Xóa ghi chú"
-                className="w-8 h-8 rounded-full bg-rose-500/15 border border-rose-400/30 text-rose-300 flex items-center justify-center active:scale-90 transition-all hover:bg-rose-500/25"
-              >
-                <TrashIcon className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
+          currentEditingNote ? undefined : (
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
@@ -236,61 +270,163 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
               <div className="flex items-center justify-between pb-2 border-b border-white/10">
                 <button
                   type="button"
-                  onClick={() => setEditingNoteId(null)}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 active:scale-95 transition-all"
+                  onClick={() => {
+                    setShowAiPromptMenu(false);
+                    setEditingNoteId(null);
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300 active:scale-95 transition-all"
                 >
                   <CaretLeftIcon className="w-4 h-4" />
                   <span>Danh sách ghi chú</span>
                 </button>
-                <span className="text-[11px] text-white/40">
-                  Lưu lúc: {lastSavedTime}
+                <span className="text-xs text-slate-300">
+                  {richWordCount} từ
                 </span>
               </div>
 
-              {/* Ô sửa tiêu đề với icon bút bám sát đuôi chữ tương tự CardDetailModal */}
-              <div
-                onClick={() => titleInputRef.current?.focus()}
-                className="group/title relative inline-flex items-center gap-1.5 max-w-full -ml-2 px-2 py-0.5 rounded-xl border border-transparent hover:border-white/15 hover:bg-white/[0.04] focus-within:border-white/25 focus-within:bg-white/[0.06] transition-all cursor-text"
-                title="Nhấp để chỉnh sửa tiêu đề ghi chú"
-              >
-                <div className="relative inline-flex items-center max-w-[280px] sm:max-w-[420px] min-w-[24px]">
-                  {/* Thẻ đệm đo chính xác từng pixel chiều rộng của chữ */}
-                  <span
-                    aria-hidden="true"
-                    className="invisible text-lg sm:text-xl font-bold tracking-tight whitespace-pre select-none pointer-events-none px-0.5 truncate max-w-full"
-                  >
-                    {currentEditingNote.title || "Tiêu đề ghi chú..."}
-                  </span>
-                  {/* Input phủ tuyệt đối 100% khớp chuẩn theo kích thước thẻ đệm */}
-                  <input
-                    ref={titleInputRef}
-                    type="text"
-                    value={currentEditingNote.title}
-                    onChange={(e) => handleUpdateTitle(e.target.value)}
-                    className="absolute inset-0 w-full h-full text-lg sm:text-xl font-bold bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-white/25 text-white tracking-tight cursor-text px-0.5"
-                    placeholder="Tiêu đề ghi chú..."
-                  />
-                </div>
-                <div
-                  className="shrink-0 flex items-center text-slate-500 group-hover/title:text-amber-400 group-focus-within/title:text-sky-400 transition-colors pointer-events-none"
-                  title="Chỉnh sửa nhanh"
-                >
-                  <PencilLineIcon className="w-3.5 h-3.5" />
-                </div>
-              </div>
+              {/* Ô sửa tiêu đề: rộng hết màn hình, dài tự xuống 2 hàng, không cắt chữ */}
+              <textarea
+                ref={titleInputRef}
+                value={currentEditingNote.title}
+                onChange={(e) => handleUpdateTitle(e.target.value)}
+                aria-label="Tiêu đề ghi chú"
+                placeholder="Tiêu đề ghi chú..."
+                rows={1}
+                onInput={(e) => {
+                  const el = e.currentTarget;
+                  el.style.height = "auto";
+                  el.style.height = `${Math.min(el.scrollHeight, 64)}px`;
+                }}
+                className="w-full text-lg font-bold bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-white/25 text-white tracking-tight px-2 py-0.5 rounded-xl hover:bg-white/[0.04] focus:bg-white/[0.06] transition-colors resize-none overflow-y-auto leading-snug max-h-16"
+              />
 
               {/* Đường line phân cách phân biệt tiêu đề và nội dung */}
               <div className="h-px bg-white/10 shrink-0" />
 
+              {/* Thanh công cụ giống desktop: đậm, nghiêng, checklist, tô sáng, hoàn tác + Hỏi AI */}
+              <div className="flex items-center justify-between gap-2 shrink-0 rounded-2xl bg-white/[0.04] border border-white/[0.08] p-1.5">
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+                  <button
+                    type="button"
+                    onClick={() => richExec("bold")}
+                    aria-label="In đậm"
+                    title="In đậm"
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center transition-colors active:scale-90 shrink-0 ${
+                      richActiveFormats.bold
+                        ? "bg-white text-slate-950 font-bold"
+                        : "text-slate-300 bg-white/[0.06] border border-white/10"
+                    }`}
+                  >
+                    <TextBIcon className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => richExec("italic")}
+                    aria-label="In nghiêng"
+                    title="In nghiêng"
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center transition-colors active:scale-90 shrink-0 ${
+                      richActiveFormats.italic
+                        ? "bg-white text-slate-950 font-bold"
+                        : "text-slate-300 bg-white/[0.06] border border-white/10"
+                    }`}
+                  >
+                    <TextItalicIcon className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={richChecklist}
+                    aria-label="Việc cần làm"
+                    title="Việc cần làm (Checklist)"
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center transition-colors active:scale-90 shrink-0 ${
+                      richActiveFormats.todo
+                        ? "bg-emerald-400 text-slate-950 font-bold"
+                        : "text-slate-300 bg-white/[0.06] border border-white/10"
+                    }`}
+                  >
+                    <CheckSquareIcon className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={richHighlight}
+                    aria-label="Tô sáng"
+                    title="Tô sáng dạ quang"
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center transition-colors active:scale-90 shrink-0 ${
+                      richActiveFormats.highlight
+                        ? "bg-amber-400 text-slate-950 font-bold"
+                        : "text-slate-300 bg-white/[0.06] border border-white/10"
+                    }`}
+                  >
+                    <HighlighterIcon className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={richUndo}
+                    aria-label="Hoàn tác"
+                    title="Hoàn tác"
+                    className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-300 bg-white/[0.06] border border-white/10 transition-colors active:scale-90 shrink-0"
+                  >
+                    <ArrowUUpLeftIcon className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowAiPromptMenu((prev) => !prev)}
+                    className={`flex items-center gap-1.5 h-11 px-3 rounded-xl text-xs font-semibold transition-colors border active:scale-95 ${
+                      showAiPromptMenu
+                        ? "bg-emerald-500/25 border-emerald-500/40 text-emerald-300"
+                        : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                    }`}
+                    title="Gửi nội dung ghi chú này vào Chatbot để hỏi"
+                  >
+                    <SparkleIcon weight="fill" className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Hỏi AI</span>
+                    <CaretDownIcon
+                      className={`w-3 h-3 opacity-70 transition-transform duration-200 ${
+                        showAiPromptMenu ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                  <NoteChatPromptMenu
+                    activeNote={currentEditingNote}
+                    isLight={false}
+                    isOpen={showAiPromptMenu}
+                    onClose={() => setShowAiPromptMenu(false)}
+                  />
+                </div>
+              </div>
+
               {/* Vùng soạn thảo Rich Content */}
               <div
-                ref={editorRef}
+                ref={richEditorRef}
                 contentEditable
                 suppressContentEditableWarning
-                onInput={handleContentInput}
+                spellCheck={false}
+                autoCorrect="off"
+                autoCapitalize="off"
+                onInput={richInputSave}
+                onClick={richClick}
+                onKeyDown={richKeyDown}
+                onPaste={richPaste}
+                onKeyUp={richSelChange}
+                onMouseUp={richSelChange}
+                onSelect={richSelChange}
                 data-placeholder="Chạm vào đây để ghi chú bài học, ý tưởng, công thức..."
                 className="flex-1 min-h-[220px] focus:outline-none text-sm text-white/90 leading-relaxed space-y-2 select-text"
               />
+
+              {/* Gợi ý khi note còn trống để bớt khoảng đen */}
+              {richWordCount === 0 && (
+                <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] p-3 text-xs text-slate-400 leading-relaxed shrink-0">
+                  Bôi đen chữ rồi dùng B / I ở trên để nhấn mạnh. Thêm checklist cho việc cần làm.
+                </div>
+              )}
+
+              {/* Chân ghi chú: chỉ giữ 1 chỗ báo giờ lưu */}
+              <div className="flex items-center justify-center text-xs text-white/60 pt-1 shrink-0">
+                <span>Đã lưu {lastSavedTime}</span>
+              </div>
             </div>
           ) : (
             /* ======================= CHẾ ĐỘ 2: DANH SÁCH GHI CHÚ ======================= */
@@ -324,7 +460,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
               {/* Danh sách các card ghi chú */}
               <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-study-scroll overscroll-contain touch-pan-y no-scrollbar">
                 {filteredNotes.length > 0 ? (
-                  filteredNotes.map((note) => {
+                  filteredNotes.map((note, idx) => {
                     const snippet = extractPlainText(note.content);
                     const stats = parseChecklistStats(note.content);
                     const isMenuOpen = activeMenuNoteId === note.id;
@@ -336,7 +472,10 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                         onTouchMove={cancelLongPress}
                         onTouchEnd={cancelLongPress}
                         onTouchCancel={cancelLongPress}
-                        className={`group relative p-3.5 rounded-2xl border transition-all select-none ${
+                        style={{ "--stagger-idx": Math.min(idx, 10) } as React.CSSProperties}
+                        className={`group p-3.5 rounded-2xl border transition-all select-none sheet-stagger-item ${
+                          isMenuOpen ? "relative z-30" : "relative z-0"
+                        } ${
                           note.isPinned
                             ? "bg-amber-500/[0.08] hover:bg-amber-500/[0.12] border-amber-400/25 shadow-[0_4px_20px_rgba(245,158,11,0.06)]"
                             : "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.08] shadow-sm"

@@ -27,6 +27,8 @@ export interface SoundMixerWidgetProps {
   isLooping: boolean;
   onToggleLoop: () => void;
   isGlobalMuted: boolean;
+  onBack?: () => void;
+  backLabel?: string;
 }
 
 export type MixerTab = "music" | "ambience";

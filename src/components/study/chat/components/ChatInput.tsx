@@ -14,6 +14,7 @@ interface ChatInputProps {
   attachments: ImageAttachment[];
   onAddFiles: (files: FileList | File[]) => void;
   onRemoveAttachment: (id: string) => void;
+  placeholder?: string;
 }
 
 // Khung nhập câu hỏi nguyên khối (Unified Capsule) chuẩn phong cách AI hiện đại
@@ -27,10 +28,13 @@ export function ChatInput({
   attachments,
   onAddFiles,
   onRemoveAttachment,
+  placeholder,
 }: ChatInputProps) {
   const busy = sending || regenerating;
   const canSend = !busy && (!!input.trim() || attachments.length > 0);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const lastEnterTimeRef = useRef<number>(0);
 
   // Tự động điều chỉnh chiều cao theo nội dung (tối thiểu 24px, tối đa 120px):
   // - Khi không có chữ (chỉ hiện placeholder): khóa cứng ở chiều cao 1 dòng chuẩn (24px) để căn giữa hoàn hảo cùng 2 nút icon
@@ -152,14 +156,36 @@ export function ChatInput({
               }
             }}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                if (canSend) {
-                  onSend();
+              // Bỏ qua nếu đang dùng bộ gõ IME (tiếng Việt Telex/VNI)
+              if (e.nativeEvent.isComposing) return;
+
+              if (e.key === "Enter") {
+                // Nhấn Shift+Enter: Luôn xuống dòng bình thường
+                if (e.shiftKey) {
+                  lastEnterTimeRef.current = 0;
+                  return;
                 }
+
+                const now = Date.now();
+                // Nếu lần Enter trước vừa xảy ra trong vòng 900ms: Được tính là lần 2 ngay sau đó để gửi tin
+                const isDoubleEnter = now - lastEnterTimeRef.current <= 900;
+
+                if (isDoubleEnter) {
+                  e.preventDefault();
+                  lastEnterTimeRef.current = 0;
+                  if (canSend) {
+                    onSend();
+                  }
+                } else {
+                  // Lần 1: Không chặn mặc định, để textarea tự xuống dòng
+                  lastEnterTimeRef.current = now;
+                }
+              } else {
+                // Khi gõ bất kỳ ký tự nào khác, reset lại mốc để lần Enter kế tiếp lại là lần 1
+                lastEnterTimeRef.current = 0;
               }
             }}
-            placeholder="Hỏi gì đó… (Shift+Enter để xuống dòng)"
+            placeholder={placeholder ?? "Hỏi gì đó… (Nhấn Enter 2 lần để gửi)"}
             maxLength={8000}
             disabled={busy}
             style={{
@@ -176,7 +202,7 @@ export function ChatInput({
           type="button"
           onClick={onSend}
           disabled={!canSend}
-          title={busy ? "Đang suy nghĩ câu trả lời…" : "Gửi câu hỏi (Enter)"}
+          title={busy ? "Đang suy nghĩ câu trả lời…" : "Gửi câu hỏi (Nhấn Enter 2 lần hoặc nhấp)"}
           aria-label="Gửi câu hỏi"
           className={`h-8.5 w-8.5 shrink-0 grid place-items-center rounded-xl transition-all duration-150 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
             canSend

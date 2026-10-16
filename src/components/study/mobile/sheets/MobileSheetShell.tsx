@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, type ReactNode } from "react";
-import { XIcon, ArrowsInSimpleIcon, ArrowsOutSimpleIcon } from "@phosphor-icons/react";
+import { XIcon, ArrowsInSimpleIcon, ArrowsOutSimpleIcon, CaretLeftIcon } from "@phosphor-icons/react";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { saveStorage } from "@/lib/safe-storage";
@@ -13,6 +13,8 @@ interface MobileSheetShellProps {
   title: string;
   sheetId?: string;
   headerRight?: ReactNode;
+  onBack?: () => void;
+  backLabel?: string;
   maxHeightClassName?: string;
   heightClassName?: string;
   defaultZenMode?: boolean;
@@ -37,6 +39,8 @@ export function MobileSheetShell({
   title,
   sheetId,
   headerRight,
+  onBack,
+  backLabel,
   maxHeightClassName,
   heightClassName,
   defaultZenMode = false,
@@ -236,17 +240,17 @@ export function MobileSheetShell({
       panelKey={`mobile-sheet-${title}`}
       panelRef={setCombinedRef}
       ariaLabel={title}
-      initial={{ opacity: 0, y: 40, scale: 0.98 }}
+      initial={{ opacity: 0, y: 72, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={
         isClosingByDragRef.current
           ? { opacity: 0, transition: { duration: 0 } }
-          : { opacity: 0, y: 60, scale: 0.98, transition: { duration: 0.18, ease: "easeOut" } }
+          : { opacity: 0, y: 80, scale: 0.96, transition: { duration: 0.22, ease: [0.32, 0, 0.67, 0] } }
       }
-      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
       backdropClassName="sm:hidden"
       panelClassName={cn(
-        "fixed z-50 flex flex-col text-white overflow-hidden sm:hidden transform-gpu will-change-[height,transform,inset]",
+        "fixed z-50 flex flex-col text-white overflow-hidden sm:hidden transform-gpu sheet-motion-panel will-change-[height,transform,inset]",
         "transition-[height,max-height,inset,border-radius,box-shadow,background-color] duration-350 ease-[cubic-bezier(0.16,1,0.3,1)]",
         isZenMode
           ? "inset-x-2 top-2.5 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.5rem)] rounded-[32px] bg-neutral-950/94 backdrop-blur-xl border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]"
@@ -278,40 +282,56 @@ export function MobileSheetShell({
         </div>
 
         {/* Tiêu đề & Nút thao tác dạng kính */}
-        <div className="flex items-center justify-between px-4 pb-2.5 pt-0.5 border-b border-white/[0.12]">
-          <h3 className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate">
+        <div className="flex items-center justify-between px-3.5 pb-2.5 pt-0.5 border-b border-white/[0.12] gap-2">
+          {/* Nút Quay lại (Back Button) khi ở Stack cấp 2 trở lên */}
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              aria-label={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
+              className="flex items-center gap-0.5 px-2 py-1 -ml-1 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white/90 hover:text-white transition-all text-xs font-semibold shrink-0 select-none shadow-sm"
+            >
+              <CaretLeftIcon className="w-4 h-4" weight="bold" />
+              {backLabel && (
+                <span className="max-w-[80px] truncate tracking-tight">{backLabel}</span>
+              )}
+            </button>
+          )}
+
+          <h3 className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate flex-1 text-left">
             {title}
           </h3>
-        <div className="flex items-center gap-1.5">
-          {headerRight}
 
-          {/* Nút chuyển chế độ Full-Screen Zen Overlay / Khay đáy */}
-          <button
-            type="button"
-            onClick={handleToggleZenMode}
-            title={isZenMode ? "Thu gọn về dạng khay đáy" : "Mở rộng không gian Zen (Toàn màn hình)"}
-            aria-label="Chuyển chế độ xem"
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all shadow-sm"
-          >
-            {isZenMode ? (
-              <ArrowsInSimpleIcon className="w-3.5 h-3.5" weight="bold" />
-            ) : (
-              <ArrowsOutSimpleIcon className="w-3.5 h-3.5" weight="bold" />
-            )}
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {headerRight}
 
-          {/* Nút Đóng */}
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={`Đóng ${title}`}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all shadow-sm"
-          >
-            <XIcon className="w-4 h-4" weight="bold" />
-          </button>
+            {/* Nút chuyển chế độ Full-Screen Zen Overlay / Khay đáy */}
+            <button
+              type="button"
+              onClick={handleToggleZenMode}
+              title={isZenMode ? "Thu gọn về dạng khay đáy" : "Mở rộng không gian Zen (Toàn màn hình)"}
+              aria-label="Chuyển chế độ xem"
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all shadow-sm"
+            >
+              {isZenMode ? (
+                <ArrowsInSimpleIcon className="w-3.5 h-3.5" weight="bold" />
+              ) : (
+                <ArrowsOutSimpleIcon className="w-3.5 h-3.5" weight="bold" />
+              )}
+            </button>
+
+            {/* Nút Đóng */}
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={`Đóng ${title}`}
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all shadow-sm"
+            >
+              <XIcon className="w-4 h-4" weight="bold" />
+            </button>
+          </div>
         </div>
       </div>
-    </div>
 
       {/* Nội dung cuộn bên trong - nhận diện vuốt ở toàn bộ 100% diện tích gồm cả khoảng trống */}
       <div

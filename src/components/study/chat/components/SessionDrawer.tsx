@@ -25,6 +25,7 @@ interface SessionDrawerProps {
   onDelete: (sid: string) => void;
   onRename?: (sid: string, newTitle: string) => void;
   onClose: () => void;
+  isMobile?: boolean;
 }
 
 /** Định dạng thời gian tương đối thân thiện chuẩn tiếng Việt */
@@ -103,6 +104,7 @@ export function SessionDrawer({
   onDelete,
   onRename,
   onClose,
+  isMobile = false,
 }: SessionDrawerProps) {
   const ref = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -190,12 +192,16 @@ export function SessionDrawer({
       ref={ref}
       role="dialog"
       aria-label="Danh sách đoạn chat"
-      className="absolute inset-x-0 bottom-0 top-[53px] z-20 flex flex-col bg-slate-950/90 backdrop-blur-2xl border-t border-white/10 select-none animate-in fade-in slide-in-from-top-3 duration-200 motion-reduce:animate-none"
+      className={`absolute inset-x-0 bottom-0 z-30 flex flex-col select-none ${
+        isMobile
+          ? "top-0 bg-neutral-950/95 backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200"
+          : "top-[53px] bg-slate-950/90 backdrop-blur-2xl border-t border-white/10 animate-in fade-in slide-in-from-top-3 duration-200"
+      } motion-reduce:animate-none`}
     >
       {/* Top Header của Drawer */}
       <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-white/[0.08] bg-black/25">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-300">
+          <div className="w-6 h-6 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center text-white/90">
             <ClockCounterClockwiseIcon size={14} weight="bold" />
           </div>
           <div>
@@ -210,7 +216,7 @@ export function SessionDrawer({
           <button
             type="button"
             onClick={onCreate}
-            className="flex items-center gap-1 px-2.5 h-7 rounded-lg text-xs font-semibold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-400/30 transition-all cursor-pointer active:scale-95 shadow-[0_0_12px_rgba(52,211,153,0.15)]"
+            className="flex items-center gap-1 px-2.5 h-7 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/15 transition-all cursor-pointer active:scale-95 shadow-sm"
             title="Bắt đầu đoạn chat mới"
           >
             <PlusIcon size={13} weight="bold" aria-hidden="true" />
@@ -320,7 +326,7 @@ export function SessionDrawer({
             <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider px-1 mb-1">
               Kết quả tìm kiếm ({filteredSessions.length})
             </div>
-            {filteredSessions.map((s) => renderSessionCard(s))}
+            {filteredSessions.map((s, idx) => renderSessionCard(s, idx))}
           </div>
         )}
 
@@ -336,7 +342,7 @@ export function SessionDrawer({
                   </span>
                 </div>
                 <div className="space-y-1.5">
-                  {group.items.map((s) => renderSessionCard(s))}
+                  {group.items.map((s, idx) => renderSessionCard(s, idx))}
                 </div>
               </div>
             ))}
@@ -344,22 +350,24 @@ export function SessionDrawer({
         )}
       </div>
 
-      {/* Footer gợi ý nhỏ */}
-      <div className="px-3.5 py-2 border-t border-white/[0.06] bg-black/20 flex items-center justify-between text-[10px] text-zinc-400">
-        <span>💡 Bấm đúp vào tên để đổi tên</span>
-        <button
-          type="button"
-          onClick={onCreate}
-          className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
-        >
-          + Tạo đoạn mới
-        </button>
-      </div>
+      {/* Footer gợi ý nhỏ - ẩn trên mobile để thoáng không gian */}
+      {!isMobile && (
+        <div className="px-3.5 py-2 border-t border-white/[0.06] bg-black/20 flex items-center justify-between text-[10px] text-zinc-400">
+          <span>💡 Bấm đúp vào tên để đổi tên</span>
+          <button
+            type="button"
+            onClick={onCreate}
+            className="text-white/80 hover:text-white font-medium transition-colors"
+          >
+            + Tạo đoạn mới
+          </button>
+        </div>
+      )}
     </div>
   );
 
   /** Render từng thẻ bài học (Session Card) */
-  function renderSessionCard(s: Session) {
+  function renderSessionCard(s: Session, idx: number = 0) {
     const isActive = s.id === activeSid;
     const isEditing = editingSid === s.id;
     const isConfirming = localConfirmSid === s.id;
@@ -374,17 +382,18 @@ export function SessionDrawer({
           }
         }}
         onDoubleClick={() => !isEditing && handleStartRename(s)}
-        className={`group relative flex items-center gap-2.5 p-2.5 rounded-2xl border transition-all cursor-pointer ${
+        style={{ "--stagger-idx": Math.min(idx, 10) } as React.CSSProperties}
+        className={`group relative flex items-center gap-2.5 p-2.5 rounded-2xl border transition-all cursor-pointer sheet-stagger-item ${
           isActive
-            ? "bg-emerald-500/[0.12] border-emerald-400/40 shadow-[0_0_16px_rgba(52,211,153,0.12)] text-white"
-            : "bg-white/[0.03] hover:bg-white/[0.07] border-white/8 hover:border-white/15 text-zinc-300 hover:text-white"
+            ? "bg-white/[0.12] border-white/25 shadow-lg text-white"
+            : "bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/[0.08] border-white/8 hover:border-white/15 text-zinc-300 hover:text-white"
         }`}
       >
         {/* Leading icon */}
         <div
           className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
             isActive
-              ? "bg-emerald-400/20 text-emerald-300 border border-emerald-400/30"
+              ? "bg-white/15 text-white border border-white/25"
               : "bg-white/5 text-zinc-400 group-hover:text-zinc-200 border border-white/10"
           }`}
         >
@@ -404,13 +413,13 @@ export function SessionDrawer({
                   if (e.key === "Enter") handleSaveRename(s.id);
                   if (e.key === "Escape") setEditingSid(null);
                 }}
-                className="flex-1 h-7 px-2 rounded-lg bg-black/60 border border-emerald-400/50 text-xs text-white focus:outline-none"
+                className="flex-1 h-7 px-2 rounded-lg bg-black/60 border border-white/30 focus:border-white/60 text-xs text-white focus:outline-none"
                 maxLength={48}
               />
               <button
                 type="button"
                 onClick={() => handleSaveRename(s.id)}
-                className="w-7 h-7 grid place-items-center rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-400/30"
+                className="w-7 h-7 grid place-items-center rounded-lg bg-white/15 hover:bg-white/25 text-white border border-white/20 active:scale-95"
                 title="Lưu tên (Enter)"
               >
                 <CheckIcon size={12} weight="bold" />
@@ -418,7 +427,7 @@ export function SessionDrawer({
               <button
                 type="button"
                 onClick={() => setEditingSid(null)}
-                className="w-7 h-7 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10"
+                className="w-7 h-7 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10 active:scale-95"
                 title="Hủy (Esc)"
               >
                 <XIcon size={12} weight="bold" />
@@ -428,7 +437,7 @@ export function SessionDrawer({
             <div>
               <p
                 className={`text-xs font-semibold truncate ${
-                  isActive ? "text-emerald-200" : "text-zinc-200 group-hover:text-white"
+                  isActive ? "text-white" : "text-zinc-200 group-hover:text-white"
                 }`}
                 title={s.title}
               >
@@ -436,7 +445,7 @@ export function SessionDrawer({
               </p>
               <div className="flex items-center gap-2 mt-0.5">
                 {isActive && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-300 shrink-0">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-[10px] font-semibold text-emerald-300 shrink-0">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     Đang mở
                   </span>
@@ -454,7 +463,9 @@ export function SessionDrawer({
         {/* Cụm hành động bên phải: Xóa & Đổi tên */}
         {!isEditing && (
           <div
-            className="flex items-center gap-1 shrink-0"
+            className={`flex items-center gap-1 shrink-0 ${
+              isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+            } transition-opacity`}
             onClick={(e) => e.stopPropagation()}
           >
             {isConfirming ? (
@@ -463,7 +474,7 @@ export function SessionDrawer({
                 <button
                   type="button"
                   onClick={() => handleConfirmDelete(s.id)}
-                  className="px-1.5 py-0.5 rounded bg-rose-500 text-white text-[10px] font-bold hover:bg-rose-600 transition-colors cursor-pointer"
+                  className="px-1.5 py-0.5 rounded bg-rose-500 text-white text-[10px] font-bold hover:bg-rose-600 transition-colors cursor-pointer active:scale-95"
                   title="Xác nhận xóa đoạn chat này"
                 >
                   Có
@@ -471,19 +482,19 @@ export function SessionDrawer({
                 <button
                   type="button"
                   onClick={() => setLocalConfirmSid(null)}
-                  className="px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 text-[10px] hover:text-white hover:bg-white/20 transition-colors cursor-pointer"
+                  className="px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 text-[10px] hover:text-white hover:bg-white/20 transition-colors cursor-pointer active:scale-95"
                   title="Hủy xóa"
                 >
                   Không
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-0.5">
                 {onRename && (
                   <button
                     type="button"
                     onClick={() => handleStartRename(s)}
-                    className="w-7 h-7 grid place-items-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    className="w-7 h-7 grid place-items-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 active:bg-white/20 transition-colors cursor-pointer"
                     title="Đổi tên đoạn chat"
                     aria-label={`Đổi tên đoạn chat ${s.title}`}
                   >
@@ -493,7 +504,7 @@ export function SessionDrawer({
                 <button
                   type="button"
                   onClick={() => setLocalConfirmSid(s.id)}
-                  className="w-7 h-7 grid place-items-center rounded-lg text-zinc-400 hover:text-rose-300 hover:bg-rose-500/15 transition-colors cursor-pointer"
+                  className="w-7 h-7 grid place-items-center rounded-lg text-zinc-400 hover:text-rose-300 hover:bg-rose-500/15 active:bg-rose-500/25 transition-colors cursor-pointer"
                   title="Xóa đoạn chat này"
                   aria-label={`Xóa đoạn chat ${s.title}`}
                 >

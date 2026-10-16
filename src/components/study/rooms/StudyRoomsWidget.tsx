@@ -23,6 +23,8 @@ export interface StudyRoomsWidgetProps {
   isOpen: boolean;
   onClose: () => void;
   onOpen?: () => void;
+  onBack?: () => void;
+  backLabel?: string;
 }
 
 const ROOM_MARGIN = 16;
@@ -57,7 +59,7 @@ const getCenter = (w: number, h: number) => {
 
 // Phòng học nhóm dạng thẻ bay: kéo đi được, đổi cỡ được,
 // nhớ chỗ y như thẻ ghi chú.
-export const StudyRoomsWidget = ({ isOpen, onClose, onOpen }: StudyRoomsWidgetProps) => {
+export const StudyRoomsWidget = ({ isOpen, onClose, onOpen, onBack, backLabel }: StudyRoomsWidgetProps) => {
   const {
     user,
     loading: authLoading,
@@ -330,6 +332,8 @@ const getLiveKitEndpoints = () => {
         isOpen={isOpen}
         onClose={onClose}
         onOpen={onOpen}
+        onBack={onBack}
+        backLabel={backLabel}
         user={user}
         authLoading={authLoading}
         isSigningIn={isSigningIn}

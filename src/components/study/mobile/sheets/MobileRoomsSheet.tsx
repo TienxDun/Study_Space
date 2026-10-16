@@ -45,12 +45,16 @@ export interface MobileRoomsSheetProps {
   joinedRoom: string;
   handleLeave: () => void;
   isAvailable: boolean;
+  onBack?: () => void;
+  backLabel?: string;
 }
 
 export function MobileRoomsSheet({
   isOpen,
   onClose,
   onOpen,
+  onBack,
+  backLabel,
   user,
   authLoading,
   isSigningIn,
@@ -93,6 +97,8 @@ export function MobileRoomsSheet({
         <MobileSheetShell
           isOpen={isOpen}
           onClose={onClose}
+          onBack={onBack}
+          backLabel={backLabel}
           sheetId="rooms"
           title={`Phòng: ${joinedRoom}`}
           heightClassName="h-[84dvh] max-h-[88dvh]"
@@ -117,6 +123,8 @@ export function MobileRoomsSheet({
     <MobileSheetShell
       isOpen={isOpen}
       onClose={onClose}
+      onBack={onBack}
+      backLabel={backLabel}
       sheetId="rooms"
       title="Phòng học nhóm"
       maxHeightClassName="h-auto max-h-[85dvh]"

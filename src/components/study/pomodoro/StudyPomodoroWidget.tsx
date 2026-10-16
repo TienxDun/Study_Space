@@ -25,6 +25,7 @@ import { usePomodoroCountdown } from "./hooks/usePomodoroCountdown";
 import { useStopwatchTimer } from "./hooks/useStopwatchTimer";
 import { TimerTabPillBar } from "./components/TimerTabPillBar";
 import { MobileTimerTabBar } from "@/components/study/mobile/pomodoro/MobileTimerTabBar";
+import { useIsMobile } from "@/components/study/mobile/hooks/useIsMobile";
 import { GiantDigitsDisplay } from "./components/GiantDigitsDisplay";
 import { PomoProgressRing } from "./components/PomoProgressRing";
 import { SubmodeBar } from "./components/SubmodeBar";
@@ -259,6 +260,9 @@ const TIMER_TABS: TimerTab[] = ["clock", "pomodoro", "stopwatch"];
     onRunningChange?.(isPomoRunning || isStopwatchRunning);
   }, [isPomoRunning, isStopwatchRunning, onRunningChange]);
 
+  // Mobile tab Stopwatch: bảng vòng luôn giữ chỗ để đồng hồ không nhảy
+  const isMobileScreen = useIsMobile();
+
   if (!isVisible) return null;
 
   return (
@@ -390,6 +394,7 @@ const TIMER_TABS: TimerTab[] = ["clock", "pomodoro", "stopwatch"];
           onClose={() => setIsLapsOpen(false)}
           onClearLaps={clearLaps}
           showStopwatchMilliseconds={showStopwatchMilliseconds}
+          persistent={isMobileScreen}
         />
       )}
     </div>

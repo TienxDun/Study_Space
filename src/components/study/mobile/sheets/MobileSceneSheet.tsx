@@ -31,6 +31,8 @@ interface MobileSceneSheetProps {
   slideshowPoolLabel?: string;
   onToggleSlideshow?: () => void;
   onCycleSlideshowInterval?: () => void;
+  onBack?: () => void;
+  backLabel?: string;
 }
 
 const MobileSceneCard = React.memo<{
@@ -135,6 +137,8 @@ export const MobileSceneSheet = React.memo(function MobileSceneSheet({
   slideshowIntervalMin = 15,
   onToggleSlideshow,
   onCycleSlideshowInterval,
+  onBack,
+  backLabel,
 }: MobileSceneSheetProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -231,6 +235,8 @@ export const MobileSceneSheet = React.memo(function MobileSceneSheet({
     <MobileSheetShell
       isOpen={isOpen}
       onClose={onClose}
+      onBack={onBack}
+      backLabel={backLabel}
       sheetId="scenes"
       title="Không gian bối cảnh"
       heightClassName="h-[80dvh] max-h-[85dvh]"

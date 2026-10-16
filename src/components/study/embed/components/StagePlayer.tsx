@@ -270,8 +270,8 @@ export function StagePlayer({
             </div>
           )}
 
-          {/* Đài tips: lớp giải thích cho 3 nút phía trên, tắt được khi đã hiểu */}
-          {showTips && (
+          {/* Đài tips: chỉ hiện trên desktop, mobile ẩn hẳn cho gọn */}
+          {!isMobile && showTips && (
             <div className="rounded-2xl bg-white/[0.03] border border-line/10 p-3.5 space-y-3">
               <div className="flex items-center justify-between pb-0.5">
                 <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-200">

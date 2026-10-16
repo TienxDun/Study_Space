@@ -15,6 +15,8 @@ interface StopwatchLapsDrawerProps {
   onClose: () => void;
   onClearLaps: () => void;
   showStopwatchMilliseconds?: boolean;
+  /** Mobile: luôn giữ chỗ bảng (chưa mở thì hiện gợi ý) để đồng hồ không nhảy */
+  persistent?: boolean;
 }
 
 export function StopwatchLapsDrawer({
@@ -23,6 +25,7 @@ export function StopwatchLapsDrawer({
   onClose,
   onClearLaps,
   showStopwatchMilliseconds = false,
+  persistent = false,
 }: StopwatchLapsDrawerProps) {
   // Nút xóa hết phải bấm 2 lần mới xóa, tránh bấm nhầm mất hết
   const [confirmingClear, setConfirmingClear] = useState(false);
@@ -51,26 +54,37 @@ export function StopwatchLapsDrawer({
     onClearLaps();
   };
 
+  const showContent = isOpen && laps.length > 0;
+  const renderPanel = showContent || persistent;
+  // Mobile chưa mở: ẩn mắt thường nhưng vẫn giữ chỗ (visibility, không phải display:none)
+  // để chiều cao 32vh trong mobile.css còn nguyên, đồng hồ không nhảy.
+  const isHiddenPlaceholder = persistent && !showContent;
+
   return (
     <AnimatePresence>
-      {isOpen && laps.length > 0 && (
+      {renderPanel && (
         <React.Fragment key="stopwatch-laps-drawer-fragment">
           {/* Backdrop to close Laps Drawer when clicking outside */}
-          <div
-            key="stopwatch-laps-backdrop"
-            className="fixed inset-0 z-30 cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-          />
+          {showContent && (
+            <div
+              key="stopwatch-laps-backdrop"
+              className="fixed inset-0 z-30 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+            />
+          )}
           <motion.div
             key="stopwatch-laps-panel"
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 w-[calc(100vw-24px)] max-w-80 sm:w-88 sm:max-w-none glass-panel hover:bg-black/45 p-3.5 z-40 laps-drawer-mobile space-y-2.5"
+            aria-hidden={isHiddenPlaceholder || undefined}
+            className={`absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 w-[calc(100vw-24px)] max-w-80 sm:w-88 sm:max-w-none glass-panel hover:bg-black/45 p-3.5 z-40 laps-drawer-mobile space-y-2.5 ${
+              isHiddenPlaceholder ? "invisible pointer-events-none select-none" : ""
+            }`}
           >
             <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
             {/* Header gọn 1 hàng: tên + số vòng, bên phải chỉ còn nút thu gọn */}
@@ -87,18 +101,22 @@ export function StopwatchLapsDrawer({
                 </span>
               </div>
 
-              <button
-                onClick={onClose}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
-                title="Thu gọn"
-                aria-label="Thu gọn bảng vòng bấm giờ"
-              >
-                <XIcon className="w-4 h-4" />
-              </button>
+              {showContent && (
+                <button
+                  onClick={onClose}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                  title="Thu gọn"
+                  aria-label="Thu gọn bảng vòng bấm giờ"
+                >
+                  <XIcon className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
-            {/* Laps List with custom sleek scrollbar (mobile: bảng ngoài cuộn chung 1 chỗ cho khỏi kẹt) */}
-            <div className="laps-list-mobile sm:max-h-44 sm:overflow-y-auto space-y-1.5 pr-1.5 custom-study-scroll">
+            {showContent ? (
+              <>
+                {/* Laps List with custom sleek scrollbar (mobile: bảng ngoài cuộn chung 1 chỗ cho khỏi kẹt) */}
+                <div className="laps-list-mobile sm:max-h-44 sm:overflow-y-auto space-y-1.5 pr-1.5 custom-study-scroll">
               {laps.map((lap, idx) => {
                 const lapNumber = laps.length - idx;
                 const isLatest = idx === 0;
@@ -148,6 +166,20 @@ export function StopwatchLapsDrawer({
               <TrashIcon className="w-3.5 h-3.5" />
               <span>{confirmingClear ? "Bấm lại để xóa hết" : "Xóa tất cả"}</span>
             </button>
+              </>
+            ) : (
+              /* Giữ chỗ lúc chưa mở: gợi ý bấm nút cờ, bảng cao không đổi nên không nhảy */
+              <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-2 text-center px-4">
+                <span className="p-2 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-slate-400">
+                  <FlagIcon className="w-5 h-5" />
+                </span>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  {laps.length === 0
+                    ? "Bấm nút cờ để ghi vòng đầu tiên"
+                    : `Đã ghi ${laps.length} vòng — bấm vào số vòng ở trên để xem lại`}
+                </p>
+              </div>
+            )}
           </motion.div>
         </React.Fragment>
       )}

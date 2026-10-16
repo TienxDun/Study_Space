@@ -28,6 +28,8 @@ export const StudyMusicPlayer = ({
   onExpandExternalStream,
   onStopExternalStream,
   isZenMode = false,
+  onBack,
+  backLabel,
 }: StudyMusicPlayerProps) => {
   const [internalIsMixerOpen, setInternalIsMixerOpen] = useState(false);
   const [activeMixerTab, setActiveMixerTab] = useState<MixerTab>("ambience");
@@ -219,6 +221,8 @@ export const StudyMusicPlayer = ({
         isLooping={isLooping}
         onToggleLoop={handleToggleLoop}
         isGlobalMuted={isGlobalMuted}
+        onBack={onBack}
+        backLabel={backLabel}
       />
 
       {/* Bottom Ambient Vignette: Dải dốc bảo vệ tương phản tự nhiên ở đáy màn hình */}
@@ -293,7 +297,11 @@ export const StudyMusicPlayer = ({
           pointerEvents: isZenMode ? "none" : "auto",
         }}
         transition={{ duration: 0.25, ease: "easeOut" }}
-        className={`fixed left-1/2 -translate-x-1/2 sm:bottom-3.5 z-40 max-w-[calc(100vw-24px)] select-none will-change-transform transition-[bottom] duration-300 ease-out ${
+        className={`fixed z-40 select-none will-change-transform transition-[bottom] duration-300 ease-out ${
+          isShowingExternalStream && externalStreamItem
+            ? "left-3 right-[72px] sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:bottom-3.5 max-w-[calc(100vw-24px)] sm:max-w-[calc(100vw-24px)]"
+            : "left-1/2 -translate-x-1/2 sm:bottom-3.5 max-w-[calc(100vw-24px)]"
+        } ${
           hasActiveRoomPill
             ? "bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+4.25rem)]"
             : "bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+1rem)]"
@@ -301,9 +309,9 @@ export const StudyMusicPlayer = ({
       >
 
         <div
-          className={`relative h-[60px] sm:h-[62px] text-white ${
+          className={`relative h-[60px] sm:h-[62px] text-white w-full ${
             isShowingExternalStream && externalStreamItem
-              ? "flex items-center justify-between gap-2 sm:gap-4 px-2 py-1 min-w-0 w-[calc(100vw-32px)] max-w-[340px] sm:max-w-none sm:w-auto sm:min-w-[380px] md:min-w-[420px] drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]"
+              ? "flex items-center justify-between gap-2 sm:gap-4 px-2 py-1 min-w-0 max-w-none sm:w-auto sm:min-w-[380px] md:min-w-[420px] drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]"
               : "flex flex-col items-center justify-center gap-1.5 sm:gap-2 px-1 py-1 min-w-0 sm:min-w-[290px] drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]"
           }`}
         >

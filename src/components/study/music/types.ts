@@ -12,6 +12,8 @@ export interface StudyMusicPlayerProps {
   onExpandExternalStream?: () => void;
   onStopExternalStream?: () => void;
   isZenMode?: boolean;
+  onBack?: () => void;
+  backLabel?: string;
 }
 
 export type { Track, MoodType, StudyEmbedItem };

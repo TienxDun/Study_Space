@@ -26,11 +26,15 @@ import { MobileTaskBubbleMenu } from "./MobileTaskBubbleMenu";
 interface MobileTasksSheetProps {
   isOpen: boolean;
   onClose: () => void;
+  onBack?: () => void;
+  backLabel?: string;
 }
 
 export const MobileTasksSheet = React.memo(function MobileTasksSheet({
   isOpen,
   onClose,
+  onBack,
+  backLabel,
 }: MobileTasksSheetProps) {
   const {
     currentBoard,
@@ -213,6 +217,8 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
       <MobileSheetShell
         isOpen={isOpen}
         onClose={onClose}
+        onBack={onBack}
+        backLabel={backLabel}
         sheetId="tasks"
         title={`Việc cần làm (${allCardsWithColumn.length})`}
         heightClassName="h-[80dvh] max-h-[85dvh]"
@@ -350,7 +356,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
           {/* Danh sách các công việc cuộn dọc */}
           <div className="flex-1 min-h-0 px-3 space-y-2 overflow-y-auto custom-study-scroll pb-16 overscroll-contain touch-pan-y no-scrollbar">
             {displayedCards.length > 0 ? (
-              displayedCards.map(({ card, colId, colTitle }) => {
+              displayedCards.map(({ card, colId, colTitle }, idx) => {
                 const deadline = getDeadlineStatus(card.dueDate);
                 const isDoneColumn = /xong|done|hoàn thành/i.test(colTitle);
                 const isCompleted = Boolean(card.completed) || isDoneColumn;
@@ -372,7 +378,10 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                     onTouchMove={cancelLongPress}
                     onTouchEnd={cancelLongPress}
                     onTouchCancel={cancelLongPress}
-                    className={`group relative rounded-2xl border transition-all select-none p-3 ${
+                    style={{ "--stagger-idx": Math.min(idx, 10) } as React.CSSProperties}
+                    className={`group rounded-2xl border transition-all select-none p-3 sheet-stagger-item ${
+                      isMenuOpen ? "relative z-30" : "relative z-0"
+                    } ${
                       isCompleted
                         ? "bg-white/[0.02] border-emerald-500/20 opacity-80"
                         : "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.08]"

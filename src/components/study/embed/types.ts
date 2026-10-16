@@ -9,6 +9,8 @@ export interface StudyEmbedPlayerWidgetProps {
   onStreamActiveChange?: (isActive: boolean) => void;
   onActiveItemChange?: (item: StudyEmbedItem | null) => void;
   isZenMode?: boolean;
+  onBack?: () => void;
+  backLabel?: string;
 }
 
 export type ViewMode = "grid" | "list";

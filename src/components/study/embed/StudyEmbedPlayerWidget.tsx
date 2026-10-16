@@ -22,7 +22,7 @@ import { ResizableDivider } from "./components/ResizableDivider";
 import { DiscoveryHub } from "./components/DiscoveryHub";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { useIsMobile } from "@/components/study/mobile/hooks/useIsMobile";
-import { RadioIcon, XIcon, ArrowsInSimpleIcon, ArrowsOutSimpleIcon } from "@phosphor-icons/react";
+import { RadioIcon, XIcon, ArrowsInSimpleIcon, ArrowsOutSimpleIcon, CaretLeftIcon } from "@phosphor-icons/react";
 import { saveStorage } from "@/lib/safe-storage";
 
 export const StudyEmbedPlayerWidget = ({
@@ -33,6 +33,8 @@ export const StudyEmbedPlayerWidget = ({
   activeItem = null,
   onStreamActiveChange,
   onActiveItemChange,
+  onBack,
+  backLabel,
 }: StudyEmbedPlayerWidgetProps) => {
   const isMobile = useIsMobile();
   const {
@@ -423,8 +425,21 @@ export const StudyEmbedPlayerWidget = ({
                 />
               </div>
               {/* Tiêu đề & Nút thao tác */}
-              <div className="flex items-center justify-between px-4 pb-2.5 pt-0.5">
-                <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center justify-between px-3.5 pb-2.5 pt-0.5 gap-2">
+                {onBack && (
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    aria-label={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
+                    className="flex items-center gap-0.5 px-2 py-1 -ml-1 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white/90 hover:text-white transition-all text-xs font-semibold shrink-0 select-none shadow-sm"
+                  >
+                    <CaretLeftIcon className="w-4 h-4" weight="bold" />
+                    {backLabel && (
+                      <span className="max-w-[80px] truncate tracking-tight">{backLabel}</span>
+                    )}
+                  </button>
+                )}
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                   <div className="w-7 h-7 rounded-lg bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-300 shrink-0">
                     <RadioIcon className="w-4 h-4" />
                   </div>

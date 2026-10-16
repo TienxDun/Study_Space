@@ -57,6 +57,9 @@ export interface StudySettingsProps {
   keepAwake: boolean;
   onToggleKeepAwake: () => void;
   wakeLockSupported: boolean;
+  // Stack navigation (mobile)
+  onBack?: () => void;
+  backLabel?: string;
 }
 
 // Reusable Modern Animated iOS-Style Toggle Switch
