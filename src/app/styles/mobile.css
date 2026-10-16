@@ -44,6 +44,27 @@
         var(--mobile-nav-safe-gap) + 1rem
     );
   }
+
+  /* Bảng vòng bấm giờ (mobile): nằm gọn thành hàng trong cột màn hình,
+     ngay dưới cụm nút bấm, trên thanh nhạc. Không nổi nên không che nút
+     Tạm dừng hay dòng "vòng đã ghi". Dài quá thì kéo trong bảng. */
+  .laps-drawer-mobile {
+    position: relative;
+    left: auto;
+    top: auto;
+    translate: none;
+    width: 100%;
+    max-height: 38vh;
+    max-height: 38dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .laps-list-mobile {
+    max-height: none;
+    overflow: visible;
+  }
 }
 
 /* Tiện ích ẩn thanh cuộn chuẩn đa trình duyệt (Chrome, Safari, Firefox, Edge) */

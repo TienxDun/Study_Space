@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -11,12 +11,14 @@ import {
   FileTextIcon,
   DotsThreeVerticalIcon,
   XIcon,
+  PencilLineIcon,
 } from "@phosphor-icons/react";
 import { useStudyNotes } from "../../notes/hooks/useStudyNotes";
 import { StudyNote } from "../../notes/types";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { MobileUndoSnackbar } from "../feedback/MobileUndoSnackbar";
+import { MobileNoteBubbleMenu } from "./MobileNoteBubbleMenu";
 
 interface MobileNotesSheetProps {
   isOpen: boolean;
@@ -73,6 +75,39 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
 
   const editorRef = useRef<HTMLDivElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressTriggeredRef = useRef(false);
+
+  const startLongPress = (noteId: string) => {
+    isLongPressTriggeredRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressTriggeredRef.current = true;
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        try {
+          navigator.vibrate(30);
+        } catch {}
+      }
+      setActiveMenuNoteId(noteId);
+    }, 450);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  // Giữ nút đóng ổn định: gõ tiêu đề hay nội dung vẽ lại cũng không giật mất chỗ gõ
+  const handleCloseSheet = useCallback(() => {
+    setEditingNoteId(null);
+    onClose();
+  }, [onClose]);
+
+  // Tự động đóng menu ngữ cảnh khi đóng bảng hoặc tìm kiếm
+  useEffect(() => {
+    setActiveMenuNoteId(null);
+  }, [searchQuery, isSearchOpen, isOpen]);
 
   // Tìm kiếm ghi chú theo tiêu đề hoặc nội dung
   const filteredNotes = useMemo(() => {
@@ -136,10 +171,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
       <MobileSheetShell
         isOpen={isOpen}
         sheetId="notes"
-        onClose={() => {
-          setEditingNoteId(null);
-          onClose();
-        }}
+        onClose={handleCloseSheet}
         title={
           currentEditingNote
             ? "Chi tiết ghi chú"
@@ -215,15 +247,40 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                 </span>
               </div>
 
-              {/* Ô sửa tiêu đề */}
-              <input
-                ref={titleInputRef}
-                type="text"
-                value={currentEditingNote.title}
-                onChange={(e) => handleUpdateTitle(e.target.value)}
-                placeholder="Tiêu đề ghi chú..."
-                className="w-full bg-transparent text-lg font-bold text-white placeholder:text-white/30 focus:outline-none border-b border-white/10 pb-2 transition-colors focus:border-emerald-400/50"
-              />
+              {/* Ô sửa tiêu đề với icon bút bám sát đuôi chữ tương tự CardDetailModal */}
+              <div
+                onClick={() => titleInputRef.current?.focus()}
+                className="group/title relative inline-flex items-center gap-1.5 max-w-full -ml-2 px-2 py-0.5 rounded-xl border border-transparent hover:border-white/15 hover:bg-white/[0.04] focus-within:border-white/25 focus-within:bg-white/[0.06] transition-all cursor-text"
+                title="Nhấp để chỉnh sửa tiêu đề ghi chú"
+              >
+                <div className="relative inline-flex items-center max-w-[280px] sm:max-w-[420px] min-w-[24px]">
+                  {/* Thẻ đệm đo chính xác từng pixel chiều rộng của chữ */}
+                  <span
+                    aria-hidden="true"
+                    className="invisible text-lg sm:text-xl font-bold tracking-tight whitespace-pre select-none pointer-events-none px-0.5 truncate max-w-full"
+                  >
+                    {currentEditingNote.title || "Tiêu đề ghi chú..."}
+                  </span>
+                  {/* Input phủ tuyệt đối 100% khớp chuẩn theo kích thước thẻ đệm */}
+                  <input
+                    ref={titleInputRef}
+                    type="text"
+                    value={currentEditingNote.title}
+                    onChange={(e) => handleUpdateTitle(e.target.value)}
+                    className="absolute inset-0 w-full h-full text-lg sm:text-xl font-bold bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-white/25 text-white tracking-tight cursor-text px-0.5"
+                    placeholder="Tiêu đề ghi chú..."
+                  />
+                </div>
+                <div
+                  className="shrink-0 flex items-center text-slate-500 group-hover/title:text-amber-400 group-focus-within/title:text-sky-400 transition-colors pointer-events-none"
+                  title="Chỉnh sửa nhanh"
+                >
+                  <PencilLineIcon className="w-3.5 h-3.5" />
+                </div>
+              </div>
+
+              {/* Đường line phân cách phân biệt tiêu đề và nội dung */}
+              <div className="h-px bg-white/10 shrink-0" />
 
               {/* Vùng soạn thảo Rich Content */}
               <div
@@ -248,7 +305,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Tìm theo tiêu đề hoặc nội dung..."
-                      className="w-full h-9 pl-9 pr-8 rounded-xl bg-white/[0.06] border border-white/[0.12] text-xs text-white placeholder:text-white/40 focus:outline-none focus:border-white/30 transition-all"
+                      className="lg-input w-full h-9 pl-9 pr-8 text-xs text-white"
                       autoFocus
                     />
                     {searchQuery && (
@@ -275,18 +332,29 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                     return (
                       <div
                         key={note.id}
-                        onClick={() => {
-                          setActiveNoteId(note.id);
-                          setEditingNoteId(note.id);
-                        }}
-                        className={`group relative p-3.5 rounded-2xl border transition-all cursor-pointer active:scale-[0.99] select-none ${
+                        onTouchStart={() => startLongPress(note.id)}
+                        onTouchMove={cancelLongPress}
+                        onTouchEnd={cancelLongPress}
+                        onTouchCancel={cancelLongPress}
+                        className={`group relative p-3.5 rounded-2xl border transition-all select-none ${
                           note.isPinned
                             ? "bg-amber-500/[0.08] hover:bg-amber-500/[0.12] border-amber-400/25 shadow-[0_4px_20px_rgba(245,158,11,0.06)]"
                             : "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.08] shadow-sm"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0 flex-1 space-y-1">
+                          {/* Thân thẻ: Bấm vào để mở xem & chỉnh sửa ghi chú */}
+                          <div
+                            onClick={() => {
+                              if (isLongPressTriggeredRef.current) {
+                                isLongPressTriggeredRef.current = false;
+                                return;
+                              }
+                              setActiveNoteId(note.id);
+                              setEditingNoteId(note.id);
+                            }}
+                            className="min-w-0 flex-1 space-y-1 cursor-pointer active:opacity-80 transition-opacity"
+                          >
                             <div className="flex items-center gap-1.5">
                               {note.isPinned && (
                                 <PushPinIcon weight="fill" className="w-3.5 h-3.5 text-amber-300 shrink-0" />
@@ -319,54 +387,23 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                             </div>
                           </div>
 
-                          {/* Nút 3 chấm menu */}
-                          <div
-                            className="relative shrink-0"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setActiveMenuNoteId((prev) =>
-                                  prev === note.id ? null : note.id
-                                )
-                              }
-                              aria-label="Tùy chọn ghi chú"
-                              className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-white/10 text-white/40 hover:text-white active:scale-90 transition-all cursor-pointer"
-                            >
-                              <DotsThreeVerticalIcon className="w-4 h-4" />
-                            </button>
-
-                            {/* Dropdown menu */}
-                            {isMenuOpen && (
-                              <div className="absolute right-0 top-full mt-1 z-30 w-36 rounded-xl bg-neutral-900/95 backdrop-blur-xl border border-white/15 shadow-xl p-1 text-left space-y-0.5 animate-in fade-in zoom-in-95 duration-100">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    handleTogglePin(note.id);
-                                    setActiveMenuNoteId(null);
-                                  }}
-                                  className="w-full px-2 py-1.5 rounded-lg text-xs text-white/80 hover:text-white hover:bg-white/10 text-left flex items-center gap-2"
-                                >
-                                  <PushPinIcon className="w-3.5 h-3.5" />
-                                  <span>{note.isPinned ? "Bỏ ghim" : "Ghim lên đầu"}</span>
-                                </button>
-                                <div className="pt-1 border-t border-white/10">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      promptDeleteNote(note);
-                                      setActiveMenuNoteId(null);
-                                    }}
-                                    className="w-full px-2 py-1.5 rounded-lg text-xs text-rose-300 hover:text-rose-200 hover:bg-rose-500/15 text-left flex items-center gap-2"
-                                  >
-                                    <TrashIcon className="w-3.5 h-3.5" />
-                                    <span>Xóa ghi chú</span>
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                          {/* Menu ngữ cảnh & Nút 3 chấm đồng bộ */}
+                          <MobileNoteBubbleMenu
+                            note={note}
+                            isOpen={isMenuOpen}
+                            onToggle={() =>
+                              setActiveMenuNoteId((prev) =>
+                                prev === note.id ? null : note.id
+                              )
+                            }
+                            onClose={() => setActiveMenuNoteId(null)}
+                            onEdit={() => {
+                              setActiveNoteId(note.id);
+                              setEditingNoteId(note.id);
+                            }}
+                            onTogglePin={() => handleTogglePin(note.id)}
+                            onDelete={() => promptDeleteNote(note)}
+                          />
                         </div>
                       </div>
                     );

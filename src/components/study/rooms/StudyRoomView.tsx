@@ -20,6 +20,8 @@ import {
   CornersOutIcon,
   CornersInIcon,
 } from "@phosphor-icons/react";
+import { toast } from "sonner";
+import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 
 interface StudyRoomViewProps {
   roomName: string;
@@ -80,6 +82,12 @@ export const StudyRoomView = ({
     } catch {}
   };
 
+  const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
+
+  const handleConfirmLeave = () => {
+    setIsLeaveConfirmOpen(true);
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Phát âm thanh của các thành viên khác trong phòng */}
@@ -137,12 +145,7 @@ export const StudyRoomView = ({
           )}
           <button
             onPointerDown={(e) => e.stopPropagation()}
-            onClick={() => {
-              try {
-                room.disconnect();
-              } catch {}
-              onLeave();
-            }}
+            onClick={handleConfirmLeave}
             className="group inline-flex items-center h-8 px-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 active:scale-95 border border-rose-400/30 text-rose-200 text-xs font-bold transition-all duration-200 cursor-pointer overflow-hidden"
             title="Rời phòng"
             aria-label="Rời phòng"
@@ -278,6 +281,23 @@ export const StudyRoomView = ({
           <span className="text-[10px] text-slate-400 font-medium">Nhắn tin</span>
         </div>
       </div>
+
+      {/* Hộp thoại xác nhận rời phòng học dạng alertdialog */}
+      <ConfirmDeleteModal
+        isOpen={isLeaveConfirmOpen}
+        onClose={() => setIsLeaveConfirmOpen(false)}
+        onConfirm={() => {
+          try {
+            room.disconnect();
+          } catch {}
+          onLeave();
+          toast.info("Đã rời phòng học nhóm");
+        }}
+        title="Xác nhận rời phòng học"
+        description={`Bạn có chắc chắn muốn ngắt kết nối và rời khỏi phòng "${roomName}" không?`}
+        confirmText="Rời phòng"
+        cancelText="Ở lại"
+      />
     </div>
   );
 };

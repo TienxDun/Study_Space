@@ -67,6 +67,34 @@ export const CardDetailModal = React.memo(function CardDetailModal({
     setIsDueDatePopoverOpen(false);
   }, [setIsStatusDropdownOpen]);
 
+  // Giữ nút đóng ổn định: khung ngoài chỉ chạy lại khi mở/tắt, gõ chữ không bị giật mất chỗ gõ
+  const handleCloseDetail = useCallback(() => {
+    setSelectedCard(null);
+    closeAllPopovers();
+  }, [setSelectedCard, closeAllPopovers]);
+
+  // Bấm + Giờ xong tự mở bảng chọn giờ luôn, khỏi bấm lần 2
+  const timeInputRef = useRef<HTMLInputElement>(null);
+  const autoOpenTimePickerRef = useRef(false);
+  const selectedDueDate = selectedCard?.dueDate;
+  useEffect(() => {
+    if (!autoOpenTimePickerRef.current) return;
+    const el = timeInputRef.current;
+    if (!el) return;
+    autoOpenTimePickerRef.current = false;
+    try {
+      if (typeof el.showPicker === "function") {
+        el.showPicker();
+      } else {
+        el.focus();
+      }
+    } catch {
+      try {
+        el.focus();
+      } catch {}
+    }
+  }, [selectedDueDate]);
+
   // Intercept Escape key to close popover or detail modal without closing parent tasks widget
   useEffect(() => {
     if (!selectedCard) return;
@@ -114,10 +142,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
   return (
     <ModalShell
       isOpen={Boolean(selectedCard)}
-      onClose={() => {
-        setSelectedCard(null);
-        closeAllPopovers();
-      }}
+      onClose={handleCloseDetail}
       panelKey={`card-details-modal-${selectedCard.id}`}
       ariaLabel={selectedCard.title || "Chi tiết nhiệm vụ"}
       backdropClassName="z-[90] bg-black/75 backdrop-blur-sm"
@@ -476,6 +501,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                                 {timeVal ? (
                                   <div className="flex items-center gap-1 shrink-0">
                                     <input
+                                      ref={timeInputRef}
                                       type="time"
                                       value={timeVal}
                                       onChange={(e) => {
@@ -497,12 +523,12 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                                       <XIcon className="w-3.5 h-3.5" />
                                     </button>
                                   </div>
-                                ) : (
+                                ) : dateVal ? (
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const baseDate = dateVal || new Date().toISOString().split("T")[0];
-                                      handleUpdateCardDueDate(`${baseDate}T23:59`);
+                                      autoOpenTimePickerRef.current = true;
+                                      handleUpdateCardDueDate(`${dateVal}T23:59`);
                                     }}
                                     className="h-8 px-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-dashed border-white/20 text-xs font-medium text-slate-300 hover:text-white flex items-center gap-1 cursor-pointer shrink-0"
                                     title="Thêm mốc giờ cụ thể"
@@ -510,12 +536,12 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                                     <ClockIcon className="w-3 h-3 text-slate-400" />
                                     <span>+ Giờ</span>
                                   </button>
-                                )}
+                                ) : null}
                               </div>
 
-                              {/* Quick Time Presets if date exists */}
+                              {/* Quick Time Presets if date exists (desktop only, mobile dùng nút + Giờ cho gọn) */}
                               {dateVal && (
-                                <div className="flex items-center justify-between gap-1 pt-0.5">
+                                <div className="hidden sm:flex items-center justify-between gap-1 pt-0.5">
                                   <span className="text-xs text-slate-400 shrink-0">Giờ:</span>
                                   <div className="flex items-center gap-1 flex-1 justify-end">
                                     {[
@@ -765,7 +791,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
               <div className="flex items-center gap-2 p-1 pl-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.08] focus-within:border-white/25 focus-within:bg-white/[0.05] transition-all">
                 <input
                   type="text"
-                  placeholder="Thêm mục việc cần làm (nhấn Enter)..."
+                  placeholder="Thêm mục việc cần làm..."
                   value={newChecklistText}
                   onChange={(e) => setNewChecklistText(e.target.value)}
                   onKeyDown={(e) => {

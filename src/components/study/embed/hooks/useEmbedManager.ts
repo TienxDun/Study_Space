@@ -241,18 +241,31 @@ export function useEmbedManager({
     [detectedEmbed, fetchedMetadata, handlePlayItem, savedEmbeds, searchOrUrl]
   );
 
+  const [embedToDelete, setEmbedToDelete] = useState<StudyEmbedItem | null>(null);
+
   const handleDeleteSaved = useCallback(
     (id: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      const updated = savedEmbeds.filter((item) => item.id !== id);
-      setSavedEmbeds(updated);
-      try {
-        localStorage.setItem(STORAGE_CUSTOM_EMBEDS_KEY, JSON.stringify(updated));
-      } catch {}
-      toast.success("Đã xóa khỏi danh sách đã lưu");
+      const itemToDelete = savedEmbeds.find((item) => item.id === id);
+      if (itemToDelete) {
+        setEmbedToDelete(itemToDelete);
+      }
     },
     [savedEmbeds]
   );
+
+  const handleConfirmDeleteSaved = useCallback(() => {
+    if (!embedToDelete) return;
+    const id = embedToDelete.id;
+    const title = embedToDelete.title;
+    const updated = savedEmbeds.filter((item) => item.id !== id);
+    setSavedEmbeds(updated);
+    try {
+      localStorage.setItem(STORAGE_CUSTOM_EMBEDS_KEY, JSON.stringify(updated));
+    } catch {}
+    setEmbedToDelete(null);
+    toast.success(`Đã xóa "${title}" khỏi danh sách đã lưu`);
+  }, [embedToDelete, savedEmbeds]);
 
   const handleToggleSaveItem = useCallback(
     (item: StudyEmbedItem) => {
@@ -304,6 +317,9 @@ export function useEmbedManager({
     handleStopStream,
     handlePlayFromInput,
     handleDeleteSaved,
+    embedToDelete,
+    setEmbedToDelete,
+    handleConfirmDeleteSaved,
     handleToggleSaveItem,
     resolveActiveItemMetadata,
   };

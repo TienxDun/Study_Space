@@ -378,25 +378,6 @@ export function useKanbanBoards() {
     setCardToDelete(card);
   }, []);
 
-  const handleConfirmDeleteCard = useCallback(() => {
-    if (!cardToDelete) return;
-    const cardId = cardToDelete.id;
-    const boardId = activeBoardId;
-    const index = currentBoard.cards.findIndex((c) => c.id === cardId);
-    setLastDeletedCard({
-      boardId,
-      card: cardToDelete,
-      index: index < 0 ? 0 : index,
-      deletedAt: Date.now(),
-    });
-    updateCurrentBoard((board) => ({
-      ...board,
-      cards: board.cards.filter((c) => c.id !== cardId),
-    }));
-    setSelectedCard((prev) => (prev?.id === cardId ? null : prev));
-    setCardToDelete(null);
-  }, [cardToDelete, currentBoard.cards, activeBoardId, updateCurrentBoard]);
-
   // Đặt lại thẻ vừa xóa về đúng chỗ cũ
   const undoDeleteCard = useCallback(() => {
     if (!lastDeletedCard) return;
@@ -413,6 +394,32 @@ export function useKanbanBoards() {
     });
     setLastDeletedCard(null);
   }, [lastDeletedCard]);
+
+  const handleConfirmDeleteCard = useCallback(() => {
+    if (!cardToDelete) return;
+    const cardId = cardToDelete.id;
+    const cardTitle = cardToDelete.title;
+    const boardId = activeBoardId;
+    const index = currentBoard.cards.findIndex((c) => c.id === cardId);
+    setLastDeletedCard({
+      boardId,
+      card: cardToDelete,
+      index: index < 0 ? 0 : index,
+      deletedAt: Date.now(),
+    });
+    updateCurrentBoard((board) => ({
+      ...board,
+      cards: board.cards.filter((c) => c.id !== cardId),
+    }));
+    setSelectedCard((prev) => (prev?.id === cardId ? null : prev));
+    setCardToDelete(null);
+    toast.success(`Đã xóa "${cardTitle}"`, {
+      action: {
+        label: "Hoàn tác",
+        onClick: () => undoDeleteCard(),
+      },
+    });
+  }, [cardToDelete, currentBoard.cards, activeBoardId, updateCurrentBoard, undoDeleteCard]);
 
   const clearDeletedCard = useCallback(() => {
     setLastDeletedCard(null);
@@ -448,12 +455,14 @@ export function useKanbanBoards() {
   const handleConfirmDeleteColumn = useCallback(() => {
     if (!columnToDelete) return;
     const colId = columnToDelete.id;
+    const colTitle = columnToDelete.title;
     updateCurrentBoard((board) => ({
       ...board,
       columns: board.columns.filter((c) => c.id !== colId),
       cards: board.cards.filter((c) => c.columnId !== colId),
     }));
     setColumnToDelete(null);
+    toast.success(`Đã xóa cột "${colTitle}"`);
   }, [columnToDelete, updateCurrentBoard]);
 
   const handleRenameColumn = useCallback(
@@ -621,6 +630,7 @@ export function useKanbanBoards() {
           ? { ...prev, checklist: prev.checklist.filter((it) => it.id !== itemId) }
           : prev
       );
+      toast.success("Đã xóa mục công việc");
     },
     [updateCurrentBoard]
   );
@@ -672,10 +682,12 @@ export function useKanbanBoards() {
   const handleConfirmDeleteBoard = useCallback(() => {
     if (!boardToDelete) return;
     const boardId = boardToDelete.id;
+    const boardTitle = boardToDelete.title;
     const updated = boards.filter((b) => b.id !== boardId);
     saveBoards(updated);
     setActiveBoardId(updated[0].id);
     setBoardToDelete(null);
+    toast.success(`Đã xóa bảng "${boardTitle}"`);
   }, [boardToDelete, boards, saveBoards]);
 
   // Update Card Due Date

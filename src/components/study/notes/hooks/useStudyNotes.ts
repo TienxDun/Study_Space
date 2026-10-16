@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { toast } from "sonner";
 import { StudyNote } from "../types";
 import { DEFAULT_NOTES } from "../constants/default-notes";
 import { sanitizeStoredNoteContent, markdownToHtml } from "../utils/note-markdown";
@@ -276,12 +277,14 @@ export function useStudyNotes() {
   const handleConfirmDeleteNote = useCallback(() => {
     if (!noteToDelete) return;
     const idToDelete = noteToDelete.id;
+    const noteTitle = noteToDelete.title || "Ghi chú";
     const updated = notes.filter((n) => n.id !== idToDelete);
     saveNotesToStorage(updated);
     if (activeNoteId === idToDelete) {
       setActiveNoteId(updated.length > 0 ? updated[0].id : "");
     }
     setNoteToDelete(null);
+    toast.success(`Đã xóa "${noteTitle}"`);
   }, [noteToDelete, notes, activeNoteId, saveNotesToStorage]);
 
   return {

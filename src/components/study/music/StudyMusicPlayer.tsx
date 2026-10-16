@@ -58,6 +58,23 @@ export const StudyMusicPlayer = ({
   const toggleMixer = onToggleMixer || (() => setInternalIsMixerOpen(!internalIsMixerOpen));
   const closeMixer = onCloseMixer || (() => setInternalIsMixerOpen(false));
 
+  // Nhận biết thanh phòng học nhóm đang chạy ngầm ở tầng dưới trên mobile
+  const [hasActiveRoomPill, setHasActiveRoomPill] = useState(false);
+
+  useEffect(() => {
+    const handleRoomPill = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      setHasActiveRoomPill(Boolean(detail?.hasRoomPill));
+    };
+
+    if (typeof document !== "undefined") {
+      setHasActiveRoomPill(Boolean(document.getElementById("mobile-active-room-pill")));
+    }
+
+    window.addEventListener("zenstudy:active-room-pill", handleRoomPill);
+    return () => window.removeEventListener("zenstudy:active-room-pill", handleRoomPill);
+  }, []);
+
   const handleOpenMusicTab = () => {
     if (isMixerOpen && activeMixerTab === "music") {
       closeMixer();
@@ -135,7 +152,21 @@ export const StudyMusicPlayer = ({
     window.dispatchEvent(
       new CustomEvent("zenstudy:music-state", { detail: { isPlaying: playing } })
     );
-  }, [isPlaying, isExternalStreamActive, isExternalPaused]);
+
+    // Báo hiệu cho các widget mobile (như thanh phòng học, mascot) biết thanh audio đang hiển thị ở đáy
+    const hasAudioBar = Boolean(
+      (isShowingExternalStream && externalStreamItem) || isPlaying
+    );
+    window.dispatchEvent(
+      new CustomEvent("zenstudy:active-audio-bar", {
+        detail: {
+          hasAudioBar,
+          isPlaying: playing,
+          isShowingExternalStream: Boolean(isShowingExternalStream && externalStreamItem),
+        },
+      })
+    );
+  }, [isPlaying, isExternalStreamActive, isExternalPaused, isShowingExternalStream, externalStreamItem]);
 
   useEffect(() => {
     const onToggle = () => {
@@ -262,7 +293,11 @@ export const StudyMusicPlayer = ({
           pointerEvents: isZenMode ? "none" : "auto",
         }}
         transition={{ duration: 0.25, ease: "easeOut" }}
-        className="fixed bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+1rem)] left-1/2 -translate-x-1/2 sm:bottom-3.5 z-40 max-w-[calc(100vw-24px)] select-none will-change-transform"
+        className={`fixed left-1/2 -translate-x-1/2 sm:bottom-3.5 z-40 max-w-[calc(100vw-24px)] select-none will-change-transform transition-[bottom] duration-300 ease-out ${
+          hasActiveRoomPill
+            ? "bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+4.25rem)]"
+            : "bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+1rem)]"
+        }`}
       >
 
         <div

@@ -15,11 +15,14 @@ import {
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useFloatingSize } from "@/lib/use-floating-size";
 import { useAuth, GoogleIcon } from "@/components/study/auth";
+import { useIsMobile } from "@/components/study/mobile/hooks/useIsMobile";
+import { MobileRoomsSheet } from "@/components/study/mobile/sheets/MobileRoomsSheet";
 import { StudyRoomView } from "./StudyRoomView";
 
 export interface StudyRoomsWidgetProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpen?: () => void;
 }
 
 const ROOM_MARGIN = 16;
@@ -54,7 +57,7 @@ const getCenter = (w: number, h: number) => {
 
 // Phòng học nhóm dạng thẻ bay: kéo đi được, đổi cỡ được,
 // nhớ chỗ y như thẻ ghi chú.
-export const StudyRoomsWidget = ({ isOpen, onClose }: StudyRoomsWidgetProps) => {
+export const StudyRoomsWidget = ({ isOpen, onClose, onOpen }: StudyRoomsWidgetProps) => {
   const {
     user,
     loading: authLoading,
@@ -62,6 +65,8 @@ export const StudyRoomsWidget = ({ isOpen, onClose }: StudyRoomsWidgetProps) => 
     authError,
     signIn,
   } = useAuth();
+
+  const isMobile = useIsMobile();
 
   const [displayName, setDisplayName] = useState(
     () => user?.displayName || user?.email?.split("@")[0] || ""
@@ -318,6 +323,38 @@ const getLiveKitEndpoints = () => {
   const canJoin = Boolean(
     user && resolvedDisplayName.length > 0 && roomName.trim().length > 0 && !joining
   );
+
+  if (isMobile) {
+    return (
+      <MobileRoomsSheet
+        isOpen={isOpen}
+        onClose={onClose}
+        onOpen={onOpen}
+        user={user}
+        authLoading={authLoading}
+        isSigningIn={isSigningIn}
+        authError={authError}
+        signIn={signIn}
+        displayName={displayName}
+        setDisplayName={setDisplayName}
+        roomName={roomName}
+        setRoomName={setRoomName}
+        openRooms={openRooms}
+        loadingRooms={loadingRooms}
+        loadOpenRooms={loadOpenRooms}
+        handleJoinListed={handleJoinListed}
+        handleJoin={handleJoin}
+        canJoin={canJoin}
+        joining={joining}
+        error={error}
+        token={token}
+        serverUrl={serverUrl}
+        joinedRoom={joinedRoom}
+        handleLeave={handleLeave}
+        isAvailable={getLiveKitEndpoints().isAvailable}
+      />
+    );
+  }
 
   return (
     <AnimatePresence>

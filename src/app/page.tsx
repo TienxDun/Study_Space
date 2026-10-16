@@ -745,7 +745,11 @@ export default function StudySpacePage() {
       />
 
       {/* Phòng học nhóm (video call) */}
-      <StudyRoomsWidget isOpen={isRoomsOpen} onClose={() => setIsRoomsOpen(false)} />
+      <StudyRoomsWidget
+        isOpen={isRoomsOpen}
+        onClose={() => setIsRoomsOpen(false)}
+        onOpen={() => setIsRoomsOpen(true)}
+      />
 
       {/* Trợ lý chat AI (góc phải, cần đăng nhập Google) */}
       <StudyChatWidget
@@ -770,21 +774,19 @@ export default function StudySpacePage() {
         />
       )}
 
-      {/* Mobile: thanh dưới 5 nút */}
+      {/* Mobile: thanh dưới 5 nút luôn luôn hiển thị */}
       {isMobile && !isZenMode && (
         <StudyMobileNav
           active={
-            isMoreOpen
-              ? "more"
-              : isTasksOpen
-                ? "tasks"
-                : isScenesOpen
-                  ? "scenes"
-                  : isMixerOpen
-                    ? "music"
-                    : isPomodoroVisible
-                      ? "pomodoro"
-                      : ""
+            isTasksOpen
+              ? "tasks"
+              : isNotesOpen
+                ? "notes"
+                : isMixerOpen
+                  ? "music"
+                  : isMoreOpen || isScenesOpen || isEmbedPlayerOpen || isRoomsOpen || isChatOpen || isStatsOpen || isSettingsOpen
+                    ? "more"
+                    : "pomodoro"
           }
           onSelect={(id: MobileNavId) => {
             const isAnySheetOpen =
@@ -814,7 +816,7 @@ export default function StudySpacePage() {
 
             // Nếu người dùng bấm vào nút "Giờ":
             if (id === "pomodoro") {
-              // 1. Nếu đang mở bảng nào đó (Việc, Cảnh, Nhạc, Thêm...) -> đóng bảng đó lại và mở đồng hồ
+              // 1. Nếu đang mở bảng nào đó (Việc, Ghi chú, Cảnh, Nhạc, Thêm...) -> đóng bảng đó lại và mở đồng hồ
               if (isAnySheetOpen) {
                 closeAll();
                 setIsPomodoroVisible(true);
@@ -825,10 +827,19 @@ export default function StudySpacePage() {
               return;
             }
 
+            const isMoreGroupActive =
+              isMoreOpen ||
+              isScenesOpen ||
+              isEmbedPlayerOpen ||
+              isRoomsOpen ||
+              isChatOpen ||
+              isStatsOpen ||
+              isSettingsOpen;
+
             const isCurrentlyActive =
-              (id === "more" && isMoreOpen) ||
+              (id === "more" && isMoreGroupActive) ||
               (id === "tasks" && isTasksOpen) ||
-              (id === "scenes" && isScenesOpen) ||
+              (id === "notes" && isNotesOpen) ||
               (id === "music" && isMixerOpen);
 
             // Nếu chạm lại chính tab đang mở thì đóng lại
@@ -844,8 +855,8 @@ export default function StudySpacePage() {
               setIsMoreOpen(true);
             } else if (id === "tasks") {
               setIsTasksOpen(true);
-            } else if (id === "scenes") {
-              setIsScenesOpen(true);
+            } else if (id === "notes") {
+              setIsNotesOpen(true);
             } else if (id === "music") {
               setIsMixerOpen(true);
             }
@@ -866,6 +877,12 @@ export default function StudySpacePage() {
               setIsMixerOpen(false);
               setIsStatsOpen(false);
               setIsNotesOpen(true);
+            } else if (id === "scenes") {
+              setIsTasksOpen(false);
+              setIsNotesOpen(false);
+              setIsMixerOpen(false);
+              setIsStatsOpen(false);
+              setIsScenesOpen(true);
             } else if (id === "embed") {
               setIsTasksOpen(false);
               setIsNotesOpen(false);
@@ -909,9 +926,9 @@ export default function StudySpacePage() {
           <div className="sm:hidden">
             <MobileRadialBubbleMenu
               onOpenChat={() => setIsChatOpen(true)}
-              onOpenMixer={() => setIsMixerOpen(true)}
-              onOpenNotes={() => setIsNotesOpen(true)}
               onOpenScenes={() => setIsScenesOpen(true)}
+              onOpenRooms={() => setIsRoomsOpen(true)}
+              onOpenRadio={() => setIsEmbedPlayerOpen(true)}
             />
           </div>
         )}

@@ -20,6 +20,10 @@ import { StudioHeader } from "./components/StudioHeader";
 import { StagePlayer } from "./components/StagePlayer";
 import { ResizableDivider } from "./components/ResizableDivider";
 import { DiscoveryHub } from "./components/DiscoveryHub";
+import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
+import { useIsMobile } from "@/components/study/mobile/hooks/useIsMobile";
+import { RadioIcon, XIcon, ArrowsInSimpleIcon, ArrowsOutSimpleIcon } from "@phosphor-icons/react";
+import { saveStorage } from "@/lib/safe-storage";
 
 export const StudyEmbedPlayerWidget = ({
   isOpen,
@@ -30,6 +34,7 @@ export const StudyEmbedPlayerWidget = ({
   onStreamActiveChange,
   onActiveItemChange,
 }: StudyEmbedPlayerWidgetProps) => {
+  const isMobile = useIsMobile();
   const {
     isPipMode,
     pipDragControls,
@@ -66,6 +71,46 @@ export const StudyEmbedPlayerWidget = ({
     void ensureYouTubeIframeApi().catch(() => {});
   }, []);
 
+  // Chế độ mở rộng toàn màn hình Zen vs Thu nhỏ khay đáy trên Mobile
+  const [isZenMode, setIsZenMode] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.mobileSheetZenMap);
+      if (raw) {
+        const map = JSON.parse(raw);
+        if (typeof map["embed"] === "boolean") return map["embed"];
+      }
+    } catch {}
+    return false;
+  });
+
+  const handleToggleZenMode = () => {
+    setIsZenMode((prev) => {
+      const next = !prev;
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.mobileSheetZenMap);
+        const map = raw ? JSON.parse(raw) : {};
+        map["embed"] = next;
+        saveStorage(STORAGE_KEYS.mobileSheetZenMap, JSON.stringify(map));
+      } catch {}
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (isOpen && isMobile) {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.mobileSheetZenMap);
+        if (raw) {
+          const map = JSON.parse(raw);
+          if (typeof map["embed"] === "boolean") {
+            setIsZenMode(map["embed"]);
+          }
+        }
+      } catch {}
+    }
+  }, [isOpen, isMobile]);
+
   const {
     activeCategory,
     setActiveCategory,
@@ -86,6 +131,9 @@ export const StudyEmbedPlayerWidget = ({
     handleStopStream,
     handlePlayFromInput,
     handleDeleteSaved,
+    embedToDelete,
+    setEmbedToDelete,
+    handleConfirmDeleteSaved,
     handleToggleSaveItem,
     resolveActiveItemMetadata,
   } = useEmbedManager({
@@ -96,6 +144,122 @@ export const StudyEmbedPlayerWidget = ({
       if (onOpen) onOpen();
     },
   });
+
+  // Chuyển tab danh mục khi vuốt ngang (đồng bộ với Bảng Cảnh & Bảng Nhạc)
+  const EMBED_CATEGORY_KEYS = ["all", "youtube", "spotify", "saved"];
+  const handleNextCategory = () => {
+    const idx = EMBED_CATEGORY_KEYS.indexOf(activeCategory);
+    if (idx < EMBED_CATEGORY_KEYS.length - 1) setActiveCategory(EMBED_CATEGORY_KEYS[idx + 1]);
+  };
+  const handlePrevCategory = () => {
+    const idx = EMBED_CATEGORY_KEYS.indexOf(activeCategory);
+    if (idx > 0) setActiveCategory(EMBED_CATEGORY_KEYS[idx - 1]);
+  };
+
+  // Kéo vuốt xuống đóng bảng trên Mobile bám sát 1:1 theo thời gian thực (chuẩn MobileSheetShell)
+  const sheetPanelRef = useRef<HTMLDivElement | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const isDraggingDown = useRef(false);
+
+  useEffect(() => {
+    if (isOpen && isMobile && sheetPanelRef.current) {
+      sheetPanelRef.current.style.transform = "";
+      sheetPanelRef.current.style.opacity = "";
+      sheetPanelRef.current.style.transition = "";
+    }
+  }, [isOpen, isMobile]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if ((e.target as HTMLElement).closest("button") || (e.target as HTMLElement).closest("input")) return;
+    touchStartY.current = e.touches[0].clientY;
+    isDraggingDown.current = true;
+    if (sheetPanelRef.current) {
+      sheetPanelRef.current.style.transition = "none";
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDraggingDown.current || touchStartY.current === null) return;
+    const diff = e.touches[0].clientY - touchStartY.current;
+    if (diff > 0) {
+      if (sheetPanelRef.current) {
+        sheetPanelRef.current.style.transform = `translateY(${diff}px)`;
+        sheetPanelRef.current.style.opacity = `${Math.max(0.3, 1 - diff / (window.innerHeight || 800))}`;
+      }
+    } else {
+      if (sheetPanelRef.current) {
+        const resistance = !isZenMode ? diff * 0.35 : 0;
+        sheetPanelRef.current.style.transform = `translateY(${resistance}px)`;
+        sheetPanelRef.current.style.opacity = "1";
+      }
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isDraggingDown.current || touchStartY.current === null) return;
+    const diff = e.changedTouches[0].clientY - touchStartY.current;
+    isDraggingDown.current = false;
+    touchStartY.current = null;
+
+    // 1. Vuốt lên trên (diff < -35px): Phóng to bảng thành Zen Mode
+    if (diff < -35) {
+      if (!isZenMode) {
+        if (sheetPanelRef.current) {
+          sheetPanelRef.current.style.transition =
+            "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)";
+          sheetPanelRef.current.style.transform = "translateY(0px)";
+        }
+        handleToggleZenMode();
+        return;
+      } else {
+        if (sheetPanelRef.current) {
+          sheetPanelRef.current.style.transition =
+            "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)";
+          sheetPanelRef.current.style.transform = "translateY(0px)";
+        }
+        return;
+      }
+    }
+
+    // 2. Vuốt xuống dưới (diff > 0):
+    // Người dùng vuốt xuống: bảng trượt thẳng xuống dưới để tắt dứt khoát, không nảy ngược lên!
+    if (diff >= 60) {
+      if (sheetPanelRef.current) {
+        sheetPanelRef.current.style.transition =
+          "transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.18s ease-out";
+        sheetPanelRef.current.style.transform = "translateY(calc(100% + 120px))";
+        sheetPanelRef.current.style.opacity = "0";
+      }
+      setTimeout(() => {
+        if (sheetPanelRef.current) {
+          sheetPanelRef.current.style.transform = "";
+          sheetPanelRef.current.style.opacity = "";
+          sheetPanelRef.current.style.transition = "";
+        }
+        onClose();
+      }, 200);
+      return;
+    }
+
+    // Chưa đủ ngưỡng vuốt xuống (< 60px) -> Đàn hồi bật nảy nhẹ về vị trí ban đầu
+    if (sheetPanelRef.current) {
+      sheetPanelRef.current.style.transition =
+        "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease-out";
+      sheetPanelRef.current.style.transform = "translateY(0px)";
+      sheetPanelRef.current.style.opacity = "1";
+    }
+  };
+
+  const handleTouchCancel = () => {
+    isDraggingDown.current = false;
+    touchStartY.current = null;
+    if (sheetPanelRef.current) {
+      sheetPanelRef.current.style.transition =
+        "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease-out";
+      sheetPanelRef.current.style.transform = "translateY(0px)";
+      sheetPanelRef.current.style.opacity = "1";
+    }
+  };
 
   // Background resolver for activeItem
   useEffect(() => {
@@ -176,11 +340,16 @@ export const StudyEmbedPlayerWidget = ({
           isPipMode
             ? "fixed inset-0 z-50 pointer-events-none"
             : isBackdropOpen
-            ? "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 pointer-events-none"
+            ? isMobile
+              ? isZenMode
+                ? "fixed inset-x-2 top-2.5 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] z-50 pointer-events-none transition-[inset] duration-350 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                : "fixed inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] z-50 pointer-events-none transition-[inset] duration-350 ease-[cubic-bezier(0.16,1,0.3,1)]"
+              : "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 pointer-events-none"
             : "fixed -top-[9999px] -left-[9999px] w-1 h-1 opacity-0 pointer-events-none"
         }
       >
         <motion.div
+          ref={sheetPanelRef}
           style={
             isPipMode
               ? { x: pipX, y: pipY, width: pipSize.width, height: pipSize.height }
@@ -213,6 +382,12 @@ export const StudyEmbedPlayerWidget = ({
                     ? "shadow-[0_30px_80px_rgba(0,0,0,0.65)] ring-2 ring-emerald-500/40 cursor-grabbing"
                     : "shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
                 }`
+              : isMobile
+              ? `pointer-events-auto relative w-full flex flex-col text-white overflow-hidden transform-gpu will-change-[height,transform] transition-[height,max-height,border-radius,box-shadow,background-color] duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                  isZenMode
+                    ? "h-full rounded-[32px] bg-neutral-950/94 backdrop-blur-xl border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]"
+                    : "h-[72dvh] max-h-[72dvh] rounded-[28px] bg-neutral-950/90 backdrop-blur-lg border border-white/[0.16] shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.2)]"
+                }`
               : "pointer-events-auto relative w-full max-w-5xl h-[88vh] max-h-[820px] flex flex-col glass-panel hover:bg-black/45 text-slate-100 overflow-hidden transform-gpu will-change-transform"
           }
         >
@@ -232,6 +407,58 @@ export const StudyEmbedPlayerWidget = ({
               }}
               isDragging={isPipDragging}
             />
+          ) : isMobile ? (
+            <div
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
+              className="shrink-0 select-none cursor-grab active:cursor-grabbing border-b border-white/[0.12] bg-white/[0.02] touch-none"
+            >
+              {/* Thanh nắm tay kéo (Pill Handle) chuẩn Mobile Sheet */}
+              <div className="pt-2.5 pb-1 flex items-center justify-center">
+                <span
+                  aria-hidden="true"
+                  className="h-1.5 w-12 rounded-full bg-white/30 hover:bg-white/50 active:bg-white/60 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.4)]"
+                />
+              </div>
+              {/* Tiêu đề & Nút thao tác */}
+              <div className="flex items-center justify-between px-4 pb-2.5 pt-0.5">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-300 shrink-0">
+                    <RadioIcon className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate">
+                    Đài phát thanh
+                  </h3>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {/* Nút chuyển chế độ Full-Screen Zen Overlay / Khay đáy */}
+                  <button
+                    type="button"
+                    onClick={handleToggleZenMode}
+                    title={isZenMode ? "Thu gọn về dạng khay đáy" : "Mở rộng không gian Zen (Toàn màn hình)"}
+                    aria-label="Chuyển chế độ xem"
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all shadow-sm cursor-pointer"
+                  >
+                    {isZenMode ? (
+                      <ArrowsInSimpleIcon className="w-3.5 h-3.5" weight="bold" />
+                    ) : (
+                      <ArrowsOutSimpleIcon className="w-3.5 h-3.5" weight="bold" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all shadow-sm cursor-pointer"
+                    title="Đóng Đài phát thanh"
+                    aria-label="Đóng Đài phát thanh"
+                  >
+                    <XIcon className="w-4 h-4" weight="bold" />
+                  </button>
+                </div>
+              </div>
+            </div>
           ) : (
             <StudioHeader onClose={onClose} />
           )}
@@ -312,6 +539,8 @@ export const StudyEmbedPlayerWidget = ({
                 onImageError={(id) => setFailedImages((prev) => ({ ...prev, [id]: true }))}
                 onPlayItem={handlePlayItem}
                 onDeleteSaved={handleDeleteSaved}
+                onSwipeLeft={handleNextCategory}
+                onSwipeRight={handlePrevCategory}
               />
             </div>
           )}
@@ -335,6 +564,18 @@ export const StudyEmbedPlayerWidget = ({
           )}
         </motion.div>
       </div>
+
+      {/* Hộp thoại xác nhận xóa đài phát đã lưu dạng alertdialog */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(embedToDelete)}
+        onClose={() => setEmbedToDelete(null)}
+        onConfirm={handleConfirmDeleteSaved}
+        title="Xác nhận xóa đài phát"
+        description="Bạn có chắc chắn muốn xóa đài này khỏi danh sách đã lưu không?"
+        itemName={embedToDelete?.title}
+        confirmText="Xóa đài"
+        cancelText="Hủy bỏ"
+      />
     </>
   );
 };

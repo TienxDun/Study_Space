@@ -79,6 +79,10 @@
 }
 
 /* Viên kính của nút đang chọn: đặc hơn thanh ngoài 1 nấc */
+:where(.lg-pill:not(.absolute)) {
+  position: relative;
+}
+
 .lg-pill {
   border-radius: 999px;
   overflow: hidden;
@@ -274,6 +278,43 @@
   pointer-events: none;
 }
 
+/* Ô / Tab đang chọn dạng kính nhuốm màu xanh ngọc (emerald) — bản desktop:
+   vẫn giữ đủ ánh sáng kính (vệt gương, viền sáng trên) nhưng pha sắc xanh
+   ngọc theo màu thương hiệu. Đứng riêng, không phụ thuộc lg-tab-active. */
+.lg-tab-active-tint {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.16),
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0.02)
+    ),
+    rgba(16, 185, 129, 0.16);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(52, 211, 153, 0.5);
+  box-shadow:
+    0 4px 18px rgba(0, 0, 0, 0.4),
+    0 0 14px rgba(52, 211, 153, 0.18),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.4),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.25);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.lg-tab-active-tint::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent);
+  pointer-events: none;
+}
+
 /* Nút / Tab chưa kích hoạt: Thủy tinh mờ tinh tế */
 .lg-tab-inactive {
   position: relative;
@@ -289,6 +330,53 @@
   background: rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* Ô nhập liệu kính lỏng mobile: kế thừa công thức thanh điều hướng (lg-bar)
+   nhưng bo góc chữ nhật và bóng nhẹ hơn cho vừa ô nhỏ. Áp trực tiếp lên
+   <input>/<textarea>: class này lo nền kính, viền, chữ gợi ý và trạng thái
+   khi chạm vào. */
+.lg-input {
+  border-radius: 0.75rem;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.09),
+      rgba(255, 255, 255, 0.03) 45%,
+      rgba(255, 255, 255, 0.01)
+    ),
+    rgba(10, 12, 18, 0.3);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.32),
+    inset 0 1px 1px rgba(255, 255, 255, 0.28),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.lg-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Khi chạm vào: viền sáng hơn một nấc + bóng sâu hơn, cùng lúc với ánh sáng
+   cạnh trên đậm lên để vẫn đúng chất kính */
+.lg-input:focus,
+.lg-input:focus-visible {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.34);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.25);
+}
+
+/* Máy không hiểu kính mờ: nền đặc để vẫn đọc được chữ */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .lg-input {
+    background: rgba(10, 12, 18, 0.92);
+  }
 }
 
 /* Nút hành động kính lỏng (ActionButton, Thêm, v.v.) */

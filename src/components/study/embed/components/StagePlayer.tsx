@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { StudyEmbedItem } from "../types";
 import { ensureYouTubeJsApi } from "@/lib/youtube-remote";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { useIsMobile } from "@/components/study/mobile/hooks/useIsMobile";
 
 interface StagePlayerProps {
   activeItem: StudyEmbedItem | null;
@@ -45,6 +46,7 @@ export function StagePlayer({
   onToggleSave,
   onIframeLoad,
 }: StagePlayerProps) {
+  const isMobile = useIsMobile();
   const handleCopyLink = async () => {
     if (!activeItem) return;
     try {
@@ -93,8 +95,10 @@ export function StagePlayer({
   };
   return (
     <div
-      style={{ flexBasis: `${splitRatio}%` }}
-      className="w-full md:w-auto md:shrink-0 flex flex-col border-b md:border-b-0 bg-transparent p-4 sm:p-5 overflow-y-auto custom-study-scroll"
+      style={isMobile ? undefined : { flexBasis: `${splitRatio}%` }}
+      className={`w-full md:w-auto md:shrink-0 flex flex-col border-b border-white/10 md:border-b-0 bg-transparent p-3 sm:p-5 overflow-y-auto custom-study-scroll ${
+        isMobile && !activeItem ? "hidden md:flex" : ""
+      }`}
     >
       {activeItem ? (
         <div className="flex flex-col gap-4">
@@ -190,7 +194,7 @@ export function StagePlayer({
               {activeItem.platform === "youtube" && (
                 <button
                   onClick={onEnterPip}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer active:scale-95"
+                  className="hidden sm:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer active:scale-95 items-center justify-center"
                   title="Tách thành cửa sổ nổi (PiP)"
                 >
                   <PictureInPictureIcon className="w-4 h-4 text-accent-music-glow" />
@@ -222,7 +226,7 @@ export function StagePlayer({
               <button
                 type="button"
                 onClick={handleToggleTips}
-                className={`p-1.5 rounded-lg transition-colors cursor-pointer active:scale-95 flex items-center justify-center ${
+                className={`hidden sm:flex p-1.5 rounded-lg transition-colors cursor-pointer active:scale-95 items-center justify-center ${
                   showTips
                     ? "text-amber-300 bg-amber-400/10"
                     : "text-slate-400 hover:text-white hover:bg-white/10"

@@ -71,3 +71,62 @@ describe("Mobile Sheets Zen Mode Persistence", () => {
     expect(updatedMap["notes"]).toBe(true);
   });
 });
+
+describe("Mobile Nav Active State Resolution", () => {
+  const resolveActiveNav = (state: {
+    isTasksOpen?: boolean;
+    isNotesOpen?: boolean;
+    isMixerOpen?: boolean;
+    isMoreOpen?: boolean;
+    isScenesOpen?: boolean;
+    isEmbedPlayerOpen?: boolean;
+    isRoomsOpen?: boolean;
+    isChatOpen?: boolean;
+    isStatsOpen?: boolean;
+    isSettingsOpen?: boolean;
+    isPomodoroVisible?: boolean;
+  }) => {
+    return state.isTasksOpen
+      ? "tasks"
+      : state.isNotesOpen
+        ? "notes"
+        : state.isMixerOpen
+          ? "music"
+          : state.isMoreOpen ||
+              state.isScenesOpen ||
+              state.isEmbedPlayerOpen ||
+              state.isRoomsOpen ||
+              state.isChatOpen ||
+              state.isStatsOpen ||
+              state.isSettingsOpen
+            ? "more"
+            : "pomodoro";
+  };
+
+  it("resolves to 'pomodoro' on home screen even when clock digits are hidden", () => {
+    expect(resolveActiveNav({ isPomodoroVisible: false })).toBe("pomodoro");
+    expect(resolveActiveNav({ isPomodoroVisible: true })).toBe("pomodoro");
+  });
+
+  it("resolves to 'tasks' when tasks sheet is open", () => {
+    expect(resolveActiveNav({ isTasksOpen: true })).toBe("tasks");
+  });
+
+  it("resolves to 'notes' when notes sheet is open", () => {
+    expect(resolveActiveNav({ isNotesOpen: true })).toBe("notes");
+  });
+
+  it("resolves to 'music' when mixer is open", () => {
+    expect(resolveActiveNav({ isMixerOpen: true })).toBe("music");
+  });
+
+  it("resolves to 'more' for secondary sheets like embed player, scenes, rooms, chat, settings", () => {
+    expect(resolveActiveNav({ isEmbedPlayerOpen: true })).toBe("more");
+    expect(resolveActiveNav({ isScenesOpen: true })).toBe("more");
+    expect(resolveActiveNav({ isRoomsOpen: true })).toBe("more");
+    expect(resolveActiveNav({ isChatOpen: true })).toBe("more");
+    expect(resolveActiveNav({ isSettingsOpen: true })).toBe("more");
+    expect(resolveActiveNav({ isMoreOpen: true })).toBe("more");
+  });
+});
+

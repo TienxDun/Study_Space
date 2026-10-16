@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import {
   MagnifyingGlassIcon,
   PlayIcon,
@@ -33,6 +34,8 @@ interface DiscoveryHubProps {
   onImageError: (id: string) => void;
   onPlayItem: (item: StudyEmbedItem) => void;
   onDeleteSaved: (id: string, e: React.MouseEvent) => void;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
 }
 
 export function DiscoveryHub({
@@ -54,7 +57,37 @@ export function DiscoveryHub({
   onImageError,
   onPlayItem,
   onDeleteSaved,
+  onSwipeLeft,
+  onSwipeRight,
 }: DiscoveryHubProps) {
+  const contentTouchStartX = useRef<number | null>(null);
+  const contentTouchStartY = useRef<number | null>(null);
+
+  const handleContentTouchStart = (e: React.TouchEvent) => {
+    if (!onSwipeLeft && !onSwipeRight) return;
+    // Bỏ qua nếu chạm vào thanh input tìm kiếm
+    if ((e.target as HTMLElement).closest("input")) return;
+    contentTouchStartX.current = e.touches[0].clientX;
+    contentTouchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleContentTouchEnd = (e: React.TouchEvent) => {
+    if (contentTouchStartX.current === null || contentTouchStartY.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - contentTouchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - contentTouchStartY.current;
+
+    // Ngưỡng vuốt ngang dứt khoát: khoảng cách ngang > 35px và góc ngang trội hơn dọc
+    if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+      if (deltaX < 0) {
+        onSwipeLeft?.();
+      } else {
+        onSwipeRight?.();
+      }
+    }
+    contentTouchStartX.current = null;
+    contentTouchStartY.current = null;
+  };
+
   const categories = CATEGORY_DEFINITIONS.map((c) => ({
     ...c,
     label:
@@ -68,7 +101,11 @@ export function DiscoveryHub({
   }));
 
   return (
-    <div className="@container flex-1 min-h-0 min-w-0 flex flex-col p-3.5 sm:p-4 md:p-5 bg-black/20 overflow-hidden">
+    <div
+      onTouchStart={handleContentTouchStart}
+      onTouchEnd={handleContentTouchEnd}
+      className="@container flex-1 min-h-0 min-w-0 flex flex-col p-3.5 sm:p-4 md:p-5 bg-black/20 overflow-hidden"
+    >
       {/* Search Bar & Quick URL Input */}
       <div className="space-y-3 shrink-0">
         <div className="flex items-center gap-2">
@@ -141,24 +178,23 @@ export function DiscoveryHub({
           </p>
         )}
 
-        {/* Filter Category Chips */}
+        {/* Filter Category Chips - Chuẩn Liquid Glass đồng bộ Bảng Cảnh & Bảng Nhạc */}
         <div
           onWheel={handleHorizontalWheel}
-          className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none"
+          className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none select-none"
         >
           {categories.map((cat) => {
             const isActive = activeCategory === cat.key;
             return (
               <button
                 key={cat.key}
+                type="button"
                 onClick={() => onSelectCategory(cat.key)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all shrink-0 cursor-pointer border ${
-                  isActive
-                    ? "bg-white/15 text-white border-line/30 shadow-sm"
-                    : "bg-black/30 text-slate-400 hover:text-slate-200 border-white/10 hover:bg-white/[0.08]"
+                className={`h-8 px-3.5 rounded-full text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer ${
+                  isActive ? "lg-tab-active" : "lg-tab-inactive"
                 }`}
               >
-                <span className={cat.accent}>{cat.label}</span>
+                <span className={isActive ? "text-white" : cat.accent}>{cat.label}</span>
               </button>
             );
           })}

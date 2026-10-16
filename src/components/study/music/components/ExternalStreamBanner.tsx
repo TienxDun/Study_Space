@@ -136,7 +136,7 @@ export function ExternalStreamBanner({
 
         <button
           onClick={onExpandExternalStream}
-          className="relative w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-[color,background-color,transform] duration-200 active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 before:content-[''] before:absolute before:-inset-2"
+          className="relative w-8 h-8 rounded-full hidden sm:flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-[color,background-color,transform] duration-200 active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 before:content-[''] before:absolute before:-inset-2"
           title="Mở rộng đài phát (E)"
           aria-label="Mở rộng đài phát"
         >

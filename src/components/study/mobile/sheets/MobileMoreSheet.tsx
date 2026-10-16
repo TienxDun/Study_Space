@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { FileTextIcon, RadioIcon, ChartBarIcon, UsersIcon, SparkleIcon, SlidersIcon, EyeSlashIcon } from "@phosphor-icons/react";
+import { FileTextIcon, RadioIcon, ChartBarIcon, UsersIcon, SparkleIcon, SlidersIcon, EyeSlashIcon, ImageIcon } from "@phosphor-icons/react";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { MobileAccountCard } from "./MobileAccountCard";
 import type { MobilePanelId } from "../types";
@@ -50,6 +50,7 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
         <section>
           <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/50">Học và ghi</p>
           <div className="space-y-1.5">
+            <MoreButton label="Đổi cảnh không gian" onClick={() => go("scenes")} icon={<ImageIcon className="w-5 h-5 text-amber-300" />} />
             <MoreButton label="Ghi chú nhanh" onClick={() => go("notes")} icon={<FileTextIcon className="w-5 h-5 text-emerald-300" />} />
             <MoreButton label="Đài YouTube và Spotify" onClick={() => go("embed")} icon={<RadioIcon className="w-5 h-5 text-rose-300" />} />
             <MoreButton label="Thống kê tập trung" onClick={() => go("stats")} icon={<ChartBarIcon className="w-5 h-5 text-sky-300" />} />

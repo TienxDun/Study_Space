@@ -56,7 +56,7 @@ export const MobileNavItem = React.memo(function MobileNavItem({
               stiffness: 420,
               damping: 32,
             }}
-            className="absolute inset-y-0.5 inset-x-0.5 lg-pill pointer-events-none"
+            className="!absolute inset-y-0.5 inset-x-0.5 lg-pill pointer-events-none"
           />
         )}
       </AnimatePresence>

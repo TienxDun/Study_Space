@@ -5,6 +5,7 @@ import { XIcon, ArrowsInSimpleIcon, ArrowsOutSimpleIcon } from "@phosphor-icons/
 import { ModalShell } from "@/components/ui/ModalShell";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { saveStorage } from "@/lib/safe-storage";
+import { cn } from "@/lib/utils";
 
 interface MobileSheetShellProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface MobileSheetShellProps {
   panelRef?: React.Ref<HTMLDivElement>;
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
+  contentScroll?: boolean;
   children: ReactNode;
 }
 
@@ -42,6 +44,7 @@ export function MobileSheetShell({
   panelRef,
   onSwipeLeft,
   onSwipeRight,
+  contentScroll = true,
   children,
 }: MobileSheetShellProps) {
   const effectiveSheetId =
@@ -66,7 +69,7 @@ export function MobileSheetShell({
   }, [defaultZenMode, effectiveSheetId]);
 
   const [isZenMode, setIsZenMode] = useState<boolean>(defaultZenMode);
-  const [isClosingByDrag, setIsClosingByDrag] = useState(false);
+  const isClosingByDragRef = useRef(false);
   const localPanelRef = useRef<HTMLDivElement | null>(null);
   const touchStartY = useRef<number | null>(null);
   const isDraggingDown = useRef(false);
@@ -75,7 +78,7 @@ export function MobileSheetShell({
   useEffect(() => {
     if (isOpen) {
       setIsZenMode(getSavedZenMode());
-      setIsClosingByDrag(false);
+      isClosingByDragRef.current = false;
       if (localPanelRef.current) {
         localPanelRef.current.style.removeProperty("display");
         localPanelRef.current.style.transform = "";
@@ -104,7 +107,7 @@ export function MobileSheetShell({
     assignRef(panelRef, el);
   };
 
-  // Kéo xuống trên vùng đỉnh: bảng bám sát ngón tay 1:1 theo thời gian thực (tới đâu đóng tới đó)
+  // Kéo xuống đóng bảng hoặc vuốt lên phóng to toàn màn hình
   const handleTouchStart = (e: React.TouchEvent) => {
     // Không kích hoạt kéo vuốt nếu người dùng chạm vào các nút chức năng trên header
     if ((e.target as HTMLElement).closest("button")) return;
@@ -119,14 +122,16 @@ export function MobileSheetShell({
     if (!isDraggingDown.current || touchStartY.current === null) return;
     const diff = e.touches[0].clientY - touchStartY.current;
     if (diff > 0) {
-      // Bám sát 1:1 theo vị trí ngón tay của người dùng: ngón tay kéo tới đâu, thẻ hạ xuống tới đó
+      // Kéo xuống dưới: bám sát 1:1 theo ngón tay
       if (localPanelRef.current) {
         localPanelRef.current.style.transform = `translateY(${diff}px)`;
         localPanelRef.current.style.opacity = `${Math.max(0.3, 1 - diff / (window.innerHeight || 800))}`;
       }
     } else {
+      // Kéo lên trên: độ đàn hồi co giãn nhẹ (rubber-band)
       if (localPanelRef.current) {
-        localPanelRef.current.style.transform = "translateY(0px)";
+        const resistance = !isZenMode ? diff * 0.35 : 0;
+        localPanelRef.current.style.transform = `translateY(${resistance}px)`;
         localPanelRef.current.style.opacity = "1";
       }
     }
@@ -138,30 +143,51 @@ export function MobileSheetShell({
     isDraggingDown.current = false;
     touchStartY.current = null;
 
-    if (diff > 75) {
-      // Đủ ngưỡng -> Đánh dấu đóng bằng cử chỉ vuốt để triệt tiêu hiệu ứng giật khung hình của Framer Motion
-      setIsClosingByDrag(true);
+    // 1. Vuốt lên trên (diff < -35px): Phóng to bảng thành Zen Mode
+    if (diff < -35) {
+      if (!isZenMode) {
+        if (localPanelRef.current) {
+          localPanelRef.current.style.transition =
+            "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)";
+          localPanelRef.current.style.transform = "translateY(0px)";
+        }
+        handleToggleZenMode();
+        return;
+      } else {
+        if (localPanelRef.current) {
+          localPanelRef.current.style.transition =
+            "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)";
+          localPanelRef.current.style.transform = "translateY(0px)";
+        }
+        return;
+      }
+    }
+
+    // 2. Vuốt xuống dưới (diff > 0):
+    // Người dùng vuốt xuống: bảng trượt thẳng xuống dưới để tắt dứt khoát, không nảy ngược lên!
+    if (diff >= 60) {
+      isClosingByDragRef.current = true;
       if (localPanelRef.current) {
         localPanelRef.current.style.transition =
-          "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.18s ease-out";
-        localPanelRef.current.style.transform = "translateY(100%)";
+          "transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.18s ease-out";
+        localPanelRef.current.style.transform = "translateY(calc(100% + 120px))";
         localPanelRef.current.style.opacity = "0";
       }
       setTimeout(() => {
-        // Ẩn tuyệt đối khỏi DOM ngay trước khi unmount để không bao giờ có layer bị nhảy giật lại
         if (localPanelRef.current) {
           localPanelRef.current.style.setProperty("display", "none", "important");
         }
         onClose();
       }, 200);
-    } else {
-      // Chưa đủ ngưỡng -> Đàn hồi bật nảy dội về vị trí ban đầu
-      if (localPanelRef.current) {
-        localPanelRef.current.style.transition =
-          "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease-out";
-        localPanelRef.current.style.transform = "translateY(0px)";
-        localPanelRef.current.style.opacity = "1";
-      }
+      return;
+    }
+
+    // Chưa đủ ngưỡng vuốt xuống (< 60px) -> Đàn hồi bật nảy nhẹ về vị trí ban đầu
+    if (localPanelRef.current) {
+      localPanelRef.current.style.transition =
+        "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease-out";
+      localPanelRef.current.style.transform = "translateY(0px)";
+      localPanelRef.current.style.opacity = "1";
     }
   };
 
@@ -213,19 +239,21 @@ export function MobileSheetShell({
       initial={{ opacity: 0, y: 40, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={
-        isClosingByDrag
+        isClosingByDragRef.current
           ? { opacity: 0, transition: { duration: 0 } }
-          : { opacity: 0, y: 40, scale: 0.98 }
+          : { opacity: 0, y: 60, scale: 0.98, transition: { duration: 0.18, ease: "easeOut" } }
       }
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
       backdropClassName="sm:hidden"
-      panelClassName={
+      panelClassName={cn(
+        "fixed z-50 flex flex-col text-white overflow-hidden sm:hidden transform-gpu will-change-[height,transform,inset]",
+        "transition-[height,max-height,inset,border-radius,box-shadow,background-color] duration-350 ease-[cubic-bezier(0.16,1,0.3,1)]",
         isZenMode
-          ? "fixed inset-x-2 top-2.5 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] z-50 flex flex-col rounded-[32px] bg-neutral-950/94 backdrop-blur-xl border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)] text-white overflow-hidden sm:hidden transform-gpu"
-          : `fixed inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] z-50 flex flex-col rounded-[28px] bg-neutral-950/90 backdrop-blur-lg border border-white/[0.16] shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.2)] text-white overflow-hidden sm:hidden transform-gpu ${
-              heightClassName || maxHeightClassName || "max-h-[72dvh]"
+          ? "inset-x-2 top-2.5 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.5rem)] rounded-[32px] bg-neutral-950/94 backdrop-blur-xl border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]"
+          : `inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] rounded-[28px] bg-neutral-950/90 backdrop-blur-lg border border-white/[0.16] shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.2)] ${
+              heightClassName || maxHeightClassName || "h-[72dvh] max-h-[72dvh]"
             }`
-      }
+      )}
     >
       {/* Mép kính bắt sáng trên đỉnh tấm kính mẹ */}
       <div
@@ -239,7 +267,7 @@ export function MobileSheetShell({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchCancel}
-        className="shrink-0 select-none cursor-grab active:cursor-grabbing"
+        className="shrink-0 select-none cursor-grab active:cursor-grabbing touch-none"
       >
         {/* Thanh nắm tay kéo (Pill Handle) tối giản chuẩn Apple Sheet */}
         <div className="pt-2.5 pb-1 flex items-center justify-center">
@@ -289,7 +317,10 @@ export function MobileSheetShell({
       <div
         onTouchStart={handleContentTouchStart}
         onTouchEnd={handleContentTouchEnd}
-        className="flex-1 min-h-0 overflow-y-auto flex flex-col custom-study-scroll pb-2 touch-pan-y overscroll-contain no-scrollbar"
+        className={cn(
+          "flex-1 min-h-0 flex flex-col custom-study-scroll pb-2 touch-pan-y overscroll-contain no-scrollbar",
+          contentScroll ? "overflow-y-auto" : "overflow-hidden"
+        )}
       >
         {children}
       </div>

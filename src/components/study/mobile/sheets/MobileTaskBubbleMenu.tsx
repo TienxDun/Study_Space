@@ -6,13 +6,12 @@ import {
   ArrowRightIcon,
   PencilLineIcon,
   TrashIcon,
-  XIcon,
   CaretLeftIcon,
+  CaretRightIcon,
   DotsThreeVerticalIcon,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { KanbanCard, KanbanColumn } from "../../tasks/types";
-import { GlassIcon } from "@/components/ui/GlassIcon";
 
 interface MobileTaskBubbleMenuProps {
   card: KanbanCard;
@@ -43,7 +42,7 @@ export const MobileTaskBubbleMenu = React.memo(function MobileTaskBubbleMenu({
   hasFocusTime,
   formattedFocusTime,
 }: MobileTaskBubbleMenuProps) {
-  // Chế độ menu: "actions" (các bong bóng chức năng chính) hoặc "columns" (các bong bóng chuyển cột)
+  // Chế độ menu: "actions" (danh sách chức năng chính) hoặc "columns" (danh sách cột chuyển)
   const [mode, setMode] = useState<"actions" | "columns">("actions");
 
   // Reset về chế độ "actions" mỗi khi mở menu
@@ -57,25 +56,24 @@ export const MobileTaskBubbleMenu = React.memo(function MobileTaskBubbleMenu({
 
   return (
     <div className="relative shrink-0 flex items-center">
-      {/* Nút Trigger cơ bản (3 chấm tròn kính mờ) */}
-      <motion.button
+      {/* Nút Trigger 3 chấm tròn dạng kính mờ */}
+      <button
         type="button"
-        whileTap={{ scale: 0.88 }}
         onClick={(e) => {
           e.stopPropagation();
           onToggle();
         }}
-        aria-label="Tùy chọn nhanh"
-        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+        aria-label="Tùy chọn công việc"
+        className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all cursor-pointer active:scale-90 shadow-sm ${
           isOpen
-            ? "bg-white/20 text-white border border-white/30 shadow-md rotate-90"
-            : "bg-white/[0.04] hover:bg-white/10 text-white/40 hover:text-white border border-white/[0.08]"
+            ? "bg-white/20 text-white border-white/30"
+            : "bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/15"
         }`}
       >
-        <DotsThreeVerticalIcon className="w-4 h-4" />
-      </motion.button>
+        <DotsThreeVerticalIcon className="w-4 h-4" weight="bold" />
+      </button>
 
-      {/* Hiệu ứng Bubble Menu khi mở */}
+      {/* Menu thả xuống ngữ cảnh có chữ mô tả rõ ràng */}
       <AnimatePresence>
         {isOpen && (
           <>
@@ -92,129 +90,125 @@ export const MobileTaskBubbleMenu = React.memo(function MobileTaskBubbleMenu({
               }}
             />
 
-            {/* Cụm bong bóng hành động nổi bật (Liquid Glass Bubble Cluster) */}
+            {/* Khung menu thả xuống dạng kính mờ tối giản & hiện đại */}
             <motion.div
-              key={`bubble-cluster-${card.id}`}
-              initial={{ opacity: 0, scale: 0.82, x: 12 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.82, x: 12 }}
-              transition={{ type: "spring", stiffness: 420, damping: 28 }}
-              className="absolute right-0 -top-1.5 z-50 flex items-center gap-1.5 p-1.5 rounded-full bg-neutral-950/95 backdrop-blur-2xl border border-white/20 shadow-[0_16px_40px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.25)] text-white"
+              key={`menu-dropdown-${card.id}`}
+              initial={{ opacity: 0, scale: 0.92, y: -6 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: -6 }}
+              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute right-0 top-9.5 z-50 min-w-[210px] p-1.5 rounded-2xl bg-neutral-950/92 backdrop-blur-2xl border border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.85)] text-white select-none"
               onClick={(e) => e.stopPropagation()}
             >
               {mode === "actions" ? (
-                <>
-                  {/* Bong bóng 1: Bắt đầu Pomodoro */}
-                  <div className="relative">
-                    <GlassIcon
-                      icon={<TimerIcon className="w-4.5 h-4.5" weight="fill" />}
-                      title="Học với Pomodoro"
-                      aria-label="Học với Pomodoro"
-                      variant="liquid"
-                      plate="none"
-                      size={36}
-                      onClick={() => {
-                        onStartFocus();
-                        onClose();
-                      }}
-                    />
+                <div className="flex flex-col space-y-0.5">
+                  {/* Mục 1: Bắt đầu Pomodoro */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onStartFocus();
+                      onClose();
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-white/80 hover:text-white hover:bg-white/10 active:scale-[0.98] transition-all cursor-pointer group/item"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/10 flex items-center justify-center shrink-0">
+                        <TimerIcon className="w-4 h-4 text-white/80 group-hover:text-white transition-colors" weight="fill" />
+                      </div>
+                      <span className="whitespace-nowrap">Học với Pomodoro</span>
+                    </div>
                     {hasFocusTime && (
-                      <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full text-[8.5px] font-mono font-bold bg-amber-400 text-neutral-950 shadow-xs border border-amber-300 pointer-events-none z-20">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-white/10 text-white/70 border border-white/10 shrink-0 ml-2">
                         {formattedFocusTime}
                       </span>
                     )}
-                  </div>
+                  </button>
 
-                  {/* Bong bóng 2: Chuyển cột (Move column) */}
+                  {/* Mục 2: Chuyển trạng thái / Chuyển cột */}
                   {targetColumns.length > 0 && (
-                    <GlassIcon
-                      icon={<ArrowRightIcon className="w-4 h-4" weight="bold" />}
-                      title="Chuyển cột"
-                      aria-label="Chuyển cột"
-                      variant="liquid"
-                      plate="none"
-                      size={36}
+                    <button
+                      type="button"
                       onClick={() => setMode("columns")}
-                    />
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-white/80 hover:text-white hover:bg-white/10 active:scale-[0.98] transition-all cursor-pointer group/item"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/10 flex items-center justify-center shrink-0">
+                          <ArrowRightIcon className="w-4 h-4 text-white/80 group-hover:text-white transition-colors" weight="bold" />
+                        </div>
+                        <span className="whitespace-nowrap">Chuyển trạng thái</span>
+                      </div>
+                      <CaretRightIcon className="w-3.5 h-3.5 text-white/40 group-hover:text-white/70 shrink-0 ml-2 transition-colors" weight="bold" />
+                    </button>
                   )}
 
-                  {/* Bong bóng 3: Xem & Chỉnh sửa chi tiết */}
-                  <GlassIcon
-                    icon={<PencilLineIcon className="w-4 h-4" weight="bold" />}
-                    title="Chi tiết việc"
-                    aria-label="Chi tiết việc"
-                    variant="liquid"
-                    plate="none"
-                    size={36}
+                  {/* Mục 3: Xem & Sửa chi tiết */}
+                  <button
+                    type="button"
                     onClick={() => {
                       onSelectDetail();
                       onClose();
                     }}
-                  />
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-white/80 hover:text-white hover:bg-white/10 active:scale-[0.98] transition-all cursor-pointer group/item"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/10 flex items-center justify-center shrink-0">
+                        <PencilLineIcon className="w-4 h-4 text-white/80 group-hover:text-white transition-colors" weight="bold" />
+                      </div>
+                      <span className="whitespace-nowrap">Chi tiết công việc</span>
+                    </div>
+                  </button>
 
-                  {/* Bong bóng 4: Xóa thẻ */}
-                  <GlassIcon
-                    icon={<TrashIcon className="w-4 h-4" weight="bold" />}
-                    title="Xóa việc này"
-                    aria-label="Xóa việc này"
-                    variant="liquid"
-                    plate="none"
-                    size={36}
+                  {/* Phân cách nhẹ */}
+                  <div className="my-1 border-t border-white/[0.08]" />
+
+                  {/* Mục 4: Xóa việc này */}
+                  <button
+                    type="button"
                     onClick={() => {
                       onDeleteCard();
                       onClose();
                     }}
-                  />
-
-                  {/* Bong bóng 5: Đóng menu */}
-                  <GlassIcon
-                    icon={<XIcon className="w-3.5 h-3.5" />}
-                    title="Đóng"
-                    aria-label="Đóng tùy chọn"
-                    variant="liquid"
-                    plate="none"
-                    size={32}
-                    onClick={onClose}
-                  />
-                </>
-              ) : (
-                /* Chế độ phụ: Chọn cột đích dạng các bong bóng nhộng (Column Pills) */
-                <div className="flex items-center gap-1.5 animate-in fade-in zoom-in-95 duration-150">
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.88 }}
-                    onClick={() => setMode("actions")}
-                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center"
-                    title="Quay lại"
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-white/70 hover:text-rose-400 hover:bg-rose-500/10 active:scale-[0.98] transition-all cursor-pointer group/item"
                   >
-                    <CaretLeftIcon className="w-4 h-4" />
-                  </motion.button>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
+                        <TrashIcon className="w-4 h-4 text-rose-400 group-hover:text-rose-300 transition-colors" weight="bold" />
+                      </div>
+                      <span className="whitespace-nowrap text-rose-300 group-hover:text-rose-200">Xóa việc này</span>
+                    </div>
+                  </button>
+                </div>
+              ) : (
+                /* Chế độ phụ: Chuyển sang cột khác */
+                <div className="flex flex-col space-y-1">
+                  <div className="flex items-center justify-between px-2 py-1.5 border-b border-white/[0.08] mb-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setMode("actions")}
+                      className="flex items-center gap-1 text-[11px] font-semibold text-white/70 hover:text-white cursor-pointer px-1.5 py-0.5 rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      <CaretLeftIcon className="w-3.5 h-3.5" weight="bold" />
+                      <span>Quay lại</span>
+                    </button>
+                    <span className="text-[10px] text-white/40">Chuyển sang</span>
+                  </div>
 
-                  <div className="flex items-center gap-1 max-w-[210px] overflow-x-auto scrollbar-none py-0.5">
+                  <div className="space-y-0.5">
                     {targetColumns.map((col) => (
-                      <motion.button
+                      <button
                         key={col.id}
                         type="button"
-                        whileTap={{ scale: 0.92 }}
                         onClick={() => {
                           onMoveCard(col.id);
                           onClose();
                         }}
-                        className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/[0.08] hover:bg-sky-500/25 text-white/90 hover:text-sky-200 border border-white/15 hover:border-sky-400/35 whitespace-nowrap active:scale-95 transition-all cursor-pointer"
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-white/80 hover:text-white hover:bg-white/10 active:scale-[0.98] transition-all cursor-pointer group/col"
                       >
-                        {col.title}
-                      </motion.button>
+                        <span className="whitespace-nowrap">{col.title}</span>
+                        <ArrowRightIcon className="w-3.5 h-3.5 text-white/40 group-hover:text-white/70 shrink-0 ml-2 transition-colors" />
+                      </button>
                     ))}
                   </div>
-
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.88 }}
-                    onClick={onClose}
-                    className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white/50 hover:text-white flex items-center justify-center ml-0.5"
-                  >
-                    <XIcon className="w-3 h-3" />
-                  </motion.button>
                 </div>
               )}
             </motion.div>

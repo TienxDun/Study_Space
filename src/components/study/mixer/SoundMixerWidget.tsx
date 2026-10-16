@@ -105,6 +105,7 @@ export const SoundMixerWidget = ({
       isLooping={isLooping}
       onToggleLoop={onToggleLoop}
       currentMoodTracks={currentMoodTracks}
+      isMobile={isMobile}
     />
   ) : (
     <AmbientTabContent
@@ -113,6 +114,7 @@ export const SoundMixerWidget = ({
       onTogglePreset={handleTogglePreset}
       onToggleSound={toggleSound}
       onVolumeChange={handleSoundVolume}
+      isMobile={isMobile}
     />
   );
 

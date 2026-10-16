@@ -216,6 +216,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
         sheetId="tasks"
         title={`Việc cần làm (${allCardsWithColumn.length})`}
         heightClassName="h-[80dvh] max-h-[85dvh]"
+        contentScroll={false}
         onSwipeLeft={goToNextFilter}
         onSwipeRight={goToPrevFilter}
         headerRight={
@@ -305,7 +306,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                 value={quickTitle}
                 onChange={(e) => setQuickTitle(e.target.value)}
                 placeholder="Nhập việc cần làm..."
-                className="flex-1 h-9 px-3 rounded-xl bg-white/[0.04] border border-white/[0.1] text-xs text-white placeholder-white/40 focus:outline-none focus:border-white/30 transition-colors min-w-0"
+                className="lg-input flex-1 h-9 px-3 text-xs text-white min-w-0"
               />
               <button
                 type="submit"
@@ -319,7 +320,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
           </div>
         }
       >
-        <div className="flex-1 flex flex-col space-y-2.5 pt-1 select-none">
+        <div className="flex-1 min-h-0 flex flex-col space-y-2.5 pt-1 select-none">
           {/* Thanh tìm kiếm mở rộng khi cần */}
           {isSearchOpen && (
             <div className="px-3">
@@ -331,7 +332,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Tìm việc..."
                   autoFocus
-                  className="w-full h-9 pl-9 pr-8 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-white/40 focus:outline-none focus:border-white/20 transition-colors"
+                  className="lg-input w-full h-9 pl-9 pr-8 text-xs text-white"
                 />
                 {searchQuery && (
                   <button
@@ -347,7 +348,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
           )}
 
           {/* Danh sách các công việc cuộn dọc */}
-          <div className="flex-1 px-3 space-y-2 overflow-y-auto custom-study-scroll pb-2 overscroll-contain touch-pan-y no-scrollbar">
+          <div className="flex-1 min-h-0 px-3 space-y-2 overflow-y-auto custom-study-scroll pb-16 overscroll-contain touch-pan-y no-scrollbar">
             {displayedCards.length > 0 ? (
               displayedCards.map(({ card, colId, colTitle }) => {
                 const deadline = getDeadlineStatus(card.dueDate);

@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { TimerIcon, CheckSquareIcon, ImageIcon, MusicNoteIcon, DotsThreeIcon } from "@phosphor-icons/react";
+import { TimerIcon, CheckSquareIcon, NotePencilIcon, MusicNoteIcon, DotsThreeIcon } from "@phosphor-icons/react";
 import type { MobileNavId } from "./types";
 import { MobileNavItem } from "./MobileNavItem";
 import { cn } from "@/lib/utils";
@@ -34,10 +34,10 @@ const ITEMS: { id: MobileNavId; label: string; icon: (active: boolean) => React.
     ),
   },
   {
-    id: "scenes",
-    label: "Cảnh",
+    id: "notes",
+    label: "Ghi chú",
     icon: (a) => (
-      <ImageIcon
+      <NotePencilIcon
         className={cn("h-[22px] w-[22px] transition-all duration-200", a ? "text-white" : "text-slate-300/75")}
         weight={a ? "fill" : "duotone"}
       />

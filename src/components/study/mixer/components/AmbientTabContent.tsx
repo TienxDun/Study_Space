@@ -12,6 +12,7 @@ interface AmbientTabContentProps {
   onTogglePreset: (recipe: Record<string, number>) => void;
   onToggleSound: (id: string) => void;
   onVolumeChange: (id: string, val: number) => void;
+  isMobile?: boolean;
 }
 
 export function AmbientTabContent({
@@ -20,6 +21,7 @@ export function AmbientTabContent({
   onTogglePreset,
   onToggleSound,
   onVolumeChange,
+  isMobile = false,
 }: AmbientTabContentProps) {
   return (
     <div className="space-y-4 pb-6">
@@ -43,14 +45,16 @@ export function AmbientTabContent({
                 onClick={() => onTogglePreset(preset.recipe)}
                 className={`relative flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-2xl transition-all text-center group active:scale-95 cursor-pointer ${
                   isActive
-                    ? "lg-tab-active shadow-[0_0_14px_rgba(52,211,153,0.3)] !border-emerald-400/40"
+                    ? isMobile
+                      ? "lg-tab-active"
+                      : "border shadow-sm bg-emerald-500/25 border-emerald-400/60 text-emerald-300 ring-1 ring-emerald-400/40 shadow-[0_0_12px_rgba(52,211,153,0.3)] font-bold"
                     : "lg-tab-inactive"
                 }`}
                 title={isActive ? "Bấm để tắt" : "Bấm để bật"}
               >
                 <Icon
                   className={`w-4 h-4 ${
-                    isActive ? "text-emerald-400" : preset.color
+                    isActive ? (isMobile ? "text-white" : "text-emerald-400") : preset.color
                   } transition-transform group-hover:scale-110`}
                 />
                 <span className="text-xs leading-tight truncate w-full">

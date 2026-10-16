@@ -274,7 +274,7 @@ export const MobileSceneSheet = React.memo(function MobileSceneSheet({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm cảnh..."
-              className="w-full h-8.5 pl-8.5 pr-8 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-white/40 focus:outline-none focus:border-white/20 transition-colors"
+              className="lg-input w-full h-8.5 pl-8.5 pr-8 text-xs text-white"
             />
             {searchQuery && (
               <button

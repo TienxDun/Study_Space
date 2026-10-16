@@ -3,9 +3,9 @@
 import React, { useState, useCallback, useMemo } from "react";
 import {
   SparkleIcon,
-  SlidersHorizontalIcon,
-  NotePencilIcon,
   ImageIcon,
+  UsersIcon,
+  RadioIcon,
   XIcon,
 } from "@phosphor-icons/react";
 import { StudySproutMascot } from "@/components/study/chat/components/StudySproutMascot";
@@ -13,18 +13,47 @@ import { GlassIcon } from "@/components/ui/GlassIcon";
 
 interface MobileRadialBubbleMenuProps {
   onOpenChat: () => void;
-  onOpenMixer: () => void;
-  onOpenNotes: () => void;
   onOpenScenes: () => void;
+  onOpenRooms: () => void;
+  onOpenRadio: () => void;
 }
 
 export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu({
   onOpenChat,
-  onOpenMixer,
-  onOpenNotes,
   onOpenScenes,
+  onOpenRooms,
+  onOpenRadio,
 }: MobileRadialBubbleMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [hasAudioBar, setHasAudioBar] = useState(false);
+  const [hasRoomPill, setHasRoomPill] = useState(false);
+
+  React.useEffect(() => {
+    const handleAudioBarChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      setHasAudioBar(Boolean(detail?.hasAudioBar));
+    };
+
+    const handleRoomPillChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      setHasRoomPill(Boolean(detail?.hasRoomPill));
+    };
+
+    if (typeof document !== "undefined") {
+      const playerEl = document.getElementById("tour-music-player");
+      if (playerEl && playerEl.querySelector("[aria-label*='đài phát']")) {
+        setHasAudioBar(true);
+      }
+      setHasRoomPill(Boolean(document.getElementById("mobile-active-room-pill")));
+    }
+
+    window.addEventListener("zenstudy:active-audio-bar", handleAudioBarChange);
+    window.addEventListener("zenstudy:active-room-pill", handleRoomPillChange);
+    return () => {
+      window.removeEventListener("zenstudy:active-audio-bar", handleAudioBarChange);
+      window.removeEventListener("zenstudy:active-room-pill", handleRoomPillChange);
+    };
+  }, []);
 
   const toggleOpen = useCallback(() => {
     if (typeof navigator !== "undefined" && navigator.vibrate) {
@@ -42,17 +71,17 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
   /**
    * Bán kính xòe quạt R = 98px từ tâm nút gốc ở góc dưới bên phải.
    * Góc bung từ 90° (thẳng đứng lên trên) đến 180° (thẳng sang trái)
-   * tương ứng cung phần tư Tây Bắc (North-West Arc) hướng vào lòng màn hình mobile:
-   * - 90°: x = 0, y = -98px (Trợ lý AI - Liquid Glass)
-   * - 120°: x = -49px, y = -85px (Âm thanh nền - Liquid Glass)
-   * - 150°: x = -85px, y = -49px (Ghi chú - Liquid Glass)
-   * - 180°: x = -98px, y = 0px (Đổi cảnh - Liquid Glass)
+   * tương ứng cung phần tư Tây Bắc (North-West Arc):
+   * 1. 90°: x = 0, y = -98px (Chatbot AI)
+   * 2. 120°: x = -49px, y = -85px (Cảnh)
+   * 3. 150°: x = -85px, y = -49px (Phòng học nhóm)
+   * 4. 180°: x = -98px, y = 0px (Đài phát thanh)
    */
   const items = useMemo(
     () => [
       {
         id: "ai-chat",
-        label: "Trợ lý AI",
+        label: "Chatbot AI",
         icon: <SparkleIcon className="w-5 h-5 text-white/95" weight="fill" />,
         x: 0,
         y: -98,
@@ -62,40 +91,40 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
         },
       },
       {
-        id: "sound-mixer",
-        label: "Âm thanh",
-        icon: <SlidersHorizontalIcon className="w-5 h-5 text-white/95" weight="bold" />,
+        id: "scenes-picker",
+        label: "Cảnh",
+        icon: <ImageIcon className="w-5 h-5 text-white/95" weight="fill" />,
         x: -49,
         y: -85,
-        onClick: () => {
-          closeMenu();
-          onOpenMixer();
-        },
-      },
-      {
-        id: "quick-notes",
-        label: "Ghi chú",
-        icon: <NotePencilIcon className="w-5 h-5 text-white/95" weight="fill" />,
-        x: -85,
-        y: -49,
-        onClick: () => {
-          closeMenu();
-          onOpenNotes();
-        },
-      },
-      {
-        id: "scenes-picker",
-        label: "Đổi cảnh",
-        icon: <ImageIcon className="w-5 h-5 text-white/95" weight="fill" />,
-        x: -98,
-        y: 0,
         onClick: () => {
           closeMenu();
           onOpenScenes();
         },
       },
+      {
+        id: "study-rooms",
+        label: "Phòng học nhóm",
+        icon: <UsersIcon className="w-5 h-5 text-white/95" weight="fill" />,
+        x: -85,
+        y: -49,
+        onClick: () => {
+          closeMenu();
+          onOpenRooms();
+        },
+      },
+      {
+        id: "radio-embed",
+        label: "Đài phát thanh",
+        icon: <RadioIcon className="w-5 h-5 text-white/95" weight="fill" />,
+        x: -98,
+        y: 0,
+        onClick: () => {
+          closeMenu();
+          onOpenRadio();
+        },
+      },
     ],
-    [closeMenu, onOpenChat, onOpenMixer, onOpenNotes, onOpenScenes]
+    [closeMenu, onOpenChat, onOpenScenes, onOpenRooms, onOpenRadio]
   );
 
   return (
@@ -109,12 +138,15 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
         }`}
       />
 
-      {/* Container nút gốc tại góc dưới bên phải */}
+      {/* Container nút gốc tại góc dưới bên phải - tự động nâng lên tầng trên nếu có thanh nhạc/đài */}
       <div
-        className="fixed z-[60] right-3.5 sm:hidden select-none pointer-events-none"
+        className="fixed z-[60] right-3.5 sm:hidden select-none pointer-events-none transition-[bottom] duration-300 ease-out"
         style={{
-          bottom:
-            "calc(var(--mobile-nav-height) + var(--app-safe-bottom) + var(--mobile-nav-safe-gap) + 1.25rem)",
+          bottom: hasRoomPill
+            ? "calc(var(--mobile-nav-height) + var(--app-safe-bottom) + var(--mobile-nav-safe-gap) + 0.65rem)"
+            : hasAudioBar
+            ? "calc(var(--mobile-nav-height) + var(--app-safe-bottom) + var(--mobile-nav-safe-gap) + 4.75rem)"
+            : "calc(var(--mobile-nav-height) + var(--app-safe-bottom) + var(--mobile-nav-safe-gap) + 1.25rem)",
         }}
       >
         <div className="relative w-[52px] h-[52px] flex items-center justify-center pointer-events-auto">

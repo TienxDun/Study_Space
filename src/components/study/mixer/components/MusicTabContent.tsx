@@ -30,6 +30,7 @@ interface MusicTabContentProps {
   isLooping: boolean;
   onToggleLoop: () => void;
   currentMoodTracks: Track[];
+  isMobile?: boolean;
 }
 
 export function MusicTabContent({
@@ -49,6 +50,7 @@ export function MusicTabContent({
   isLooping,
   onToggleLoop,
   currentMoodTracks,
+  isMobile = false,
 }: MusicTabContentProps) {
   return (
     <>
@@ -67,7 +69,9 @@ export function MusicTabContent({
                 onClick={() => onSelectMood(mood.key as MoodType)}
                 className={`flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl transition-all active:scale-95 cursor-pointer ${
                   isSelected
-                    ? "lg-tab-active !border-emerald-400/50 shadow-[0_4px_20px_rgba(52,211,153,0.3)]"
+                    ? isMobile
+                      ? "lg-tab-active"
+                      : "border bg-emerald-600/90 text-white border-emerald-400 shadow-lg shadow-emerald-500/20 font-bold"
                     : "lg-tab-inactive"
                 }`}
               >
