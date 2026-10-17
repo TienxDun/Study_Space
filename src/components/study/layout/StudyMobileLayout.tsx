@@ -6,6 +6,7 @@ import type { StudySpaceState } from "@/components/study/hooks/useStudySpaceStat
 import { MobileTopBar } from "@/components/study/mobile/top/MobileTopBar";
 import { StudyMobileNav } from "@/components/study/mobile/navigation/StudyMobileNav";
 import { MobileRadialBubbleMenu } from "@/components/study/mobile/navigation/MobileRadialBubbleMenu";
+import { MobileWelcomeScreen } from "@/components/study/mobile/welcome/MobileWelcomeScreen";
 // Dynamic imports cho các bảng chức năng mobile để giảm tải RAM ban đầu
 const MobileTasksSheet = dynamic(
   () => import("@/components/study/mobile/sheets/MobileTasksSheet").then((mod) => mod.MobileTasksSheet),
@@ -115,6 +116,9 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
 
   return (
     <>
+      {/* Màn hình chào mừng chuyên nghiệp khi mở/tải lại app trên điện thoại */}
+      <MobileWelcomeScreen sceneName={currentScene?.name} />
+
       {/* Top Bar cho Mobile */}
       <MobileTopBar
         isZenMode={isZenMode}

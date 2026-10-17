@@ -1,153 +1,195 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SparkleIcon, ArrowRightIcon } from "@phosphor-icons/react";
 import { ZenStudyLogo } from "@/components/study/brand/ZenStudyLogo";
-import { getGreeting } from "@/components/study/pomodoro/utils/timer-formatters";
 
 interface MobileWelcomeScreenProps {
-  isMobile: boolean;
-  currentSceneName?: string;
-  onEnter?: () => void;
+  /** Tên bối cảnh hiện tại (nếu có) để hiển thị thân thiện */
+  sceneName?: string;
+  /** Callback kích hoạt khi bắt đầu vào app */
+  onStart?: () => void;
 }
 
-/**
- * Màn hình chào mừng (Welcome / Splash Screen) chuyên nghiệp dành riêng cho điện thoại.
- * Xuất hiện khi mở app hoặc khi ứng dụng bị tải lại (reload) trên điện thoại,
- * giúp che đi thời gian tải tài nguyên và tạo cảm giác như một ứng dụng cài đặt chính thống.
- */
-export const MobileWelcomeScreen: React.FC<MobileWelcomeScreenProps> = ({
-  isMobile,
-  currentSceneName,
-  onEnter,
-}) => {
-  const [isVisible, setIsVisible] = useState(true);
-  const [greeting, setGreeting] = useState("");
+function getWelcomeGreeting(): { greeting: string; subtitle: string; emoji: string } {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) {
+    return {
+      greeting: "Chào buổi sáng!",
+      subtitle: "Chúc bạn một ngày học tập ngập tràn cảm hứng và năng lượng.",
+      emoji: "☀️",
+    };
+  }
+  if (hour >= 12 && hour < 18) {
+    return {
+      greeting: "Chào buổi chiều!",
+      subtitle: "Cùng giữ nhịp tập trung và hoàn thành các mục tiêu hôm nay nhé.",
+      emoji: "🌿",
+    };
+  }
+  if (hour >= 18 && hour < 23) {
+    return {
+      greeting: "Chào buổi tối!",
+      subtitle: "Thả lỏng tâm trí và bắt đầu phiên học tập thật hiệu quả nào.",
+      emoji: "✨",
+    };
+  }
+  return {
+    greeting: "Chào cú đêm!",
+    subtitle: "Đêm đã khuya rồi, bạn nhớ chú ý sức khỏe và nghỉ ngơi điều độ nhé.",
+    emoji: "🌙",
+  };
+}
+
+export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen({
+  sceneName,
+  onStart,
+}: MobileWelcomeScreenProps) {
+  const [isOpen, setIsOpen] = useState(true);
+  const greetingData = useMemo(() => getWelcomeGreeting(), []);
 
   const handleDismiss = useCallback(() => {
-    setIsVisible(false);
-    onEnter?.();
-  }, [onEnter]);
+    setIsOpen(false);
+    onStart?.();
+  }, [onStart]);
 
+  // Tự động vào app sau 3.2 giây nếu người dùng không chạm vào màn hình
   useEffect(() => {
-    setGreeting(getGreeting());
-
-    // Tự động chuyển vào không gian học sau 2.4 giây nếu người dùng không bấm
-    const autoDismissTimer = setTimeout(() => {
+    const timer = setTimeout(() => {
       handleDismiss();
-    }, 2400);
+    }, 3200);
 
-    return () => clearTimeout(autoDismissTimer);
+    return () => clearTimeout(timer);
   }, [handleDismiss]);
-
-  if (!isMobile) return null;
 
   return (
     <AnimatePresence>
-      {isVisible && (
+      {isOpen && (
         <motion.div
-          key="mobile-welcome-splash"
+          key="mobile-welcome-screen"
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.04 }}
-          transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}
-          className="fixed inset-0 z-[100] flex flex-col justify-between items-center bg-slate-950 text-white select-none overflow-hidden px-6 pt-safe pb-safe touch-none"
+          animate={{ opacity: 1 }}
+          exit={{
+            opacity: 0,
+            scale: 1.05,
+            filter: "blur(12px)",
+            transition: { duration: 0.45, ease: [0.32, 0.72, 0, 1] },
+          }}
+          onClick={handleDismiss}
+          className="fixed inset-0 z-[100] flex flex-col justify-between bg-slate-950/95 backdrop-blur-2xl text-white select-none overflow-hidden pt-safe pb-safe cursor-pointer"
+          aria-label="Màn hình chào mừng ZenStudy"
         >
-          {/* Nền hiệu ứng hào quang ánh sáng tinh tế */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(56,189,248,0.12),transparent_65%)] pointer-events-none" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_75%,rgba(16,185,129,0.08),transparent_60%)] pointer-events-none" />
+          {/* Vùng phát sáng môi trường nhẹ ở trung tâm */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(56,189,248,0.14)_0%,rgba(16,185,129,0.06)_40%,transparent_70%)] pointer-events-none" />
 
-          {/* Góc trên: Nhãn phiên bản & trạng thái */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.3 }}
-            className="w-full flex items-center justify-between pt-6 text-[11px] text-slate-400 font-medium"
-          >
-            <span className="flex items-center gap-1.5 text-sky-400/90 font-mono">
+          {/* Vùng trên cùng: Huy hiệu trạng thái */}
+          <div className="relative z-10 w-full px-6 pt-6 flex items-center justify-between">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.07] border border-white/10 text-[11px] font-medium text-slate-300">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Sẵn sàng học tập
+              <span>Không gian tập trung</span>
+            </div>
+            <span className="text-xs font-mono text-slate-400">
+              {new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
             </span>
-            <span className="text-slate-500 font-mono">ZenStudy v1.0</span>
-          </motion.div>
+          </div>
 
-          {/* Trung tâm: Logo & Lời chào thân thiện */}
-          <div className="flex flex-col items-center text-center my-auto w-full max-w-xs">
-            {/* Logo linh vật với hiệu ứng nhịp thở nhẹ nhàng */}
+          {/* Vùng trung tâm: Logo, lời chào và thông điệp truyền cảm hứng */}
+          <div className="relative z-10 w-full px-6 flex flex-col items-center text-center -mt-4">
+            {/* Logo Squircle phát sáng nhẹ nhàng */}
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
+              initial={{ scale: 0.88, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className="relative mb-6"
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="relative mb-5"
             >
-              <div className="absolute inset-0 rounded-3xl bg-sky-500/20 blur-xl scale-125 animate-pulse" />
-              <div className="relative w-20 h-20 rounded-3xl bg-white/[0.08] backdrop-blur-xl border border-white/20 shadow-[0_16px_36px_rgba(0,0,0,0.8)] flex items-center justify-center p-3.5">
-                <ZenStudyLogo variant="icon" className="w-full h-full" priority />
+              <div className="absolute inset-0 rounded-3xl bg-cyan-400/20 blur-xl animate-pulse" />
+              <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-b from-white/15 to-white/5 border border-white/20 shadow-[0_12px_32px_rgba(0,0,0,0.6)] flex items-center justify-center backdrop-blur-md">
+                <ZenStudyLogo variant="icon" className="w-12 h-12" priority />
               </div>
             </motion.div>
 
             {/* Tên thương hiệu */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: 0.35 }}
-              className="mb-2"
+            <motion.h1
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.4 }}
+              className="text-2xl font-bold tracking-tight text-white flex items-center gap-1.5"
             >
-              <ZenStudyLogo variant="full" className="h-8 w-auto mx-auto" priority />
-            </motion.div>
+              ZenStudy Space
+            </motion.h1>
 
-            {/* Lời chào theo thời gian trong ngày */}
             <motion.p
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25, duration: 0.35 }}
-              className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed px-2"
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.15, duration: 0.4 }}
+              className="text-xs text-cyan-300/80 font-medium tracking-wide uppercase mt-0.5"
             >
-              {greeting || "Chúc bạn một ngày học tập thật tập trung và hiệu quả"}
+              Học bài tập trung & Nhạc Lo-fi
             </motion.p>
 
-            {currentSceneName && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.35, duration: 0.35 }}
-                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.06] border border-white/10 text-[11px] text-slate-400"
-              >
-                <SparkleIcon className="w-3.5 h-3.5 text-amber-400" />
-                <span>Không gian: <strong className="text-slate-200 font-semibold">{currentSceneName}</strong></span>
-              </motion.div>
-            )}
+            {/* Lời chào theo buổi */}
+            <motion.div
+              initial={{ y: 12, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.22, duration: 0.45 }}
+              className="mt-6 px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/10 max-w-xs shadow-inner"
+            >
+              <p className="text-sm font-semibold text-slate-100 flex items-center justify-center gap-1.5">
+                <span>{greetingData.emoji}</span>
+                <span>{greetingData.greeting}</span>
+              </p>
+              <p className="text-xs text-slate-300/90 mt-1 leading-relaxed">
+                {greetingData.subtitle}
+              </p>
+              {sceneName && (
+                <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-center gap-1 text-[11px] text-slate-400">
+                  <SparkleIcon className="w-3 h-3 text-cyan-400" />
+                  <span>Bối cảnh: <strong className="text-slate-200">{sceneName}</strong></span>
+                </div>
+              )}
+            </motion.div>
           </div>
 
-          {/* Dưới cùng: Thanh tiến trình chuẩn bị & Nút vào bàn học */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-            className="w-full max-w-xs flex flex-col items-center gap-3 pb-6"
-          >
-            {/* Thanh tiến trình tự chạy thể hiện app đã sẵn sàng */}
-            <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+          {/* Vùng đáy: Nút bắt đầu & thanh tự động đếm ngược */}
+          <div className="relative z-10 w-full px-6 pb-8 flex flex-col items-center">
+            {/* Nút Bắt đầu học ngay */}
+            <motion.button
+              type="button"
+              initial={{ y: 15, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDismiss();
+              }}
+              className="w-full max-w-xs h-13 rounded-2xl bg-gradient-to-r from-cyan-500 via-sky-500 to-emerald-500 text-slate-950 font-bold text-sm flex items-center justify-center gap-2 shadow-[0_8px_28px_rgba(56,189,248,0.35)] active:scale-95 transition-transform"
+            >
+              <span>BẮT ĐẦU HỌC NGAY</span>
+              <ArrowRightIcon className="w-4 h-4" weight="bold" />
+            </motion.button>
+
+            {/* Dòng ghi chú tự động vào */}
+            <p className="text-[11px] text-slate-400 mt-3 flex items-center gap-1">
+              <span>Chạm bất kỳ đâu để vào</span>
+              <span className="text-slate-500">•</span>
+              <span className="text-slate-500">Tự động sau 3s</span>
+            </p>
+
+            {/* Thanh tiến trình tự động vào */}
+            <div className="w-36 h-1 rounded-full bg-white/10 overflow-hidden mt-2">
               <motion.div
                 initial={{ width: "0%" }}
                 animate={{ width: "100%" }}
-                transition={{ duration: 2.2, ease: "easeInOut" }}
-                className="h-full bg-gradient-to-r from-sky-400 to-emerald-400"
+                transition={{ duration: 3.2, ease: "linear" }}
+                className="h-full bg-cyan-400/80 rounded-full"
               />
             </div>
-
-            {/* Nút bấm Vào học ngay */}
-            <button
-              onClick={handleDismiss}
-              className="w-full h-12 rounded-2xl bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-slate-950 font-semibold text-sm flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(56,189,248,0.35)] active:scale-[0.98] transition-all cursor-pointer"
-            >
-              <span>Vào bàn học ngay</span>
-              <ArrowRightIcon className="w-4 h-4" weight="bold" />
-            </button>
-            <span className="text-[10px] text-slate-500">Tự động vào sau giây lát...</span>
-          </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
   );
-};
+});
+
+MobileWelcomeScreen.displayName = "MobileWelcomeScreen";
