@@ -178,7 +178,7 @@ Dùng đúng các class có sẵn trong `src/app/styles/glass.css`, không tự 
 ### 6.8. Nút mở nhanh + bảng chat full
 
 - Nút mở nhanh `MobileRadialBubbleMenu`: đứng yên đáy phải, to 52px, bấm bung 4 bong bóng, không cho kéo đi chỗ khác.
-- Bảng chat full `MobileChatFullScreen`: kín màn hình `fixed inset-0 bg-[#0b0f1a]`, đầu cao 56px có viền dưới `border-white/10`, nút đóng 44px.
+- Bảng chat `MobileChatSheet`: trượt lên từ đáy dạng sheet hiện đại, tích hợp xác thực và đính kèm tệp.
 
 ### 6.9. Thanh hoàn tác `MobileUndoSnackbar`
 
@@ -229,7 +229,7 @@ Không:
 - Bảng Thêm/Tài khoản: `MobileMoreSheet.tsx`, `MobileAccountCard.tsx`
 - Việc: `MobileTasksSheet.tsx`, `MobileTaskBubbleMenu.tsx`
 - Giờ: `mobile/pomodoro/MobileTimerTabBar.tsx`, `MobilePomodoroView.tsx`
-- Chat: `mobile/navigation/MobileRadialBubbleMenu.tsx`, `mobile/chat/MobileChatFullScreen.tsx`
+- Chat: `mobile/navigation/MobileRadialBubbleMenu.tsx`, `mobile/sheets/MobileChatSheet.tsx`
 - Phòng: `mobile/rooms/MobileRoomView.tsx`, `MobileActiveRoomPill.tsx`
 - Hoàn tác: `mobile/feedback/MobileUndoSnackbar.tsx`
 - Kính mờ: `src/app/styles/glass.css` (các class `lg-*`)

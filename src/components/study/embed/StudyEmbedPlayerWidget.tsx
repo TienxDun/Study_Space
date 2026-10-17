@@ -271,7 +271,7 @@ export const StudyEmbedPlayerWidget = ({
   }, [activeItem, resolveActiveItemMetadata]);
 
   const isYouTubeActive = Boolean(activeItem && activeItem.platform === "youtube");
-  const { isPaused: isExternalPaused, toggleExternalPlay } = useYouTubeRemote(
+  useYouTubeRemote(
     Boolean(activeItem),
     isYouTubeActive,
     // Tín hiệu đáng tin nhất để tắt màn che loading: player báo đang phát thật

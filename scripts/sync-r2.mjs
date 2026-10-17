@@ -91,10 +91,6 @@ async function main() {
   console.log(`📦 Bucket: ${R2_BUCKET_NAME}`);
   console.log(`🌐 Endpoint: ${R2_ENDPOINT}\n`);
 
-  const scenesPath = path.join(process.cwd(), "src/data/assets/scenes.json");
-  const scenesRaw = await fs.readFile(scenesPath, "utf-8");
-  const scenes = JSON.parse(scenesRaw);
-
   const localBase = path.join(process.cwd(), "public/study");
 
   // Hàm quét đệ quy toàn bộ thư mục public/study (scenes, musics, sounds, authors, thumbnails)

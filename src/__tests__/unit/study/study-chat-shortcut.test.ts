@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { filterCommandActions, type CommandAction } from "@/components/study/command/StudyCommandPalette";
 
 describe("StudyChat Shortcut and Command Palette Integration", () => {

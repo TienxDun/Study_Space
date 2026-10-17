@@ -81,5 +81,3 @@ export const PrioritySignalIcon: React.FC<PrioritySignalIconProps> = ({
     </svg>
   );
 };
-
-export default PrioritySignalIcon;

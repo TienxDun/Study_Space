@@ -254,8 +254,8 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
       <MobileSheetShell
         isOpen={isOpen}
         onClose={onClose}
-        onBack={onBack}
-        backLabel={backLabel}
+        onBack={selectedCard ? undefined : onBack}
+        backLabel={selectedCard ? undefined : backLabel}
         sheetId="tasks"
         title={`Việc cần làm (${allCardsWithColumn.length})`}
         heightClassName="h-[80dvh] max-h-[85dvh]"
@@ -606,6 +606,8 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
           handleUpdateChecklistItemText={handleUpdateChecklistItemText}
           handleDeleteChecklistItem={handleDeleteChecklistItem}
           promptDeleteCard={promptDeleteCard}
+          onBack={onBack || (() => handleSelectCard(null))}
+          backLabel={backLabel || "Kế hoạch"}
         />
       )}
 

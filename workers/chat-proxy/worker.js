@@ -103,7 +103,6 @@ const DEFAULT_SYSTEM_VN = [
   "3. Trả lời có cấu trúc: định nghĩa gọn 1-2 câu trước, rồi mới liệt kê, cuối có câu chốt hoặc gợi ý bước tiếp theo.",
   "4. Câu nào không chắc thì nói rõ là chưa chắc, đừng khẳng định.",
 ].join("\n");
-const SYSTEM_VN = DEFAULT_SYSTEM_VN; // giữ tên cũ cho chỗ chưa đổi
 const DEFAULT_GEN = { temperature: 0.7, max_tokens: 2048 };
 
 const mem = { cfCooldownUntil: 0, lastError: null, certAt: 0, certs: {} };
@@ -548,10 +547,6 @@ function parseAttachments(body) {
   }
   return { images, files };
 }
-// Cloudflare free chỉ đọc chữ. Hãng ngoài (Gemini/OpenAI) thì thử gửi, hãng báo lỗi thì hiện ra.
-function canSeeImages(providerId) {
-  return providerId !== "cf";
-}
 
 // Đường Cloudflare: chạy ngay trong nhà Cloudflare, không cần key ngoài.
 // Model cũ trả { response }, model mới (Sea-Lion...) trả kiểu OpenAI { choices[0].message.content }.
@@ -613,7 +608,7 @@ async function getChain(env) {
 const PROVIDERS = {
   cf: {
     id: "workers-ai",
-    async prepare(env, ctx) {
+    async prepare(env) {
       if (!env.AI || typeof env.AI.run !== "function") {
         return { ok: false, signal: "fatal", status: 500, error: "Worker chưa gắn AI binding (Settings -> Bindings -> AI)." };
       }
@@ -693,25 +688,6 @@ async function runChainEntry(a, env, ctx, messages, images) {
   return { error: r.error };
 }
 
-// Giữ tên cũ để chỗ khác gọi không vỡ.
-async function runProvider(p, env, ctx, modelId, messages) {
-  const pre = await p.prepare(env, ctx);
-  if (!pre.ok) {
-    const out = { [pre.signal]: true };
-    if (pre.status) out.status = pre.status;
-    if (pre.error) out.error = pre.error;
-    return out;
-  }
-  const r = await p.send(env, ctx, modelId, messages);
-  if (r.ok) {
-    if (p.countLate) await p.countLate(env, ctx, { modelId, messages, text: r.text });
-    return { text: r.text, provider: p.id, model: modelId };
-  }
-  if (p.noteFail) p.noteFail(r);
-  if (r.status === 401 || r.status === 403) return { badKey: true };
-  return { error: r.error };
-}
-
 function corsHeaders(req, env) {
   const origin = req.headers.get("Origin") || "";
   const allowed = String(env.ALLOWED_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);
@@ -725,7 +701,7 @@ function corsHeaders(req, env) {
   };
 }
 
-export default {
+const worker = {
   async fetch(req, env) {
     const cors = corsHeaders(req, env);
     const json = (obj, status = 200) =>
@@ -998,3 +974,5 @@ export default {
     return json({ error: "Dùng POST /chat, GET /status, GET /models, POST /providers/check, GET /providers/models, GET /health." }, 404);
   },
 };
+
+export default worker;

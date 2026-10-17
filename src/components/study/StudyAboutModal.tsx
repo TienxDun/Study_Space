@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   XIcon,
   WarningIcon,
@@ -143,14 +144,12 @@ export const StudyAboutModal = ({ isOpen, onClose }: StudyAboutModalProps) => {
           aria-label="Xem ảnh to của Lều Tiến Dũng"
           className="mx-auto block rounded-full cursor-zoom-in transition-transform hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
         >
-          <img
+          <Image
             src="/authors/leu-tien-dung.webp"
             alt="Ảnh của Lều Tiến Dũng"
             width={64}
             height={64}
             className="w-16 h-16 rounded-full object-cover object-[center_12%] border-2 border-emerald-400/50 shadow-[0_0_24px_rgba(52,211,153,0.4)] pointer-events-none"
-            loading="lazy"
-            decoding="async"
           />
         </button>
         {isAvatarOpen && (
@@ -165,9 +164,11 @@ export const StudyAboutModal = ({ isOpen, onClose }: StudyAboutModalProps) => {
               className="relative"
               onClick={(e) => e.stopPropagation()}
             >
-              <img
+              <Image
                 src="/authors/leu-tien-dung.webp"
                 alt="Ảnh to của Lều Tiến Dũng"
+                width={360}
+                height={360}
                 className="w-auto h-auto max-w-[min(360px,85vw)] max-h-[75vh] rounded-2xl object-contain border border-white/20 shadow-[0_20px_60px_rgba(0,0,0,0.7)]"
               />
               <button

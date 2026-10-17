@@ -79,7 +79,6 @@ async function mintAdminToken(env) {
 // Biến môi trường đọc thêm (không bắt buộc, khai báo trong Dashboard):
 //   ALLOWED_ORIGINS = "https://zenstudy.space,http://localhost:3001"
 // Để trống = cho mọi nơi gọi (tiện lúc thử, chặn lại khi web đông).
-const ALLOWED_ORIGINS = "";
 
 function corsHeaders(req, env) {
   const origin = req.headers.get("Origin") || "";
@@ -96,7 +95,7 @@ function corsHeaders(req, env) {
   };
 }
 
-export default {
+const worker = {
   async fetch(req, env) {
     const cors = corsHeaders(req, env);
     const json = (obj, status = 200) =>
@@ -164,4 +163,6 @@ export default {
     return json({ error: "Dùng POST /token hoặc GET /rooms." }, 404);
   },
 };
+
+export default worker;
 

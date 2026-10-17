@@ -2,7 +2,6 @@ import rawScenes from "@/data/assets/scenes.json";
 import rawTracks from "@/data/assets/tracks.json";
 import rawSounds from "@/data/assets/sounds.json";
 import { 
-  getAssetBaseUrl, 
   resolveScene, 
   resolveTrack, 
   resolveAmbientSound,
@@ -11,14 +10,6 @@ import {
   LegacyAmbientSound
 } from "@/lib/asset-resolver";
 import { SceneAsset, TrackAsset, AmbientSoundAsset } from "@/types/assets";
-
-// Base URLs tương thích ngược
-export const STUDY_CDN_URL = getAssetBaseUrl();
-export const STUDY_MUSIC_URL = `${STUDY_CDN_URL}/musics`;
-export const STUDY_SOUND_URL = `${STUDY_CDN_URL}/sounds`;
-export const STUDY_SCENE_URL = `${STUDY_CDN_URL}/scenes`;
-export const STUDY_THUMB_URL = `${STUDY_CDN_URL}/thumbnails`;
-export const STUDY_AUTHOR_URL = `${STUDY_CDN_URL}/authors`;
 
 export type MoodType = "lofi" | "jazz" | "relax";
 
@@ -74,12 +65,6 @@ export const STUDY_TRACKS_BY_MOOD: Record<MoodType, Track[]> = {
   jazz: (rawTracks.jazz as TrackAsset[]).map(resolveTrack),
   relax: (rawTracks.relax as TrackAsset[]).map(resolveTrack),
 };
-
-export const ALL_STUDY_TRACKS: Track[] = [
-  ...STUDY_TRACKS_BY_MOOD.lofi,
-  ...STUDY_TRACKS_BY_MOOD.jazz,
-  ...STUDY_TRACKS_BY_MOOD.relax,
-];
 
 export const AMBIENT_SOUNDS: AmbientSound[] = (rawSounds as AmbientSoundAsset[]).map(resolveAmbientSound);
 

@@ -1,1 +1,16 @@
-export type { MobilePanelId } from "./hooks/useMobilePanel";
+export type MobilePanelId =
+  | "none"
+  | "pomodoro"
+  | "tasks"
+  | "tasks-detail"
+  | "scenes"
+  | "music"
+  | "notes"
+  | "notes-detail"
+  | "embed"
+  | "mixer"
+  | "rooms"
+  | "chat"
+  | "settings"
+  | "stats"
+  | "more";

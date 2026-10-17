@@ -16,7 +16,6 @@
     "@livekit/components-react": "^2.9.24",
     "@livekit/components-styles": "^1.2.0",
     "@phosphor-icons/react": "^2.1.10",
-    "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "firebase": "^13.0.0",
     "framer-motion": "^12.38.0",
@@ -35,7 +34,6 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

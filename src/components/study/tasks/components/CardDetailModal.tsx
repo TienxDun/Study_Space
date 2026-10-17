@@ -5,6 +5,7 @@ import { ModalShell } from "@/components/ui/ModalShell";
 import {
   XIcon,
   CaretDownIcon,
+  CaretLeftIcon,
   CheckIcon,
   CalendarIcon,
   TextAlignLeftIcon,
@@ -37,6 +38,8 @@ interface CardDetailModalProps {
   handleUpdateChecklistItemText: (cardId: string, itemId: string, text: string) => void;
   handleDeleteChecklistItem: (cardId: string, itemId: string) => void;
   promptDeleteCard: (card: KanbanCard) => void;
+  onBack?: () => void;
+  backLabel?: string;
 }
 
 export const CardDetailModal = React.memo(function CardDetailModal({
@@ -53,6 +56,8 @@ export const CardDetailModal = React.memo(function CardDetailModal({
   handleUpdateChecklistItemText,
   handleDeleteChecklistItem,
   promptDeleteCard,
+  onBack,
+  backLabel,
 }: CardDetailModalProps) {
   const [newChecklistText, setNewChecklistText] = useState("");
   const [editingChecklistId, setEditingChecklistId] = useState<string | null>(null);
@@ -161,8 +166,23 @@ export const CardDetailModal = React.memo(function CardDetailModal({
       >
           <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
           {/* Header: Title, Board Info & Action Bar */}
-          <div className="px-5 sm:px-6 pt-5 pb-3.5 border-b border-white/10 space-y-3 bg-white/[0.01]">
-            <div className="flex items-start justify-between gap-3">
+          <div className="px-4 sm:px-6 pt-4 sm:pt-5 pb-3.5 border-b border-white/10 space-y-3 bg-white/[0.01]">
+            <div className="flex items-start justify-between gap-2.5 sm:gap-3">
+              {/* Nút Quay lại cho Mobile / Stack Navigation */}
+              {onBack && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  aria-label={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
+                  className="flex items-center gap-0.5 px-2.5 py-1 -ml-1 mt-0.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white/90 hover:text-white transition-all text-xs font-semibold shrink-0 select-none shadow-sm cursor-pointer"
+                >
+                  <CaretLeftIcon className="w-4 h-4" weight="bold" />
+                  {backLabel && (
+                    <span className="max-w-[70px] sm:max-w-[120px] truncate tracking-tight">{backLabel}</span>
+                  )}
+                </button>
+              )}
+
               {/* Task Title with intuitive inline editing affordance (Icon bám sát đuôi chữ) */}
               <div className="flex-1 min-w-0">
                 <div

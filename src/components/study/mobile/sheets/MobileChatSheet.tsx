@@ -31,7 +31,7 @@ export function MobileChatSheet({
   onBack,
   backLabel,
 }: MobileChatSheetProps) {
-  const { user, loading, redirectError, signIn, signOut, getToken } = useAuth();
+  const { user, loading, redirectError, signIn, getToken } = useAuth();
   const [input, setInput] = useState("");
   const [notice, setNotice] = useState("");
   const attachmentsApi = useImageAttachments(setNotice);

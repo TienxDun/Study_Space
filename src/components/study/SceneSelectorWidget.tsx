@@ -22,7 +22,6 @@ import {
 } from "@phosphor-icons/react";
 import { Scene, STUDY_SCENES } from "./study-types";
 import { useFavoriteScenes } from "@/lib/use-favorites";
-import { motion } from "framer-motion";
 import { ModalShell } from "../ui/ModalShell";
 import { EmptyState } from "../ui/EmptyState";
 import { Badge } from "../ui/Badge";
@@ -60,6 +59,7 @@ const SceneThumbnail = React.memo<{ scene: Scene }>(({ scene }) => {
         className={`w-full h-full object-cover transform-gpu [@media(hover:hover)]:group-hover:scale-105 [@media(hover:hover)]:transition-transform [@media(hover:hover)]:duration-500 [@media(hover:hover)]:ease-out transition-opacity duration-300 ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
+        loading="lazy"
         decoding="async"
         onLoad={() => setIsLoaded(true)}
       />

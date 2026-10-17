@@ -130,3 +130,26 @@ describe("Mobile Nav Active State Resolution", () => {
   });
 });
 
+describe("Mobile Tasks Detail Back Button Routing", () => {
+  it("routes onBack to CardDetailModal when card is selected, not MobileSheetShell", () => {
+    const parentOnBack = () => {};
+    const parentBackLabel = "Kế hoạch";
+
+    // Khi chưa chọn thẻ: nút Back nằm trên MobileSheetShell (nếu có stack trước đó)
+    let selectedCard: any = null;
+    const sheetOnBackBefore = selectedCard ? undefined : parentOnBack;
+    const detailOnBackBefore = selectedCard ? parentOnBack : undefined;
+    expect(sheetOnBackBefore).toBe(parentOnBack);
+    expect(detailOnBackBefore).toBeUndefined();
+
+    // Khi đã chọn thẻ xem chi tiết: nút Back chuyển sang CardDetailModal, MobileSheetShell không hiển thị
+    selectedCard = { id: "card-1", title: "Làm bài tập" };
+    const sheetOnBackAfter = selectedCard ? undefined : parentOnBack;
+    const detailOnBackAfter = selectedCard ? (parentOnBack || (() => {})) : undefined;
+    const detailBackLabel = selectedCard ? parentBackLabel : undefined;
+    expect(sheetOnBackAfter).toBeUndefined();
+    expect(detailOnBackAfter).toBe(parentOnBack);
+    expect(detailBackLabel).toBe("Kế hoạch");
+  });
+});
+

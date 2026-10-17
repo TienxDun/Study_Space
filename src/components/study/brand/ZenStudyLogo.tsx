@@ -53,5 +53,3 @@ export const ZenStudyLogo: React.FC<ZenStudyLogoProps> = ({
     />
   );
 };
-
-export default ZenStudyLogo;
