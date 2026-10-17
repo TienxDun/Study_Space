@@ -88,16 +88,34 @@ function sanitizeSession(s: FocusSession): FocusSession | null {
 export class LocalStorageFocusSessionStore implements FocusSessionStore {
   list(): FocusSession[] {
     if (typeof window === "undefined") return [];
+    let raw: string | null = null;
     try {
-      const raw = localStorage.getItem(STORAGE_KEYS.focusSessions);
-      if (!raw) return [];
+      raw = localStorage.getItem(STORAGE_KEYS.focusSessions);
+    } catch {
+      return [];
+    }
+    if (!raw) {
+      cachedFocusRaw = null;
+      cachedFocusList = [];
+      return [];
+    }
+    // Cùng chuỗi thô ⇒ dùng lại kết quả đã parse (JSON.parse + sanitize
+    // tới 2000 phiên là việc nặng, không nên lặp lại mỗi lần đọc).
+    if (raw === cachedFocusRaw) return cachedFocusList;
+    try {
       const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return [];
+      if (!Array.isArray(parsed)) {
+        cachedFocusRaw = raw;
+        cachedFocusList = [];
+        return [];
+      }
       const clean: FocusSession[] = [];
       for (const item of parsed) {
         const s = sanitizeSession(item as FocusSession);
         if (s) clean.push(s);
       }
+      cachedFocusRaw = raw;
+      cachedFocusList = clean;
       return clean;
     } catch {
       return [];
@@ -113,6 +131,7 @@ export class LocalStorageFocusSessionStore implements FocusSessionStore {
         ? next.slice(next.length - MAX_STORED_SESSIONS)
         : next;
     saveStorageJSON(STORAGE_KEYS.focusSessions, pruned);
+    cachedFocusRaw = null; // buộc lần đọc sau parse lại theo dữ liệu mới
     return pruned;
   }
 
@@ -120,8 +139,14 @@ export class LocalStorageFocusSessionStore implements FocusSessionStore {
     try {
       localStorage.removeItem(STORAGE_KEYS.focusSessions);
     } catch {}
+    cachedFocusRaw = null;
+    cachedFocusList = [];
   }
 }
+
+// Cache dùng chung: chỉ đọc localStorage (rẻ) rồi so chuỗi, hết trùng parse.
+let cachedFocusRaw: string | null = null;
+let cachedFocusList: FocusSession[] = [];
 
 export const focusSessionStore: FocusSessionStore =
   new LocalStorageFocusSessionStore();

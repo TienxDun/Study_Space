@@ -1,12 +1,14 @@
 "use client";
 
+import { memo } from "react";
+
 interface PomoProgressRingProps {
   progress: number; // 0..1 elapsed
   size?: number;
 }
 
 /** Vòng tròn focus: khung chứa duy nhất số thời gian ở giữa. */
-export function PomoProgressRing({ progress, size = 340 }: PomoProgressRingProps) {
+export const PomoProgressRing = memo(function PomoProgressRing({ progress, size = 340 }: PomoProgressRingProps) {
   const stroke = 4;
   const r = (size - stroke) / 2;
   const clamped = Math.max(0, Math.min(1, progress));
@@ -58,4 +60,4 @@ export function PomoProgressRing({ progress, size = 340 }: PomoProgressRingProps
       </svg>
     </div>
   );
-}
+});

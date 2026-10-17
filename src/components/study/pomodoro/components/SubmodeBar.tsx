@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { FlameIcon, CoffeeIcon, MoonStarsIcon } from "@phosphor-icons/react";
 import { TimerTab, PomodoroMode } from "../types";
@@ -44,7 +45,7 @@ const MODE_STATUS: Record<
   },
 };
 
-export function SubmodeBar({
+export const SubmodeBar = memo(function SubmodeBar({
   currentTab,
   pomoMode,
   clockFullDate,
@@ -115,4 +116,4 @@ export function SubmodeBar({
       ) : null}
     </div>
   );
-}
+});

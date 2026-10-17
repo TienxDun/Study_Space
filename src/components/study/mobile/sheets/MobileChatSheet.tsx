@@ -10,7 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { useAuth, GoogleSignInButton } from "@/components/study/auth";
-import { firebaseConfigured } from "@/lib/firebase";
+import { firebaseConfigured } from "@/lib/firebase-config";
 import { useChatSessions } from "../../chat/hooks/useChatSessions";
 import { useChatMessages } from "../../chat/hooks/useChatMessages";
 import { useImageAttachments } from "../../chat/hooks/useImageAttachments";

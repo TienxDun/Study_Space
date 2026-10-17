@@ -46,3 +46,36 @@ export function useFocusStats(period: FocusStatsPeriod = "today"): FocusSummary 
 
   return summary;
 }
+
+/**
+ * Đọc 1 lần cả "hôm nay" + "tuần này" trong CÙNG một subscription.
+ * Dùng cho dòng thống kê dưới đồng hồ Pomodoro để tránh 2 listener/cửa sổ
+ * tính toán song song mỗi lần có phiên mới.
+ */
+export function useFocusStatsPair(): { today: FocusSummary; week: FocusSummary } {
+  const [pair, setPair] = useState<{ today: FocusSummary; week: FocusSummary }>({
+    today: EMPTY,
+    week: EMPTY,
+  });
+
+  useEffect(() => {
+    const refresh = () => {
+      const sessions = focusSessionStore.list();
+      setPair({ today: getTodaySummary(sessions), week: getWeekSummary(sessions) });
+    };
+    refresh();
+    window.addEventListener(EVENT_FOCUS_SESSION_LOGGED, refresh);
+    window.addEventListener("storage", refresh);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener(EVENT_FOCUS_SESSION_LOGGED, refresh);
+      window.removeEventListener("storage", refresh);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+
+  return pair;
+}

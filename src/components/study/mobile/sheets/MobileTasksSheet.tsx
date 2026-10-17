@@ -28,6 +28,9 @@ interface MobileTasksSheetProps {
   onClose: () => void;
   onBack?: () => void;
   backLabel?: string;
+  isEditingDetail?: boolean;
+  onOpenDetail?: () => void;
+  onCloseDetail?: () => void;
 }
 
 export const MobileTasksSheet = React.memo(function MobileTasksSheet({
@@ -35,6 +38,9 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
   onClose,
   onBack,
   backLabel,
+  isEditingDetail,
+  onOpenDetail,
+  onCloseDetail,
 }: MobileTasksSheetProps) {
   const {
     currentBoard,
@@ -99,6 +105,37 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
   React.useEffect(() => {
     setActiveMenuCardId(null);
   }, [selectedColumnFilter, searchQuery]);
+
+  // Điều hướng xem/sửa chi tiết task đồng bộ cùng Mobile Stack Navigation
+  const handleSelectCard = React.useCallback(
+    (card: KanbanCard | null) => {
+      setSelectedCard(card);
+      if (card) {
+        if (!isEditingDetail) {
+          onOpenDetail?.();
+        }
+      } else {
+        if (isEditingDetail) {
+          onCloseDetail?.();
+        }
+      }
+    },
+    [setSelectedCard, onOpenDetail, onCloseDetail, isEditingDetail]
+  );
+
+  // Khi thoát chế độ chi tiết task từ ngăn xếp điều hướng (Back phần cứng hoặc Back UI)
+  React.useEffect(() => {
+    if (isEditingDetail === false && selectedCard !== null) {
+      setSelectedCard(null);
+    }
+  }, [isEditingDetail, selectedCard, setSelectedCard]);
+
+  // Nếu toàn bộ bảng Tasks bị đóng, đóng luôn modal chi tiết task để tránh sót lại trên màn hình
+  React.useEffect(() => {
+    if (!isOpen && selectedCard !== null) {
+      setSelectedCard(null);
+    }
+  }, [isOpen, selectedCard, setSelectedCard]);
 
   const cycleQuickPriority = () => {
     setQuickPriority((prev) => {
@@ -410,7 +447,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
 
                       {/* Thân thẻ: Bấm để mở chi tiết */}
                       <div
-                        onClick={() => setSelectedCard(card)}
+                        onClick={() => handleSelectCard(card)}
                         className="flex-1 min-w-0 cursor-pointer"
                       >
                         <p
@@ -511,7 +548,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                         onStartFocus={() => {
                           startFocusTask({ id: card.id, title: card.title });
                         }}
-                        onSelectDetail={() => setSelectedCard(card)}
+                        onSelectDetail={() => handleSelectCard(card)}
                         onMoveCard={(targetColId) => handleMoveCard(card.id, targetColId)}
                         onDeleteCard={() => promptDeleteCard(card)}
                         hasFocusTime={hasFocusTime}
@@ -557,7 +594,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
       {selectedCard && (
         <CardDetailModal
           selectedCard={selectedCard}
-          setSelectedCard={setSelectedCard}
+          setSelectedCard={handleSelectCard}
           currentBoard={currentBoard}
           updateCurrentBoard={updateCurrentBoard}
           isStatusDropdownOpen={isStatusDropdownOpen}

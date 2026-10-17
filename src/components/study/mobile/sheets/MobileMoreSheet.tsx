@@ -36,7 +36,6 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
   onSelect,
 }: MobileMoreSheetProps) {
   const go = (id: MobilePanelId) => {
-    onClose();
     onSelect(id);
   };
 

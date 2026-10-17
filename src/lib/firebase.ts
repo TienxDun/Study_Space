@@ -6,19 +6,11 @@ import {
   persistentLocalCache,
   type Firestore,
 } from "firebase/firestore";
+import { firebaseConfig as config, firebaseConfigured } from "./firebase-config";
 
-// 4 mã công khai đọc từ env (xem .env.example). Thiếu thì firebaseConfigured = false,
-// các component tự ẩn nút đăng nhập/chat thay vì crash lúc build tĩnh.
-const config = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
-};
-
-export const firebaseConfigured = Boolean(
-  config.apiKey && config.projectId && config.appId
-);
+// Cờ cấu hình được tách sang module gọn (không kéo SDK). Re-export để tương
+// thích ngược; component chỉ cần cờ nên import trực tiếp từ ./firebase-config.
+export { firebaseConfigured };
 
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;

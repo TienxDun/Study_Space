@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   PlayIcon,
   PauseIcon,
@@ -21,7 +22,7 @@ interface TimerActionControlsProps {
   onAddLap: () => void;
 }
 
-export function TimerActionControls({
+export const TimerActionControls = memo(function TimerActionControls({
   currentTab,
   isPomoRunning,
   onTogglePomoRunning,
@@ -120,4 +121,4 @@ export function TimerActionControls({
       ) : null}
     </div>
   );
-}
+});

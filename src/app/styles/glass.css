@@ -245,6 +245,7 @@
 }
 
 /* Nút / Tab đang kích hoạt: Chuẩn Obsidian Liquid Glass */
+/* IMPORTANT-ALLOWED-START: lg-tab-active-override */
 .lg-tab-active {
   position: relative;
   overflow: hidden;
@@ -266,6 +267,7 @@
   color: #ffffff !important;
   font-weight: 600;
 }
+/* IMPORTANT-ALLOWED-END */
 
 .lg-tab-active::after {
   content: "";
@@ -316,6 +318,7 @@
 }
 
 /* Nút / Tab chưa kích hoạt: Thủy tinh mờ tinh tế */
+/* IMPORTANT-ALLOWED-START: lg-tab-inactive-override */
 .lg-tab-inactive {
   position: relative;
   background: rgba(255, 255, 255, 0.04) !important;
@@ -331,6 +334,7 @@
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.18) !important;
 }
+/* IMPORTANT-ALLOWED-END */
 
 /* Ô nhập liệu kính lỏng mobile: kế thừa công thức thanh điều hướng (lg-bar)
    nhưng bo góc chữ nhật và bóng nhẹ hơn cho vừa ô nhỏ. Áp trực tiếp lên

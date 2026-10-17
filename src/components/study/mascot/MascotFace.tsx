@@ -53,18 +53,33 @@ export const MascotFace = ({ size = 40, musicPlaying, poking = false }: MascotFa
     if (reduceMotion) return;
     let alive = true;
     let timer = 0;
-    const loop = () => {
+    let blinkTimer = 0;
+    const scheduleBlink = () => {
       timer = window.setTimeout(() => {
         if (!alive) return;
         setBlinking(true);
-        window.setTimeout(() => alive && setBlinking(false), 160);
-        loop();
+        blinkTimer = window.setTimeout(() => {
+          if (alive) setBlinking(false);
+        }, 160);
+        scheduleBlink();
       }, 2600 + Math.random() * 2600);
     };
-    loop();
+    const onVisibility = () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(blinkTimer);
+      if (document.hidden) {
+        if (alive) setBlinking(false);
+      } else {
+        scheduleBlink();
+      }
+    };
+    if (!document.hidden) scheduleBlink();
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       alive = false;
       window.clearTimeout(timer);
+      window.clearTimeout(blinkTimer);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [reduceMotion]);
 

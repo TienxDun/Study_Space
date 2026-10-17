@@ -21,13 +21,21 @@ interface UseMobileStackOptions {
 export function useMobileStack(options?: UseMobileStackOptions) {
   const [stack, setStack] = useState<MobileStackItem[]>([]);
   const stackRef = useRef<MobileStackItem[]>([]);
-  stackRef.current = stack;
-
   const onStackChangeRef = useRef(options?.onStackChange);
-  onStackChangeRef.current = options?.onStackChange;
+
+  // Cập nhật ref trong effect để không vi phạm quy tắc render thuần của React
+  useEffect(() => {
+    stackRef.current = stack;
+  }, [stack]);
+
+  useEffect(() => {
+    onStackChangeRef.current = options?.onStackChange;
+  }, [options?.onStackChange]);
 
   // Số lượng history entry đã push vào window.history bởi mobile stack
   const historyEntriesCountRef = useRef(0);
+  // Bỏ qua các sự kiện popstate phát sinh do code chủ động lùi (closeAll / tab switch)
+  const suppressPopstateCountRef = useRef(0);
   // Lưu thời điểm bấm Back lần 1 tại màn hình chính
   const lastRootBackTimeRef = useRef<number>(0);
   // Đánh dấu người dùng đang thực sự thoát app sau 2 lần back liên tục
@@ -45,6 +53,9 @@ export function useMobileStack(options?: UseMobileStackOptions) {
   const ensureRootHistoryGuard = useCallback(() => {
     if (typeof window === "undefined") return;
     try {
+      if (window.history.state?.studyMobileRootGuard) {
+        return;
+      }
       window.history.pushState({ studyMobileRootGuard: true }, "");
     } catch {}
   }, []);
@@ -54,7 +65,7 @@ export function useMobileStack(options?: UseMobileStackOptions) {
     ensureRootHistoryGuard();
   }, [ensureRootHistoryGuard]);
 
-  // Đóng toàn bộ stack về 0 và dọn dẹp history đã push
+  // Đóng toàn bộ stack về 0 và dọn dẹp history đã push một cách an toàn
   const closeAll = useCallback(() => {
     if (stackRef.current.length === 0) return;
     const entriesToRevert = historyEntriesCountRef.current;
@@ -63,9 +74,13 @@ export function useMobileStack(options?: UseMobileStackOptions) {
     onStackChangeRef.current?.(null, []);
 
     if (entriesToRevert > 0 && typeof window !== "undefined") {
+      // MDN: window.history.go(-n) chỉ phát ra ĐÚNG 1 sự kiện popstate khi hoàn tất, không phải n lần
+      suppressPopstateCountRef.current += 1;
       try {
         window.history.go(-entriesToRevert);
-      } catch {}
+      } catch {
+        suppressPopstateCountRef.current = Math.max(0, suppressPopstateCountRef.current - 1);
+      }
     }
   }, []);
 
@@ -88,30 +103,60 @@ export function useMobileStack(options?: UseMobileStackOptions) {
 
   // Push màn hình mới vào đỉnh ngăn xếp
   const push = useCallback((id: MobilePanelId, title: string, props?: Record<string, unknown>) => {
+    // Chặn trùng lặp tuyệt đối: Nếu màn hình ở đỉnh ngăn xếp đã là id này thì thoát sớm hoàn toàn
+    // (ngăn chặn việc pushState và tăng historyEntriesCountRef khi gõ phím/chọn thuộc tính trong modal)
+    const currentStack = stackRef.current;
+    if (currentStack.length > 0 && currentStack[currentStack.length - 1].id === id) {
+      return;
+    }
+
+    const nextItem: MobileStackItem = { id, title, props };
     setStack((prev) => {
-      if (prev.length > 0 && prev[prev.length - 1].id === id) return prev;
-      const next = [...prev, { id, title, props }];
-      onStackChangeRef.current?.(next[next.length - 1], next);
+      const next = [...prev, nextItem];
+      onStackChangeRef.current?.(nextItem, next);
       return next;
     });
 
     if (typeof window !== "undefined") {
       try {
-        window.history.pushState({ studyMobileStack: true, screenId: id, depth: historyEntriesCountRef.current + 1 }, "");
         historyEntriesCountRef.current += 1;
+        window.history.pushState(
+          { studyMobileStack: true, screenId: id, depth: historyEntriesCountRef.current },
+          ""
+        );
       } catch {}
     }
   }, []);
 
-  // Thiết lập 1 màn hình gốc (reset stack cũ và push 1 entry mới)
+  // Thiết lập 1 màn hình gốc (reset stack cũ hoặc replace mượt mà khi đổi tab)
   const openRoot = useCallback((id: MobilePanelId, title: string, props?: Record<string, unknown>) => {
-    setStack([{ id, title, props }]);
-    onStackChangeRef.current?.({ id, title, props }, [{ id, title, props }]);
+    const currentEntries = historyEntriesCountRef.current;
+    const newRootItem: MobileStackItem = { id, title, props };
+
+    setStack([newRootItem]);
+    onStackChangeRef.current?.(newRootItem, [newRootItem]);
 
     if (typeof window !== "undefined") {
       try {
-        window.history.pushState({ studyMobileStack: true, screenId: id, depth: 1 }, "");
-        historyEntriesCountRef.current += 1;
+        if (currentEntries === 1) {
+          // Đang ở 1 root sheet khác -> dùng replaceState để chuyển tab tức thì không race condition
+          window.history.replaceState({ studyMobileStack: true, screenId: id, depth: 1 }, "");
+        } else if (currentEntries > 1) {
+          // Đang ở sub-screen -> lùi các entry con và giữ entry gốc
+          const excessEntries = currentEntries - 1;
+          suppressPopstateCountRef.current += 1;
+          historyEntriesCountRef.current = 1;
+          window.history.go(-excessEntries);
+          setTimeout(() => {
+            try {
+              window.history.replaceState({ studyMobileStack: true, screenId: id, depth: 1 }, "");
+            } catch {}
+          }, 50);
+        } else {
+          // Đang ở màn hình chính -> push root entry mới
+          window.history.pushState({ studyMobileStack: true, screenId: id, depth: 1 }, "");
+          historyEntriesCountRef.current = 1;
+        }
       } catch {}
     }
   }, []);
@@ -119,12 +164,18 @@ export function useMobileStack(options?: UseMobileStackOptions) {
   // Lắng nghe sự kiện popstate của trình duyệt (Hardware Back Button / Safari Edge Swipe)
   useEffect(() => {
     const handlePopState = () => {
-      // Nếu đang trong quá trình thoát app (lần back thứ 2) thì cho trình duyệt back tự nhiên
+      // 1. Bỏ qua các sự kiện popstate do code chủ động lùi (closeAll hoặc chuyển root)
+      if (suppressPopstateCountRef.current > 0) {
+        suppressPopstateCountRef.current -= 1;
+        return;
+      }
+
+      // 2. Nếu đang trong quá trình thoát app (lần back thứ 2) thì cho trình duyệt back tự nhiên
       if (isAllowingExitRef.current) return;
 
       const currentStack = stackRef.current;
 
-      // 1. Nếu đang mở Sheet/Modal trong ngăn xếp:
+      // 3. Nếu đang mở Sheet/Modal trong ngăn xếp:
       if (currentStack.length > 0) {
         if (historyEntriesCountRef.current > 0) {
           historyEntriesCountRef.current -= 1;
@@ -143,7 +194,7 @@ export function useMobileStack(options?: UseMobileStackOptions) {
         return;
       }
 
-      // 2. Nếu đang ở màn hình chính (không có sheet nào mở):
+      // 4. Nếu đang ở màn hình chính (không có sheet nào mở):
       // Áp dụng cơ chế "Bấm Back 2 lần trong vòng 2 giây để thoát"
       const now = Date.now();
       const timeDiff = now - lastRootBackTimeRef.current;

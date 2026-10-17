@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { TimerTab } from "../types";
 
 interface TimerTabPillBarProps {
@@ -7,7 +8,7 @@ interface TimerTabPillBarProps {
   onSelectTab: (tab: TimerTab) => void;
 }
 
-export function TimerTabPillBar({ currentTab, onSelectTab }: TimerTabPillBarProps) {
+export const TimerTabPillBar = memo(function TimerTabPillBar({ currentTab, onSelectTab }: TimerTabPillBarProps) {
   return (
     <div className="flex items-center gap-2.5 mb-2 z-20 transition-all duration-300 opacity-0 -translate-y-1.5 group-hover:opacity-100 group-hover:translate-y-0 pointer-events-none group-hover:pointer-events-auto">
       <div className="flex items-center gap-1.5 p-1 rounded-full drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]">
@@ -46,4 +47,4 @@ export function TimerTabPillBar({ currentTab, onSelectTab }: TimerTabPillBarProp
       </div>
     </div>
   );
-}
+});

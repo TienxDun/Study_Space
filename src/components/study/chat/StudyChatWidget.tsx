@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GoogleLogoIcon } from "@phosphor-icons/react";
 import { useAuth, GoogleSignInButton } from "@/components/study/auth";
-import { firebaseConfigured } from "@/lib/firebase";
+import { firebaseConfigured } from "@/lib/firebase-config";
 import { useChatSessions } from "./hooks/useChatSessions";
 import { useChatMessages } from "./hooks/useChatMessages";
 import { useImageAttachments } from "./hooks/useImageAttachments";

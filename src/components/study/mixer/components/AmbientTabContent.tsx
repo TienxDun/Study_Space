@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { AMBIENT_SOUNDS } from "../../study-types";
 import { AmbientSound } from "../types";
 import { AMBIENT_PRESETS } from "../constants";
@@ -15,7 +16,7 @@ interface AmbientTabContentProps {
   isMobile?: boolean;
 }
 
-export function AmbientTabContent({
+export const AmbientTabContent = memo(function AmbientTabContent({
   ambientVolumes,
   activeCount,
   onTogglePreset,
@@ -99,4 +100,4 @@ export function AmbientTabContent({
       </div>
     </div>
   );
-}
+});

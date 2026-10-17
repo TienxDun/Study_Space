@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 export function useStopwatchTimer(showMilliseconds = true) {
   const [stopwatchTime, setStopwatchTime] = useState(0); // in milliseconds
   const [isStopwatchRunning, setIsStopwatchRunning] = useState(false);
   const [laps, setLaps] = useState<number[]>([]);
   const [isLapsOpen, setIsLapsOpen] = useState(false);
+
+  // Mirror số mili-giây hiện tại vào ref để addLap giữ nguyên identity
+  // (không phụ thuộc stopwatchTime đổi 33 lần/giây → không phá memo con).
+  const stopwatchTimeRef = useRef(0);
+  useEffect(() => {
+    stopwatchTimeRef.current = stopwatchTime;
+  }, [stopwatchTime]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -34,10 +41,10 @@ export function useStopwatchTimer(showMilliseconds = true) {
 
   const addLap = useCallback(() => {
     if (isStopwatchRunning) {
-      setLaps((prev) => [stopwatchTime, ...prev]);
+      setLaps((prev) => [stopwatchTimeRef.current, ...prev]);
       setIsLapsOpen(true);
     }
-  }, [isStopwatchRunning, stopwatchTime]);
+  }, [isStopwatchRunning]);
 
   const toggleLapsDrawer = useCallback(() => {
     setIsLapsOpen((prev) => !prev);

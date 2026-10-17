@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
 import {
   XIcon,
 } from "@phosphor-icons/react";
@@ -34,7 +34,7 @@ import { PaginationDots } from "./components/PaginationDots";
 import { FocusStatsLine } from "./components/FocusStatsLine";
 import { StopwatchLapsDrawer } from "./components/StopwatchLapsDrawer";
 
-export const StudyPomodoroWidget = ({
+export const StudyPomodoroWidget = memo(function StudyPomodoroWidget({
   isVisible,
   activeTab: externalTab,
   onTabChange,
@@ -46,7 +46,7 @@ export const StudyPomodoroWidget = ({
   soundType: externalSoundType,
   showStopwatchMilliseconds: externalShowMs,
   onRunningChange,
-}: StudyPomodoroWidgetProps) => {
+}: StudyPomodoroWidgetProps) {
   const [internalTab, setInternalTab] = useState<TimerTab>("clock");
   const currentTab = externalTab !== undefined ? externalTab : internalTab;
   const { focusTask, clearFocus, completeSession, logFocusTime } = useFocusTask();
@@ -113,6 +113,17 @@ const TIMER_TABS: TimerTab[] = ["clock", "pomodoro", "stopwatch"];
       setInternalTab(tab);
     },
     [onTabChange]
+  );
+
+  // Handler ổn định cho thanh tab mobile (tránh tạo closure mới mỗi tick → phá memo con)
+  const handleSelectTabMobile = useCallback(
+    (tab: TimerTab) => {
+      switchTab(tab);
+      setTabsVisible(true);
+      if (tabsTimer.current) window.clearTimeout(tabsTimer.current);
+      tabsTimer.current = window.setTimeout(() => setTabsVisible(false), 4000);
+    },
+    [switchTab]
   );
 
   // Vuốt sang trái: chuyển chế độ tiếp theo (Đồng hồ -> Pomodoro -> Stopwatch -> Đồng hồ)
@@ -222,6 +233,7 @@ const TIMER_TABS: TimerTab[] = ["clock", "pomodoro", "stopwatch"];
   const { clockDigits, clockPeriod, clockFullDate } = useRealtimeClock({
     showClockSeconds,
     isClock12Hour,
+    enabled: currentTab === "clock",
   });
 
   // Pomodoro countdown hook
@@ -281,10 +293,7 @@ const TIMER_TABS: TimerTab[] = ["clock", "pomodoro", "stopwatch"];
       </div>
       <MobileTimerTabBar
         currentTab={currentTab}
-        onSelectTab={(tab) => {
-          switchTab(tab);
-          pokeTabs();
-        }}
+        onSelectTab={handleSelectTabMobile}
         visible={tabsVisible}
       />
 
@@ -399,4 +408,4 @@ const TIMER_TABS: TimerTab[] = ["clock", "pomodoro", "stopwatch"];
       )}
     </div>
   );
-};
+});

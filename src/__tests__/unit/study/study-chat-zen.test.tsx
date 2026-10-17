@@ -2,6 +2,11 @@ import { describe, it, expect, vi } from "vitest";
 import React from "react";
 import { renderToString } from "react-dom/server";
 
+vi.mock("@/lib/firebase-config", () => ({
+  firebaseConfigured: true,
+  firebaseConfig: {},
+}));
+
 vi.mock("@/lib/firebase", () => ({
   firebaseConfigured: true,
   auth: {},

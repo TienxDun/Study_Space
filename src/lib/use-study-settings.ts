@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { PomodoroSoundType } from "@/components/study/study-sound";
 import { STORAGE_KEYS } from "./storage-keys";
 
@@ -64,7 +64,7 @@ export const useStudySettings = () => {
     } catch {}
   }, []);
 
-  const toggleClockSeconds = () => {
+  const toggleClockSeconds = useCallback(() => {
     setShowClockSeconds((prev) => {
       const next = !prev;
       try {
@@ -72,9 +72,9 @@ export const useStudySettings = () => {
       } catch {}
       return next;
     });
-  };
+  }, []);
 
-  const toggleClock12Hour = () => {
+  const toggleClock12Hour = useCallback(() => {
     setIsClock12Hour((prev) => {
       const next = !prev;
       try {
@@ -82,9 +82,9 @@ export const useStudySettings = () => {
       } catch {}
       return next;
     });
-  };
+  }, []);
 
-  const toggleStopwatchMilliseconds = () => {
+  const toggleStopwatchMilliseconds = useCallback(() => {
     setShowStopwatchMilliseconds((prev) => {
       const next = !prev;
       try {
@@ -92,16 +92,16 @@ export const useStudySettings = () => {
       } catch {}
       return next;
     });
-  };
+  }, []);
 
-  const savePomodoroDurations = (d: PomodoroDurations) => {
+  const savePomodoroDurations = useCallback((d: PomodoroDurations) => {
     setPomodoroDurations(d);
     try {
       localStorage.setItem(STORAGE_KEYS.pomoDurations, JSON.stringify(d));
     } catch {}
-  };
+  }, []);
 
-  const toggleSound = () => {
+  const toggleSound = useCallback(() => {
     setSoundEnabled((prev) => {
       const next = !prev;
       try {
@@ -109,9 +109,9 @@ export const useStudySettings = () => {
       } catch {}
       return next;
     });
-  };
+  }, []);
 
-  const toggleKeepAwake = () => {
+  const toggleKeepAwake = useCallback(() => {
     setKeepAwake((prev) => {
       const next = !prev;
       try {
@@ -119,14 +119,14 @@ export const useStudySettings = () => {
       } catch {}
       return next;
     });
-  };
+  }, []);
 
-  const selectSoundType = (type: PomodoroSoundType) => {
+  const selectSoundType = useCallback((type: PomodoroSoundType) => {
     setSoundType(type);
     try {
       localStorage.setItem(STORAGE_KEYS.pomoSoundType, type);
     } catch {}
-  };
+  }, []);
 
   return {
     showClockSeconds,

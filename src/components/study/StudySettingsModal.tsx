@@ -27,8 +27,27 @@ function StopwatchPreview({ showMs }: { showMs: boolean }) {
   const [ms, setMs] = useState(0);
   useEffect(() => {
     const start = Date.now();
-    const id = window.setInterval(() => setMs(Date.now() - start), showMs ? 30 : 200);
-    return () => window.clearInterval(id);
+    const delay = showMs ? 30 : 200;
+    let id: number | undefined;
+    const tick = () => setMs(Date.now() - start);
+    const startTimer = () => {
+      if (id !== undefined) return;
+      tick();
+      id = window.setInterval(tick, delay);
+    };
+    const stopTimer = () => {
+      if (id === undefined) return;
+      window.clearInterval(id);
+      id = undefined;
+    };
+    // Chỉ nhịp khi tab đang hiện — đồng hồ demo 30ms không cần chạy khi bị ẩn.
+    const onVisibility = () => (document.hidden ? stopTimer() : startTimer());
+    if (!document.hidden) startTimer();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      stopTimer();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [showMs]);
   return <span>{formatStopwatch(ms, showMs)}</span>;
 }

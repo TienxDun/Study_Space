@@ -32,16 +32,26 @@ export function useSiriWaveform({
     const g = canvas.getContext("2d");
     if (!g) return;
 
+    let sizeOk = false;
     const fit = () => {
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
-      if (w === 0 || h === 0) return;
+      if (w === 0 || h === 0) {
+        sizeOk = false;
+        return;
+      }
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
+      sizeOk = true;
     };
     fit();
     window.addEventListener("resize", fit);
+    // Theo dõi đổi kích thước/ẩn-hiện: khi canvas bị display:none (mobile) thì
+    // không vẽ gì để khỏi tốn 60fps cho một khung vô hình.
+    const ro =
+      typeof ResizeObserver !== "undefined" ? new ResizeObserver(fit) : null;
+    ro?.observe(canvas);
 
     let alive = true;
     let rafId = 0;
@@ -49,8 +59,11 @@ export function useSiriWaveform({
 
     const draw = (t: number) => {
       if (!alive) return;
-      // Tab ẩn thì trình duyệt đã bóp rAF, nhưng vẫn bỏ qua phần vẽ cho chắc
-      if (typeof document !== "undefined" && document.hidden) {
+      // Tab ẩn hoặc canvas chưa có kích thước (đang display:none) → bỏ qua vẽ
+      if (
+        (typeof document !== "undefined" && document.hidden) ||
+        !sizeOk
+      ) {
         rafId = requestAnimationFrame(draw);
         return;
       }
@@ -125,8 +138,8 @@ export function useSiriWaveform({
     return () => {
       alive = false;
       window.removeEventListener("resize", fit);
+      ro?.disconnect();
       cancelAnimationFrame(rafId);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }

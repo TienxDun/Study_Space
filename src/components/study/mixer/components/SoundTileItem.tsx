@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   CloudRainIcon,
   LightningIcon,
@@ -51,7 +52,7 @@ const renderSoundIcon = (iconName: string, active: boolean) => {
   }
 };
 
-export function SoundTileItem({
+export const SoundTileItem = memo(function SoundTileItem({
   sound,
   volume,
   onToggle,
@@ -131,4 +132,4 @@ export function SoundTileItem({
       </div>
     </div>
   );
-}
+});

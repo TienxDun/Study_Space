@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { MusicNotesIcon, CloudRainIcon, SpeakerXIcon } from "@phosphor-icons/react";
 import { ModalShell } from "@/components/ui/ModalShell";
-import { SoundMixerWidgetProps, MixerTab } from "./types";
+import { SoundMixerWidgetProps, MixerTab, Track } from "./types";
 import { STUDY_TRACKS_BY_MOOD, AMBIENT_SOUNDS } from "../study-types";
 import { useAmbientAudio } from "./hooks/useAmbientAudio";
 import { MixerHeader } from "./components/MixerHeader";
@@ -11,6 +11,8 @@ import { MusicTabContent } from "./components/MusicTabContent";
 import { AmbientTabContent } from "./components/AmbientTabContent";
 import { MobileSheetShell } from "../mobile/sheets/MobileSheetShell";
 import { useIsMobile } from "../mobile/hooks/useIsMobile";
+
+const EMPTY_TRACKS: Track[] = [];
 
 export const SoundMixerWidget = ({
   isOpen,
@@ -87,7 +89,10 @@ export const SoundMixerWidget = ({
     };
   }, [isOpen, onClose, isMobile]);
 
-  const currentMoodTracks = STUDY_TRACKS_BY_MOOD[currentMood] || [];
+  const currentMoodTracks = useMemo(
+    () => STUDY_TRACKS_BY_MOOD[currentMood] || EMPTY_TRACKS,
+    [currentMood]
+  );
 
   const tabContent = activeTab === "music" ? (
     <MusicTabContent

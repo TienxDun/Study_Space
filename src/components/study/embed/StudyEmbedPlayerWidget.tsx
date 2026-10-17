@@ -341,13 +341,13 @@ export const StudyEmbedPlayerWidget = ({
         className={
           isPipMode
             ? "fixed inset-0 z-50 pointer-events-none"
-            : isBackdropOpen
-            ? isMobile
-              ? isZenMode
-                ? "fixed inset-x-2 top-2.5 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] z-50 pointer-events-none transition-[inset] duration-350 ease-[cubic-bezier(0.16,1,0.3,1)]"
-                : "fixed inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] z-50 pointer-events-none transition-[inset] duration-350 ease-[cubic-bezier(0.16,1,0.3,1)]"
-              : "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 pointer-events-none"
-            : "fixed -top-[9999px] -left-[9999px] w-1 h-1 opacity-0 pointer-events-none"
+            : isMobile
+            ? `fixed ${isZenMode ? "inset-x-2 top-2.5" : "inset-x-3"} bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] z-50 pointer-events-none transition-[inset] duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                isBackdropOpen ? "" : "translate-y-[200%] opacity-0"
+              }`
+            : `fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 pointer-events-none ${
+                isBackdropOpen ? "" : "translate-y-[200%] opacity-0"
+              }`
         }
       >
         <motion.div

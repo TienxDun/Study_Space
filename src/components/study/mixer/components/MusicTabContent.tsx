@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   PlayIcon,
   PauseIcon,
@@ -33,7 +34,7 @@ interface MusicTabContentProps {
   isMobile?: boolean;
 }
 
-export function MusicTabContent({
+export const MusicTabContent = memo(function MusicTabContent({
   currentMood,
   onSelectMood,
   currentTrack,
@@ -232,4 +233,4 @@ export function MusicTabContent({
       </div>
     </>
   );
-}
+});

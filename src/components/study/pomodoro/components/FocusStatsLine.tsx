@@ -1,12 +1,12 @@
 "use client";
 
+import { memo } from "react";
 import { formatFocusDuration } from "@/lib/focus-sessions";
-import { useFocusStats } from "@/lib/use-focus-stats";
+import { useFocusStatsPair } from "@/lib/use-focus-stats";
 
 /** Dòng thống kê gọn dưới đồng hồ Pomodoro: hôm nay + tuần này tập trung bao lâu. */
-export function FocusStatsLine() {
-  const today = useFocusStats("today");
-  const week = useFocusStats("week");
+export const FocusStatsLine = memo(function FocusStatsLine() {
+  const { today, week } = useFocusStatsPair();
 
   return (
     <div
@@ -24,4 +24,4 @@ export function FocusStatsLine() {
       </span>
     </div>
   );
-}
+});

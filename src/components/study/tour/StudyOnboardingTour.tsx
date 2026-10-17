@@ -245,16 +245,24 @@ export function StudyOnboardingTour({
   }, [isTourActive, currentStep.targetId]);
 
   useEffect(() => {
+    if (!isTourActive) return;
     updateTargetRect();
-    const handleResize = () => updateTargetRect();
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("scroll", handleResize);
+    // Cuộn/kéo cửa sổ bắn rất dày; gộp về 1 lần mỗi khung hình để khỏi
+    // đo getBoundingClientRect + setState liên tục.
+    let raf = 0;
+    const handleUpdate = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(updateTargetRect);
+    };
+    window.addEventListener("resize", handleUpdate);
+    window.addEventListener("scroll", handleUpdate);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
-      window.removeEventListener("scroll", handleResize);
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", handleUpdate);
+      window.removeEventListener("scroll", handleUpdate);
     };
-  }, [updateTargetRect, currentStepIndex]);
+  }, [updateTargetRect, currentStepIndex, isTourActive]);
 
   // Điều hướng bằng bàn phím
   useEffect(() => {

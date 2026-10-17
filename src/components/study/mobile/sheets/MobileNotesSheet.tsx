@@ -5,11 +5,9 @@ import {
   PlusIcon,
   MagnifyingGlassIcon,
   PushPinIcon,
-  CaretLeftIcon,
   CaretDownIcon,
   CheckSquareIcon,
   FileTextIcon,
-  DotsThreeVerticalIcon,
   XIcon,
   TextBIcon,
   TextItalicIcon,
@@ -31,6 +29,8 @@ interface MobileNotesSheetProps {
   onClose: () => void;
   onBack?: () => void;
   backLabel?: string;
+  isEditingDetail?: boolean;
+  onOpenDetail?: () => void;
 }
 
 // Chuyển HTML thành text thuần để hiển thị trích dẫn ngắn trong danh sách
@@ -59,6 +59,8 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
   onClose,
   onBack,
   backLabel,
+  isEditingDetail,
+  onOpenDetail,
 }: MobileNotesSheetProps) {
   const {
     sortedNotes,
@@ -197,10 +199,20 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
     el.style.height = `${Math.min(el.scrollHeight, 64)}px`;
   }, [editingNoteId, currentEditingNote?.title]);
 
+  // Khi thoát chế độ sửa note từ ngăn xếp điều hướng (do phím Back phần cứng hoặc Back UI)
+  useEffect(() => {
+    if (isEditingDetail === false && editingNoteId !== null) {
+      setEditingNoteId(null);
+      prevEditingIdRef.current = null;
+    }
+  }, [isEditingDetail, editingNoteId]);
+
   // Tạo ghi chú mới và mở ngay chế độ chỉnh sửa
   const handleAddNewNote = () => {
-    handleCreateNote();
-    // Tạo note xong activeNoteId sẽ chuyển sang note mới
+    const newNote = handleCreateNote();
+    setActiveNoteId(newNote.id);
+    setEditingNoteId(newNote.id);
+    onOpenDetail?.();
   };
 
   // Tự động mở chế độ sửa khi có note mới tạo
@@ -227,7 +239,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
         isOpen={isOpen}
         sheetId="notes"
         onClose={handleCloseSheet}
-        onBack={currentEditingNote ? () => setEditingNoteId(null) : onBack}
+        onBack={currentEditingNote ? (onBack || (() => setEditingNoteId(null))) : onBack}
         backLabel={currentEditingNote ? "Ghi chú" : backLabel}
         title={
           currentEditingNote
@@ -480,6 +492,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                               }
                               setActiveNoteId(note.id);
                               setEditingNoteId(note.id);
+                              onOpenDetail?.();
                             }}
                             className="min-w-0 flex-1 space-y-1 cursor-pointer active:opacity-80 transition-opacity"
                           >
@@ -528,6 +541,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                             onEdit={() => {
                               setActiveNoteId(note.id);
                               setEditingNoteId(note.id);
+                              onOpenDetail?.();
                             }}
                             onTogglePin={() => handleTogglePin(note.id)}
                             onDelete={() => promptDeleteNote(note)}

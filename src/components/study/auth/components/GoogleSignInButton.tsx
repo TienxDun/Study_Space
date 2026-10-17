@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
-import { firebaseConfigured, getFirebaseAuth } from "@/lib/firebase";
+import { firebaseConfigured } from "@/lib/firebase-config";
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
@@ -61,8 +60,14 @@ export function GoogleSignInButton() {
           callback: async (resp: { credential?: string }) => {
             try {
               if (!resp?.credential) throw new Error("empty");
+              // Nạp Firebase SDK động: chỉ khi người dùng thực sự đăng nhập.
+              const [{ GoogleAuthProvider, signInWithCredential }, fb] =
+                await Promise.all([
+                  import("firebase/auth"),
+                  import("@/lib/firebase"),
+                ]);
               await signInWithCredential(
-                getFirebaseAuth(),
+                fb.getFirebaseAuth(),
                 GoogleAuthProvider.credential(resp.credential)
               );
             } catch {

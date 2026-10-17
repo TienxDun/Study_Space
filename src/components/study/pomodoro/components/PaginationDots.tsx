@@ -1,12 +1,14 @@
 "use client";
 
+import { memo } from "react";
+
 interface PaginationDotsProps {
   completedSessions: number;
   /** Ghi đè wrapper mặc định (dùng để đặt dots vào khoảng hở của ring). */
   className?: string;
 }
 
-export function PaginationDots({ completedSessions, className }: PaginationDotsProps) {
+export const PaginationDots = memo(function PaginationDots({ completedSessions, className }: PaginationDotsProps) {
   return (
     <div
       className={
@@ -27,4 +29,4 @@ export function PaginationDots({ completedSessions, className }: PaginationDotsP
       ))}
     </div>
   );
-}
+});

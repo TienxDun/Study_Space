@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type RefObject } from "react";
+import { useMemo, useState, type RefObject } from "react";
 import {
   ArrowDownIcon,
   CopyIcon,
@@ -108,7 +108,10 @@ export function MessageList({
   const [savedNoteId, setSavedNoteId] = useState<string | null>(null);
   const [downloadedId, setDownloadedId] = useState<string | null>(null);
   const [lightboxImg, setLightboxImg] = useState<{ src: string; alt?: string } | null>(null);
-  const lastAssistantId = [...msgs].reverse().find((m) => m.role === "assistant")?.id;
+  const lastAssistantId = useMemo(
+    () => [...msgs].reverse().find((m) => m.role === "assistant")?.id,
+    [msgs]
+  );
 
   // Mở ảnh Full HD / gốc từ bộ nhớ tạm hoặc IndexedDB (fallback sang thumb nếu không có)
   const handleOpenLightbox = async (att: { thumb?: string; name: string; id?: string; originalUrl?: string }) => {

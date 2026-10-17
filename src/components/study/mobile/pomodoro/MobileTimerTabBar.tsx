@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { motion } from "framer-motion";
 import type { TimerTab } from "@/components/study/pomodoro/types";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,7 @@ const TABS: { id: TimerTab; label: string }[] = [
 // Hàng nút chuyển chế độ RIÊNG cho mobile, kiểu nút kính mẫu 001 Lucianlabs:
 // viên kính trượt lò xo, đốm sáng theo tay, bấm lún như giọt nước.
 // Mỏng nhẹ và tự ẩn khi không dùng tới (cha điều khiển qua visible).
-export function MobileTimerTabBar({ currentTab, onSelectTab, visible }: MobileTimerTabBarProps) {
+export const MobileTimerTabBar = memo(function MobileTimerTabBar({ currentTab, onSelectTab, visible }: MobileTimerTabBarProps) {
   // Đốm sáng đi theo ngón tay: chạm đâu sáng đó
   const handleSpot = (e: React.PointerEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
@@ -80,4 +81,4 @@ export function MobileTimerTabBar({ currentTab, onSelectTab, visible }: MobileTi
       </div>
     </div>
   );
-}
+});

@@ -73,7 +73,7 @@ export function MobileSheetShell({
   }, [defaultZenMode, effectiveSheetId]);
 
   const [isZenMode, setIsZenMode] = useState<boolean>(defaultZenMode);
-  const isClosingByDragRef = useRef(false);
+  const [isClosingByDrag, setIsClosingByDrag] = useState(false);
   const localPanelRef = useRef<HTMLDivElement | null>(null);
   const touchStartY = useRef<number | null>(null);
   const isDraggingDown = useRef(false);
@@ -82,7 +82,7 @@ export function MobileSheetShell({
   useEffect(() => {
     if (isOpen) {
       setIsZenMode(getSavedZenMode());
-      isClosingByDragRef.current = false;
+      setIsClosingByDrag(false);
       if (localPanelRef.current) {
         localPanelRef.current.style.removeProperty("display");
         localPanelRef.current.style.transform = "";
@@ -170,7 +170,7 @@ export function MobileSheetShell({
     // 2. Vuốt xuống dưới (diff > 0):
     // Người dùng vuốt xuống: bảng trượt thẳng xuống dưới để tắt dứt khoát, không nảy ngược lên!
     if (diff >= 60) {
-      isClosingByDragRef.current = true;
+      setIsClosingByDrag(true);
       if (localPanelRef.current) {
         localPanelRef.current.style.transition =
           "transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.18s ease-out";
@@ -243,7 +243,7 @@ export function MobileSheetShell({
       initial={{ opacity: 0, y: 72, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={
-        isClosingByDragRef.current
+        isClosingByDrag
           ? { opacity: 0, transition: { duration: 0 } }
           : { opacity: 0, y: 80, scale: 0.96, transition: { duration: 0.22, ease: [0.32, 0, 0.67, 0] } }
       }

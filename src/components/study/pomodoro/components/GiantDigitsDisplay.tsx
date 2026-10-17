@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { TimerTab } from "../types";
 import { formatTime, formatStopwatch } from "../utils/timer-formatters";
 
@@ -12,7 +13,7 @@ interface GiantDigitsDisplayProps {
   showStopwatchMilliseconds?: boolean;
 }
 
-export function GiantDigitsDisplay({
+export const GiantDigitsDisplay = memo(function GiantDigitsDisplay({
   currentTab,
   clockDigits,
   clockPeriod,
@@ -43,4 +44,4 @@ export function GiantDigitsDisplay({
       )}
     </div>
   );
-}
+});

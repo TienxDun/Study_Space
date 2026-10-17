@@ -89,6 +89,7 @@
   }
 }
 
+/* IMPORTANT-ALLOWED-START: mobile-no-scrollbar */
 /* Tiện ích ẩn thanh cuộn chuẩn đa trình duyệt (Chrome, Safari, Firefox, Edge) */
 .no-scrollbar,
 .scrollbar-none {
@@ -129,6 +130,7 @@
     height: 0 !important;
   }
 }
+/* IMPORTANT-ALLOWED-END */
 
 /* =========================================================================
    ANIMATION MỞ BẢNG & SẮP XẾP THỨ TỰ RENDER (STAGGERED CASCADE)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import {
@@ -16,7 +16,7 @@ import { WaveformScrubber } from "./components/WaveformScrubber";
 import { PlayerControls } from "./components/PlayerControls";
 import { ExternalStreamBanner } from "./components/ExternalStreamBanner";
 
-export const StudyMusicPlayer = ({
+export const StudyMusicPlayer = memo(function StudyMusicPlayer({
   isGlobalMuted = false,
   onToggleMute,
   onMuteChange,
@@ -30,7 +30,7 @@ export const StudyMusicPlayer = ({
   isZenMode = false,
   onBack,
   backLabel,
-}: StudyMusicPlayerProps) => {
+}: StudyMusicPlayerProps) {
   const [internalIsMixerOpen, setInternalIsMixerOpen] = useState(false);
   const [activeMixerTab, setActiveMixerTab] = useState<MixerTab>("ambience");
   const [isMounted, setIsMounted] = useState(false);
@@ -475,4 +475,4 @@ export const StudyMusicPlayer = ({
       })()}
     </>
   );
-};
+});

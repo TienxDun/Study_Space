@@ -34,6 +34,7 @@ import { FocusStatsModal } from "@/components/study/stats/FocusStatsModal";
 import { MobileRadialBubbleMenu } from "@/components/study/mobile/navigation/MobileRadialBubbleMenu";
 import { MobilePomodoroView } from "@/components/study/mobile/pomodoro/MobilePomodoroView";
 import type { MobileNavId } from "@/components/study/mobile/navigation/types";
+import type { MobilePanelId } from "@/components/study/mobile/types";
 import { useMobileStack, type MobileStackItem } from "@/components/study/mobile/navigation/useMobileStack";
 import { StudyShortcutsModal } from "@/components/study/StudyShortcutsModal";
 import { StudyOnboardingTour } from "@/components/study/tour/StudyOnboardingTour";
@@ -120,6 +121,7 @@ export default function StudySpacePage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const handleToggleChat = () => {
     setIsChatOpen((prev) => !prev);
@@ -135,13 +137,13 @@ export default function StudySpacePage() {
     setIsRoomsOpen(false);
     setIsChatOpen(false);
     setIsStatsOpen(false);
-    handleCloseSettings();
+    setIsSettingsOpen(false);
     setIsMoreOpen(false);
 
     if (!screen) return;
     if (screen.id === "more") setIsMoreOpen(true);
-    else if (screen.id === "tasks") setIsTasksOpen(true);
-    else if (screen.id === "notes") setIsNotesOpen(true);
+    else if (screen.id === "tasks" || screen.id === "tasks-detail") setIsTasksOpen(true);
+    else if (screen.id === "notes" || screen.id === "notes-detail") setIsNotesOpen(true);
     else if (screen.id === "scenes") setIsScenesOpen(true);
     else if (screen.id === "stats") setIsStatsOpen(true);
     else if (screen.id === "settings") setIsSettingsOpen(true);
@@ -153,6 +155,7 @@ export default function StudySpacePage() {
 
   // Stack navigation cho mobile với đồng bộ hai chiều (Back button cứng & giao diện)
   const {
+    currentScreen: mobileCurrentScreen,
     canGoBack: mobileCanGoBack,
     previousScreen: mobilePrevScreen,
     push: mobilePush,
@@ -198,7 +201,7 @@ export default function StudySpacePage() {
     onAdvance: handleSelectScene,
   });
 
-  const handleToggleSlideshow = () => {
+  const handleToggleSlideshow = useCallback(() => {
     setIsSlideshowOn((prev) => {
       const next = !prev;
       try {
@@ -206,9 +209,9 @@ export default function StudySpacePage() {
       } catch {}
       return next;
     });
-  };
+  }, []);
 
-  const handleCycleSlideshowInterval = () => {
+  const handleCycleSlideshowInterval = useCallback(() => {
     setSlideshowIntervalMin((prev) => {
       const idx = SLIDESHOW_INTERVALS_MIN.indexOf(prev);
       const next =
@@ -218,10 +221,9 @@ export default function StudySpacePage() {
       } catch {}
       return next;
     });
-  };
+  }, []);
 
   // Unified Settings Modal State (Default: Tắt giây đồng hồ, Tắt .00 stopwatch, Bật chuông Pomodoro 25-5-15)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const {
     showClockSeconds,
     isClock12Hour,
@@ -277,27 +279,34 @@ export default function StudySpacePage() {
     const handleStartFocus = () => {
       setIsPomodoroVisible(true);
       setCenterTab("pomodoro");
-      setIsTasksOpen(false);
+      if (isMobile) {
+        handleMobileCloseAllSheets();
+      } else {
+        setIsTasksOpen(false);
+      }
     };
 
     window.addEventListener("study_space_start_focus", handleStartFocus);
     return () => {
       window.removeEventListener("study_space_start_focus", handleStartFocus);
     };
-  }, []);
+  }, [isMobile, handleMobileCloseAllSheets]);
 
   // Mở thẳng UI Pomodoro (từ CTA trong modal Thống kê khi chưa có dữ liệu)
   useEffect(() => {
     const handleOpenPomodoro = () => {
       setIsPomodoroVisible(true);
       setCenterTab("pomodoro");
+      if (isMobile) {
+        handleMobileCloseAllSheets();
+      }
     };
 
     window.addEventListener("study_space_open_pomodoro", handleOpenPomodoro);
     return () => {
       window.removeEventListener("study_space_open_pomodoro", handleOpenPomodoro);
     };
-  }, []);
+  }, [isMobile, handleMobileCloseAllSheets]);
 
   // Giữ màn hình sáng khi đang học: chạy giờ / phát nhạc / phát đài
   const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -345,7 +354,7 @@ export default function StudySpacePage() {
     keepAwake && (isTimerRunning || isMusicPlaying || isExternalStreamActive)
   );
 
-  const handleOpenSettings = () => {
+  const handleOpenSettings = useCallback(() => {
     setIsSettingsOpen(true);
     setIsMixerOpen(false);
     setIsTasksOpen(false);
@@ -353,20 +362,20 @@ export default function StudySpacePage() {
     setIsScenesOpen(false);
     setIsEmbedPlayerOpen(false);
     setIsShortcutsHelpOpen(false);
-  };
+  }, []);
 
-  const handleCloseSettings = () => {
+  const handleCloseSettings = useCallback(() => {
     setIsSettingsOpen(false);
-  };
+  }, []);
 
-  const handleToggleClock = () => {
+  const handleToggleClock = useCallback(() => {
     if (isPomodoroVisible && centerTab === "clock") {
       setIsPomodoroVisible(false);
     } else {
       setIsPomodoroVisible(true);
       setCenterTab("clock");
     }
-  };
+  }, [isPomodoroVisible, centerTab]);
 
   const handleToggleShortcutsHelp = () => {
     setIsShortcutsHelpOpen((prev) => {
@@ -385,7 +394,7 @@ export default function StudySpacePage() {
     }
   };
 
-  const handleTogglePomodoroVisibility = () => {
+  const handleTogglePomodoroVisibility = useCallback(() => {
     setIsPomodoroVisible((prev) => {
       const next = !prev;
       try {
@@ -393,7 +402,7 @@ export default function StudySpacePage() {
       } catch {}
       return next;
     });
-  };
+  }, []);
 
   const handleToggleTasks = () => {
     setIsTasksOpen(!isTasksOpen);
@@ -434,7 +443,7 @@ export default function StudySpacePage() {
     setIsMixerOpen(false);
   };
 
-  const toggleGlobalMute = () => {
+  const toggleGlobalMute = useCallback(() => {
     setIsGlobalMuted((prev) => {
       const next = !prev;
       try {
@@ -442,17 +451,17 @@ export default function StudySpacePage() {
       } catch {}
       return next;
     });
-  };
+  }, []);
 
-  const setGlobalMute = (muted: boolean) => {
+  const setGlobalMute = useCallback((muted: boolean) => {
     setIsGlobalMuted(muted);
     try {
       localStorage.setItem(STORAGE_KEYS.globalMute, String(muted));
     } catch {}
-  };
+  }, []);
 
   // Fullscreen toggle
-  const toggleFullscreen = () => {
+  const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
       setIsFullscreen(true);
@@ -462,7 +471,7 @@ export default function StudySpacePage() {
       }
       setIsFullscreen(false);
     }
-  };
+  }, []);
 
 
 
@@ -485,13 +494,40 @@ export default function StudySpacePage() {
   // Lắng nghe sự kiện mở Takenote từ các component khác (như nút Lưu note từ Chatbot)
   useEffect(() => {
     const handleOpenNotes = () => {
-      setIsNotesOpen(true);
+      if (isMobile) {
+        if (mobileCurrentScreen) {
+          mobilePush("notes", "Ghi chú");
+        } else {
+          mobileOpenRoot("notes", "Ghi chú");
+        }
+      } else {
+        setIsNotesOpen(true);
+      }
     };
     window.addEventListener("study-space:open-notes", handleOpenNotes);
     return () => {
       window.removeEventListener("study-space:open-notes", handleOpenNotes);
     };
-  }, []);
+  }, [isMobile, mobileCurrentScreen, mobilePush, mobileOpenRoot]);
+
+  // Lắng nghe sự kiện gửi ghi chú sang Trợ lý AI (như nút Hỏi AI từ Takenote)
+  useEffect(() => {
+    const handleSendToChat = () => {
+      if (isMobile) {
+        if (mobileCurrentScreen) {
+          mobilePush("chat", "Trợ lý AI");
+        } else {
+          mobileOpenRoot("chat", "Trợ lý AI");
+        }
+      } else {
+        setIsChatOpen(true);
+      }
+    };
+    window.addEventListener("study-space:send-to-chat", handleSendToChat);
+    return () => {
+      window.removeEventListener("study-space:send-to-chat", handleSendToChat);
+    };
+  }, [isMobile, mobileCurrentScreen, mobilePush, mobileOpenRoot]);
 
   // Mở 1 panel duy nhất (đóng settings + các panel khác)
   const openPanelOnly = (
@@ -507,6 +543,211 @@ export default function StudySpacePage() {
     setIsChatOpen(false);
     setter(true);
   };
+
+  // ---- Handler ổn định (identity không đổi giữa các lần render) ----
+  // Truyền cho các component đã React.memo để memo không bị vô hiệu.
+  const handleOpenTasksDetail = useCallback(
+    () => mobilePush("tasks-detail", "Công việc"),
+    [mobilePush]
+  );
+  const handleOpenNotesDetail = useCallback(
+    () => mobilePush("notes-detail", "Ghi chú"),
+    [mobilePush]
+  );
+  const handleCloseDetail = useCallback(() => mobilePop(), [mobilePop]);
+
+  const handleOpenChatRoot = useCallback(
+    () => mobileOpenRoot("chat", "Trợ lý AI"),
+    [mobileOpenRoot]
+  );
+  const handleOpenScenesRoot = useCallback(
+    () => mobileOpenRoot("scenes", "Không gian"),
+    [mobileOpenRoot]
+  );
+  const handleOpenRoomsRoot = useCallback(
+    () => mobileOpenRoot("rooms", "Phòng học nhóm"),
+    [mobileOpenRoot]
+  );
+  const handleOpenRadioRoot = useCallback(
+    () => mobileOpenRoot("embed", "Đài phát"),
+    [mobileOpenRoot]
+  );
+  const handleOpenStatsRoot = useCallback(
+    () => mobileOpenRoot("stats", "Thống kê"),
+    [mobileOpenRoot]
+  );
+
+  const handleMobileNavSelect = useCallback(
+    (id: MobileNavId) => {
+      const isAnySheetOpen =
+        isMoreOpen ||
+        isTasksOpen ||
+        isNotesOpen ||
+        isScenesOpen ||
+        isMixerOpen ||
+        isEmbedPlayerOpen ||
+        isRoomsOpen ||
+        isChatOpen ||
+        isStatsOpen ||
+        isSettingsOpen;
+
+      if (id === "pomodoro") {
+        if (isAnySheetOpen) {
+          handleMobileCloseAllSheets();
+          setIsPomodoroVisible(true);
+          return;
+        }
+        handleTogglePomodoroVisibility();
+        return;
+      }
+
+      const isMoreGroupActive =
+        isMoreOpen ||
+        isScenesOpen ||
+        isEmbedPlayerOpen ||
+        isRoomsOpen ||
+        isChatOpen ||
+        isStatsOpen ||
+        isSettingsOpen;
+
+      const isCurrentlyActive =
+        (id === "more" && isMoreGroupActive) ||
+        (id === "tasks" && isTasksOpen) ||
+        (id === "notes" && isNotesOpen) ||
+        (id === "music" && isMixerOpen);
+
+      if (isCurrentlyActive) {
+        handleMobileCloseAllSheets();
+        return;
+      }
+
+      if (id === "more") {
+        mobileOpenRoot("more", "Thêm");
+      } else if (id === "tasks") {
+        mobileOpenRoot("tasks", "Công việc");
+      } else if (id === "notes") {
+        mobileOpenRoot("notes", "Ghi chú");
+      } else if (id === "music") {
+        mobileOpenRoot("music", "Nhạc & Âm thanh");
+      }
+    },
+    [
+      isMoreOpen,
+      isTasksOpen,
+      isNotesOpen,
+      isScenesOpen,
+      isMixerOpen,
+      isEmbedPlayerOpen,
+      isRoomsOpen,
+      isChatOpen,
+      isStatsOpen,
+      isSettingsOpen,
+      handleMobileCloseAllSheets,
+      handleTogglePomodoroVisibility,
+      mobileOpenRoot,
+    ]
+  );
+
+  const handleMoreSelect = useCallback(
+    (id: MobilePanelId) => {
+      if (id === "notes") {
+        mobilePush("notes", "Ghi chú");
+      } else if (id === "scenes") {
+        mobilePush("scenes", "Không gian");
+      } else if (id === "embed") {
+        mobilePush("embed", "Đài phát");
+      } else if (id === "rooms") {
+        mobilePush("rooms", "Phòng học nhóm");
+      } else if (id === "chat") {
+        mobilePush("chat", "Trợ lý AI");
+      } else if (id === "settings") {
+        mobilePush("settings", "Cài đặt");
+      } else if (id === "stats") {
+        mobilePush("stats", "Thống kê");
+      } else if (id === "pomodoro") {
+        handleMobileCloseAllSheets();
+        setIsZenMode(true);
+      }
+    },
+    [mobilePush, handleMobileCloseAllSheets]
+  );
+
+  const handleWidgetToggleVisibility = useCallback(() => {
+    setIsPomodoroVisible((prev) => !prev);
+  }, []);
+
+  // Mở đài phát (dùng cho cả nút mở rộng stream lẫn onOpen của widget)
+  const handleOpenEmbedRoot = useCallback(() => {
+    if (isMobile) {
+      // Đài phát đang mở sẵn (ví dụ vừa bấm phát một đài -> onPlaySuccess gọi onOpen)
+      // thì giữ nguyên ngăn xếp. openRoot ở đây sẽ reset về [embed], nuốt mất nút
+      // "Quay lại <màn trước>" (khi mở từ bảng Thêm) làm nút lúc hiện lúc mất.
+      if (mobileCurrentScreen?.id === "embed") return;
+      mobileOpenRoot("embed", "Đài phát");
+    } else {
+      handleCloseSettings();
+      setIsTasksOpen(false);
+      setIsNotesOpen(false);
+      setIsScenesOpen(false);
+      setIsMixerOpen(false);
+      setIsEmbedPlayerOpen(true);
+      setIsPipActive(false);
+    }
+  }, [isMobile, mobileOpenRoot, handleCloseSettings, mobileCurrentScreen]);
+
+  const handleCloseEmbed = useCallback(() => {
+    if (isMobile) {
+      handleMobileCloseAllSheets();
+    } else {
+      setIsEmbedPlayerOpen(false);
+    }
+  }, [isMobile, handleMobileCloseAllSheets]);
+
+  const handleStopExternalStream = useCallback(() => {
+    setIsExternalStreamActive(false);
+    setExternalActiveItem(null);
+    sendYouTubeCommand("pauseVideo");
+    try {
+      localStorage.removeItem(STORAGE_KEYS.activeEmbed);
+    } catch {}
+  }, []);
+
+  const handleCloseMixer = useCallback(() => {
+    if (isMobile) {
+      handleMobileCloseAllSheets();
+    } else {
+      setIsMixerOpen(false);
+    }
+  }, [isMobile, handleMobileCloseAllSheets]);
+
+  const handleToggleMixer = useCallback(() => {
+    if (isMobile) {
+      if (isMixerOpen) {
+        handleMobileCloseAllSheets();
+      } else {
+        mobileOpenRoot("music", "Nhạc & Âm thanh");
+      }
+    } else {
+      setIsMixerOpen((prev) => {
+        const next = !prev;
+        if (next) {
+          handleCloseSettings();
+          setIsTasksOpen(false);
+          setIsNotesOpen(false);
+          setIsScenesOpen(false);
+          setIsEmbedPlayerOpen(false);
+          setIsShortcutsHelpOpen(false);
+        }
+        return next;
+      });
+    }
+  }, [
+    isMobile,
+    isMixerOpen,
+    handleMobileCloseAllSheets,
+    mobileOpenRoot,
+    handleCloseSettings,
+  ]);
 
   const commandActions = useMemo<CommandAction[]>(
     () => [
@@ -542,6 +783,45 @@ export default function StudySpacePage() {
     (isEmbedPlayerOpen && !isPipActive) ||
     isMixerOpen ||
     isShortcutsHelpOpen;
+
+  // Xác định tab đang sáng trên thanh điều hướng mobile trực tiếp theo đỉnh ngăn xếp
+  const activeNavTab = useMemo<MobileNavId>(() => {
+    const currentId = mobileCurrentScreen?.id;
+    if (currentId === "tasks" || currentId === "tasks-detail" || isTasksOpen) return "tasks";
+    if (currentId === "notes" || currentId === "notes-detail" || isNotesOpen) return "notes";
+    if (currentId === "music" || currentId === "mixer" || isMixerOpen) return "music";
+    if (
+      currentId === "more" ||
+      currentId === "scenes" ||
+      currentId === "embed" ||
+      currentId === "rooms" ||
+      currentId === "chat" ||
+      currentId === "stats" ||
+      currentId === "settings" ||
+      isMoreOpen ||
+      isScenesOpen ||
+      isEmbedPlayerOpen ||
+      isRoomsOpen ||
+      isChatOpen ||
+      isStatsOpen ||
+      isSettingsOpen
+    ) {
+      return "more";
+    }
+    return "pomodoro";
+  }, [
+    mobileCurrentScreen,
+    isTasksOpen,
+    isNotesOpen,
+    isMixerOpen,
+    isMoreOpen,
+    isScenesOpen,
+    isEmbedPlayerOpen,
+    isRoomsOpen,
+    isChatOpen,
+    isStatsOpen,
+    isSettingsOpen,
+  ]);
 
   return (
     <div className="fixed inset-0 sm:relative sm:w-screen sm:h-dvh overflow-hidden bg-slate-950 text-white select-none font-sans">
@@ -616,6 +896,9 @@ export default function StudySpacePage() {
           onClose={handleMobileCloseAllSheets}
           onBack={mobileCanGoBack ? handleMobileBack : undefined}
           backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+          isEditingDetail={mobileCurrentScreen?.id === "tasks-detail"}
+          onOpenDetail={handleOpenTasksDetail}
+          onCloseDetail={handleCloseDetail}
         />
       )}
 
@@ -632,6 +915,8 @@ export default function StudySpacePage() {
           onClose={handleMobileCloseAllSheets}
           onBack={mobileCanGoBack ? handleMobileBack : undefined}
           backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+          isEditingDetail={mobileCurrentScreen?.id === "notes-detail"}
+          onOpenDetail={handleOpenNotesDetail}
         />
       )}
 
@@ -702,18 +987,10 @@ export default function StudySpacePage() {
       </AnimatePresence>
       <StudyEmbedPlayerWidget 
         isOpen={isEmbedPlayerOpen} 
-        onClose={isMobile ? handleMobileCloseAllSheets : () => setIsEmbedPlayerOpen(false)} 
+        onClose={handleCloseEmbed}
         onBack={isMobile && mobileCanGoBack ? handleMobileBack : undefined}
         backLabel={isMobile && mobileCanGoBack ? mobilePrevScreen?.title : undefined}
-        onOpen={() => {
-          handleCloseSettings();
-          setIsTasksOpen(false);
-          setIsNotesOpen(false);
-          setIsScenesOpen(false);
-          setIsMixerOpen(false);
-          setIsEmbedPlayerOpen(true);
-          setIsPipActive(false);
-        }}
+        onOpen={handleOpenEmbedRoot}
         onPipModeChange={setIsPipActive}
         activeItem={externalActiveItem}
         onStreamActiveChange={setIsExternalStreamActive}
@@ -794,7 +1071,7 @@ export default function StudySpacePage() {
             isVisible={isPomodoroVisible}
             activeTab={centerTab}
             onTabChange={setCenterTab}
-            onToggleVisibility={() => setIsPomodoroVisible(!isPomodoroVisible)}
+            onToggleVisibility={handleWidgetToggleVisibility}
             onRunningChange={setIsTimerRunning}
             showClockSeconds={showClockSeconds}
             isClock12Hour={isClock12Hour}
@@ -815,38 +1092,10 @@ export default function StudySpacePage() {
         isMixerOpen={isMixerOpen}
         isExternalStreamActive={isExternalStreamActive}
         externalStreamItem={externalActiveItem}
-        onExpandExternalStream={() => {
-          handleCloseSettings();
-          setIsTasksOpen(false);
-          setIsNotesOpen(false);
-          setIsScenesOpen(false);
-          setIsMixerOpen(false);
-          setIsEmbedPlayerOpen(true);
-          setIsPipActive(false);
-        }}
-        onStopExternalStream={() => {
-          setIsExternalStreamActive(false);
-          setExternalActiveItem(null);
-          sendYouTubeCommand("pauseVideo");
-          try {
-            localStorage.removeItem(STORAGE_KEYS.activeEmbed);
-          } catch {}
-        }}
-        onToggleMixer={() => {
-          setIsMixerOpen((prev) => {
-            const next = !prev;
-            if (next) {
-              handleCloseSettings();
-              setIsTasksOpen(false);
-              setIsNotesOpen(false);
-              setIsScenesOpen(false);
-              setIsEmbedPlayerOpen(false);
-              setIsShortcutsHelpOpen(false);
-            }
-            return next;
-          });
-        }}
-        onCloseMixer={isMobile ? handleMobileCloseAllSheets : () => setIsMixerOpen(false)}
+        onExpandExternalStream={handleOpenEmbedRoot}
+        onStopExternalStream={handleStopExternalStream}
+        onToggleMixer={handleToggleMixer}
+        onCloseMixer={handleCloseMixer}
         onBack={isMobile && mobileCanGoBack ? handleMobileBack : undefined}
         backLabel={isMobile && mobileCanGoBack ? mobilePrevScreen?.title : undefined}
       />
@@ -862,7 +1111,13 @@ export default function StudySpacePage() {
       <StudyRoomsWidget
         isOpen={isRoomsOpen}
         onClose={isMobile ? handleMobileCloseAllSheets : () => setIsRoomsOpen(false)}
-        onOpen={() => setIsRoomsOpen(true)}
+        onOpen={() => {
+          if (isMobile) {
+            mobileOpenRoot("rooms", "Phòng học nhóm");
+          } else {
+            setIsRoomsOpen(true);
+          }
+        }}
         onBack={isMobile && mobileCanGoBack ? handleMobileBack : undefined}
         backLabel={isMobile && mobileCanGoBack ? mobilePrevScreen?.title : undefined}
       />
@@ -902,83 +1157,7 @@ export default function StudySpacePage() {
 
       {/* Mobile: thanh dưới 5 nút luôn luôn hiển thị */}
       {isMobile && !isZenMode && (
-        <StudyMobileNav
-          active={
-            isTasksOpen
-              ? "tasks"
-              : isNotesOpen
-                ? "notes"
-                : isMixerOpen
-                  ? "music"
-                  : isMoreOpen || isScenesOpen || isEmbedPlayerOpen || isRoomsOpen || isChatOpen || isStatsOpen || isSettingsOpen
-                    ? "more"
-                    : "pomodoro"
-          }
-          onSelect={(id: MobileNavId) => {
-            const isAnySheetOpen =
-              isMoreOpen ||
-              isTasksOpen ||
-              isNotesOpen ||
-              isScenesOpen ||
-              isMixerOpen ||
-              isEmbedPlayerOpen ||
-              isRoomsOpen ||
-              isChatOpen ||
-              isStatsOpen ||
-              isSettingsOpen;
-
-            // Nếu người dùng bấm vào nút "Giờ":
-            if (id === "pomodoro") {
-              // 1. Nếu đang mở bảng nào đó -> đóng toàn bộ và mở đồng hồ
-              if (isAnySheetOpen) {
-                handleMobileCloseAllSheets();
-                setIsPomodoroVisible(true);
-                return;
-              }
-              // 2. Nếu đang ở màn hình chính -> Bật / Tắt (Toggle) đồng hồ
-              handleTogglePomodoroVisibility();
-              return;
-            }
-
-            const isMoreGroupActive =
-              isMoreOpen ||
-              isScenesOpen ||
-              isEmbedPlayerOpen ||
-              isRoomsOpen ||
-              isChatOpen ||
-              isStatsOpen ||
-              isSettingsOpen;
-
-            const isCurrentlyActive =
-              (id === "more" && isMoreGroupActive) ||
-              (id === "tasks" && isTasksOpen) ||
-              (id === "notes" && isNotesOpen) ||
-              (id === "music" && isMixerOpen);
-
-            // Nếu chạm lại chính tab đang mở thì đóng lại
-            if (isCurrentlyActive) {
-              handleMobileCloseAllSheets();
-              return;
-            }
-
-            // Chuyển đổi tức thì: đóng bảng cũ và khởi tạo root trong ngăn xếp
-            handleMobileCloseAllSheets();
-
-            if (id === "more") {
-              mobileOpenRoot("more", "Thêm");
-              setIsMoreOpen(true);
-            } else if (id === "tasks") {
-              mobileOpenRoot("tasks", "Công việc");
-              setIsTasksOpen(true);
-            } else if (id === "notes") {
-              mobileOpenRoot("notes", "Ghi chú");
-              setIsNotesOpen(true);
-            } else if (id === "music") {
-              mobileOpenRoot("music", "Nhạc & Âm thanh");
-              setIsMixerOpen(true);
-            }
-          }}
-        />
+        <StudyMobileNav active={activeNavTab} onSelect={handleMobileNavSelect} />
       )}
 
       {/* Mobile: bảng Thêm 3 cụm */}
@@ -986,59 +1165,7 @@ export default function StudySpacePage() {
         <MobileMoreSheet
           isOpen={isMoreOpen}
           onClose={handleMobileCloseAllSheets}
-          onSelect={(id) => {
-            if (id === "notes") {
-              mobilePush("notes", "Ghi chú");
-              setIsMoreOpen(false);
-              setIsTasksOpen(false);
-              setIsScenesOpen(false);
-              setIsMixerOpen(false);
-              setIsStatsOpen(false);
-              setIsNotesOpen(true);
-            } else if (id === "scenes") {
-              mobilePush("scenes", "Không gian");
-              setIsMoreOpen(false);
-              setIsTasksOpen(false);
-              setIsNotesOpen(false);
-              setIsMixerOpen(false);
-              setIsStatsOpen(false);
-              setIsScenesOpen(true);
-            } else if (id === "embed") {
-              mobilePush("embed", "Đài phát");
-              setIsMoreOpen(false);
-              setIsTasksOpen(false);
-              setIsNotesOpen(false);
-              setIsScenesOpen(false);
-              setIsMixerOpen(false);
-              setIsStatsOpen(false);
-              setIsEmbedPlayerOpen(true);
-            } else if (id === "rooms") {
-              mobilePush("rooms", "Phòng học nhóm");
-              setIsMoreOpen(false);
-              setIsRoomsOpen(true);
-            } else if (id === "chat") {
-              mobilePush("chat", "Trợ lý AI");
-              setIsMoreOpen(false);
-              setIsChatOpen(true);
-            } else if (id === "settings") {
-              mobilePush("settings", "Cài đặt");
-              setIsMoreOpen(false);
-              handleOpenSettings();
-            } else if (id === "stats") {
-              mobilePush("stats", "Thống kê");
-              setIsMoreOpen(false);
-              setIsTasksOpen(false);
-              setIsNotesOpen(false);
-              setIsScenesOpen(false);
-              setIsMixerOpen(false);
-              setIsEmbedPlayerOpen(false);
-              handleCloseSettings();
-              setIsStatsOpen(true);
-            } else if (id === "pomodoro") {
-              handleMobileCloseAllSheets();
-              setIsZenMode(true);
-            }
-          }}
+          onSelect={handleMoreSelect}
         />
       )}
 
@@ -1058,26 +1185,11 @@ export default function StudySpacePage() {
         !isStatsOpen && (
           <div className="sm:hidden">
             <MobileRadialBubbleMenu
-              onOpenChat={() => {
-                mobileOpenRoot("chat", "Trợ lý AI");
-                setIsChatOpen(true);
-              }}
-              onOpenScenes={() => {
-                mobileOpenRoot("scenes", "Không gian");
-                setIsScenesOpen(true);
-              }}
-              onOpenRooms={() => {
-                mobileOpenRoot("rooms", "Phòng học nhóm");
-                setIsRoomsOpen(true);
-              }}
-              onOpenRadio={() => {
-                mobileOpenRoot("embed", "Đài phát");
-                setIsEmbedPlayerOpen(true);
-              }}
-              onOpenStats={() => {
-                mobileOpenRoot("stats", "Thống kê");
-                setIsStatsOpen(true);
-              }}
+              onOpenChat={handleOpenChatRoot}
+              onOpenScenes={handleOpenScenesRoot}
+              onOpenRooms={handleOpenRoomsRoot}
+              onOpenRadio={handleOpenRadioRoot}
+              onOpenStats={handleOpenStatsRoot}
             />
           </div>
         )}

@@ -5,11 +5,14 @@ import { useState, useEffect } from "react";
 interface UseRealtimeClockOptions {
   showClockSeconds: boolean;
   isClock12Hour: boolean;
+  /** Chỉ chạy interval khi tab đồng hồ đang hiển thị (tránh tick thừa 1Hz). */
+  enabled?: boolean;
 }
 
 export function useRealtimeClock({
   showClockSeconds,
   isClock12Hour,
+  enabled = true,
 }: UseRealtimeClockOptions) {
   const [clockDigits, setClockDigits] = useState("");
   const [clockPeriod, setClockPeriod] = useState("");
@@ -52,9 +55,12 @@ export function useRealtimeClock({
     };
 
     updateRealtime();
+    // Tab khác đang mở: chỉ cập nhật 1 lần, không giữ interval để khỏi
+    // re-render widget mỗi giây khi chẳng ai nhìn đồng hồ.
+    if (!enabled) return;
     const interval = setInterval(updateRealtime, showClockSeconds ? 1000 : 10000);
     return () => clearInterval(interval);
-  }, [showClockSeconds, isClock12Hour]);
+  }, [enabled, showClockSeconds, isClock12Hour]);
 
   return {
     clockDigits,

@@ -31,13 +31,29 @@ export const POMODORO_SOUND_OPTIONS: PomodoroSoundOption[] = [
   },
 ];
 
+// Một AudioContext dùng chung cho cả phiên: tạo mới mỗi tiếng chuông sẽ rò rỉ
+// context (trình duyệt giới hạn ~6 cái) và tốn CPU. Tạo lười, tái sử dụng.
+let sharedCtx: AudioContext | null = null;
+
+function getAudioContext(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  const AudioCtx =
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext: typeof AudioContext })
+      .webkitAudioContext;
+  if (!AudioCtx) return null;
+  if (!sharedCtx || sharedCtx.state === "closed") {
+    sharedCtx = new AudioCtx();
+  }
+  return sharedCtx;
+}
+
 export const playPomodoroSound = (soundType: PomodoroSoundType = "classic_clock", enabled: boolean = true) => {
-  if (!enabled || typeof window === "undefined") return;
+  if (!enabled) return;
 
   try {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
+    const ctx = getAudioContext();
+    if (!ctx) return;
 
     if (ctx.state === "suspended") {
       ctx.resume();

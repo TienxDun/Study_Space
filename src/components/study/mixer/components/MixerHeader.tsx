@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   XIcon,
   MusicNotesIcon,
@@ -19,7 +20,7 @@ interface MixerHeaderProps {
   onResetAmbience?: () => void;
 }
 
-export function MixerHeader({
+export const MixerHeader = memo(function MixerHeader({
   onClose,
   activeTab,
   musicCount,
@@ -61,5 +62,5 @@ export function MixerHeader({
       </div>
     </div>
   );
-}
+});
 

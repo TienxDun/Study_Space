@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   GridLayout,
   ParticipantTile,
@@ -40,6 +40,47 @@ const formatTime = (ts: number) =>
     hour12: false,
   });
 
+// Ô soạn tin tách riêng giữ state `draft` cục bộ: gõ phím chỉ vẽ lại đúng ô này,
+// không kéo theo lưới video LiveKit (rất nặng) re-render mỗi ký tự.
+function RoomChatComposer({
+  onSend,
+}: {
+  onSend: (text: string) => Promise<void>;
+}) {
+  const [draft, setDraft] = useState("");
+  const handleSend = async () => {
+    const text = draft.trim();
+    if (!text) return;
+    try {
+      await onSend(text);
+      setDraft("");
+    } catch {}
+  };
+  return (
+    <div className="flex items-center gap-1.5 p-2.5 border-t border-white/10 shrink-0">
+      <input
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") handleSend();
+        }}
+        placeholder="Nhắn gì đó..."
+        maxLength={500}
+        className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-white/30"
+      />
+      <button
+        onClick={handleSend}
+        disabled={!draft.trim()}
+        className="px-3 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-40 flex items-center gap-1"
+        title="Gửi"
+      >
+        <PaperPlaneTiltIcon className="w-3.5 h-3.5" />
+        <span className="hidden sm:inline">Gửi</span>
+      </button>
+    </div>
+  );
+}
+
 // Khung gọi tiếng Việt: lưới mặt, hàng nút mic/cam/chia sẻ/nhắn tin,
 // bảng chat trượt bên phải.
 export const StudyRoomView = ({
@@ -60,7 +101,6 @@ export const StudyRoomView = ({
   );
   const { chatMessages, send } = useChat();
   const [chatOpen, setChatOpen] = useState(false);
-  const [draft, setDraft] = useState("");
   const [seenCount, setSeenCount] = useState(0);
   const unreadCount = !chatOpen && chatMessages.length > seenCount
     ? chatMessages.length - seenCount
@@ -73,14 +113,12 @@ export const StudyRoomView = ({
     });
   };
 
-  const handleSend = async () => {
-    const text = draft.trim();
-    if (!text) return;
-    try {
+  const handleSendMessage = useCallback(
+    async (text: string) => {
       await send(text);
-      setDraft("");
-    } catch {}
-  };
+    },
+    [send]
+  );
 
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
 
@@ -212,27 +250,7 @@ export const StudyRoomView = ({
                 </div>
               ))}
             </div>
-            <div className="flex items-center gap-1.5 p-2.5 border-t border-white/10 shrink-0">
-              <input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSend();
-                }}
-                placeholder="Nhắn gì đó..."
-                maxLength={500}
-                className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-white/30"
-              />
-              <button
-                onClick={handleSend}
-                disabled={!draft.trim()}
-                className="px-3 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-40 flex items-center gap-1"
-                title="Gửi"
-              >
-                <PaperPlaneTiltIcon className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Gửi</span>
-              </button>
-            </div>
+            <RoomChatComposer onSend={handleSendMessage} />
           </div>
         )}
       </div>

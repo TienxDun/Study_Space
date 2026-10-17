@@ -1,17 +1,27 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import {
-  onAuthStateChanged,
-  signInWithRedirect,
-  signInWithPopup,
-  getRedirectResult,
-  GoogleAuthProvider,
-  signOut,
-  type User,
-} from "firebase/auth";
-import { firebaseConfigured, getFirebaseAuth } from "@/lib/firebase";
+import { firebaseConfigured } from "@/lib/firebase-config";
 import type { UseAuthReturn } from "../types";
+import type { User } from "firebase/auth";
+
+// Firebase SDK chỉ được nạp động khi thực sự cần (sau khi trang đã hydrate),
+// nhờ vậy ~670KB SDK không nằm trên critical path của lần tải đầu.
+async function loadAuthSdk() {
+  const [auth, fb] = await Promise.all([
+    import("firebase/auth"),
+    import("@/lib/firebase"),
+  ]);
+  return {
+    onAuthStateChanged: auth.onAuthStateChanged,
+    getRedirectResult: auth.getRedirectResult,
+    GoogleAuthProvider: auth.GoogleAuthProvider,
+    signInWithPopup: auth.signInWithPopup,
+    signInWithRedirect: auth.signInWithRedirect,
+    signOut: auth.signOut,
+    getFirebaseAuth: fb.getFirebaseAuth,
+  };
+}
 
 export function useAuth(): UseAuthReturn {
   const [user, setUser] = useState<User | null>(null);
@@ -24,24 +34,41 @@ export function useAuth(): UseAuthReturn {
       setLoading(false);
       return;
     }
-    // Nhận kết quả sau khi Google chuyển về nếu dùng redirect
-    getRedirectResult(getFirebaseAuth()).catch((e) => {
-      const code = String(e?.code || "");
-      if (code === "auth/user-cancelled" || code === "auth/popup-closed-by-user") return;
-      setAuthError(
-        code === "auth/unauthorized-domain"
-          ? "Domain này chưa được duyệt trong Firebase (Authentication > Settings > Authorized domains)."
-          : code === "auth/network-request-failed"
-            ? "Mạng chập chờn hoặc bị chặn, bạn thử lại nhé."
-            : code === "auth/web-storage-unsupported"
-              ? "Trình duyệt đang chặn bộ nhớ bên thứ ba, bạn cho phép cookie bên thứ ba rồi thử lại."
-              : `Đăng nhập lỗi (${code || "không rõ"}), bạn thử lại nhé.`
-      );
-    });
-    return onAuthStateChanged(getFirebaseAuth(), (u) => {
-      setUser(u);
-      setLoading(false);
-    });
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+
+    (async () => {
+      try {
+        const { onAuthStateChanged, getRedirectResult, getFirebaseAuth } =
+          await loadAuthSdk();
+        if (cancelled) return;
+        // Nhận kết quả sau khi Google chuyển về nếu dùng redirect
+        getRedirectResult(getFirebaseAuth()).catch((e: { code?: string }) => {
+          const code = String(e?.code || "");
+          if (code === "auth/user-cancelled" || code === "auth/popup-closed-by-user") return;
+          setAuthError(
+            code === "auth/unauthorized-domain"
+              ? "Domain này chưa được duyệt trong Firebase (Authentication > Settings > Authorized domains)."
+              : code === "auth/network-request-failed"
+                ? "Mạng chập chờn hoặc bị chặn, bạn thử lại nhé."
+                : code === "auth/web-storage-unsupported"
+                  ? "Trình duyệt đang chặn bộ nhớ bên thứ ba, bạn cho phép cookie bên thứ ba rồi thử lại."
+                  : `Đăng nhập lỗi (${code || "không rõ"}), bạn thử lại nhé.`
+          );
+        });
+        unsubscribe = onAuthStateChanged(getFirebaseAuth(), (u: User | null) => {
+          setUser(u);
+          setLoading(false);
+        });
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, []);
 
   // Ưu tiên mở popup để không làm đứt quãng nhạc/trang web; nếu bị chặn thì chuyển sang redirect
@@ -52,6 +79,12 @@ export function useAuth(): UseAuthReturn {
     }
     setIsSigningIn(true);
     setAuthError("");
+    const {
+      GoogleAuthProvider,
+      signInWithPopup,
+      signInWithRedirect,
+      getFirebaseAuth,
+    } = await loadAuthSdk();
     const auth = getFirebaseAuth();
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
@@ -85,12 +118,14 @@ export function useAuth(): UseAuthReturn {
   }, []);
 
   const signOutNow = useCallback(async () => {
+    const { signOut, getFirebaseAuth } = await loadAuthSdk();
     await signOut(getFirebaseAuth());
     setUser(null);
   }, []);
 
   // Vé gửi kèm mỗi câu hỏi sang Worker (Worker tự kiểm vé thật/giả).
   const getToken = useCallback(async (): Promise<string | null> => {
+    const { getFirebaseAuth } = await loadAuthSdk();
     const u = getFirebaseAuth().currentUser;
     if (!u) return null;
     try {
