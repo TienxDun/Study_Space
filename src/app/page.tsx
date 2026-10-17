@@ -12,6 +12,7 @@ import { StudyShortcutsModal } from "@/components/study/StudyShortcutsModal";
 import { StudyOnboardingTour } from "@/components/study/tour/StudyOnboardingTour";
 import { StudyDesktopLayout } from "@/components/study/layout/StudyDesktopLayout";
 import { StudyMobileLayout } from "@/components/study/layout/StudyMobileLayout";
+import { MobileWelcomeScreen } from "@/components/study/mobile/welcome/MobileWelcomeScreen";
 import { useStudySpaceState } from "@/components/study/hooks/useStudySpaceState";
 
 // Dynamic imports cho các widget đa phương tiện dùng chung
@@ -57,6 +58,14 @@ export default function StudySpacePage() {
       {/* Phân tách 2 tầng hiển thị rõ ràng */}
       {!state.isMobile && <StudyDesktopLayout state={state} />}
       {state.isMobile && <StudyMobileLayout state={state} />}
+
+      {/* Màn hình chào mừng Welcome / Splash Screen chuyên nghiệp cho Mobile */}
+      {state.isMobile && (
+        <MobileWelcomeScreen
+          isMobile={state.isMobile}
+          currentSceneName={state.currentScene?.name}
+        />
+      )}
 
       {/* Khu vực Đồng hồ Pomodoro trung tâm */}
       <main className="relative z-10 w-full h-full flex flex-col items-center justify-center pointer-events-none px-4 pb-14 mobile-content-safe">
