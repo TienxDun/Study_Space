@@ -119,13 +119,8 @@ export const MobileNoteBubbleMenu = React.memo(function MobileNoteBubbleMenu({
                     <span className="whitespace-nowrap">
                       {note.isPinned ? "Bỏ ghim ghi chú" : "Ghim lên đầu"}
                     </span>
-                  </div>
-                  {note.isPinned && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/15 text-amber-300 border border-amber-400/20 shrink-0 ml-2">
-                      Đã ghim
-                    </span>
-                  )}
-                </button>
+                   </div>
+                 </button>
 
                 {/* Đường phân cách nhẹ */}
                 <div className="my-1 border-t border-white/[0.08]" />
