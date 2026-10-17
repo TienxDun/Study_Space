@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,7 +14,6 @@ import {
   CaretRightIcon,
 } from "@phosphor-icons/react";
 import { STUDY_SCENES, type Scene } from "@/components/study/study-types";
-import CardSwap, { Card, type CardSwapHandle } from "@/components/ui/CardSwap";
 import { ZenStudyLogo } from "@/components/study/brand/ZenStudyLogo";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
 
@@ -41,11 +40,12 @@ interface CuratedCard {
 }
 
 /**
- * MobileWelcomeScreen - Dựng 1:1 theo video concept chuẩn screenshot-to-code:
+ * MobileWelcomeScreen - Tối ưu hóa hiệu năng cao (High-Performance 60FPS) cho Mobile:
  * - Flow 2 bước liền mạch:
  *   + Bước 1: Màn hình chào mừng Cinematic Splash (Welcome to StudySpace, typography thanh lịch, nút kính lỏng Get Started).
- *   + Bước 2: Giao diện chọn không gian "Pick your space." với Card Deck xếp lớp 3D, đổi màu ambient nền theo cảnh, nút ↗ trực tiếp.
- * - Tuân thủ docs/mobile-style-guide.md: kính mờ backdrop-blur, lề an toàn pt-safe / pb-safe, haptic feedback 10ms.
+ *   + Bước 2: Giao diện chọn không gian "Pick your space." với Native 3D Card Stack (Hỗ trợ vuốt tay Swipe mượt mà, gia tốc phần cứng GPU, không giật lag).
+ * - Loại bỏ các lớp filter blur nặng nề và vòng lặp RAF 240Hz ngầm gây drop FPS trên mobile.
+ * - Tuân thủ docs/mobile-style-guide.md: kính mờ backdrop-blur-md, lề an toàn pt-safe / pb-safe, haptic feedback 10ms.
  */
 export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
   props: MobileWelcomeScreenProps
@@ -57,7 +57,6 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
   const [step, setStep] = useState<1 | 2>(1);
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [isEntering, setIsEntering] = useState(false);
-  const cardSwapRef = useRef<CardSwapHandle>(null);
 
   // Danh sách các không gian học tập chọn lọc tương ứng với Card Stack ở Bước 2
   const curatedCards: CuratedCard[] = useMemo(() => {
@@ -81,7 +80,7 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
         scene: findScene("fantasy", 0),
         displayTitle: "THẾ GIỚI HUYỀN ẢO",
         tag: "Tập trung sâu",
-        glowColor: "rgba(217, 119, 6, 0.22)",
+        glowColor: "rgba(217, 119, 6, 0.28)",
         accentColor: "#F59E0B",
         icon: <MountainsIcon className="w-4 h-4 text-amber-300" weight="fill" />,
       },
@@ -89,7 +88,7 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
         scene: findScene("rainy", 1),
         displayTitle: "THUNG LŨNG MƯA",
         tag: "Mưa êm dịu",
-        glowColor: "rgba(16, 185, 129, 0.22)",
+        glowColor: "rgba(16, 185, 129, 0.28)",
         accentColor: "#10B981",
         icon: <CloudRainIcon className="w-4 h-4 text-emerald-300" weight="fill" />,
       },
@@ -97,7 +96,7 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
         scene: findScene("living room", 2),
         displayTitle: "CĂN NHÀ GỖ ẤM ÁP",
         tag: "Thư giãn & Chill",
-        glowColor: "rgba(249, 115, 22, 0.22)",
+        glowColor: "rgba(249, 115, 22, 0.28)",
         accentColor: "#F97316",
         icon: <CoffeeIcon className="w-4 h-4 text-orange-300" weight="fill" />,
       },
@@ -105,13 +104,14 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
         scene: findScene("tofu", 3),
         displayTitle: "TIỆM ĐẬU PHỤ FUJIWARA",
         tag: "Lofi đêm khuya",
-        glowColor: "rgba(99, 102, 241, 0.22)",
+        glowColor: "rgba(99, 102, 241, 0.28)",
         accentColor: "#818CF8",
         icon: <SparkleIcon className="w-4 h-4 text-indigo-300" weight="fill" />,
       },
     ];
   }, []);
 
+  const totalCards = curatedCards.length;
   const activeCard = curatedCards[activeCardIndex] || curatedCards[0];
 
   // Khởi tạo từ sessionStorage
@@ -175,17 +175,17 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
     [isEntering, triggerHaptic, handleDismiss]
   );
 
-  // Chuyển card tiếp theo qua CardSwap
+  // Chuyển card tiếp theo (Next)
   const handleNextCard = useCallback(() => {
     triggerHaptic();
-    cardSwapRef.current?.next();
-  }, [triggerHaptic]);
+    setActiveCardIndex((prev) => (prev + 1) % totalCards);
+  }, [triggerHaptic, totalCards]);
 
-  // Chuyển card trước đó qua CardSwap
+  // Chuyển card trước đó (Prev)
   const handlePrevCard = useCallback(() => {
     triggerHaptic();
-    cardSwapRef.current?.prev();
-  }, [triggerHaptic]);
+    setActiveCardIndex((prev) => (prev - 1 + totalCards) % totalCards);
+  }, [triggerHaptic, totalCards]);
 
   if (!hasMounted || !isOpen) {
     return null;
@@ -204,54 +204,47 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
         aria-label="Màn hình chào mừng ZenStudy"
       >
         {/* ============================================================== */}
-        {/* NỀN AMBIENT DYNAMIC: TỰ ĐỘNG CHUYỂN TÔNG MÀU THEO SCENE ĐANG CHỌN */}
+        {/* NỀN AMBIENT DYNAMIC TỐI ƯU GPU: KHÔNG DÙNG BLUR NẶNG NỀ         */}
         {/* ============================================================== */}
-        <div className="absolute inset-0 pointer-events-none transition-colors duration-700">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div
-            className="absolute -top-[15%] left-1/2 -translate-x-1/2 w-[140%] h-[60%] rounded-full opacity-35 blur-[120px] transition-all duration-700"
+            className="absolute -top-[10%] left-1/2 -translate-x-1/2 w-[110%] h-[50%] rounded-full opacity-25 blur-3xl transform-gpu pointer-events-none transition-colors duration-500"
             style={{
-              background: `radial-gradient(circle, ${activeCard?.glowColor || "rgba(56, 189, 248, 0.2)"} 0%, transparent 75%)`,
-            }}
-          />
-          <div
-            className="absolute -bottom-[20%] left-1/2 -translate-x-1/2 w-[130%] h-[50%] rounded-full opacity-25 blur-[130px] transition-all duration-700"
-            style={{
-              background: `radial-gradient(circle, ${activeCard?.glowColor || "rgba(16, 185, 129, 0.2)"} 0%, transparent 80%)`,
+              background: `radial-gradient(circle, ${activeCard?.glowColor || "rgba(251, 191, 36, 0.25)"} 0%, transparent 70%)`,
             }}
           />
         </div>
 
         {/* ============================================================== */}
-        {/* NỀN PHONG CẢNH ĐIỆN ẢNH TRÀN TOÀN MÀN HÌNH (EDGE-TO-EDGE FULLSCREEN) */}
+        {/* NỀN PHONG CẢNH ĐIỆN ẢNH TỐI ƯU TĨNH: TRÁNH REPAINT LIÊN TỤC    */}
         {/* ============================================================== */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-          <motion.img
+          <img
+            key={curatedCards[activeCardIndex]?.scene.id}
             src={curatedCards[activeCardIndex]?.scene.thumbnailUrl || "/thumbnails/journey-through-fantasy-world.webp"}
             alt="Hình nền không gian học tập"
-            className="w-full h-full object-cover object-center filter brightness-[0.78] contrast-[1.05]"
-            initial={{ scale: 1 }}
-            animate={{ scale: 1.05 }}
-            transition={{ duration: 18, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+            className="w-full h-full object-cover object-center filter brightness-[0.7] contrast-[1.05] transition-opacity duration-500 will-change-transform"
+            loading="eager"
           />
-          {/* Lớp gradient bóng đổ mượt mà từ đáy lên y hệt video mẫu tràn viền 100% */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F1A] via-[#0B0F1A]/75 via-45% to-black/30" />
+          {/* Lớp gradient bóng đổ mượt mà từ đáy lên */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F1A] via-[#0B0F1A]/80 via-50% to-black/35 pointer-events-none" />
         </div>
 
         {/* ============================================================== */}
-        {/* BƯỚC 1: MÀN HÌNH CHÀO MỪNG CINEMATIC SPLASH (MÀN 1 TRONG VIDEO) */}
+        {/* BƯỚC 1: MÀN HÌNH CHÀO MỪNG CINEMATIC SPLASH                    */}
         {/* ============================================================== */}
         {step === 1 && (
           <motion.div
             key="welcome-step-1"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40, transition: { duration: 0.3 } }}
+            exit={{ opacity: 0, x: -40, transition: { duration: 0.25 } }}
             className="relative z-20 flex-1 flex flex-col justify-between items-center px-6 pb-safe pt-safe max-w-md mx-auto w-full h-full"
           >
-            {/* Khoảng đệm đỉnh cân bằng để đưa khối Typography vào đúng trung tâm màn hình */}
+            {/* Khoảng đệm đỉnh */}
             <div className="w-full h-20 sm:h-28 pointer-events-none" aria-hidden="true" />
 
-            {/* Typography Container ở trung tâm màn hình (Center) */}
+            {/* Typography Container ở trung tâm */}
             <div className="space-y-3 text-center flex flex-col items-center my-auto">
               <h1 className="text-[32px] sm:text-[36px] font-light tracking-tight text-white leading-[1.15] flex flex-col items-center gap-2.5">
                 <span>Chào mừng bạn đến với</span>
@@ -268,7 +261,7 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
               </p>
             </div>
 
-            {/* Nút bấm kính lỏng Liquid Glass Button (001, Buttons) ở đáy */}
+            {/* Nút bấm kính lỏng Liquid Glass Button ở đáy */}
             <div className="w-full pb-8 flex flex-col items-center">
               <LiquidGlassButton
                 label="Bắt đầu ngay"
@@ -280,104 +273,153 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
         )}
 
         {/* ============================================================== */}
-        {/* BƯỚC 2: GIAO DIỆN CHỌN KHÔNG GIAN PICK YOUR SPACE (MÀN 2 TRONG VIDEO) */}
+        {/* BƯỚC 2: GIAO DIỆN CHỌN KHÔNG GIAN NATIVE 3D CARD STACK (60FPS)  */}
         {/* ============================================================== */}
         {step === 2 && (
           <motion.div
             key="welcome-step-2"
-            initial={{ opacity: 0, x: 40 }}
+            initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 40, transition: { duration: 0.3 } }}
-            className="relative z-20 flex-1 flex flex-col justify-between px-5 pb-safe pt-safe max-w-md mx-auto w-full"
+            exit={{ opacity: 0, x: 30, transition: { duration: 0.25 } }}
+            className="relative z-20 flex-1 flex flex-col justify-between px-5 pb-safe pt-safe max-w-md mx-auto w-full h-full"
           >
-            {/* Header: "Chọn không gian học tập." căn giữa thanh lịch */}
+            {/* Header: "Chọn không gian học tập." */}
             <div className="pt-2 text-center">
               <span className="text-[13px] font-medium tracking-tight text-white/80 block leading-tight">
                 Chọn không gian
               </span>
-              <span className="text-[14px] font-bold tracking-tight text-white block leading-tight mt-0.5">
+              <span className="text-[15px] font-bold tracking-tight text-white block leading-tight mt-0.5">
                 học tập.
               </span>
             </div>
 
-            {/* 3D Card Stack với ReactBits CardSwap (vuốt, fling, đổi thẻ mượt mà) */}
-            <div className="relative w-full flex-1 my-auto flex items-center justify-center min-h-[350px]">
-              <CardSwap
-                ref={cardSwapRef}
-                width={275}
-                height={350}
-                cardDistance={32}
-                verticalDistance={30}
-                depth={55}
-                skewAmount={3}
-                cardRadius={24}
-                delay={4500}
-                draggable={true}
-                autoplay={true}
-                pauseOnHover={true}
-                onChange={(index) => {
-                  setActiveCardIndex(index);
-                }}
-                onCardClick={(index) => {
-                  handleSelectAndEnter(curatedCards[index]);
-                }}
-              >
-                {curatedCards.map((card) => (
-                  <Card
-                    key={card.scene.id}
-                    className="p-3.5 border border-white/20 backdrop-blur-2xl shadow-[0_25px_50px_rgba(0,0,0,0.65)] flex flex-col justify-between"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 50%, rgba(255, 255, 255, 0.01) 100%), rgba(11, 15, 26, 0.45)",
-                      backdropFilter: "blur(24px) saturate(160%)",
-                      WebkitBackdropFilter: "blur(24px) saturate(160%)",
-                      boxShadow:
-                        "0 25px 50px -12px rgba(0, 0, 0, 0.7), inset 0 1px 1.5px rgba(255, 255, 255, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.18)",
-                    }}
-                  >
-                    {/* Hàng tiêu đề trên cùng của thẻ */}
-                    <div className="flex items-center gap-2 px-1 pt-1 pb-2.5">
-                      <div className="w-7 h-7 rounded-full bg-white/10 border border-white/10 flex items-center justify-center">
-                        {card.icon}
-                      </div>
-                      <span className="text-[12.5px] font-bold tracking-wider uppercase text-white">
-                        {card.displayTitle}
-                      </span>
-                    </div>
+            {/* Khung chứa Card Stack 3D Native siêu nhẹ, vuốt tay cực nhạy */}
+            <div className="relative w-full flex-1 my-auto flex items-center justify-center min-h-[350px] max-h-[420px] touch-pan-y">
+              <div className="relative w-[280px] h-[360px] flex items-center justify-center">
+                {curatedCards.map((card, idx) => {
+                  // Khoảng cách theo vòng lặp so với activeCardIndex
+                  const diff = (idx - activeCardIndex + totalCards) % totalCards;
+                  const isFront = diff === 0;
 
-                    {/* Khung ảnh xem trước không gian */}
-                    <div className="relative flex-1 rounded-[18px] overflow-hidden bg-black/40 border border-white/10">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={card.scene.thumbnailUrl || "/thumbnails/journey-through-fantasy-world.webp"}
-                        alt={card.displayTitle}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </Card>
-                ))}
-              </CardSwap>
+                  // Chỉ render các thẻ nhìn thấy (diff <= 2) để tiết kiệm tối đa RAM và DOM
+                  if (diff > 2) return null;
+
+                  return (
+                    <motion.div
+                      key={card.scene.id}
+                      drag={isFront ? "x" : false}
+                      dragConstraints={{ left: 0, right: 0 }}
+                      dragElastic={0.3}
+                      onDragEnd={(_, info) => {
+                        if (info.offset.x < -40 || info.velocity.x < -300) {
+                          handleNextCard();
+                        } else if (info.offset.x > 40 || info.velocity.x > 300) {
+                          handlePrevCard();
+                        }
+                      }}
+                      animate={{
+                        scale: isFront ? 1 : diff === 1 ? 0.93 : 0.86,
+                        y: isFront ? 0 : diff === 1 ? 16 : 30,
+                        rotate: isFront ? 0 : diff === 1 ? 1.5 : -1.5,
+                        opacity: isFront ? 1 : diff === 1 ? 0.75 : 0.45,
+                        zIndex: 30 - diff * 10,
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 350,
+                        damping: 30,
+                      }}
+                      onClick={() => {
+                        if (isFront) {
+                          handleSelectAndEnter(card);
+                        } else {
+                          triggerHaptic();
+                          setActiveCardIndex(idx);
+                        }
+                      }}
+                      className="absolute inset-0 rounded-[24px] p-3.5 bg-slate-900/90 border border-white/20 backdrop-blur-md shadow-[0_20px_45px_rgba(0,0,0,0.65)] flex flex-col justify-between cursor-pointer select-none transform-gpu will-change-transform"
+                      style={{
+                        boxShadow: isFront
+                          ? `0 24px 50px -10px rgba(0,0,0,0.7), 0 0 25px ${card.glowColor}`
+                          : "0 15px 30px -10px rgba(0,0,0,0.5)",
+                      }}
+                    >
+                      {/* Tiêu đề & Tag loại không gian */}
+                      <div className="flex items-center justify-between gap-2 px-1 pt-0.5 pb-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div
+                            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 border border-white/10"
+                            style={{ background: `${card.accentColor}25` }}
+                          >
+                            {card.icon}
+                          </div>
+                          <span className="text-[12px] font-bold tracking-wider uppercase text-white truncate">
+                            {card.displayTitle}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/10 text-white/80 shrink-0">
+                          {card.tag}
+                        </span>
+                      </div>
+
+                      {/* Khung ảnh xem trước không gian học tập */}
+                      <div className="relative flex-1 rounded-[18px] overflow-hidden bg-black/40 border border-white/10 mt-1 mb-2">
+                        <img
+                          src={card.scene.thumbnailUrl || "/thumbnails/journey-through-fantasy-world.webp"}
+                          alt={card.displayTitle}
+                          className="w-full h-full object-cover"
+                          loading="eager"
+                        />
+                        {/* Nhãn click-to-enter trên thẻ trước */}
+                        {isFront && (
+                          <div className="absolute inset-x-0 bottom-0 py-2 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-center gap-1.5 text-white/90 text-[11px] font-medium">
+                            <span>Chạm để vào không gian</span>
+                            <ArrowRightIcon className="w-3 h-3" weight="bold" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Vạch tiến độ nhỏ đáy thẻ */}
+                      <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-300"
+                          style={{
+                            width: `${((activeCardIndex + 1) / totalCards) * 100}%`,
+                            background: card.accentColor,
+                          }}
+                        />
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Điều hướng Next/Prev & Chỉ số trang */}
-            <div className="flex items-center justify-between px-2 pt-1 pb-3">
+            {/* Điều hướng Next/Prev & Dots indicator */}
+            <div className="flex items-center justify-between px-3 pt-1 pb-3">
               <button
                 type="button"
                 onClick={handlePrevCard}
-                className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/70 active:scale-95"
+                className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/80 active:scale-95 transition-transform"
                 aria-label="Không gian trước"
               >
                 <CaretLeftIcon className="w-4 h-4" weight="bold" />
               </button>
 
               {/* Dots indicator */}
-              <div className="flex items-center gap-1.5">
-                {curatedCards.map((_, dotIdx) => (
-                  <span
+              <div className="flex items-center gap-2">
+                {curatedCards.map((card, dotIdx) => (
+                  <button
                     key={dotIdx}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      dotIdx === activeCardIndex ? "w-5 bg-white" : "w-1.5 bg-white/25"
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic();
+                      setActiveCardIndex(dotIdx);
+                    }}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      dotIdx === activeCardIndex ? "w-6 bg-white" : "w-2 bg-white/25"
                     }`}
+                    aria-label={`Chọn ${card.displayTitle}`}
                   />
                 ))}
               </div>
@@ -385,17 +427,17 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
               <button
                 type="button"
                 onClick={handleNextCard}
-                className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/70 active:scale-95"
+                className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/80 active:scale-95 transition-transform"
                 aria-label="Không gian tiếp theo"
               >
                 <CaretRightIcon className="w-4 h-4" weight="bold" />
               </button>
             </div>
 
-            {/* Bottom Dock Navigation nổi ở đáy: Tái thiết kế chuẩn Linear & Apple Design Spec (awesome-design-md) */}
+            {/* Bottom Dock Navigation ở đáy */}
             <div className="pb-3 w-full max-w-[340px] mx-auto select-none">
               <div className="lg-bar h-[54px] p-1.5 flex items-center gap-2 shadow-2xl relative w-full overflow-hidden">
-                {/* Nút phụ: Về trang giới thiệu - Nút pill kính mờ nằm ngang đồng trục */}
+                {/* Nút phụ: Về trang giới thiệu */}
                 <button
                   type="button"
                   onClick={() => {
@@ -411,10 +453,10 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
                   </span>
                 </button>
 
-                {/* Vạch chia hairline quang học tinh tế chuẩn Linear */}
+                {/* Vạch chia hairline */}
                 <div className="h-4 w-[1px] bg-white/15 shrink-0" aria-hidden="true" />
 
-                {/* Nút hành động chính: Vào không gian ngay dạng lg-pill kính lỏng nổi bật */}
+                {/* Nút hành động chính: Vào không gian ngay */}
                 <button
                   type="button"
                   onClick={() => handleSelectAndEnter(activeCard)}
