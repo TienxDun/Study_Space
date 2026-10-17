@@ -14,6 +14,7 @@ import { StudyOnboardingTour } from "@/components/study/tour/StudyOnboardingTour
 import { StudyDesktopLayout } from "@/components/study/layout/StudyDesktopLayout";
 import { StudyMobileLayout } from "@/components/study/layout/StudyMobileLayout";
 import { MobileWelcomeScreen } from "@/components/study/mobile/welcome/MobileWelcomeScreen";
+import { MobileSplashScreen } from "@/components/study/mobile/splash/MobileSplashScreen";
 import { useStudySpaceState } from "@/components/study/hooks/useStudySpaceState";
 
 // Dynamic imports cho các widget đa phương tiện dùng chung
@@ -70,7 +71,10 @@ export default function StudySpacePage() {
       {!state.isMobile && <StudyDesktopLayout state={state} />}
       {state.isMobile && <StudyMobileLayout state={state} hasEntered={hasEntered} />}
 
-      {/* Màn hình chào mừng Welcome / Splash Screen chuyên nghiệp cho Mobile */}
+      {/* Màn hình khởi động Splash Screen chuẩn nhận diện thương hiệu cho Mobile */}
+      {state.isMobile && <MobileSplashScreen />}
+
+      {/* Màn hình chào mừng Welcome / Onboarding Screen chuyên nghiệp cho Mobile */}
       {state.isMobile && (
         <MobileWelcomeScreen
           sceneName={state.currentScene?.name}
