@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { CornersOutIcon, CornersInIcon } from "@phosphor-icons/react";
 import { ZenStudyLogo } from "@/components/study/brand/ZenStudyLogo";
 
@@ -9,6 +10,7 @@ interface MobileTopBarProps {
   isZenMode: boolean;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
+  hasEntered?: boolean;
 }
 
 // Thanh trên mobile: logo, giờ, toàn màn hình. Tài khoản nằm trong bảng Thêm cho thoáng.
@@ -16,6 +18,7 @@ export const MobileTopBar = React.memo(function MobileTopBar({
   isZenMode,
   isFullscreen,
   onToggleFullscreen,
+  hasEntered = true,
 }: MobileTopBarProps) {
   const [time, setTime] = useState("");
 
@@ -33,7 +36,19 @@ export const MobileTopBar = React.memo(function MobileTopBar({
   if (isZenMode) return null;
 
   return (
-    <header className="fixed top-0 inset-x-0 z-40 sm:hidden pt-safe pointer-events-none">
+    <motion.header
+      initial={{ opacity: 0, y: 25 }}
+      animate={{
+        opacity: hasEntered ? 1 : 0,
+        y: hasEntered ? 0 : 25,
+      }}
+      transition={{
+        duration: 0.5,
+        delay: hasEntered ? 0.08 : 0,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      className="fixed top-0 inset-x-0 z-40 sm:hidden pt-safe pointer-events-none"
+    >
       <div className="relative flex items-center justify-between px-4 h-14 pointer-events-auto">
         <Link
           href="/"
@@ -64,6 +79,8 @@ export const MobileTopBar = React.memo(function MobileTopBar({
           </button>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 });
+
+MobileTopBar.displayName = "MobileTopBar";

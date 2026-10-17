@@ -6,6 +6,7 @@ import {
   TelevisionIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
+import Image from "next/image";
 import { Badge } from "@/components/ui/Badge";
 import { StudyEmbedItem } from "../types";
 
@@ -52,10 +53,13 @@ export function EmbedCardItem({
           <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 animate-pulse" />
         )}
         {item.thumbnail && !hasImageError ? (
-          <img
+          <Image
             src={item.thumbnail}
             alt={item.title}
-            className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-300 ${
+            fill
+            unoptimized
+            sizes="(max-width: 640px) 100vw, 50vw"
+            className={`object-cover group-hover:scale-105 transition-all duration-300 ${
               isImageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
             }`}
             onLoad={onImageLoad}

@@ -188,46 +188,65 @@ const TIMER_TABS: TimerTab[] = ["clock", "pomodoro", "stopwatch"];
     touchStartY.current = null;
   };
 
-  // Clock internal options
-  const [internalShowClockSeconds, setInternalShowClockSeconds] = useState(false);
-  const [internalIsClock12Hour, setInternalIsClock12Hour] = useState(false);
+  // Clock internal options (lazy initialization to avoid extra re-renders on mount)
+  const [internalShowClockSeconds] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const savedSec = localStorage.getItem(CLOCK_SECONDS_KEY);
+      return savedSec !== null ? savedSec === "true" : false;
+    } catch {
+      return false;
+    }
+  });
+  const [internalIsClock12Hour] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const saved12h = localStorage.getItem(CLOCK_12HOUR_KEY);
+      return saved12h !== null ? saved12h === "true" : false;
+    } catch {
+      return false;
+    }
+  });
   const showClockSeconds =
     externalShowSeconds !== undefined ? externalShowSeconds : internalShowClockSeconds;
   const isClock12Hour =
     external12Hour !== undefined ? external12Hour : internalIsClock12Hour;
 
   // Stopwatch internal options
-  const [internalShowStopwatchMs, setInternalShowStopwatchMs] = useState(false);
+  const [internalShowStopwatchMs] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const savedMs = localStorage.getItem(STOPWATCH_MS_KEY);
+      return savedMs !== null ? savedMs === "true" : false;
+    } catch {
+      return false;
+    }
+  });
   const showStopwatchMilliseconds =
     externalShowMs !== undefined ? externalShowMs : internalShowStopwatchMs;
 
   // Durations & Sound
-  const [internalDurations, setInternalDurations] = useState<PomodoroDurations>(DEFAULT_DURATIONS);
-  const durations = externalDurations !== undefined ? externalDurations : internalDurations;
-
-  const [internalSoundEnabled, setInternalSoundEnabled] = useState(true);
-  const soundEnabled =
-    externalSound !== undefined ? externalSound : internalSoundEnabled;
-
-  // Restore preferences from LocalStorage
-  useEffect(() => {
+  const [internalDurations] = useState<PomodoroDurations>(() => {
+    if (typeof window === "undefined") return DEFAULT_DURATIONS;
     try {
       const savedDurations = localStorage.getItem(POMO_DURATIONS_KEY);
-      if (savedDurations) setInternalDurations(JSON.parse(savedDurations));
-
-      const savedSound = localStorage.getItem(SOUND_KEY);
-      if (savedSound !== null) setInternalSoundEnabled(savedSound === "true");
-
-      const savedSec = localStorage.getItem(CLOCK_SECONDS_KEY);
-      if (savedSec !== null) setInternalShowClockSeconds(savedSec === "true");
-
-      const saved12h = localStorage.getItem(CLOCK_12HOUR_KEY);
-      if (saved12h !== null) setInternalIsClock12Hour(saved12h === "true");
-
-      const savedMs = localStorage.getItem(STOPWATCH_MS_KEY);
-      if (savedMs !== null) setInternalShowStopwatchMs(savedMs === "true");
+      if (savedDurations) return JSON.parse(savedDurations);
     } catch {}
-  }, []);
+    return DEFAULT_DURATIONS;
+  });
+  const durations = externalDurations !== undefined ? externalDurations : internalDurations;
+
+  const [internalSoundEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      const savedSound = localStorage.getItem(SOUND_KEY);
+      return savedSound !== null ? savedSound === "true" : true;
+    } catch {
+      return true;
+    }
+  });
+  const soundEnabled =
+    externalSound !== undefined ? externalSound : internalSoundEnabled;
 
   // Clock hook
   const { clockDigits, clockPeriod, clockFullDate } = useRealtimeClock({

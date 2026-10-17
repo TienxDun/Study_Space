@@ -56,6 +56,7 @@ export function useStudySpaceState() {
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isPomodoroNavActive, setIsPomodoroNavActive] = useState(false);
 
   // Đồng bộ mở đúng Sheet theo màn hình đỉnh stack mobile
   const syncScreenToStates = useCallback((screen: MobileStackItem | null) => {
@@ -71,6 +72,7 @@ export function useStudySpaceState() {
     setIsMoreOpen(false);
 
     if (!screen) return;
+    setIsPomodoroNavActive(false);
     if (screen.id === "more") setIsMoreOpen(true);
     else if (screen.id === "tasks" || screen.id === "tasks-detail") setIsTasksOpen(true);
     else if (screen.id === "notes" || screen.id === "notes-detail") setIsNotesOpen(true);
@@ -83,6 +85,10 @@ export function useStudySpaceState() {
     else if (screen.id === "music") setIsMixerOpen(true);
   }, []);
 
+  const handleExitZen = useCallback(() => {
+    setIsZenMode(false);
+  }, []);
+
   // Stack navigation cho mobile với đồng bộ hai chiều
   const {
     currentScreen: mobileCurrentScreen,
@@ -93,6 +99,8 @@ export function useStudySpaceState() {
     closeAll: mobileCloseAll,
     openRoot: mobileOpenRoot,
   } = useMobileStack({
+    isZenMode,
+    onExitZen: handleExitZen,
     onStackChange: (current) => {
       syncScreenToStates(current);
     },
@@ -101,6 +109,7 @@ export function useStudySpaceState() {
   const handleMobileCloseAllSheets = useCallback(() => {
     mobileCloseAll();
     syncScreenToStates(null);
+    setIsPomodoroNavActive(false);
   }, [mobileCloseAll, syncScreenToStates]);
 
   const handleMobileBack = useCallback(() => {
@@ -328,6 +337,7 @@ export function useStudySpaceState() {
       try {
         localStorage.setItem(STORAGE_KEYS.pomoVisible, String(next));
       } catch {}
+      setIsPomodoroNavActive(next);
       return next;
     });
   }, []);
@@ -531,11 +541,14 @@ export function useStudySpaceState() {
         if (isAnySheetOpen) {
           handleMobileCloseAllSheets();
           setIsPomodoroVisible(true);
+          setIsPomodoroNavActive(true);
           return;
         }
         handleTogglePomodoroVisibility();
         return;
       }
+
+      setIsPomodoroNavActive(false);
 
       const isMoreGroupActive =
         isMoreOpen ||
@@ -745,7 +758,10 @@ export function useStudySpaceState() {
     ) {
       return "more";
     }
-    return isPomodoroVisible ? "pomodoro" : null;
+    if (isPomodoroNavActive) {
+      return "pomodoro";
+    }
+    return null;
   }, [
     mobileCurrentScreen,
     isTasksOpen,
@@ -758,142 +774,254 @@ export function useStudySpaceState() {
     isChatOpen,
     isStatsOpen,
     isSettingsOpen,
-    isPomodoroVisible,
+    isPomodoroNavActive,
   ]);
 
-  return {
-    // Scene & Background
-    currentScene,
-    pendingScene,
-    isPreloadingScene,
-    handleSelectScene,
-    isSlideshowOn,
-    slideshowIntervalMin,
-    slideshowPool,
-    isSlideshowPoolFavorites,
-    handleToggleSlideshow,
-    handleCycleSlideshowInterval,
+  return useMemo(
+    () => ({
+      // Scene & Background
+      currentScene,
+      pendingScene,
+      isPreloadingScene,
+      handleSelectScene,
+      isSlideshowOn,
+      slideshowIntervalMin,
+      slideshowPool,
+      isSlideshowPoolFavorites,
+      handleToggleSlideshow,
+      handleCycleSlideshowInterval,
 
-    // Layout & Display Mode
-    isFullscreen,
-    toggleFullscreen,
-    isGlobalMuted,
-    toggleGlobalMute,
-    setGlobalMute,
-    isZenMode,
-    setIsZenMode,
-    isMobile,
-    isAnyModalOpen,
+      // Layout & Display Mode
+      isFullscreen,
+      toggleFullscreen,
+      isGlobalMuted,
+      toggleGlobalMute,
+      setGlobalMute,
+      isZenMode,
+      setIsZenMode,
+      isMobile,
+      isAnyModalOpen,
 
-    // Centerpiece Pomodoro & Timer
-    isPomodoroVisible,
-    setIsPomodoroVisible,
-    centerTab,
-    setCenterTab,
-    handleToggleClock,
-    handleTogglePomodoroVisibility,
-    handleWidgetToggleVisibility,
-    isTimerRunning,
-    setIsTimerRunning,
+      // Centerpiece Pomodoro & Timer
+      isPomodoroVisible,
+      setIsPomodoroVisible,
+      centerTab,
+      setCenterTab,
+      handleToggleClock,
+      handleTogglePomodoroVisibility,
+      handleWidgetToggleVisibility,
+      isTimerRunning,
+      setIsTimerRunning,
 
-    // Settings
-    isSettingsOpen,
-    setIsSettingsOpen,
-    handleOpenSettings,
-    handleCloseSettings,
-    handleToggleSettings,
-    showClockSeconds,
-    handleToggleClockSeconds,
-    isClock12Hour,
-    handleToggleClock12Hour,
-    showStopwatchMilliseconds,
-    handleToggleStopwatchMilliseconds,
-    pomodoroDurations,
-    handleSavePomodoroDurations,
-    soundEnabled,
-    handleToggleSound,
-    soundType,
-    handleSelectSoundType,
-    keepAwake,
-    handleToggleKeepAwake,
-    wakeLockSupported,
+      // Settings
+      isSettingsOpen,
+      setIsSettingsOpen,
+      handleOpenSettings,
+      handleCloseSettings,
+      handleToggleSettings,
+      showClockSeconds,
+      handleToggleClockSeconds,
+      isClock12Hour,
+      handleToggleClock12Hour,
+      showStopwatchMilliseconds,
+      handleToggleStopwatchMilliseconds,
+      pomodoroDurations,
+      handleSavePomodoroDurations,
+      soundEnabled,
+      handleToggleSound,
+      soundType,
+      handleSelectSoundType,
+      keepAwake,
+      handleToggleKeepAwake,
+      wakeLockSupported,
 
-    // Widgets
-    isTasksOpen,
-    setIsTasksOpen,
-    handleToggleTasks,
+      // Widgets
+      isTasksOpen,
+      setIsTasksOpen,
+      handleToggleTasks,
 
-    isNotesOpen,
-    setIsNotesOpen,
-    handleToggleNotes,
+      isNotesOpen,
+      setIsNotesOpen,
+      handleToggleNotes,
 
-    isScenesOpen,
-    setIsScenesOpen,
-    handleToggleScenes,
+      isScenesOpen,
+      setIsScenesOpen,
+      handleToggleScenes,
 
-    isMixerOpen,
-    setIsMixerOpen,
-    handleToggleMixer,
-    handleCloseMixer,
+      isMixerOpen,
+      setIsMixerOpen,
+      handleToggleMixer,
+      handleCloseMixer,
 
-    isEmbedPlayerOpen,
-    setIsEmbedPlayerOpen,
-    handleToggleEmbed,
-    handleOpenEmbedRoot,
-    handleCloseEmbed,
+      isEmbedPlayerOpen,
+      setIsEmbedPlayerOpen,
+      handleToggleEmbed,
+      handleOpenEmbedRoot,
+      handleCloseEmbed,
 
-    isExternalStreamActive,
-    setIsExternalStreamActive,
-    externalActiveItem,
-    setExternalActiveItem,
-    handleStopExternalStream,
+      isExternalStreamActive,
+      setIsExternalStreamActive,
+      externalActiveItem,
+      setExternalActiveItem,
+      handleStopExternalStream,
 
-    isPipActive,
-    setIsPipActive,
+      isPipActive,
+      setIsPipActive,
 
-    isShortcutsHelpOpen,
-    setIsShortcutsHelpOpen,
-    handleToggleShortcutsHelp,
+      isShortcutsHelpOpen,
+      setIsShortcutsHelpOpen,
+      handleToggleShortcutsHelp,
 
-    isTourOpen,
-    setIsTourOpen,
+      isTourOpen,
+      setIsTourOpen,
 
-    isCommandOpen,
-    setIsCommandOpen,
-    commandActions,
+      isCommandOpen,
+      setIsCommandOpen,
+      commandActions,
 
-    isRoomsOpen,
-    setIsRoomsOpen,
+      isRoomsOpen,
+      setIsRoomsOpen,
 
-    isChatOpen,
-    setIsChatOpen,
+      isChatOpen,
+      setIsChatOpen,
 
-    isStatsOpen,
-    setIsStatsOpen,
+      isStatsOpen,
+      setIsStatsOpen,
 
-    // Mobile Navigation & Sheets
-    isMoreOpen,
-    setIsMoreOpen,
-    mobileCurrentScreen,
-    mobileCanGoBack,
-    mobilePrevScreen,
-    mobilePush,
-    mobilePop,
-    mobileOpenRoot,
-    handleMobileBack,
-    handleMobileCloseAllSheets,
-    handleOpenTasksDetail,
-    handleOpenNotesDetail,
-    handleCloseDetail,
-    handleOpenChatRoot,
-    handleOpenScenesRoot,
-    handleOpenRoomsRoot,
-    handleOpenRadioRoot,
-    handleOpenStatsRoot,
-    handleMobileNavSelect,
-    handleMoreSelect,
-    activeNavTab,
-  };
+      // Mobile Navigation & Sheets
+      isMoreOpen,
+      setIsMoreOpen,
+      mobileCurrentScreen,
+      mobileCanGoBack,
+      mobilePrevScreen,
+      mobilePush,
+      mobilePop,
+      mobileOpenRoot,
+      handleMobileBack,
+      handleMobileCloseAllSheets,
+      handleOpenTasksDetail,
+      handleOpenNotesDetail,
+      handleCloseDetail,
+      handleOpenChatRoot,
+      handleOpenScenesRoot,
+      handleOpenRoomsRoot,
+      handleOpenRadioRoot,
+      handleOpenStatsRoot,
+      handleMobileNavSelect,
+      handleMoreSelect,
+      activeNavTab,
+    }),
+    [
+      currentScene,
+      pendingScene,
+      isPreloadingScene,
+      handleSelectScene,
+      isSlideshowOn,
+      slideshowIntervalMin,
+      slideshowPool,
+      isSlideshowPoolFavorites,
+      handleToggleSlideshow,
+      handleCycleSlideshowInterval,
+      isFullscreen,
+      toggleFullscreen,
+      isGlobalMuted,
+      toggleGlobalMute,
+      setGlobalMute,
+      isZenMode,
+      setIsZenMode,
+      isMobile,
+      isAnyModalOpen,
+      isPomodoroVisible,
+      setIsPomodoroVisible,
+      centerTab,
+      setCenterTab,
+      handleToggleClock,
+      handleTogglePomodoroVisibility,
+      handleWidgetToggleVisibility,
+      isTimerRunning,
+      setIsTimerRunning,
+      isSettingsOpen,
+      setIsSettingsOpen,
+      handleOpenSettings,
+      handleCloseSettings,
+      handleToggleSettings,
+      showClockSeconds,
+      handleToggleClockSeconds,
+      isClock12Hour,
+      handleToggleClock12Hour,
+      showStopwatchMilliseconds,
+      handleToggleStopwatchMilliseconds,
+      pomodoroDurations,
+      handleSavePomodoroDurations,
+      soundEnabled,
+      handleToggleSound,
+      soundType,
+      handleSelectSoundType,
+      keepAwake,
+      handleToggleKeepAwake,
+      wakeLockSupported,
+      isTasksOpen,
+      setIsTasksOpen,
+      handleToggleTasks,
+      isNotesOpen,
+      setIsNotesOpen,
+      handleToggleNotes,
+      isScenesOpen,
+      setIsScenesOpen,
+      handleToggleScenes,
+      isMixerOpen,
+      setIsMixerOpen,
+      handleToggleMixer,
+      handleCloseMixer,
+      isEmbedPlayerOpen,
+      setIsEmbedPlayerOpen,
+      handleToggleEmbed,
+      handleOpenEmbedRoot,
+      handleCloseEmbed,
+      isExternalStreamActive,
+      setIsExternalStreamActive,
+      externalActiveItem,
+      setExternalActiveItem,
+      handleStopExternalStream,
+      isPipActive,
+      setIsPipActive,
+      isShortcutsHelpOpen,
+      setIsShortcutsHelpOpen,
+      handleToggleShortcutsHelp,
+      isTourOpen,
+      setIsTourOpen,
+      isCommandOpen,
+      setIsCommandOpen,
+      commandActions,
+      isRoomsOpen,
+      setIsRoomsOpen,
+      isChatOpen,
+      setIsChatOpen,
+      isStatsOpen,
+      setIsStatsOpen,
+      isMoreOpen,
+      setIsMoreOpen,
+      mobileCurrentScreen,
+      mobileCanGoBack,
+      mobilePrevScreen,
+      mobilePush,
+      mobilePop,
+      mobileOpenRoot,
+      handleMobileBack,
+      handleMobileCloseAllSheets,
+      handleOpenTasksDetail,
+      handleOpenNotesDetail,
+      handleCloseDetail,
+      handleOpenChatRoot,
+      handleOpenScenesRoot,
+      handleOpenRoomsRoot,
+      handleOpenRadioRoot,
+      handleOpenStatsRoot,
+      handleMobileNavSelect,
+      handleMoreSelect,
+      activeNavTab,
+    ]
+  );
 }
 
 export type StudySpaceState = ReturnType<typeof useStudySpaceState>;

@@ -82,7 +82,7 @@ const TopBarClockButton = ({
       onClick={onToggleClock}
       className={`absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 h-9 inline-flex items-center justify-center px-2.5 sm:px-3 rounded-xl pointer-events-auto group cursor-pointer active:scale-95 will-change-transform transition-all duration-200 select-none ${
         isPomodoroVisible && centerTab === "clock"
-          ? "text-accent-music-bright drop-shadow-[0_0_14px_rgba(52,211,153,0.7)] glass-hover"
+          ? "text-accent-music-bright bg-white/[0.08] border border-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_4px_16px_rgba(0,0,0,0.4)]"
           : "text-slate-100 hover:text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] glass-hover"
       }`}
       title={

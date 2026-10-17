@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { CircleNotchIcon } from "@phosphor-icons/react";
@@ -12,6 +13,7 @@ import { StudyShortcutsModal } from "@/components/study/StudyShortcutsModal";
 import { StudyOnboardingTour } from "@/components/study/tour/StudyOnboardingTour";
 import { StudyDesktopLayout } from "@/components/study/layout/StudyDesktopLayout";
 import { StudyMobileLayout } from "@/components/study/layout/StudyMobileLayout";
+import { MobileWelcomeScreen } from "@/components/study/mobile/welcome/MobileWelcomeScreen";
 import { useStudySpaceState } from "@/components/study/hooks/useStudySpaceState";
 
 // Dynamic imports cho các widget đa phương tiện dùng chung
@@ -27,6 +29,16 @@ const StudyRoomsWidget = dynamic(
 
 export default function StudySpacePage() {
   const state = useStudySpaceState();
+
+  // Kiểm soát hiệu ứng hiển thị tuần tự (Fly in from bottom) khi vào trang chính
+  const [hasEntered, setHasEntered] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      return Boolean(sessionStorage.getItem("zenstudy_mobile_welcome_completed"));
+    } catch {
+      return true;
+    }
+  });
 
   return (
     <div className="fixed inset-0 sm:relative sm:w-screen sm:h-dvh overflow-hidden bg-slate-950 text-white select-none font-sans">
@@ -56,28 +68,51 @@ export default function StudySpacePage() {
 
       {/* Phân tách 2 tầng hiển thị rõ ràng */}
       {!state.isMobile && <StudyDesktopLayout state={state} />}
-      {state.isMobile && <StudyMobileLayout state={state} />}
+      {state.isMobile && <StudyMobileLayout state={state} hasEntered={hasEntered} />}
 
-      {/* Khu vực Đồng hồ Pomodoro trung tâm */}
+      {/* Màn hình chào mừng Welcome / Splash Screen chuyên nghiệp cho Mobile */}
+      {state.isMobile && (
+        <MobileWelcomeScreen
+          sceneName={state.currentScene?.name}
+          onSelectScene={state.handleSelectScene}
+          onStart={() => setHasEntered(true)}
+        />
+      )}
+
+      {/* Khu vực Đồng hồ Pomodoro trung tâm - Hiệu ứng trượt từ dưới lên (Fly in from bottom) */}
       <main className="relative z-10 w-full h-full flex flex-col items-center justify-center pointer-events-none px-4 pb-14 mobile-content-safe">
         <StudySeoSemanticContent />
-        <MobilePomodoroView
-          className={state.centerTab === "stopwatch" ? "stopwatch-pin-top" : undefined}
+        <motion.div
+          initial={{ opacity: 0, y: 35 }}
+          animate={{
+            opacity: state.isMobile ? (hasEntered ? 1 : 0) : 1,
+            y: state.isMobile ? (hasEntered ? 0 : 35) : 0,
+          }}
+          transition={{
+            duration: 0.55,
+            delay: state.isMobile && hasEntered ? 0.22 : 0,
+            ease: [0.16, 1, 0.3, 1],
+          }}
+          className="w-full flex justify-center pointer-events-none"
         >
-          <StudyPomodoroWidget
-            isVisible={state.isPomodoroVisible}
-            activeTab={state.centerTab}
-            onTabChange={state.setCenterTab}
-            onToggleVisibility={state.handleWidgetToggleVisibility}
-            onRunningChange={state.setIsTimerRunning}
-            showClockSeconds={state.showClockSeconds}
-            isClock12Hour={state.isClock12Hour}
-            showStopwatchMilliseconds={state.showStopwatchMilliseconds}
-            durations={state.pomodoroDurations}
-            soundEnabled={state.soundEnabled}
-            soundType={state.soundType}
-          />
-        </MobilePomodoroView>
+          <MobilePomodoroView
+            className={state.centerTab === "stopwatch" ? "stopwatch-pin-top" : undefined}
+          >
+            <StudyPomodoroWidget
+              isVisible={state.isPomodoroVisible}
+              activeTab={state.centerTab}
+              onTabChange={state.setCenterTab}
+              onToggleVisibility={state.handleWidgetToggleVisibility}
+              onRunningChange={state.setIsTimerRunning}
+              showClockSeconds={state.showClockSeconds}
+              isClock12Hour={state.isClock12Hour}
+              showStopwatchMilliseconds={state.showStopwatchMilliseconds}
+              durations={state.pomodoroDurations}
+              soundEnabled={state.soundEnabled}
+              soundType={state.soundType}
+            />
+          </MobilePomodoroView>
+        </motion.div>
       </main>
 
       {/* Trình phát nhạc nền Lo-fi (Luôn giữ mounted để không ngắt nhạc khi ẩn UI) */}
@@ -95,6 +130,7 @@ export default function StudySpacePage() {
         onCloseMixer={state.handleCloseMixer}
         onBack={state.isMobile && state.mobileCanGoBack ? state.handleMobileBack : undefined}
         backLabel={state.isMobile && state.mobileCanGoBack ? state.mobilePrevScreen?.title : undefined}
+        hasEntered={state.isMobile ? hasEntered : true}
       />
 
       {/* Đài phát video YouTube & Spotify (Dùng chung cho cả 2 layout) */}

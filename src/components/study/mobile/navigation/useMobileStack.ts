@@ -16,12 +16,17 @@ export interface MobileStackItem {
  */
 interface UseMobileStackOptions {
   onStackChange?: (current: MobileStackItem | null, stack: MobileStackItem[]) => void;
+  isZenMode?: boolean;
+  onExitZen?: () => void;
 }
 
 export function useMobileStack(options?: UseMobileStackOptions) {
   const [stack, setStack] = useState<MobileStackItem[]>([]);
   const stackRef = useRef<MobileStackItem[]>([]);
   const onStackChangeRef = useRef(options?.onStackChange);
+  const isZenModeRef = useRef(options?.isZenMode || false);
+  const onExitZenRef = useRef(options?.onExitZen);
+  const lastZenBackTimeRef = useRef<number>(0);
 
   // Cập nhật ref trong effect để không vi phạm quy tắc render thuần của React
   useEffect(() => {
@@ -31,6 +36,14 @@ export function useMobileStack(options?: UseMobileStackOptions) {
   useEffect(() => {
     onStackChangeRef.current = options?.onStackChange;
   }, [options?.onStackChange]);
+
+  useEffect(() => {
+    isZenModeRef.current = Boolean(options?.isZenMode);
+  }, [options?.isZenMode]);
+
+  useEffect(() => {
+    onExitZenRef.current = options?.onExitZen;
+  }, [options?.onExitZen]);
 
   // Số lượng history entry đã push vào window.history bởi mobile stack
   const historyEntriesCountRef = useRef(0);
@@ -194,7 +207,32 @@ export function useMobileStack(options?: UseMobileStackOptions) {
         return;
       }
 
-      // 4. Nếu đang ở màn hình chính (không có sheet nào mở):
+      // 4. Nếu đang ở chế độ Zen Mode:
+      // Bấm Back 2 lần trong vòng 2 giây để thoát Zen Mode (lần 1 nhắc nhở, lần 2 thoát Zen)
+      if (isZenModeRef.current) {
+        const now = Date.now();
+        const timeDiff = now - lastZenBackTimeRef.current;
+
+        if (timeDiff <= 2000) {
+          // Lần back thứ 2 trong 2s -> thoát Zen Mode
+          lastZenBackTimeRef.current = 0;
+          toast.dismiss("back-to-exit-zen-toast");
+          ensureRootHistoryGuard();
+          onExitZenRef.current?.();
+        } else {
+          // Lần back đầu tiên -> Chặn thoát, hiện toast nhắc nhở và khôi phục guard state
+          lastZenBackTimeRef.current = now;
+          ensureRootHistoryGuard();
+          toast("Nhấn Back lần nữa để thoát chế độ Zen", {
+            id: "back-to-exit-zen-toast",
+            duration: 2000,
+            position: "bottom-center",
+          });
+        }
+        return;
+      }
+
+      // 5. Nếu đang ở màn hình chính (không có sheet nào mở và không ở Zen Mode):
       // Áp dụng cơ chế "Bấm Back 2 lần trong vòng 2 giây để thoát"
       const now = Date.now();
       const timeDiff = now - lastRootBackTimeRef.current;

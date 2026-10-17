@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { CircleNotchIcon, SignOutIcon } from "@phosphor-icons/react";
 import { useAuth } from "@/lib/use-auth";
 import { GoogleIcon } from "@/components/study/auth/components/GoogleIcon";
@@ -51,12 +52,14 @@ export function MobileAccountCard() {
   return (
     <div className="min-h-[48px] flex items-center gap-3 px-3">
       {user.photoURL && !avatarError ? (
-        <img
+        <Image
           src={user.photoURL}
           alt={user.displayName || "Avatar"}
+          width={44}
+          height={44}
+          unoptimized
           className="w-11 h-11 rounded-2xl object-cover border border-white/20 shrink-0"
           onError={() => setAvatarError(true)}
-          referrerPolicy="no-referrer"
         />
       ) : (
         <span className="w-11 h-11 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-base font-bold flex items-center justify-center shrink-0">

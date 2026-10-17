@@ -4,6 +4,7 @@ import {
   CornersOutIcon,
   XIcon,
 } from "@phosphor-icons/react";
+import Image from "next/image";
 import { StudyEmbedItem } from "../types";
 import { MascotFace } from "@/components/study/mascot/MascotFace";
 
@@ -49,13 +50,13 @@ export function ExternalStreamBanner({
             }`}
           >
             {externalStreamItem.thumbnail ? (
-              <img
+              <Image
                 src={externalStreamItem.thumbnail.replace("/hqdefault.jpg", "/mqdefault.jpg")}
                 alt={externalStreamItem.title}
-                width={48}
-                height={48}
-                loading="lazy"
-                className="w-full h-full object-cover scale-[1.38]"
+                fill
+                unoptimized
+                sizes="48px"
+                className="object-cover scale-[1.38]"
               />
             ) : (
               <div className="w-full h-full bg-slate-800 flex items-center justify-center" />

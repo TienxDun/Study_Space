@@ -1,6 +1,7 @@
 "use client";
 
 import { memo } from "react";
+import Image from "next/image";
 import {
   PlayIcon,
   PauseIcon,
@@ -68,12 +69,12 @@ export const MusicTabContent = memo(function MusicTabContent({
               <button
                 key={mood.key}
                 onClick={() => onSelectMood(mood.key as MoodType)}
-                className={`flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl transition-all active:scale-95 cursor-pointer ${
+                className={`flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl transition-all active:scale-95 cursor-pointer backdrop-blur-md border ${
                   isSelected
                     ? isMobile
-                      ? "lg-tab-active"
+                      ? "bg-white/20 border-white/30 text-white font-semibold shadow-sm"
                       : "border bg-emerald-600/90 text-white border-emerald-400 shadow-lg shadow-emerald-500/20 font-bold"
-                    : "lg-tab-inactive"
+                    : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white font-medium"
                 }`}
               >
                 <Icon className={`w-5 h-5 ${isSelected ? "text-white" : mood.color}`} />
@@ -93,10 +94,13 @@ export const MusicTabContent = memo(function MusicTabContent({
         {/* Track Header & Artwork */}
         <div className="relative z-10 flex items-center gap-3.5 mb-3.5">
           <div className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-xl shrink-0 bg-slate-800 border border-white/20 group">
-            <img
+            <Image
               src={currentTrack.cover}
               alt={currentTrack.title}
-              className={`w-full h-full object-cover transition-transform duration-700 ${
+              fill
+              unoptimized
+              sizes="64px"
+              className={`object-cover transition-transform duration-700 ${
                 isPlaying ? "scale-105" : "scale-100"
               }`}
             />
@@ -212,8 +216,15 @@ export const MusicTabContent = memo(function MusicTabContent({
                     : "bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-transparent"
                 }`}
               >
-                <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 bg-slate-800 border border-white/10">
-                  <img src={t.cover} alt={t.title} className="w-full h-full object-cover" />
+                <div className="relative w-8 h-8 rounded-xl overflow-hidden shrink-0 bg-slate-800 border border-white/10">
+                  <Image
+                    src={t.cover}
+                    alt={t.title}
+                    fill
+                    unoptimized
+                    sizes="32px"
+                    className="object-cover"
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold truncate leading-tight">{t.title}</p>

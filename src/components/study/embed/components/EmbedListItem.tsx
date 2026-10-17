@@ -4,6 +4,7 @@ import {
   PlayIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
+import Image from "next/image";
 import { StudyEmbedItem } from "../types";
 
 interface EmbedListItemProps {
@@ -50,10 +51,13 @@ export function EmbedListItem({
             <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 animate-pulse" />
           )}
           {item.thumbnail && !hasImageError ? (
-            <img
+            <Image
               src={item.thumbnail}
               alt={item.title}
-              className={`w-full h-full object-cover ${
+              fill
+              unoptimized
+              sizes="40px"
+              className={`object-cover ${
                 isImageLoaded ? "opacity-100" : "opacity-0"
               }`}
               onLoad={onImageLoad}
