@@ -210,3 +210,5 @@ src/app/admin/
 src/app/api/
 src/data/assets/backups/
 bg-asset-studio-plan.md
+tools/
+*_frames/

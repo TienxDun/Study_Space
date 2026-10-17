@@ -84,7 +84,7 @@ describe("Mobile Nav Active State Resolution", () => {
     isChatOpen?: boolean;
     isStatsOpen?: boolean;
     isSettingsOpen?: boolean;
-    isPomodoroVisible?: boolean;
+    isPomodoroNavActive?: boolean;
   }) => {
     return state.isTasksOpen
       ? "tasks"
@@ -100,14 +100,17 @@ describe("Mobile Nav Active State Resolution", () => {
               state.isStatsOpen ||
               state.isSettingsOpen
             ? "more"
-            : state.isPomodoroVisible
+            : state.isPomodoroNavActive
               ? "pomodoro"
               : null;
   };
 
-  it("resolves to 'pomodoro' when clock is visible and null when clock is hidden", () => {
-    expect(resolveActiveNav({ isPomodoroVisible: false })).toBeNull();
-    expect(resolveActiveNav({ isPomodoroVisible: true })).toBe("pomodoro");
+  it("resolves to null when no sheet is open and clock tab is not selected (initial mobile access)", () => {
+    expect(resolveActiveNav({})).toBeNull();
+  });
+
+  it("resolves to 'pomodoro' when pomodoro nav tab is actively selected", () => {
+    expect(resolveActiveNav({ isPomodoroNavActive: true })).toBe("pomodoro");
   });
 
   it("resolves to 'tasks' when tasks sheet is open", () => {

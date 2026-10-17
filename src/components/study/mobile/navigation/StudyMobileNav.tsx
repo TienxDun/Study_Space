@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { motion } from "framer-motion";
 import { TimerIcon, CheckSquareIcon, NotePencilIcon, MusicNoteIcon, DotsThreeIcon } from "@phosphor-icons/react";
 import type { MobileNavId } from "./types";
 import { MobileNavItem } from "./MobileNavItem";
@@ -10,6 +11,7 @@ import { cn } from "@/lib/utils";
 interface StudyMobileNavProps {
   active: string | null;
   onSelect: (id: MobileNavId) => void;
+  hasEntered?: boolean;
 }
 
 const ITEMS: { id: MobileNavId; label: string; icon: (active: boolean) => React.ReactNode }[] = [
@@ -69,6 +71,7 @@ const ITEMS: { id: MobileNavId; label: string; icon: (active: boolean) => React.
 export const StudyMobileNav = React.memo(function StudyMobileNav({
   active,
   onSelect,
+  hasEntered = true,
 }: StudyMobileNavProps) {
   const cachedRectRef = useRef<DOMRect | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -108,8 +111,18 @@ export const StudyMobileNav = React.memo(function StudyMobileNav({
   }, []);
 
   const navContent = (
-    <nav
+    <motion.nav
       aria-label="Điều hướng mobile"
+      initial={{ opacity: 0, y: 45 }}
+      animate={{
+        opacity: hasEntered ? 1 : 0,
+        y: hasEntered ? 0 : 45,
+      }}
+      transition={{
+        duration: 0.55,
+        delay: hasEntered ? 0.48 : 0,
+        ease: [0.16, 1, 0.3, 1],
+      }}
       className="fixed inset-x-0 bottom-0 z-[70] sm:hidden bottom-nav-safe pointer-events-none"
     >
       <div className="relative mx-3 pointer-events-auto">
@@ -139,7 +152,7 @@ export const StudyMobileNav = React.memo(function StudyMobileNav({
           <span aria-hidden="true" className="lg-spot" />
         </div>
       </div>
-    </nav>
+    </motion.nav>
   );
 
   if (!mounted || typeof document === "undefined" || !document.body) {

@@ -399,17 +399,16 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                   className="w-full text-base sm:text-lg font-bold bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-white/25 text-white tracking-tight px-1 py-0.5 rounded-lg hover:bg-white/[0.04] focus:bg-white/[0.06] transition-colors resize-none overflow-y-auto leading-snug max-h-16"
                 />
 
-                {/* Dòng metadata hỗ trợ học tập & Nút Hỏi AI */}
+                {/* Dòng metadata hỗ trợ học tập & Nút Hỏi AI - Tinh giản chuẩn awesome-design-md */}
                 <div className="flex items-center justify-between gap-2 px-1 text-[11px] font-medium text-white/50 select-none">
-                  <div className="flex items-center gap-2 min-w-0 truncate">
+                  <div className="flex items-center gap-1.5 min-w-0 truncate">
                     {currentEditingNote.isPinned && (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-400/15 text-amber-300 border border-amber-400/25 text-[10px] font-semibold shrink-0">
-                        <PushPinIcon className="w-2.5 h-2.5" weight="fill" />
-                        <span>Đã ghim</span>
-                      </span>
+                      <PushPinIcon
+                        className="w-3 h-3 text-amber-400/90 shrink-0"
+                        weight="fill"
+                        title="Đã ghim"
+                      />
                     )}
-                    <span>Cập nhật {lastSavedTime === "Vừa xong" ? "vừa xong" : lastSavedTime}</span>
-                    <span className="opacity-40">•</span>
                     <span>{richWordCount} từ</span>
                     {checklistStats.total > 0 && (
                       <>
@@ -417,8 +416,8 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                         <span
                           className={
                             checklistStats.done === checklistStats.total
-                              ? "text-emerald-400 font-semibold"
-                              : "text-white/70"
+                              ? "text-emerald-400 font-medium"
+                              : "text-white/60"
                           }
                         >
                           {checklistStats.done}/{checklistStats.total} xong
@@ -427,22 +426,22 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                     )}
                   </div>
 
-                  {/* Nút Hỏi AI nổi bật, tinh tế, bo tròn chuẩn pill */}
+                  {/* Nút Hỏi AI: Ghost Glass Button tinh tế, gọn gàng */}
                   <div className="relative shrink-0">
                     <button
                       type="button"
                       onClick={() => setShowAiPromptMenu((prev) => !prev)}
-                      className={`flex items-center gap-1.5 h-7 px-2.5 rounded-full text-xs font-semibold transition-all border active:scale-95 shadow-sm shrink-0 cursor-pointer ${
+                      className={`flex items-center gap-1 h-6 px-2.5 rounded-full text-[11px] font-medium transition-all border active:scale-95 cursor-pointer backdrop-blur-md ${
                         showAiPromptMenu
-                          ? "bg-emerald-500/25 border-emerald-500/40 text-emerald-300"
-                          : "bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/20 text-emerald-400"
+                          ? "bg-white/15 border-white/25 text-emerald-300 shadow-sm"
+                          : "bg-white/5 hover:bg-white/10 border-white/10 text-emerald-400 hover:text-emerald-300"
                       }`}
                       title="Gửi nội dung ghi chú vào Trợ lý AI"
                     >
-                      <SparkleIcon weight="fill" className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <SparkleIcon weight="fill" className="w-3 h-3 text-emerald-400 shrink-0" />
                       <span className="whitespace-nowrap">Hỏi AI</span>
                       <CaretDownIcon
-                        className={`w-3 h-3 opacity-70 transition-transform duration-200 ${
+                        className={`w-2.5 h-2.5 opacity-60 transition-transform duration-200 ${
                           showAiPromptMenu ? "rotate-180" : ""
                         }`}
                       />

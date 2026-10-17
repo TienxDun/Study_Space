@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, memo } from "react";
+import Image from "next/image";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import {
@@ -30,6 +31,7 @@ export const StudyMusicPlayer = memo(function StudyMusicPlayer({
   isZenMode = false,
   onBack,
   backLabel,
+  hasEntered = true,
 }: StudyMusicPlayerProps) {
   const [internalIsMixerOpen, setInternalIsMixerOpen] = useState(false);
   const [activeMixerTab, setActiveMixerTab] = useState<MixerTab>("ambience");
@@ -251,10 +253,13 @@ export const StudyMusicPlayer = memo(function StudyMusicPlayer({
                   isPlaying ? "animate-[spin_10s_linear_infinite]" : ""
                 }`}
               >
-                <img
+                <Image
                   src={currentTrack?.cover || "/study/thumbnails/coffee-shop.PNG"}
                   alt={currentTrack?.title || "Track Cover"}
-                  className="w-full h-full object-cover scale-[1.1]"
+                  fill
+                  unoptimized
+                  sizes="48px"
+                  className="object-cover scale-[1.1]"
                 />
                 {/* Subtle Vinyl Grooves Rings */}
                 <div className="absolute inset-0 rounded-full border border-white/15 pointer-events-none" />
@@ -291,12 +296,17 @@ export const StudyMusicPlayer = memo(function StudyMusicPlayer({
       {/* 2. Playback Controller Island: Căn giữa đáy màn hình (Thuần túy không viền không hộp) */}
       <motion.div
         id="tour-music-player"
+        initial={{ opacity: 0, y: 35 }}
         animate={{
-          opacity: isZenMode ? 0 : 1,
-          y: isZenMode ? 32 : 0,
-          pointerEvents: isZenMode ? "none" : "auto",
+          opacity: isZenMode ? 0 : hasEntered ? 1 : 0,
+          y: isZenMode ? 32 : hasEntered ? 0 : 35,
+          pointerEvents: isZenMode || !hasEntered ? "none" : "auto",
         }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
+        transition={{
+          duration: 0.55,
+          delay: hasEntered ? 0.34 : 0,
+          ease: [0.16, 1, 0.3, 1],
+        }}
         className={`fixed z-40 select-none will-change-transform transition-[bottom] duration-300 ease-out ${
           isShowingExternalStream && externalStreamItem
             ? "left-3 right-[72px] sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:bottom-3.5 max-w-[calc(100vw-24px)] sm:max-w-[calc(100vw-24px)]"

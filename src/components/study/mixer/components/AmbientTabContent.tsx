@@ -44,12 +44,12 @@ export const AmbientTabContent = memo(function AmbientTabContent({
               <button
                 key={preset.label}
                 onClick={() => onTogglePreset(preset.recipe)}
-                className={`relative flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-2xl transition-all text-center group active:scale-95 cursor-pointer ${
+                className={`relative flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-2xl transition-all text-center group active:scale-95 cursor-pointer backdrop-blur-md border ${
                   isActive
                     ? isMobile
-                      ? "lg-tab-active"
+                      ? "bg-white/20 border-white/30 text-white font-semibold shadow-sm"
                       : "border shadow-sm bg-emerald-500/25 border-emerald-400/60 text-emerald-300 ring-1 ring-emerald-400/40 shadow-[0_0_12px_rgba(52,211,153,0.3)] font-bold"
-                    : "lg-tab-inactive"
+                    : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white font-medium"
                 }`}
                 title={isActive ? "Bấm để tắt" : "Bấm để bật"}
               >

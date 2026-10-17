@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
+import { toast } from "sonner";
 import type { StudySpaceState } from "@/components/study/hooks/useStudySpaceState";
 import { MobileTopBar } from "@/components/study/mobile/top/MobileTopBar";
 import { StudyMobileNav } from "@/components/study/mobile/navigation/StudyMobileNav";
 import { MobileRadialBubbleMenu } from "@/components/study/mobile/navigation/MobileRadialBubbleMenu";
-import { MobileWelcomeScreen } from "@/components/study/mobile/welcome/MobileWelcomeScreen";
+import { useMobileDoubleTap } from "@/components/study/mobile/hooks/useMobileDoubleTap";
 // Dynamic imports cho các bảng chức năng mobile để giảm tải RAM ban đầu
 const MobileTasksSheet = dynamic(
   () => import("@/components/study/mobile/sheets/MobileTasksSheet").then((mod) => mod.MobileTasksSheet),
@@ -40,13 +41,16 @@ const MobileChatSheet = dynamic(
 
 interface StudyMobileLayoutProps {
   state: StudySpaceState;
+  hasEntered?: boolean;
 }
 
 export const StudyMobileLayout = React.memo(function StudyMobileLayout({
   state,
+  hasEntered = true,
 }: StudyMobileLayoutProps) {
   const {
     isZenMode,
+    setIsZenMode,
     isFullscreen,
     toggleFullscreen,
     isTasksOpen,
@@ -114,16 +118,53 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
     });
   }, [isTasksOpen, isNotesOpen, isScenesOpen, isSettingsOpen, isStatsOpen, isChatOpen, isMoreOpen]);
 
+  // Không cho phép Double Tap toggle Zen Mode khi đang mở bất kỳ sheet/bảng chức năng nào
+  const isAnySheetOpen = Boolean(
+    isTasksOpen ||
+    isNotesOpen ||
+    isScenesOpen ||
+    isSettingsOpen ||
+    isStatsOpen ||
+    isChatOpen ||
+    isMoreOpen ||
+    isMixerOpen ||
+    isEmbedPlayerOpen ||
+    isRoomsOpen
+  );
+
+  const handleDoubleTap = useCallback(() => {
+    setIsZenMode((prev) => {
+      const next = !prev;
+      if (next) {
+        toast("Đã bật chế độ Zen (Chạm đúp để thoát)", {
+          id: "zen-mode-toggle",
+          duration: 2000,
+          position: "bottom-center",
+        });
+      } else {
+        toast("Đã thoát chế độ Zen", {
+          id: "zen-mode-toggle",
+          duration: 2000,
+          position: "bottom-center",
+        });
+      }
+      return next;
+    });
+  }, [setIsZenMode]);
+
+  useMobileDoubleTap({
+    enabled: !isAnySheetOpen,
+    onDoubleTap: handleDoubleTap,
+  });
+
   return (
     <>
-      {/* Màn hình chào mừng chuyên nghiệp khi mở/tải lại app trên điện thoại */}
-      <MobileWelcomeScreen sceneName={currentScene?.name} />
-
       {/* Top Bar cho Mobile */}
       <MobileTopBar
         isZenMode={isZenMode}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
+        hasEntered={hasEntered}
       />
 
       {/* Tasks Sheet */}
@@ -212,7 +253,11 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
 
       {/* Thanh điều hướng đáy 5 nút */}
       {!isZenMode && (
-        <StudyMobileNav active={activeNavTab} onSelect={handleMobileNavSelect} />
+        <StudyMobileNav
+          active={activeNavTab}
+          onSelect={handleMobileNavSelect}
+          hasEntered={hasEntered}
+        />
       )}
 
       {/* Bảng Thêm */}

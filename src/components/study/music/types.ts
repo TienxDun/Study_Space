@@ -14,6 +14,7 @@ export interface StudyMusicPlayerProps {
   isZenMode?: boolean;
   onBack?: () => void;
   backLabel?: string;
+  hasEntered?: boolean;
 }
 
 export type { Track, MoodType, StudyEmbedItem };

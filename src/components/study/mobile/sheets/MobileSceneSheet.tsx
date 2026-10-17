@@ -15,6 +15,7 @@ import {
   TimerIcon,
   XIcon,
 } from "@phosphor-icons/react";
+import Image from "next/image";
 import { Scene, STUDY_SCENES } from "../../study-types";
 import { useFavoriteScenes } from "@/lib/use-favorites";
 import { MobileSheetShell } from "./MobileSheetShell";
@@ -62,14 +63,15 @@ const MobileSceneCard = React.memo<{
     >
       {/* Ảnh thumbnail */}
       {!isLoaded && <div className="absolute inset-0 bg-white/5 animate-pulse" />}
-      <img
+      <Image
         src={scene.thumbnailUrl}
         alt={scene.name}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${
+        fill
+        unoptimized
+        sizes="(max-width: 640px) 50vw, 33vw"
+        className={`object-cover transition-opacity duration-300 ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
-        loading="lazy"
-        decoding="async"
         onLoad={() => setIsLoaded(true)}
       />
 
@@ -257,8 +259,10 @@ export const MobileSceneSheet = React.memo(function MobileSceneSheet({
                 key={cat.key}
                 type="button"
                 onClick={() => setSelectedCategory(cat.key)}
-                className={`h-8 px-3.5 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer ${
-                  isActive ? "lg-tab-active" : "lg-tab-inactive"
+                className={`h-8 px-3.5 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer backdrop-blur-md border ${
+                  isActive
+                    ? "bg-white/20 border-white/30 text-white font-medium shadow-sm"
+                    : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white"
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />

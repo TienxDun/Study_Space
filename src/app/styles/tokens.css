@@ -10,20 +10,25 @@
   --color-line: #ffffff; /* viền kính: border-line/10 */
   --color-wash: #ffffff; /* phủ hover: bg-wash/10 */
 
-  /* music = emerald */
-  --color-accent-music-ink: #022c22;
+  /* Linear brand primary accent (Quiet Luxury) */
+  --color-accent-brand: #5e6ad2;
+  --color-accent-brand-hover: #828fff;
+  --color-accent-brand-focus: #5e69d1;
+
+  /* music = calibrated emerald (dịu mắt, không neon chói) */
+  --color-accent-music-ink: #064e3b;
   --color-accent-music-deep: #059669;
   --color-accent-music: #10b981;
-  --color-accent-music-glow: #34d399;
-  --color-accent-music-bright: #6ee7b7;
+  --color-accent-music-glow: #10b981;
+  --color-accent-music-bright: #34d399;
   --color-accent-music-pale: #a7f3d0;
   --color-accent-music-mint: #5eead4;
 
-  /* scene = sky */
+  /* scene = calibrated sky */
   --color-accent-scene-deep: #0284c7;
   --color-accent-scene: #0ea5e9;
-  --color-accent-scene-glow: #38bdf8;
-  --color-accent-scene-bright: #7dd3fc;
+  --color-accent-scene-glow: #0ea5e9;
+  --color-accent-scene-bright: #38bdf8;
 
   /* external stream = red/rose */
   --color-accent-stream-ink: #450a0a;

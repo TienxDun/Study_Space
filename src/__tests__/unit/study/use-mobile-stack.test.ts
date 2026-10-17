@@ -29,10 +29,14 @@ describe("useMobileStack - Navigation & Deduplication Tests", () => {
 
   function TestHarness({
     onStackChange,
+    isZenMode,
+    onExitZen,
   }: {
     onStackChange?: (current: any, stack: any[]) => void;
+    isZenMode?: boolean;
+    onExitZen?: () => void;
   }) {
-    hookResult = useMobileStack({ onStackChange });
+    hookResult = useMobileStack({ onStackChange, isZenMode, onExitZen });
     return React.createElement("div", null, `Stack: ${hookResult.stack.length}`);
   }
 
@@ -195,5 +199,30 @@ describe("useMobileStack - Navigation & Deduplication Tests", () => {
     // Lùi từ more về màn hình chính (stack rỗng)
     expect(hookResult.stack.length).toBe(0);
     expect(hookResult.isOpen).toBe(false);
+  });
+
+  it("chế độ Zen Mode: bấm Back lần 1 không thoát, bấm Back lần 2 trong vòng 2 giây sẽ gọi onExitZen", () => {
+    vi.useFakeTimers();
+    const onExitZen = vi.fn();
+
+    act(() => {
+      root.render(React.createElement(TestHarness, { isZenMode: true, onExitZen }));
+    });
+
+    // Bấm Back lần 1
+    act(() => {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    expect(onExitZen).not.toHaveBeenCalled();
+
+    // Chờ 500ms (< 2000ms), bấm Back lần 2
+    act(() => {
+      vi.advanceTimersByTime(500);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+
+    // Lần 2 trong 2s -> gọi onExitZen để thoát Zen mode
+    expect(onExitZen).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
   });
 });

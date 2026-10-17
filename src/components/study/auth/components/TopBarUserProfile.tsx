@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { CircleNotchIcon, SignOutIcon } from "@phosphor-icons/react";
 import { useAuth } from "@/lib/use-auth";
@@ -72,12 +73,14 @@ export const TopBarUserProfile = () => {
         aria-expanded={isOpen}
       >
         {user.photoURL && !avatarError ? (
-          <img
+          <Image
             src={user.photoURL}
             alt={user.displayName || "Avatar"}
+            width={24}
+            height={24}
+            unoptimized
             className="w-6 h-6 rounded-lg object-cover border border-white/20"
             onError={() => setAvatarError(true)}
-            referrerPolicy="no-referrer"
           />
         ) : (
           <span className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold flex items-center justify-center">
@@ -101,12 +104,14 @@ export const TopBarUserProfile = () => {
           >
             <div className="flex items-center gap-3 pb-3 border-b border-white/10">
               {user.photoURL && !avatarError ? (
-                <img
+                <Image
                   src={user.photoURL}
                   alt={user.displayName || "Avatar"}
+                  width={40}
+                  height={40}
+                  unoptimized
                   className="w-10 h-10 rounded-xl object-cover border border-white/20"
                   onError={() => setAvatarError(true)}
-                  referrerPolicy="no-referrer"
                 />
               ) : (
                 <span className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-sm font-bold flex items-center justify-center">

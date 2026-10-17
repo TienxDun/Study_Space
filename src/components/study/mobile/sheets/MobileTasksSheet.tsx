@@ -71,7 +71,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
   const [selectedColumnFilter, setSelectedColumnFilter] = useState<string>("all");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [quickTitle, setQuickTitle] = useState("");
-  const [quickPriority, setQuickPriority] = useState<CardPriority>("medium");
+  const [quickPriority, setQuickPriority] = useState<CardPriority>("low");
   const [activeMenuCardId, setActiveMenuCardId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -246,6 +246,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
     }));
 
     setQuickTitle("");
+    setQuickPriority("low");
     inputRef.current?.focus();
   };
 
@@ -279,7 +280,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
         footer={
           /* Cụm điều khiển ngón tay cái Thumb-Zone: Bộ lọc trạng thái + Thanh thêm nhanh */
           <div className="p-2.5 space-y-2 select-none">
-            {/* Bộ lọc trạng thái dạng viên nhộng (Status Pills cuộn ngang) */}
+            {/* Bộ lọc trạng thái dạng viên nhộng (Status Pills cuộn ngang) - Ghost Glass Style */}
             <div className="overflow-x-auto no-scrollbar pb-0.5">
               <div className="flex items-center justify-center gap-1.5 min-w-full w-max px-1">
                 <button
@@ -289,8 +290,10 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                   }}
                   type="button"
                   onClick={() => setSelectedColumnFilter("all")}
-                  className={`h-7 px-3 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer ${
-                    selectedColumnFilter === "all" ? "lg-tab-active" : "lg-tab-inactive"
+                  className={`h-7 px-3 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer backdrop-blur-md border ${
+                    selectedColumnFilter === "all"
+                      ? "bg-white/20 border-white/30 text-white font-medium shadow-sm"
+                      : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white"
                   }`}
                 >
                   <span>Tất cả</span>
@@ -309,8 +312,10 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                       key={col.id}
                       type="button"
                       onClick={() => setSelectedColumnFilter(col.id)}
-                      className={`h-7 px-3 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer ${
-                        isActive ? "lg-tab-active" : "lg-tab-inactive"
+                      className={`h-7 px-3 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer backdrop-blur-md border ${
+                        isActive
+                          ? "bg-white/20 border-white/30 text-white font-medium shadow-sm"
+                          : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white"
                       }`}
                     >
                       <span className="truncate max-w-[120px]">{col.title}</span>
@@ -323,7 +328,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
 
             {/* Thanh nhập việc nhanh ở đáy (Quick Add Bar) */}
             <form onSubmit={handleQuickAdd} className="flex items-center gap-1.5">
-              {/* Nút chọn độ ưu tiên nhanh (Cột sóng / Ăng-ten Thấp - Vừa - Gấp) */}
+              {/* Nút chọn độ ưu tiên nhanh - Ghost Glass Button */}
               <button
                 type="button"
                 onClick={cycleQuickPriority}
@@ -335,7 +340,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                     : "Vừa"
                 } - Chạm để đổi`}
                 aria-label="Chọn độ ưu tiên"
-                className="h-9 px-2.5 rounded-xl lg-btn-action flex items-center gap-1 text-[11px] font-medium shrink-0 cursor-pointer"
+                className="h-9 px-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 backdrop-blur-md flex items-center gap-1 text-[11px] font-medium text-white/80 hover:text-white shrink-0 cursor-pointer transition-all active:scale-95"
               >
                 <PrioritySignalIcon priority={quickPriority} className="w-3.5 h-3.5 shrink-0" />
                 <span className="text-[10px] text-white/80">
@@ -351,13 +356,14 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                 placeholder="Nhập việc cần làm..."
                 className="lg-input flex-1 h-9 px-3 text-xs text-white min-w-0"
               />
+              {/* Nút Thêm việc - Ghost Glass Button */}
               <button
                 type="submit"
                 aria-label="Thêm việc"
-                className="h-9 px-3.5 rounded-xl lg-btn-action text-white text-xs font-semibold flex items-center gap-1 transition-all active:scale-95 shrink-0 cursor-pointer"
+                className="h-9 px-3.5 rounded-xl border border-white/20 bg-white/15 hover:bg-white/25 active:scale-95 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1 transition-all shrink-0 cursor-pointer shadow-sm"
               >
-                <PlusIcon className="w-4 h-4 relative z-10" weight="bold" />
-                <span className="relative z-10">Thêm</span>
+                <PlusIcon className="w-4 h-4" weight="bold" />
+                <span>Thêm</span>
               </button>
             </form>
           </div>
