@@ -27,10 +27,12 @@ export function useMobileDoubleTap({
   maxDistance = 32,
 }: UseMobileDoubleTapOptions) {
   const onDoubleTapRef = useRef(onDoubleTap);
-  onDoubleTapRef.current = onDoubleTap;
-
   const enabledRef = useRef(enabled);
-  enabledRef.current = enabled;
+
+  useEffect(() => {
+    onDoubleTapRef.current = onDoubleTap;
+    enabledRef.current = enabled;
+  }, [onDoubleTap, enabled]);
 
   const touchStartTimeRef = useRef(0);
   const touchStartPosRef = useRef({ x: 0, y: 0 });

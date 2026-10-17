@@ -158,22 +158,43 @@ export const StudyEmbedPlayerWidget = ({
     if (idx > 0) setActiveCategory(EMBED_CATEGORY_KEYS[idx - 1]);
   };
 
-  // Kéo vuốt xuống đóng bảng trên Mobile bám sát 1:1 theo thời gian thực (chuẩn MobileSheetShell)
   const sheetPanelRef = useRef<HTMLDivElement | null>(null);
   const touchStartY = useRef<number | null>(null);
   const isDraggingDown = useRef(false);
+  const isClosingByDragRef = useRef(false);
+
+  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (isOpen && isMobile && sheetPanelRef.current) {
-      sheetPanelRef.current.style.transform = "";
-      sheetPanelRef.current.style.opacity = "";
-      sheetPanelRef.current.style.transition = "";
+      isClosingByDragRef.current = false;
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+      sheetPanelRef.current.style.removeProperty("display");
+      sheetPanelRef.current.style.removeProperty("visibility");
+      sheetPanelRef.current.style.removeProperty("opacity");
+      sheetPanelRef.current.style.removeProperty("transform");
+      sheetPanelRef.current.style.removeProperty("transition");
     }
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
   }, [isOpen, isMobile]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if ((e.target as HTMLElement).closest("button") || (e.target as HTMLElement).closest("input")) return;
-    touchStartY.current = e.touches[0].clientY;
+    const target = e.target as Node | null;
+    const targetEl = target instanceof Element ? target : target?.parentElement;
+    if (targetEl?.closest("button") || targetEl?.closest("input") || targetEl?.closest("a")) return;
+
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    touchStartY.current = touch.clientY;
     isDraggingDown.current = true;
     if (sheetPanelRef.current) {
       sheetPanelRef.current.style.transition = "none";
@@ -182,7 +203,10 @@ export const StudyEmbedPlayerWidget = ({
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDraggingDown.current || touchStartY.current === null) return;
-    const diff = e.touches[0].clientY - touchStartY.current;
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    const diff = touch.clientY - touchStartY.current;
     if (diff > 0) {
       if (sheetPanelRef.current) {
         sheetPanelRef.current.style.transform = `translateY(${diff}px)`;
@@ -199,7 +223,8 @@ export const StudyEmbedPlayerWidget = ({
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!isDraggingDown.current || touchStartY.current === null) return;
-    const diff = e.changedTouches[0].clientY - touchStartY.current;
+    const touch = e.changedTouches[0] || e.touches[0];
+    const diff = touch ? touch.clientY - touchStartY.current : 0;
     isDraggingDown.current = false;
     touchStartY.current = null;
 
@@ -223,22 +248,30 @@ export const StudyEmbedPlayerWidget = ({
       }
     }
 
-    // 2. Vuốt xuống dưới (diff > 0):
+    // 2. Vuốt xuống dưới (diff >= 55px):
     // Người dùng vuốt xuống: bảng trượt thẳng xuống dưới để tắt dứt khoát, không bao giờ nảy ngược lên!
     if (diff >= 55) {
+      isClosingByDragRef.current = true;
       if (sheetPanelRef.current) {
         sheetPanelRef.current.style.transition =
-          "transform 0.22s cubic-bezier(0.32, 0, 0.67, 0), opacity 0.2s ease-out";
+          "transform 0.18s cubic-bezier(0.32, 0, 0.67, 0), opacity 0.16s ease-out";
         sheetPanelRef.current.style.transform = "translateY(100vh)";
         sheetPanelRef.current.style.opacity = "0";
       }
-      setTimeout(() => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = setTimeout(() => {
+        if (sheetPanelRef.current) {
+          sheetPanelRef.current.style.setProperty("display", "none", "important");
+          sheetPanelRef.current.style.setProperty("visibility", "hidden", "important");
+          sheetPanelRef.current.style.setProperty("opacity", "0", "important");
+          sheetPanelRef.current.style.setProperty("transform", "translateY(100vh)", "important");
+        }
         onClose();
-      }, 200);
+      }, 180);
       return;
     }
 
-    // Chưa đủ ngưỡng vuốt xuống (< 60px) -> Đàn hồi bật nảy nhẹ về vị trí ban đầu
+    // Chưa đủ ngưỡng vuốt xuống (< 55px) -> Đàn hồi bật nảy nhẹ về vị trí ban đầu
     if (sheetPanelRef.current) {
       sheetPanelRef.current.style.transition =
         "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease-out";

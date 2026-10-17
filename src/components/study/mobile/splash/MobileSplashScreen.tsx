@@ -33,7 +33,10 @@ export const MobileSplashScreen: React.FC<MobileSplashScreenProps> = ({
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Đang khởi tạo không gian...");
   const onFinishRef = useRef(onFinish);
-  onFinishRef.current = onFinish;
+
+  useEffect(() => {
+    onFinishRef.current = onFinish;
+  }, [onFinish]);
 
   useEffect(() => {
     setHasMounted(true);

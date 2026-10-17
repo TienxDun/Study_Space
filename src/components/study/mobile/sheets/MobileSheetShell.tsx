@@ -73,23 +73,35 @@ export function MobileSheetShell({
   }, [defaultZenMode, effectiveSheetId]);
 
   const [isZenMode, setIsZenMode] = useState<boolean>(defaultZenMode);
-  const [isClosingByDrag, setIsClosingByDrag] = useState(false);
   const localPanelRef = useRef<HTMLDivElement | null>(null);
   const touchStartY = useRef<number | null>(null);
   const isDraggingDown = useRef(false);
+  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isClosingByDrag, setIsClosingByDrag] = useState(false);
 
   // Khi mở bảng, đồng bộ chế độ xem theo lựa chọn đã lưu của người dùng và reset chuyển động
   useEffect(() => {
     if (isOpen) {
-      setIsZenMode(getSavedZenMode());
       setIsClosingByDrag(false);
+      setIsZenMode(getSavedZenMode());
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
       if (localPanelRef.current) {
         localPanelRef.current.style.removeProperty("display");
-        localPanelRef.current.style.transform = "";
-        localPanelRef.current.style.opacity = "";
-        localPanelRef.current.style.transition = "";
+        localPanelRef.current.style.removeProperty("visibility");
+        localPanelRef.current.style.removeProperty("opacity");
+        localPanelRef.current.style.removeProperty("transform");
+        localPanelRef.current.style.removeProperty("transition");
       }
     }
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
   }, [isOpen, getSavedZenMode]);
 
   const handleToggleZenMode = () => {
@@ -118,8 +130,14 @@ export function MobileSheetShell({
   // Kéo xuống đóng bảng hoặc vuốt lên phóng to toàn màn hình
   const handleTouchStart = (e: React.TouchEvent) => {
     // Không kích hoạt kéo vuốt nếu người dùng chạm vào các nút chức năng trên header
-    if ((e.target as HTMLElement).closest("button")) return;
-    touchStartY.current = e.touches[0].clientY;
+    const target = e.target as Node | null;
+    const targetEl = target instanceof Element ? target : target?.parentElement;
+    if (targetEl?.closest("button") || targetEl?.closest("input") || targetEl?.closest("a")) return;
+
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    touchStartY.current = touch.clientY;
     isDraggingDown.current = true;
     if (localPanelRef.current) {
       localPanelRef.current.style.transition = "none";
@@ -128,11 +146,11 @@ export function MobileSheetShell({
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDraggingDown.current || touchStartY.current === null) return;
-    const diff = e.touches[0].clientY - touchStartY.current;
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    const diff = touch.clientY - touchStartY.current;
     if (diff > 0) {
-      if (e.cancelable) {
-        e.preventDefault();
-      }
       // Kéo xuống dưới: bám sát 1:1 theo ngón tay
       if (localPanelRef.current) {
         localPanelRef.current.style.transform = `translateY(${diff}px)`;
@@ -150,7 +168,8 @@ export function MobileSheetShell({
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!isDraggingDown.current || touchStartY.current === null) return;
-    const diff = e.changedTouches[0].clientY - touchStartY.current;
+    const touch = e.changedTouches[0] || e.touches[0];
+    const diff = touch ? touch.clientY - touchStartY.current : 0;
     isDraggingDown.current = false;
     touchStartY.current = null;
 
@@ -173,23 +192,31 @@ export function MobileSheetShell({
       }
     }
 
-    // 2. Vuốt xuống dưới (diff > 0):
+    // 2. Vuốt xuống dưới (diff >= 55px):
     // Người dùng vuốt xuống: bảng trượt thẳng xuống dưới để tắt dứt khoát, không bao giờ nảy ngược lên!
     if (diff >= 55) {
       setIsClosingByDrag(true);
       if (localPanelRef.current) {
         localPanelRef.current.style.transition =
-          "transform 0.22s cubic-bezier(0.32, 0, 0.67, 0), opacity 0.2s ease-out";
+          "transform 0.18s cubic-bezier(0.32, 0, 0.67, 0), opacity 0.16s ease-out";
         localPanelRef.current.style.transform = "translateY(100vh)";
         localPanelRef.current.style.opacity = "0";
       }
-      setTimeout(() => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = setTimeout(() => {
+        // Trước khi unmount, ép ẩn hoàn toàn panel để AnimatePresence không thể flash lại vị trí y=0
+        if (localPanelRef.current) {
+          localPanelRef.current.style.setProperty("display", "none", "important");
+          localPanelRef.current.style.setProperty("visibility", "hidden", "important");
+          localPanelRef.current.style.setProperty("opacity", "0", "important");
+          localPanelRef.current.style.setProperty("transform", "translateY(100vh)", "important");
+        }
         onClose();
-      }, 200);
+      }, 180);
       return;
     }
 
-    // Chưa đủ ngưỡng vuốt xuống (< 60px) -> Đàn hồi bật nảy nhẹ về vị trí ban đầu
+    // Chưa đủ ngưỡng vuốt xuống (< 55px) -> Đàn hồi bật nảy nhẹ về vị trí ban đầu
     if (localPanelRef.current) {
       localPanelRef.current.style.transition =
         "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease-out";
@@ -215,14 +242,22 @@ export function MobileSheetShell({
 
   const handleContentTouchStart = (e: React.TouchEvent) => {
     if (!onSwipeLeft && !onSwipeRight) return;
-    contentTouchStartX.current = e.touches[0].clientX;
-    contentTouchStartY.current = e.touches[0].clientY;
+    const touch = e.touches[0];
+    if (!touch) return;
+    contentTouchStartX.current = touch.clientX;
+    contentTouchStartY.current = touch.clientY;
   };
 
   const handleContentTouchEnd = (e: React.TouchEvent) => {
     if (contentTouchStartX.current === null || contentTouchStartY.current === null) return;
-    const deltaX = e.changedTouches[0].clientX - contentTouchStartX.current;
-    const deltaY = e.changedTouches[0].clientY - contentTouchStartY.current;
+    const touch = e.changedTouches[0] || e.touches[0];
+    if (!touch) {
+      contentTouchStartX.current = null;
+      contentTouchStartY.current = null;
+      return;
+    }
+    const deltaX = touch.clientX - contentTouchStartX.current;
+    const deltaY = touch.clientY - contentTouchStartY.current;
 
     // Ngưỡng vuốt ngang dứt khoát: khoảng cách ngang > 35px và góc ngang trội hơn dọc
     if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
@@ -247,7 +282,7 @@ export function MobileSheetShell({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={
         isClosingByDrag
-          ? { opacity: 0, transition: { duration: 0 } }
+          ? { opacity: 0, y: "100%", transition: { duration: 0 } }
           : { opacity: 0, y: "100%", transition: { duration: 0.22, ease: [0.32, 0, 0.67, 0] } }
       }
       transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}

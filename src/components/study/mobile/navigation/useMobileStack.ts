@@ -80,6 +80,7 @@ export function useMobileStack(options?: UseMobileStackOptions) {
 
   // Đóng toàn bộ stack về 0 và dọn dẹp history đã push một cách an toàn
   const closeAll = useCallback(() => {
+    lastRootBackTimeRef.current = 0;
     if (stackRef.current.length === 0) return;
     const entriesToRevert = historyEntriesCountRef.current;
     historyEntriesCountRef.current = 0;
@@ -116,6 +117,7 @@ export function useMobileStack(options?: UseMobileStackOptions) {
 
   // Push màn hình mới vào đỉnh ngăn xếp
   const push = useCallback((id: MobilePanelId, title: string, props?: Record<string, unknown>) => {
+    lastRootBackTimeRef.current = 0;
     // Chặn trùng lặp tuyệt đối: Nếu màn hình ở đỉnh ngăn xếp đã là id này thì thoát sớm hoàn toàn
     // (ngăn chặn việc pushState và tăng historyEntriesCountRef khi gõ phím/chọn thuộc tính trong modal)
     const currentStack = stackRef.current;
@@ -143,6 +145,7 @@ export function useMobileStack(options?: UseMobileStackOptions) {
 
   // Thiết lập 1 màn hình gốc (reset stack cũ hoặc replace mượt mà khi đổi tab)
   const openRoot = useCallback((id: MobilePanelId, title: string, props?: Record<string, unknown>) => {
+    lastRootBackTimeRef.current = 0;
     const currentEntries = historyEntriesCountRef.current;
     const newRootItem: MobileStackItem = { id, title, props };
 
