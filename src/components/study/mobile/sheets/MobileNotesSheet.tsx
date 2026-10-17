@@ -403,11 +403,13 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                 <div className="flex items-center justify-between gap-2 px-1 text-[11px] font-medium text-white/50 select-none">
                   <div className="flex items-center gap-1.5 min-w-0 truncate">
                     {currentEditingNote.isPinned && (
-                      <PushPinIcon
-                        className="w-3 h-3 text-amber-400/90 shrink-0"
-                        weight="fill"
-                        title="Đã ghim"
-                      />
+                      <span title="Đã ghim" className="inline-flex items-center">
+                        <PushPinIcon
+                          className="w-3 h-3 text-amber-400/90 shrink-0"
+                          weight="fill"
+                          aria-label="Đã ghim"
+                        />
+                      </span>
                     )}
                     <span>{richWordCount} từ</span>
                     {checklistStats.total > 0 && (
