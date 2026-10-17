@@ -100,11 +100,13 @@ describe("Mobile Nav Active State Resolution", () => {
               state.isStatsOpen ||
               state.isSettingsOpen
             ? "more"
-            : "pomodoro";
+            : state.isPomodoroVisible
+              ? "pomodoro"
+              : null;
   };
 
-  it("resolves to 'pomodoro' on home screen even when clock digits are hidden", () => {
-    expect(resolveActiveNav({ isPomodoroVisible: false })).toBe("pomodoro");
+  it("resolves to 'pomodoro' when clock is visible and null when clock is hidden", () => {
+    expect(resolveActiveNav({ isPomodoroVisible: false })).toBeNull();
     expect(resolveActiveNav({ isPomodoroVisible: true })).toBe("pomodoro");
   });
 

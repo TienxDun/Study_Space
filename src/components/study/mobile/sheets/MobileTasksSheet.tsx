@@ -101,10 +101,10 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
     [allTimeStats]
   );
 
-  // Tự động đóng popup con khi đổi bộ lọc hoặc gõ tìm kiếm
+  // Tự động đóng popup con khi đóng bảng, đổi bộ lọc hoặc gõ tìm kiếm
   React.useEffect(() => {
     setActiveMenuCardId(null);
-  }, [selectedColumnFilter, searchQuery]);
+  }, [selectedColumnFilter, searchQuery, isOpen]);
 
   // Điều hướng xem/sửa chi tiết task đồng bộ cùng Mobile Stack Navigation
   const handleSelectCard = React.useCallback(
@@ -258,7 +258,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
         backLabel={selectedCard ? undefined : backLabel}
         sheetId="tasks"
         title={`Việc cần làm (${allCardsWithColumn.length})`}
-        heightClassName="h-[80dvh] max-h-[85dvh]"
+        heightClassName="h-[68dvh] max-h-[72dvh]"
         contentScroll={false}
         onSwipeLeft={goToNextFilter}
         onSwipeRight={goToPrevFilter}

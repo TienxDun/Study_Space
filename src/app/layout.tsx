@@ -14,6 +14,7 @@ export const viewport: Viewport = {
   themeColor: "#090d16",
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";

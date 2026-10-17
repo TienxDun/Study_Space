@@ -9,7 +9,11 @@ export function useIsMobile(breakpoint = 640) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${breakpoint - 0.02}px)`);
+    // Hỗ trợ cả trường hợp điện thoại xoay ngang (chiều cao <= 500px trên thiết bị cảm ứng)
+    // để tránh bị giật hoặc unmount xáo trộn toàn bộ giao diện mobile khi xoay màn hình
+    const mql = window.matchMedia(
+      `(max-width: ${breakpoint - 0.02}px), ((max-height: 500px) and (orientation: landscape) and (pointer: coarse))`
+    );
     const update = () => setIsMobile(mql.matches);
     update();
     mql.addEventListener("change", update);

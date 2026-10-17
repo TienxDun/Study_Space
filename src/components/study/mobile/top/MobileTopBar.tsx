@@ -35,7 +35,16 @@ export const MobileTopBar = React.memo(function MobileTopBar({
   return (
     <header className="fixed top-0 inset-x-0 z-40 sm:hidden pt-safe pointer-events-none">
       <div className="relative flex items-center justify-between px-4 h-14 pointer-events-auto">
-        <Link href="/" aria-label="ZenStudy" className="w-11 h-11 grid place-items-center shrink-0 active:scale-95">
+        <Link
+          href="/"
+          aria-label="ZenStudy"
+          onClick={(e) => {
+            if (typeof window !== "undefined" && window.location.pathname === "/") {
+              e.preventDefault();
+            }
+          }}
+          className="w-11 h-11 grid place-items-center shrink-0 active:scale-95"
+        >
           <ZenStudyLogo variant="icon" className="h-9 w-9" priority />
         </Link>
         <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-mono text-sm font-semibold tracking-wider tabular-nums text-slate-100 drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]">

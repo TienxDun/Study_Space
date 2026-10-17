@@ -224,20 +224,15 @@ export const StudyEmbedPlayerWidget = ({
     }
 
     // 2. Vuốt xuống dưới (diff > 0):
-    // Người dùng vuốt xuống: bảng trượt thẳng xuống dưới để tắt dứt khoát, không nảy ngược lên!
-    if (diff >= 60) {
+    // Người dùng vuốt xuống: bảng trượt thẳng xuống dưới để tắt dứt khoát, không bao giờ nảy ngược lên!
+    if (diff >= 55) {
       if (sheetPanelRef.current) {
         sheetPanelRef.current.style.transition =
-          "transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.18s ease-out";
-        sheetPanelRef.current.style.transform = "translateY(calc(100% + 120px))";
+          "transform 0.22s cubic-bezier(0.32, 0, 0.67, 0), opacity 0.2s ease-out";
+        sheetPanelRef.current.style.transform = "translateY(100vh)";
         sheetPanelRef.current.style.opacity = "0";
       }
       setTimeout(() => {
-        if (sheetPanelRef.current) {
-          sheetPanelRef.current.style.transform = "";
-          sheetPanelRef.current.style.opacity = "";
-          sheetPanelRef.current.style.transition = "";
-        }
         onClose();
       }, 200);
       return;
@@ -385,7 +380,7 @@ export const StudyEmbedPlayerWidget = ({
                     : "shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
                 }`
               : isMobile
-              ? `pointer-events-auto relative w-full flex flex-col text-white overflow-hidden transform-gpu will-change-[height,transform] transition-[height,max-height,border-radius,box-shadow,background-color] duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              ? `pointer-events-auto relative w-full flex flex-col text-white overflow-hidden transform-gpu will-change-[height,transform] transition-[height,max-height,border-radius,box-shadow,background-color] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)] ${
                   isZenMode
                     ? "h-full rounded-[32px] bg-neutral-950/94 backdrop-blur-xl border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]"
                     : "h-[72dvh] max-h-[72dvh] rounded-[28px] bg-neutral-950/90 backdrop-blur-lg border border-white/[0.16] shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.2)]"
@@ -430,13 +425,11 @@ export const StudyEmbedPlayerWidget = ({
                   <button
                     type="button"
                     onClick={onBack}
+                    title={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
                     aria-label={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
-                    className="flex items-center gap-0.5 px-2 py-1 -ml-1 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white/90 hover:text-white transition-all text-xs font-semibold shrink-0 select-none shadow-sm"
+                    className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.18] active:scale-90 border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-all shrink-0 select-none shadow-sm cursor-pointer"
                   >
                     <CaretLeftIcon className="w-4 h-4" weight="bold" />
-                    {backLabel && (
-                      <span className="max-w-[80px] truncate tracking-tight">{backLabel}</span>
-                    )}
                   </button>
                 )}
                 <div className="flex items-center gap-2 min-w-0 flex-1">

@@ -143,12 +143,22 @@ export function useScenePreloader({
         video.playsInline = true;
         video.src = targetScene.bgUrl;
 
+        const cleanupVideo = () => {
+          video.removeEventListener("canplaythrough", onReady);
+          video.removeEventListener("canplay", onReady);
+          video.removeEventListener("error", onError);
+          video.removeAttribute("src");
+          video.load();
+        };
+
         const onReady = () => {
+          cleanupVideo();
           finish();
         };
 
         const onError = () => {
           console.warn(`[ScenePreloader] Không thể nạp trước video "${targetScene.name}".`);
+          cleanupVideo();
           finish();
         };
 
@@ -163,11 +173,7 @@ export function useScenePreloader({
         cancelPreviousPreloadRef.current = () => {
           isFinished = true;
           if (timerId) clearTimeout(timerId);
-          video.removeEventListener("canplaythrough", onReady);
-          video.removeEventListener("canplay", onReady);
-          video.removeEventListener("error", onError);
-          video.src = "";
-          video.load();
+          cleanupVideo();
         };
       }
     },
