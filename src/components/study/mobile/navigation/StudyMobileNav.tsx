@@ -8,7 +8,7 @@ import { MobileNavItem } from "./MobileNavItem";
 import { cn } from "@/lib/utils";
 
 interface StudyMobileNavProps {
-  active: string;
+  active: string | null;
   onSelect: (id: MobileNavId) => void;
 }
 

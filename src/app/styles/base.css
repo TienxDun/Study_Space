@@ -7,6 +7,7 @@
     min-height: 100%;
     background: var(--background);
     overscroll-behavior: none;
+    overscroll-behavior-y: none;
   }
   body {
     @apply bg-background text-foreground;
@@ -14,6 +15,7 @@
     scrollbar-gutter: stable;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior: none;
+    overscroll-behavior-y: none;
   }
 }
 

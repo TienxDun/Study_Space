@@ -17,6 +17,8 @@ export const STORAGE_KEYS = {
   pomoCount: "huflit_study_pomo_count",
   // Giờ đang chạy dở của Pomodoro (để F5 vẫn chạy tiếp, tính theo giờ thật)
   pomoRunningState: "study_pomodoro_running_state_v1",
+  // Giờ đang chạy dở của Đồng hồ bấm giờ Stopwatch (để F5/tắt tab mở lại vẫn tiếp tục chuẩn xác)
+  stopwatchRunningState: "study_stopwatch_running_state_v1",
   // Music player
   mood: "huflit_study_mood",
   trackId: "huflit_study_track_id",

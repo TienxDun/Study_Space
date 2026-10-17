@@ -151,7 +151,7 @@ export function MobileChatSheet({
       backLabel={backLabel}
       sheetId="chat"
       title="Trợ lý học tập"
-      maxHeightClassName="h-[82dvh] max-h-[90dvh]"
+      heightClassName="h-[68dvh] max-h-[72dvh]"
       contentScroll={false}
       headerRight={
         user ? (

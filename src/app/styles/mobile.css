@@ -137,11 +137,14 @@
    Tối ưu máy yếu không bị giựt khung hình, trải nghiệm thị giác êm ái
    ========================================================================= */
 
-/* Kích hoạt phần cứng GPU Compositing Layer riêng biệt */
+/* Kích hoạt phần cứng GPU Compositing Layer riêng biệt & Chuyển động co giãn bảng mượt mà */
 .sheet-motion-panel {
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   perspective: 1000px;
+  transition-property: height, max-height, left, right, border-radius, background-color, box-shadow;
+  transition-duration: 380ms;
+  transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* Hiệu ứng trượt thác nước mềm mại cho từng phần tử bên trong bảng */

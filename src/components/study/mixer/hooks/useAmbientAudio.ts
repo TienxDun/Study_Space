@@ -44,17 +44,21 @@ export function useAmbientAudio({ isGlobalMuted }: UseAmbientAudioOptions) {
     []
   );
 
-  // Setup ambient sound audio objects
-  useEffect(() => {
-    AMBIENT_SOUNDS.forEach((sound: AmbientSound) => {
-      if (!soundAudiosRef.current[sound.id]) {
-        const audio = new Audio(sound.src);
-        audio.loop = true;
-        audio.preload = "none";
-        soundAudiosRef.current[sound.id] = audio;
-      }
-    });
+  // Khởi tạo Audio đối tượng theo nhu cầu (Lazy): chỉ cấp phát khi âm thanh thật sự được bật,
+  // giúp tiết kiệm kênh âm thanh phần cứng và bộ nhớ RAM quý giá trên điện thoại
+  const getOrCreateAudio = useCallback((sound: AmbientSound) => {
+    if (typeof window === "undefined") return null;
+    if (!soundAudiosRef.current[sound.id]) {
+      const audio = new Audio(sound.src);
+      audio.loop = true;
+      audio.preload = "none";
+      soundAudiosRef.current[sound.id] = audio;
+    }
+    return soundAudiosRef.current[sound.id];
+  }, []);
 
+  // Cleanup toàn bộ âm thanh khi unmount
+  useEffect(() => {
     return () => {
       Object.values(soundAudiosRef.current).forEach((audio) => {
         audio.pause();
@@ -64,23 +68,29 @@ export function useAmbientAudio({ isGlobalMuted }: UseAmbientAudioOptions) {
     };
   }, []);
 
-  // Update volume and play/pause for each ambient track
+  // Cập nhật âm lượng và phát/dừng cho từng âm thanh thiên nhiên đang hoạt động
   useEffect(() => {
     AMBIENT_SOUNDS.forEach((sound: AmbientSound) => {
-      const audio = soundAudiosRef.current[sound.id];
-      if (audio) {
-        const soundVol = ambientVolumes[sound.id] || 0;
-        const effectiveVol = isGlobalMuted ? 0 : soundVol;
-        audio.volume = effectiveVol;
+      const soundVol = ambientVolumes[sound.id] || 0;
+      const effectiveVol = isGlobalMuted ? 0 : soundVol;
 
-        if (effectiveVol > 0 && audio.paused) {
-          audio.play().catch(() => {});
-        } else if (effectiveVol === 0 && !audio.paused) {
-          audio.pause();
+      if (effectiveVol > 0) {
+        const audio = getOrCreateAudio(sound);
+        if (audio) {
+          audio.volume = effectiveVol;
+          if (audio.paused) {
+            audio.play().catch(() => {});
+          }
+        }
+      } else {
+        const existingAudio = soundAudiosRef.current[sound.id];
+        if (existingAudio && !existingAudio.paused) {
+          existingAudio.volume = 0;
+          existingAudio.pause();
         }
       }
     });
-  }, [ambientVolumes, isGlobalMuted]);
+  }, [ambientVolumes, isGlobalMuted, getOrCreateAudio]);
 
   const toggleSound = useCallback(
     (soundId: string) => {

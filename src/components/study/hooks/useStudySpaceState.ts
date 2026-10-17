@@ -722,7 +722,7 @@ export function useStudySpaceState() {
     isMixerOpen ||
     isShortcutsHelpOpen;
 
-  const activeNavTab = useMemo<MobileNavId>(() => {
+  const activeNavTab = useMemo<MobileNavId | null>(() => {
     const currentId = mobileCurrentScreen?.id;
     if (currentId === "tasks" || currentId === "tasks-detail" || isTasksOpen) return "tasks";
     if (currentId === "notes" || currentId === "notes-detail" || isNotesOpen) return "notes";
@@ -745,7 +745,7 @@ export function useStudySpaceState() {
     ) {
       return "more";
     }
-    return "pomodoro";
+    return isPomodoroVisible ? "pomodoro" : null;
   }, [
     mobileCurrentScreen,
     isTasksOpen,
@@ -758,6 +758,7 @@ export function useStudySpaceState() {
     isChatOpen,
     isStatsOpen,
     isSettingsOpen,
+    isPomodoroVisible,
   ]);
 
   return {

@@ -93,6 +93,10 @@ export function MobileSheetShell({
   }, [isOpen, getSavedZenMode]);
 
   const handleToggleZenMode = () => {
+    if (localPanelRef.current) {
+      localPanelRef.current.style.removeProperty("transform");
+      localPanelRef.current.style.removeProperty("transition");
+    }
     setIsZenMode((prev) => {
       const next = !prev;
       try {
@@ -126,6 +130,9 @@ export function MobileSheetShell({
     if (!isDraggingDown.current || touchStartY.current === null) return;
     const diff = e.touches[0].clientY - touchStartY.current;
     if (diff > 0) {
+      if (e.cancelable) {
+        e.preventDefault();
+      }
       // Kéo xuống dưới: bám sát 1:1 theo ngón tay
       if (localPanelRef.current) {
         localPanelRef.current.style.transform = `translateY(${diff}px)`;
@@ -151,16 +158,15 @@ export function MobileSheetShell({
     if (diff < -35) {
       if (!isZenMode) {
         if (localPanelRef.current) {
-          localPanelRef.current.style.transition =
-            "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)";
-          localPanelRef.current.style.transform = "translateY(0px)";
+          localPanelRef.current.style.removeProperty("transform");
+          localPanelRef.current.style.removeProperty("transition");
         }
         handleToggleZenMode();
         return;
       } else {
         if (localPanelRef.current) {
           localPanelRef.current.style.transition =
-            "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)";
+            "transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)";
           localPanelRef.current.style.transform = "translateY(0px)";
         }
         return;
@@ -168,19 +174,16 @@ export function MobileSheetShell({
     }
 
     // 2. Vuốt xuống dưới (diff > 0):
-    // Người dùng vuốt xuống: bảng trượt thẳng xuống dưới để tắt dứt khoát, không nảy ngược lên!
-    if (diff >= 60) {
+    // Người dùng vuốt xuống: bảng trượt thẳng xuống dưới để tắt dứt khoát, không bao giờ nảy ngược lên!
+    if (diff >= 55) {
       setIsClosingByDrag(true);
       if (localPanelRef.current) {
         localPanelRef.current.style.transition =
-          "transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.18s ease-out";
-        localPanelRef.current.style.transform = "translateY(calc(100% + 120px))";
+          "transform 0.22s cubic-bezier(0.32, 0, 0.67, 0), opacity 0.2s ease-out";
+        localPanelRef.current.style.transform = "translateY(100vh)";
         localPanelRef.current.style.opacity = "0";
       }
       setTimeout(() => {
-        if (localPanelRef.current) {
-          localPanelRef.current.style.setProperty("display", "none", "important");
-        }
         onClose();
       }, 200);
       return;
@@ -245,17 +248,16 @@ export function MobileSheetShell({
       exit={
         isClosingByDrag
           ? { opacity: 0, transition: { duration: 0 } }
-          : { opacity: 0, y: 80, scale: 0.96, transition: { duration: 0.22, ease: [0.32, 0, 0.67, 0] } }
+          : { opacity: 0, y: "100%", transition: { duration: 0.22, ease: [0.32, 0, 0.67, 0] } }
       }
-      transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
       backdropClassName="sm:hidden"
       panelClassName={cn(
-        "fixed z-50 flex flex-col text-white overflow-hidden sm:hidden transform-gpu sheet-motion-panel will-change-[height,transform,inset]",
-        "transition-[height,max-height,inset,border-radius,box-shadow,background-color] duration-350 ease-[cubic-bezier(0.16,1,0.3,1)]",
+        "fixed z-50 flex flex-col text-white overflow-hidden sm:hidden transform-gpu sheet-motion-panel will-change-[height,max-height,left,right]",
         isZenMode
-          ? "inset-x-2 top-2.5 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.5rem)] rounded-[32px] bg-neutral-950/94 backdrop-blur-xl border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]"
+          ? "inset-x-2 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] max-h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] rounded-[32px] bg-neutral-950/94 backdrop-blur-xl border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]"
           : `inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] rounded-[28px] bg-neutral-950/90 backdrop-blur-lg border border-white/[0.16] shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.2)] ${
-              heightClassName || maxHeightClassName || "h-[72dvh] max-h-[72dvh]"
+              heightClassName || maxHeightClassName || "h-[68dvh] max-h-[72dvh]"
             }`
       )}
     >
@@ -288,13 +290,11 @@ export function MobileSheetShell({
             <button
               type="button"
               onClick={onBack}
+              title={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
               aria-label={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
-              className="flex items-center gap-0.5 px-2 py-1 -ml-1 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white/90 hover:text-white transition-all text-xs font-semibold shrink-0 select-none shadow-sm"
+              className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.18] active:scale-90 border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-all shrink-0 select-none shadow-sm cursor-pointer"
             >
               <CaretLeftIcon className="w-4 h-4" weight="bold" />
-              {backLabel && (
-                <span className="max-w-[80px] truncate tracking-tight">{backLabel}</span>
-              )}
             </button>
           )}
 
@@ -311,13 +311,15 @@ export function MobileSheetShell({
               onClick={handleToggleZenMode}
               title={isZenMode ? "Thu gọn về dạng khay đáy" : "Mở rộng không gian Zen (Toàn màn hình)"}
               aria-label="Chuyển chế độ xem"
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all shadow-sm"
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all shadow-sm cursor-pointer"
             >
-              {isZenMode ? (
-                <ArrowsInSimpleIcon className="w-3.5 h-3.5" weight="bold" />
-              ) : (
-                <ArrowsOutSimpleIcon className="w-3.5 h-3.5" weight="bold" />
-              )}
+              <span className={cn("inline-flex transition-transform duration-300 ease-out", isZenMode ? "rotate-180 scale-105" : "rotate-0 scale-100")}>
+                {isZenMode ? (
+                  <ArrowsInSimpleIcon className="w-3.5 h-3.5" weight="bold" />
+                ) : (
+                  <ArrowsOutSimpleIcon className="w-3.5 h-3.5" weight="bold" />
+                )}
+              </span>
             </button>
 
             {/* Nút Đóng */}

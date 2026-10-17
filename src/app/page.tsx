@@ -37,17 +37,17 @@ export default function StudySpacePage() {
       <AnimatePresence>
         {state.isPreloadingScene && state.pendingScene && (
           <motion.div
-            initial={{ opacity: 0, y: 15, scale: 0.95 }}
+            initial={state.isMobile ? { opacity: 0, y: -12, scale: 0.95 } : { opacity: 0, y: 15, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 15, scale: 0.95 }}
+            exit={state.isMobile ? { opacity: 0, y: -12, scale: 0.95 } : { opacity: 0, y: 15, scale: 0.95 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 px-4 py-2 rounded-full bg-black/85 backdrop-blur-2xl border border-white/20 text-white text-xs shadow-[0_12px_40px_rgba(0,0,0,0.8)] pointer-events-none select-none"
+            className="fixed top-[calc(env(safe-area-inset-top,0px)+3.75rem)] sm:top-auto sm:bottom-24 left-1/2 -translate-x-1/2 z-[80] flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-black/85 backdrop-blur-2xl border border-white/20 text-white text-xs shadow-[0_12px_40px_rgba(0,0,0,0.8)] pointer-events-none select-none max-w-[calc(100vw-2rem)] w-max"
           >
             <CircleNotchIcon className="w-3.5 h-3.5 animate-spin text-accent-music-glow shrink-0" />
-            <span className="text-slate-200">
-              Đang tải bối cảnh <strong className="text-white font-semibold">{state.pendingScene.name}</strong>...
+            <span className="text-slate-200 truncate max-w-[190px] sm:max-w-none">
+              Đang tải <strong className="text-white font-semibold">{state.pendingScene.name}</strong>...
             </span>
-            <span className="text-[10px] text-accent-music-bright font-mono bg-white/10 px-1.5 py-0.5 rounded border border-white/10">
+            <span className="shrink-0 text-[10px] text-accent-music-bright font-mono bg-white/10 px-1.5 py-0.5 rounded border border-white/10">
               {state.pendingScene.type === "VIDEO" ? "Video" : "Ảnh"}
             </span>
           </motion.div>

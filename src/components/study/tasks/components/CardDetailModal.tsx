@@ -167,34 +167,32 @@ export const CardDetailModal = React.memo(function CardDetailModal({
           <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
           {/* Header: Title, Board Info & Action Bar */}
           <div className="px-4 sm:px-6 pt-4 sm:pt-5 pb-3.5 border-b border-white/10 space-y-3 bg-white/[0.01]">
-            <div className="flex items-start justify-between gap-2.5 sm:gap-3">
+            <div className="flex items-center justify-between gap-2.5 sm:gap-3">
               {/* Nút Quay lại cho Mobile / Stack Navigation */}
               {onBack && (
                 <button
                   type="button"
                   onClick={onBack}
+                  title={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
                   aria-label={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
-                  className="flex items-center gap-0.5 px-2.5 py-1 -ml-1 mt-0.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white/90 hover:text-white transition-all text-xs font-semibold shrink-0 select-none shadow-sm cursor-pointer"
+                  className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.18] active:scale-90 border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-all shrink-0 select-none shadow-sm cursor-pointer -ml-0.5"
                 >
                   <CaretLeftIcon className="w-4 h-4" weight="bold" />
-                  {backLabel && (
-                    <span className="max-w-[70px] sm:max-w-[120px] truncate tracking-tight">{backLabel}</span>
-                  )}
                 </button>
               )}
 
               {/* Task Title with intuitive inline editing affordance (Icon bám sát đuôi chữ) */}
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
                 <div
                   onClick={() => titleInputRef.current?.focus()}
-                  className="group/title relative inline-flex items-center gap-1.5 max-w-full -ml-2 px-2 py-0.5 rounded-xl border border-transparent hover:border-white/15 hover:bg-white/[0.04] focus-within:border-white/25 focus-within:bg-white/[0.06] transition-all cursor-text"
+                  className="group/title relative inline-flex items-center gap-1.5 max-w-full -ml-1.5 px-1.5 py-0.5 rounded-xl border border-transparent hover:border-white/15 hover:bg-white/[0.04] focus-within:border-white/25 focus-within:bg-white/[0.06] transition-all cursor-text leading-none"
                   title="Nhấp để chỉnh sửa tiêu đề nhiệm vụ"
                 >
                   <div className="relative inline-flex items-center max-w-[320px] sm:max-w-[420px] min-w-[24px]">
                     {/* Thẻ đệm đo chính xác từng pixel chiều rộng của chữ */}
                     <span
                       aria-hidden="true"
-                      className="invisible text-lg sm:text-xl font-bold tracking-tight whitespace-pre select-none pointer-events-none px-0.5 truncate max-w-full"
+                      className="invisible text-lg sm:text-xl font-bold tracking-tight whitespace-pre select-none pointer-events-none px-0.5 truncate max-w-full leading-snug"
                     >
                       {selectedCard.title || "Tiêu đề nhiệm vụ..."}
                     </span>
@@ -213,7 +211,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                           ),
                         }));
                       }}
-                      className="absolute inset-0 w-full h-full text-lg sm:text-xl font-bold bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-white/25 text-white tracking-tight cursor-text px-0.5"
+                      className="absolute inset-0 w-full h-full text-lg sm:text-xl font-bold bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-white/25 text-white tracking-tight cursor-text px-0.5 leading-snug"
                       placeholder="Tiêu đề nhiệm vụ..."
                     />
                   </div>
@@ -225,20 +223,21 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   </div>
                 </div>
 
-                <div className="text-xs text-slate-400 flex items-center mt-1 px-0.5">
+                <div className="text-[11px] text-slate-400 flex items-center mt-0.5 px-0.5">
                   <span className="text-slate-400 font-medium">{currentBoard.title}</span>
                 </div>
               </div>
 
               {/* Quick Actions (Auto-save, Delete & Close) */}
-              <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
-                <span className="text-xs text-emerald-400/90 font-medium mr-1">
-                  Tự động lưu
-                </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/[0.08] border border-emerald-500/20 text-emerald-300 text-[11px] font-medium mr-0.5 select-none h-7">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span>Đã lưu</span>
+                </div>
                 <button
                   type="button"
                   onClick={() => promptDeleteCard(selectedCard)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                  className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                   title="Xóa thẻ này"
                 >
                   <TrashIcon className="w-4 h-4" />
@@ -249,7 +248,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                     setSelectedCard(null);
                     closeAllPopovers();
                   }}
-                  className="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
                   title="Đóng (Esc)"
                 >
                   <XIcon className="w-4 h-4" />
@@ -257,8 +256,8 @@ export const CardDetailModal = React.memo(function CardDetailModal({
               </div>
             </div>
 
-            {/* Compact Property Chips Bar (Dàn đều 4 thẻ) */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full pt-0.5">
+            {/* Property Chips Bar (Dàn đều 3 thẻ thuộc tính) */}
+            <div className="grid grid-cols-3 gap-2 w-full pt-0.5">
               {/* 1. Status Chip */}
               <div className="relative">
                 <button
@@ -337,17 +336,17 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   }}
                   className={`w-full h-8 px-2 sm:px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${
                     selectedCard.priority === "high"
-                      ? "bg-rose-500/10 border-rose-500/30 text-rose-300 hover:bg-rose-500/20"
+                      ? "bg-rose-500/[0.08] border-rose-500/25 text-rose-300 hover:bg-rose-500/15"
                       : selectedCard.priority === "medium"
-                      ? "bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20"
-                      : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20"
+                      ? "bg-amber-500/[0.08] border-amber-500/25 text-amber-300 hover:bg-amber-500/15"
+                      : "bg-emerald-500/[0.08] border-emerald-500/25 text-emerald-300 hover:bg-emerald-500/15"
                   }`}
                   title="Mức độ ưu tiên"
                 >
                   <div className="flex items-center gap-1.5 min-w-0">
                     <PrioritySignalIcon priority={selectedCard.priority || "medium"} className="w-3.5 h-3.5 shrink-0" />
                     <span className="flex items-center gap-1 min-w-0">
-                      <span className="opacity-75 text-xs font-normal shrink-0">Ưu tiên:</span>
+                      <span className="text-slate-400 font-normal shrink-0">Ưu tiên:</span>
                       <span className="font-semibold text-xs whitespace-nowrap">
                         {selectedCard.priority === "high"
                           ? "Cao"
@@ -637,27 +636,27 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   )}
                 </AnimatePresence>
               </div>
-
-              {/* 4. Action Button: Bắt đầu phiên Pomodoro */}
-              <button
-                type="button"
-                onClick={() => {
-                  startFocusTask({ id: selectedCard.id, title: selectedCard.title });
-                  setSelectedCard(null);
-                  closeAllPopovers();
-                }}
-                className="w-full h-8 px-2 sm:px-2.5 rounded-xl bg-amber-400/15 hover:bg-amber-400/25 active:scale-95 text-amber-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-amber-400/30 shadow-xs"
-                title="Bắt đầu phiên Pomodoro"
-              >
-                <PlayIcon className="w-3.5 h-3.5 fill-amber-200 shrink-0" />
-                <span>Bắt đầu</span>
-                {typeof selectedCard.pomodoros === "number" && selectedCard.pomodoros > 0 && (
-                  <span className="text-[10px] opacity-75 font-mono">
-                    ({selectedCard.pomodoros})
-                  </span>
-                )}
-              </button>
             </div>
+
+            {/* Primary Action Button: Bắt đầu phiên Pomodoro */}
+            <button
+              type="button"
+              onClick={() => {
+                startFocusTask({ id: selectedCard.id, title: selectedCard.title });
+                setSelectedCard(null);
+                closeAllPopovers();
+              }}
+              className="w-full h-9 px-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-amber-400/20 to-amber-500/20 hover:from-amber-500/30 hover:to-amber-500/30 active:scale-[0.99] text-amber-200 font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border border-amber-400/35 shadow-sm"
+              title="Bắt đầu phiên tập trung Pomodoro cho nhiệm vụ này"
+            >
+              <PlayIcon className="w-3.5 h-3.5 fill-amber-300 text-amber-300 shrink-0" />
+              <span>Bắt đầu phiên Pomodoro</span>
+              {typeof selectedCard.pomodoros === "number" && selectedCard.pomodoros > 0 && (
+                <span className="text-[10px] text-amber-300/80 font-mono bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20 ml-1">
+                  Đã hoàn thành {selectedCard.pomodoros} phiên
+                </span>
+              )}
+            </button>
           </div>
 
           {/* Scrollable Content Body */}
@@ -683,8 +682,8 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                     ),
                   }));
                 }}
-                rows={3}
-                className="w-full p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.05] focus:bg-white/[0.06] border border-white/[0.08] focus:border-white/20 text-xs sm:text-sm text-slate-200 placeholder-white/30 focus:outline-none resize-none min-h-[76px] transition-all font-normal leading-relaxed"
+                rows={2}
+                className="w-full p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] focus:bg-white/[0.06] border border-white/[0.08] focus:border-white/20 text-xs sm:text-sm text-slate-200 placeholder-white/30 focus:outline-none resize-none min-h-[60px] transition-all font-normal leading-relaxed"
               />
             </div>
 

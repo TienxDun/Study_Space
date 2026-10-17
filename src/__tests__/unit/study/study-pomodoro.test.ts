@@ -135,4 +135,33 @@ describe("Study Pomodoro & Stopwatch Formatter Logic", () => {
     expect(computeSpanDelta(NaN, 900, 0)).toBe(0);
     expect(computeSpanDelta(1500, 900, 2000)).toBe(0);
   });
+
+  it("should persist stopwatch state key correctly", async () => {
+    const { STORAGE_KEYS } = await import("@/lib/storage-keys");
+    expect(STORAGE_KEYS.stopwatchRunningState).toBe("study_stopwatch_running_state_v1");
+
+    const mockStore: Record<string, string> = {};
+    const mockStorage = {
+      getItem: (k: string) => mockStore[k] ?? null,
+      setItem: (k: string, v: string) => { mockStore[k] = String(v); },
+      removeItem: (k: string) => { delete mockStore[k]; },
+      clear: () => { Object.keys(mockStore).forEach((k) => delete mockStore[k]); },
+    };
+    // @ts-expect-error test mock
+    globalThis.localStorage = mockStorage;
+
+    const testState = {
+      baseTime: 12500,
+      isRunning: true,
+      startedAt: Date.now() - 5000,
+      laps: [12500],
+      isLapsOpen: true,
+    };
+    localStorage.setItem(STORAGE_KEYS.stopwatchRunningState, JSON.stringify(testState));
+
+    const restored = JSON.parse(localStorage.getItem(STORAGE_KEYS.stopwatchRunningState) || "{}");
+    expect(restored.baseTime).toBe(12500);
+    expect(restored.isRunning).toBe(true);
+    expect(restored.laps).toHaveLength(1);
+  });
 });
