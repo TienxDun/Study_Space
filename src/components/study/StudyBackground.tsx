@@ -22,21 +22,35 @@ export const StudyBackground = ({
     setHasVideoError(false);
   }, [scene.id]);
 
-  // Thông báo sẵn sàng khi nạp bối cảnh dạng hình ảnh
+  // Thông báo sẵn sàng khi bối cảnh đã có hình ảnh hiển thị (Ảnh gốc hoặc Thumbnail Poster của Video)
   useEffect(() => {
-    if (scene.type === "IMAGE" || hasVideoError) {
-      const targetUrl = hasVideoError ? scene.thumbnailUrl : scene.bgUrl;
-      if (typeof window !== "undefined") {
+    let isCancelled = false;
+    if (typeof window !== "undefined") {
+      const targetUrl =
+        scene.type === "IMAGE" || hasVideoError
+          ? hasVideoError
+            ? scene.thumbnailUrl
+            : scene.bgUrl
+          : scene.thumbnailUrl;
+
+      if (targetUrl) {
         const img = new Image();
         img.src = targetUrl;
         if (img.complete) {
-          onLoaded?.();
+          if (!isCancelled) onLoaded?.();
         } else {
-          img.onload = () => onLoaded?.();
-          img.onerror = () => onLoaded?.();
+          img.onload = () => {
+            if (!isCancelled) onLoaded?.();
+          };
+          img.onerror = () => {
+            if (!isCancelled) onLoaded?.();
+          };
         }
       }
     }
+    return () => {
+      isCancelled = true;
+    };
   }, [scene.bgUrl, scene.thumbnailUrl, scene.type, hasVideoError, onLoaded]);
 
   return (

@@ -134,6 +134,7 @@ export const StudyMusicPlayer = memo(function StudyMusicPlayer({
     externalStreamItem,
     toggleExternalPlay,
     onStopExternalStream,
+    enabledAutoplay: hasEntered,
   });
 
   const isShowingExternalStream = Boolean(

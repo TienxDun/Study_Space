@@ -40,7 +40,21 @@ export const MobileSplashScreen: React.FC<MobileSplashScreenProps> = ({
   preview = false,
 }) => {
   const [hasMounted, setHasMounted] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    if (forceShow || preview) return true;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const splash = params.get("splash");
+      const p = params.get("preview");
+      if (splash === "preview" || splash === "true" || splash === "1" || p === "splash") {
+        return true;
+      }
+      return !sessionStorage.getItem(STORAGE_KEY);
+    } catch {
+      return true;
+    }
+  });
   const [progress, setProgress] = useState(0);
   const [isUrlPreview, setIsUrlPreview] = useState(false);
   const [replayCount, setReplayCount] = useState(0);

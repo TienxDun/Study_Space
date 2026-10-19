@@ -218,16 +218,23 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
         </div>
 
         {/* ============================================================== */}
-        {/* NỀN PHONG CẢNH ĐIỆN ẢNH TỐI ƯU TĨNH: TRÁNH REPAINT LIÊN TỤC    */}
+        {/* NỀN PHONG CẢNH ĐIỆN ẢNH TỐI ƯU TĨNH: CROSSFADE MƯỢT MÀ 60FPS   */}
         {/* ============================================================== */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-          <img
-            key={curatedCards[activeCardIndex]?.scene.id}
-            src={curatedCards[activeCardIndex]?.scene.thumbnailUrl || "/thumbnails/journey-through-fantasy-world.webp"}
-            alt="Hình nền không gian học tập"
-            className="w-full h-full object-cover object-center filter brightness-[0.7] contrast-[1.05] transition-opacity duration-500 will-change-transform"
-            loading="eager"
-          />
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          {curatedCards.map((card, idx) => {
+            const isActive = idx === activeCardIndex;
+            return (
+              <img
+                key={card.scene.id}
+                src={card.scene.thumbnailUrl || "/thumbnails/journey-through-fantasy-world.webp"}
+                alt="Hình nền không gian học tập"
+                className={`absolute inset-0 w-full h-full object-cover object-center filter brightness-[0.7] contrast-[1.05] transition-opacity duration-500 ease-out will-change-[opacity] ${
+                  isActive ? "opacity-100" : "opacity-0"
+                }`}
+                loading="eager"
+              />
+            );
+          })}
           {/* Lớp gradient bóng đổ mượt mà từ đáy lên */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F1A] via-[#0B0F1A]/80 via-50% to-black/35 pointer-events-none" />
         </div>

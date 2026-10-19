@@ -10,7 +10,6 @@ import {
   CheckCircleIcon,
   CircleIcon,
   CaretUpIcon,
-  MinusIcon,
   ImageIcon,
   MusicNotesIcon,
   CloudRainIcon,
@@ -724,11 +723,10 @@ export function StudyOnboardingTour({
                   title="Nhấn giữ & kéo thả để di chuyển bảng nhiệm vụ"
                 >
                   {/* Cột trái: Nhãn hành trình làm quen */}
-                  <div className="flex items-center gap-1.5 min-w-0 max-w-full justify-self-start">
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold border bg-white/10 hover:bg-white/15 border-white/10 text-slate-200 shadow-2xs">
-                      <SparkleIcon className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                      <span className="font-semibold truncate">Làm quen</span>
-                    </div>
+                  <div className="flex items-center min-w-0 max-w-full justify-self-start">
+                    <span className="text-xs font-semibold text-slate-200 truncate px-1">
+                      Làm quen
+                    </span>
                   </div>
 
                   {/* Cột giữa: Thanh kéo Drag Indicator - căn giữa đối xứng chuẩn xác */}
@@ -742,17 +740,8 @@ export function StudyOnboardingTour({
                     />
                   </div>
 
-                  {/* Cột phải: Cụm nút thao tác (Thu nhỏ & Đóng) */}
+                  {/* Cột phải: Nút đóng bảng nhiệm vụ */}
                   <div className="flex items-center gap-1.5 shrink-0 justify-self-end col-start-3">
-                    <button
-                      type="button"
-                      onClick={handleToggleMinimizeQuest}
-                      className="w-7 h-7 rounded-xl border transition-colors flex items-center justify-center cursor-pointer hover:bg-white/10 border-white/10 text-slate-400 hover:text-white"
-                      title="Thu nhỏ bảng nhiệm vụ"
-                    >
-                      <MinusIcon className="w-3.5 h-3.5" />
-                    </button>
-
                     <button
                       type="button"
                       onClick={() => setIsQuestVisible(false)}

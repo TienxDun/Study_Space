@@ -38,7 +38,7 @@ export function useStudySpaceState() {
   const isMobile = useIsMobile();
 
   // Widget States
-  const [isPomodoroVisible, setIsPomodoroVisible] = useState(true);
+  const [isPomodoroVisible, setIsPomodoroVisible] = useState(false);
   const [centerTab, setCenterTab] = useState<TimerTab>("pomodoro");
   const [isTasksOpen, setIsTasksOpen] = useState(false);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
@@ -348,7 +348,6 @@ export function useStudySpaceState() {
       if (next) handleCloseSettings();
       return next;
     });
-    setIsNotesOpen(false);
     setIsScenesOpen(false);
     setIsMixerOpen(false);
   }, [handleCloseSettings]);
@@ -359,7 +358,6 @@ export function useStudySpaceState() {
       if (next) handleCloseSettings();
       return next;
     });
-    setIsTasksOpen(false);
     setIsScenesOpen(false);
     setIsMixerOpen(false);
   }, [handleCloseSettings]);
@@ -481,8 +479,8 @@ export function useStudySpaceState() {
     setter: React.Dispatch<React.SetStateAction<boolean>>
   ) => {
     handleCloseSettings();
-    setIsTasksOpen(false);
-    setIsNotesOpen(false);
+    if (setter !== setIsNotesOpen) setIsTasksOpen(false);
+    if (setter !== setIsTasksOpen) setIsNotesOpen(false);
     setIsScenesOpen(false);
     setIsMixerOpen(false);
     setIsEmbedPlayerOpen(false);
@@ -729,7 +727,6 @@ export function useStudySpaceState() {
     isSettingsOpen ||
     isStatsOpen ||
     isTasksOpen ||
-    isNotesOpen ||
     isScenesOpen ||
     (isEmbedPlayerOpen && !isPipActive) ||
     isMixerOpen ||
@@ -784,6 +781,7 @@ export function useStudySpaceState() {
       pendingScene,
       isPreloadingScene,
       handleSelectScene,
+      setCurrentSceneDirectly,
       isSlideshowOn,
       slideshowIntervalMin,
       slideshowPool,
@@ -916,6 +914,7 @@ export function useStudySpaceState() {
       pendingScene,
       isPreloadingScene,
       handleSelectScene,
+      setCurrentSceneDirectly,
       isSlideshowOn,
       slideshowIntervalMin,
       slideshowPool,

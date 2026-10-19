@@ -14,6 +14,7 @@ interface UseAudioPlayerOptions {
   externalStreamItem?: StudyEmbedItem | null;
   toggleExternalPlay?: () => void;
   onStopExternalStream?: () => void;
+  enabledAutoplay?: boolean;
 }
 
 export function useAudioPlayer({
@@ -24,6 +25,7 @@ export function useAudioPlayer({
   externalStreamItem = null,
   toggleExternalPlay,
   onStopExternalStream,
+  enabledAutoplay = true,
 }: UseAudioPlayerOptions) {
   const [currentMood, setCurrentMood] = useState<MoodType>("lofi");
   const [tracks, setTracks] = useState<Track[]>(STUDY_TRACKS_BY_MOOD.lofi);
@@ -109,7 +111,7 @@ export function useAudioPlayer({
   // Chỉ tự động phát nhạc ở lần đầu tiên truy cập web; các lần sau mở web thì tắt
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || !enabledAutoplay) return;
 
     // Kiểm tra xem đã từng vào web trước đây chưa
     const hasVisited =
@@ -127,6 +129,8 @@ export function useAudioPlayer({
     } catch {
       // Bỏ qua lỗi quota hoặc môi trường chặn localStorage
     }
+
+    let cleanupListeners: (() => void) | null = null;
 
     const attemptAutoplay = () => {
       // Đài ngoài đang chiếm sóng thì không tự phát nhạc nội bộ
@@ -149,11 +153,20 @@ export function useAudioPlayer({
           window.addEventListener("click", onFirstInteraction, { once: true });
           window.addEventListener("touchstart", onFirstInteraction, { once: true });
           window.addEventListener("keydown", onFirstInteraction, { once: true });
+          cleanupListeners = () => {
+            window.removeEventListener("click", onFirstInteraction);
+            window.removeEventListener("touchstart", onFirstInteraction);
+            window.removeEventListener("keydown", onFirstInteraction);
+          };
         });
     };
 
     attemptAutoplay();
-  }, []);
+
+    return () => {
+      cleanupListeners?.();
+    };
+  }, [enabledAutoplay]);
 
   const stopExternalStreamIfActive = useCallback(() => {
     if (onStopExternalStream) {

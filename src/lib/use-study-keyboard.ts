@@ -102,7 +102,6 @@ export const useStudyKeyboard = (api: StudyKeyboardApi) => {
           if (next) a.closeSettings();
           return next;
         });
-        a.setNotesOpen(false);
         a.setScenesOpen(false);
         a.setMixerOpen(false);
         a.setEmbedOpen(false);
@@ -113,7 +112,6 @@ export const useStudyKeyboard = (api: StudyKeyboardApi) => {
           if (next) a.closeSettings();
           return next;
         });
-        a.setTasksOpen(false);
         a.setScenesOpen(false);
         a.setMixerOpen(false);
         a.setEmbedOpen(false);

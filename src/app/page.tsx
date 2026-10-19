@@ -50,10 +50,14 @@ export default function StudySpacePage() {
   const [hasEntered, setHasEntered] = useState(() => {
     if (typeof window === "undefined") return true;
     try {
-      return Boolean(
+      const isWelcomeDone = Boolean(
         localStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted) ||
         sessionStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted)
       );
+      const isSplashDone = Boolean(
+        sessionStorage.getItem("zenstudy_mobile_splash_completed")
+      );
+      return isWelcomeDone && isSplashDone;
     } catch {
       return true;
     }
@@ -96,19 +100,30 @@ export default function StudySpacePage() {
       {!state.isMobile && <StudyDesktopLayout state={state} />}
       {state.isMobile && <StudyMobileLayout state={state} hasEntered={hasEntered} />}
 
-      {/* Màn hình khởi động Splash Screen chuẩn nhận diện thương hiệu cho Mobile (hỗ trợ xem thử trên máy tính qua ?splash=preview) */}
-      {(state.isMobile || isSplashPreview) && (
-        <MobileSplashScreen
-          preview={isSplashPreview}
-          isReady={isBackgroundReady && !state.isPreloadingScene}
-        />
-      )}
+      {/* Màn hình khởi động Splash Screen chuẩn nhận diện thương hiệu cho Mobile (tự ẩn trên Desktop bằng CSS sm:hidden, hỗ trợ xem thử qua ?splash=preview) */}
+      <MobileSplashScreen
+        preview={isSplashPreview}
+        isReady={isBackgroundReady && !state.isPreloadingScene}
+        onFinish={() => {
+          try {
+            const isWelcomeDone = Boolean(
+              localStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted) ||
+              sessionStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted)
+            );
+            if (isWelcomeDone) {
+              setHasEntered(true);
+            }
+          } catch {
+            setHasEntered(true);
+          }
+        }}
+      />
 
       {/* Màn hình chào mừng Welcome / Onboarding Screen chuyên nghiệp cho Mobile */}
       {state.isMobile && !isSplashPreview && (
         <MobileWelcomeScreen
           sceneName={state.currentScene?.name}
-          onSelectScene={state.handleSelectScene}
+          onSelectScene={state.setCurrentSceneDirectly}
           onStart={() => setHasEntered(true)}
         />
       )}
