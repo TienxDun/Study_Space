@@ -341,9 +341,20 @@ export function MobileRoomsSheet({
                 maxLength={32}
                 className="w-full min-h-[42px] px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/15 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-400/50 transition-colors"
               />
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                💡 Ai nhập cùng tên phòng này sẽ tự động gặp nhau. Mic & cam mặc định tắt khi vừa vào.
-              </p>
+              <div className="pt-1 space-y-1.5">
+                <p className="flex items-start gap-2 text-[11px] leading-relaxed text-slate-400">
+                  <UsersIcon className="w-3.5 h-3.5 mt-[1px] shrink-0 text-emerald-400/80" weight="bold" />
+                  <span>
+                    Ai nhập <span className="font-semibold text-slate-200">cùng tên phòng</span> sẽ tự động gặp nhau.
+                  </span>
+                </p>
+                <p className="flex items-start gap-2 text-[11px] leading-relaxed text-slate-400">
+                  <VideoCameraIcon className="w-3.5 h-3.5 mt-[1px] shrink-0 text-slate-500" weight="bold" />
+                  <span>
+                    Mic và camera <span className="font-semibold text-slate-200">mặc định tắt</span> khi vừa vào.
+                  </span>
+                </p>
+              </div>
             </div>
 
             {/* Thông báo lỗi nếu có */}

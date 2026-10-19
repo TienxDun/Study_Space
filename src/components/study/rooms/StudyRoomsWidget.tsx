@@ -11,6 +11,7 @@ import {
   ArrowClockwiseIcon,
   SignInIcon,
   LockKeyIcon,
+  VideoCameraIcon,
 } from "@phosphor-icons/react";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useFloatingSize } from "@/lib/use-floating-size";
@@ -66,6 +67,7 @@ export const StudyRoomsWidget = ({ isOpen, onClose, onOpen, onBack, backLabel }:
     isSigningIn,
     authError,
     signIn,
+    getToken,
   } = useAuth();
 
   const isMobile = useIsMobile();
@@ -221,10 +223,16 @@ const getLiveKitEndpoints = () => {
     setJoining(true);
     setError(null);
     try {
+      // Worker tự kiểm vé Firebase và lấy danh tính từ uid trong vé.
+      const idToken = await getToken();
+      if (!idToken) throw new Error("Đăng nhập rồi mới vào phòng học nhóm được.");
       const res = await fetch(tokenUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ room, name, userId: user?.uid }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ room, name }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Vào phòng thất bại.");
@@ -255,7 +263,7 @@ const getLiveKitEndpoints = () => {
     } finally {
       setJoining(false);
     }
-  }, [roomSize, user]);
+  }, [roomSize, getToken]);
 
   const resolvedDisplayName =
     displayName.trim() || user?.displayName || user?.email?.split("@")[0] || "";
@@ -274,14 +282,19 @@ const getLiveKitEndpoints = () => {
     }
     setLoadingRooms(true);
     try {
-      const res = await fetch(roomsUrl, { cache: "no-store" });
+      // Danh sách phòng cũng cần vé Firebase (worker tự kiểm).
+      const idToken = await getToken();
+      const res = await fetch(roomsUrl, {
+        cache: "no-store",
+        ...(idToken ? { headers: { Authorization: `Bearer ${idToken}` } } : {}),
+      });
       const data = await res.json().catch(() => ({}));
       if (res.ok) setOpenRooms(data.rooms || []);
     } catch {}
     finally {
       setLoadingRooms(false);
     }
-  }, []);
+  }, [getToken]);
 
   useEffect(() => {
     if (isOpen && !token) loadOpenRooms();
@@ -622,9 +635,20 @@ const getLiveKitEndpoints = () => {
                           maxLength={32}
                           className="w-full px-3 py-2 rounded-xl bg-black/50 border border-white/20 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:border-white/30"
                         />
-                        <p className="text-[11px] text-slate-500 mt-1">
-                          Ai gõ cùng tên phòng là vào chung. Mic và camera mặc định tắt khi vào phòng.
-                        </p>
+                        <div className="mt-2 space-y-1.5">
+                          <p className="flex items-start gap-2 text-[11px] leading-relaxed text-slate-400">
+                            <UsersIcon className="w-3.5 h-3.5 mt-[1px] shrink-0 text-emerald-400/80" weight="bold" />
+                            <span>
+                              Ai gõ <span className="font-semibold text-slate-200">cùng tên phòng</span> là vào chung.
+                            </span>
+                          </p>
+                          <p className="flex items-start gap-2 text-[11px] leading-relaxed text-slate-400">
+                            <VideoCameraIcon className="w-3.5 h-3.5 mt-[1px] shrink-0 text-slate-500" weight="bold" />
+                            <span>
+                              Mic và camera <span className="font-semibold text-slate-200">mặc định tắt</span> khi vào phòng.
+                            </span>
+                          </p>
+                        </div>
                       </div>
                     </div>
 
