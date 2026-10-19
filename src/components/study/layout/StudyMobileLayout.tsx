@@ -66,7 +66,14 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
     isRoomsOpen,
     currentScene,
     pendingScene,
+    isPreloadingScene,
     handleSelectScene,
+    isSlideshowOn,
+    slideshowIntervalMin,
+    slideshowPool,
+    isSlideshowPoolFavorites,
+    handleToggleSlideshow,
+    handleCycleSlideshowInterval,
     mobileCurrentScreen,
     mobileCanGoBack,
     mobilePrevScreen,
@@ -207,7 +214,17 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
             backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
             currentScene={currentScene}
             pendingScene={pendingScene}
+            isPreloading={isPreloadingScene}
             onSelectScene={handleSelectScene}
+            slideshowEnabled={isSlideshowOn}
+            slideshowIntervalMin={slideshowIntervalMin}
+            slideshowPoolLabel={
+              isSlideshowPoolFavorites
+                ? `${slideshowPool.length} cảnh yêu thích`
+                : `tất cả ${slideshowPool.length} cảnh`
+            }
+            onToggleSlideshow={handleToggleSlideshow}
+            onCycleSlideshowInterval={handleCycleSlideshowInterval}
           />
         </ErrorBoundary>
       )}

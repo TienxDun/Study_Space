@@ -2,6 +2,7 @@
 
 > Thứ tự bắt buộc: Worker trước → Firebase → web. Mỗi bước có cách kiểm tra.
 > Rules liên quan: `docs/firestore-rules.md`. File Gemini cũ đã bỏ.
+> Kho dữ liệu học tập (D1): xem `docs/d1-backend.md`.
 
 ## Bước 0 — Xoay key đã lộ (làm 1 lần, trước khi online)
 
@@ -35,11 +36,12 @@ Các key từng dán ở khung chat coi như đã lộ:
 
 ## Bước 3 — Web (Cloudflare Pages)
 
-1. Pages → project web → Settings → Environment variables (Production) — cả 6 cái đều là **Text thường** (vì `NEXT_PUBLIC_*` nằm trong web, ai cũng thấy được — đây là mã công khai, không phải mật khẩu):
+1. Pages → project web → Settings → Environment variables (Production) — cả 7 cái đều là **Text thường** (vì `NEXT_PUBLIC_*` nằm trong web, ai cũng thấy được — đây là mã công khai, không phải mật khẩu):
    - `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`,
      `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`
    - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
    - `NEXT_PUBLIC_CHAT_API_URL` = `https://chat-proxy.<bạn>.workers.dev`
+   - `NEXT_PUBLIC_DATA_API_URL` = `https://data-api.<bạn>.workers.dev` (kho dữ liệu học tập, xem `docs/d1-backend.md` Bước 5)
    - **Tuyệt đối không thêm `GROQ_API_KEY` hay `ADMIN_TOKEN` vào đây.**
 2. Deployments → Retry deployment (web tĩnh: đổi env phải đăng lại).
 3. Kiểm tra: mở `zenstudy.space` → bong bóng chat → đăng nhập → hỏi 1 câu → F5 vẫn còn lịch sử.
@@ -52,6 +54,7 @@ Các key từng dán ở khung chat coi như đã lộ:
 - [ ] Acc A không đọc được dữ liệu acc B (mở 2 trình duyệt test).
 - [ ] `/status?token=...`: `workersAI.requestsToday` tăng, không có `lastAuthError` mới.
 - [ ] Dùng hết 30 câu: báo "mai quay lại" (test bằng acc phụ hoặc hạ `USER_DAILY_LIMIT` tạm thời).
+- [ ] Đồng bộ: đổi ghi chú ở laptop → F5 trên điện thoại (cùng acc) thấy thay đổi.
 
 ## Quy tắc bảo mật (giữ suốt đời dự án)
 

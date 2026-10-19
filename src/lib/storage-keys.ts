@@ -40,7 +40,6 @@ export const STORAGE_KEYS = {
   multiNotes: "huflit_study_multi_notes",
   oldNotes: "huflit_study_notes",
   notesTheme: "huflit_study_notes_theme",
-  notesCompactMode: "huflit_study_notes_compact_mode",
   notesCompactPos: "study_space_notes_compact_pos",
   notesCompactSize: "study_space_notes_compact_size",
   embedPipPos: "study_space_pip_pos",
@@ -52,7 +51,6 @@ export const STORAGE_KEYS = {
   screenAwake: "study_space_screen_awake",
   // Favorites
   favoriteScenes: "huflit_study_favorite_scenes",
-  favoriteTracks: "huflit_study_favorite_tracks",
   slideshowEnabled: "huflit_study_slideshow_enabled",
   slideshowIntervalMin: "huflit_study_slideshow_interval_min",
   // Focus Mode Integration

@@ -63,7 +63,33 @@ const NEURON_RATES = {
   "gpt-oss-20b": { in: 18182, out: 27273 },
   "llama-70b": { in: 26668, out: 204805 },
 };
+// ---------- Sổ đếm quota: ưu tiên D1, tự lùi về KV nếu chưa gắn D1 ----------
+// Quy ước key:
+//   user:{uid}:{yyyy-mm-dd}  -> số câu của 1 người trong ngày
+//   cf:rpd:{yyyy-mm-dd}      -> số lượt Workers AI trong ngày (toàn hệ thống)
+//   cfn:rpd:{yyyy-mm-dd}     -> số neurons Workers AI trong ngày (toàn hệ thống)
+// Lý do chuyển: KV free chỉ 1.000 ghi/ngày (~330 câu) và ghi không nguyên tử;
+// D1 free cho 100.000 dòng ghi/ngày và mỗi câu chỉ tốn 2 dòng ghi.
+function d1(env) {
+  return env && env.DB && typeof env.DB.prepare === "function" ? env.DB : null;
+}
+const RE_USER_COUNT = /^user:(.+):(\d{4}-\d{2}-\d{2})$/;
+const RE_CF_REQ = /^cf:rpd:(\d{4}-\d{2}-\d{2})$/;
+const RE_CF_NEURONS = /^cfn:rpd:(\d{4}-\d{2}-\d{2})$/;
+
 async function addFloat(env, key, val, ttlSeconds) {
+  const db = d1(env);
+  if (db) {
+    try {
+      const m = RE_CF_NEURONS.exec(key);
+      if (m) {
+        await db.prepare(
+          "INSERT INTO cf_usage (day, requests, neurons) VALUES (?, 0, ?) ON CONFLICT(day) DO UPDATE SET neurons = neurons + ?"
+        ).bind(m[1], val, val).run();
+        return 0;
+      }
+    } catch { /* D1 lỗi -> dùng KV dự phòng bên dưới */ }
+  }
   const store = kv(env);
   if (!store) return 0;
   const cur = (Number(await store.get(key).catch(() => 0)) || 0) + val;
@@ -119,11 +145,50 @@ function kv(env) {
   return env.CHAT_QUOTA && typeof env.CHAT_QUOTA.get === "function" ? env.CHAT_QUOTA : null;
 }
 async function getCount(env, key) {
+  const db = d1(env);
+  if (db) {
+    try {
+      let m = RE_USER_COUNT.exec(key);
+      if (m) {
+        const row = await db.prepare("SELECT count FROM chat_usage WHERE uid = ? AND day = ?").bind(m[1], m[2]).first();
+        return Number(row && row.count) || 0;
+      }
+      m = RE_CF_REQ.exec(key);
+      if (m) {
+        const row = await db.prepare("SELECT requests FROM cf_usage WHERE day = ?").bind(m[1]).first();
+        return Number(row && row.requests) || 0;
+      }
+      m = RE_CF_NEURONS.exec(key);
+      if (m) {
+        const row = await db.prepare("SELECT neurons FROM cf_usage WHERE day = ?").bind(m[1]).first();
+        return Number(row && row.neurons) || 0;
+      }
+    } catch { /* D1 lỗi -> dùng KV dự phòng bên dưới */ }
+  }
   const store = kv(env);
   if (store) return Number((await store.get(key).catch(() => null)) || 0);
   return 0;
 }
 async function incrCount(env, key, ttlSeconds) {
+  const db = d1(env);
+  if (db) {
+    try {
+      let m = RE_USER_COUNT.exec(key);
+      if (m) {
+        await db.prepare(
+          "INSERT INTO chat_usage (uid, day, count) VALUES (?, ?, 1) ON CONFLICT(uid, day) DO UPDATE SET count = count + 1"
+        ).bind(m[1], m[2]).run();
+        return 0;
+      }
+      m = RE_CF_REQ.exec(key);
+      if (m) {
+        await db.prepare(
+          "INSERT INTO cf_usage (day, requests, neurons) VALUES (?, 1, 0) ON CONFLICT(day) DO UPDATE SET requests = requests + 1"
+        ).bind(m[1]).run();
+        return 0;
+      }
+    } catch { /* D1 lỗi -> dùng KV dự phòng bên dưới */ }
+  }
   const store = kv(env);
   if (!store) return 0;
   const cur = (Number(await store.get(key).catch(() => 0)) || 0) + 1;
@@ -713,7 +778,17 @@ const worker = {
     const min = currentMinute();
 
     if (url.pathname === "/health" && req.method === "GET") {
-      return json({ ok: true, aiBinding: !!env.AI, kv: !!kv(env), time: new Date().toISOString() });
+      const db = d1(env);
+      let schema = false;
+      if (db) {
+        try {
+          const r = await db.prepare(
+            "SELECT count(*) AS n FROM sqlite_master WHERE type = 'table' AND name IN ('chat_usage','cf_usage')"
+          ).first();
+          schema = (Number(r && r.n) || 0) === 2;
+        } catch { schema = false; }
+      }
+      return json({ ok: true, aiBinding: !!env.AI, kv: !!kv(env), db: !!db, schema, pid: !!env.FIREBASE_PROJECT_ID, time: new Date().toISOString() });
     }
 
     if (url.pathname === "/status" && req.method === "GET") {

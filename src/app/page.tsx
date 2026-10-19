@@ -16,6 +16,8 @@ import { StudyMobileLayout } from "@/components/study/layout/StudyMobileLayout";
 import { MobileWelcomeScreen } from "@/components/study/mobile/welcome/MobileWelcomeScreen";
 import { MobileSplashScreen } from "@/components/study/mobile/splash/MobileSplashScreen";
 import { useStudySpaceState } from "@/components/study/hooks/useStudySpaceState";
+import { useAuth } from "@/lib/use-auth";
+import { useCloudSync } from "@/lib/use-cloud-sync";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 // Dynamic imports cho các widget đa phương tiện dùng chung
@@ -31,6 +33,10 @@ const StudyRoomsWidget = dynamic(
 
 export default function StudySpacePage() {
   const state = useStudySpaceState();
+
+  // Đồng bộ dữ liệu học tập lên Cloudflare D1 khi đã đăng nhập (localStorage vẫn là bản chính).
+  const { user, getToken } = useAuth();
+  useCloudSync(user?.uid, getToken);
 
   // Cho phép xem thử Splash Screen qua URL (?splash=preview, ?splash=true, ?preview=splash)
   const [isSplashPreview, setIsSplashPreview] = useState(false);
