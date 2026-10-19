@@ -7,15 +7,37 @@ import type { Scene } from "./study-types";
 export interface StudyBackgroundProps {
   scene: Scene;
   isBlurActive?: boolean;
+  onLoaded?: () => void;
 }
 
 /** Nền nhập vai: crossfade video/ảnh + fallback thumbnail + Spatial Vignette & GPU-accelerated Depth Blur. */
-export const StudyBackground = ({ scene, isBlurActive = false }: StudyBackgroundProps) => {
+export const StudyBackground = ({
+  scene,
+  isBlurActive = false,
+  onLoaded,
+}: StudyBackgroundProps) => {
   const [hasVideoError, setHasVideoError] = useState(false);
 
   useEffect(() => {
     setHasVideoError(false);
   }, [scene.id]);
+
+  // Thông báo sẵn sàng khi nạp bối cảnh dạng hình ảnh
+  useEffect(() => {
+    if (scene.type === "IMAGE" || hasVideoError) {
+      const targetUrl = hasVideoError ? scene.thumbnailUrl : scene.bgUrl;
+      if (typeof window !== "undefined") {
+        const img = new Image();
+        img.src = targetUrl;
+        if (img.complete) {
+          onLoaded?.();
+        } else {
+          img.onload = () => onLoaded?.();
+          img.onerror = () => onLoaded?.();
+        }
+      }
+    }
+  }, [scene.bgUrl, scene.thumbnailUrl, scene.type, hasVideoError, onLoaded]);
 
   return (
     <div className="absolute inset-0 bg-slate-950 overflow-hidden pointer-events-none select-none">
@@ -38,9 +60,12 @@ export const StudyBackground = ({ scene, isBlurActive = false }: StudyBackground
               loop
               muted
               playsInline
+              onLoadedData={() => onLoaded?.()}
+              onCanPlay={() => onLoaded?.()}
               onError={() => {
                 console.warn(`[StudySpace] Lỗi nạp video bối cảnh "${scene.name}", tự động chuyển sang ảnh thumbnail an toàn.`);
                 setHasVideoError(true);
+                onLoaded?.();
               }}
               className="w-full h-full object-cover"
             />

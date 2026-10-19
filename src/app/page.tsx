@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { CircleNotchIcon } from "@phosphor-icons/react";
@@ -16,6 +16,7 @@ import { StudyMobileLayout } from "@/components/study/layout/StudyMobileLayout";
 import { MobileWelcomeScreen } from "@/components/study/mobile/welcome/MobileWelcomeScreen";
 import { MobileSplashScreen } from "@/components/study/mobile/splash/MobileSplashScreen";
 import { useStudySpaceState } from "@/components/study/hooks/useStudySpaceState";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 // Dynamic imports cho các widget đa phương tiện dùng chung
 const StudyEmbedPlayerWidget = dynamic(
@@ -31,20 +32,44 @@ const StudyRoomsWidget = dynamic(
 export default function StudySpacePage() {
   const state = useStudySpaceState();
 
+  // Cho phép xem thử Splash Screen qua URL (?splash=preview, ?splash=true, ?preview=splash)
+  const [isSplashPreview, setIsSplashPreview] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const splash = params.get("splash");
+      const preview = params.get("preview");
+      if (splash === "preview" || splash === "true" || splash === "1" || preview === "splash") {
+        setIsSplashPreview(true);
+      }
+    }
+  }, []);
+
   // Kiểm soát hiệu ứng hiển thị tuần tự (Fly in from bottom) khi vào trang chính
   const [hasEntered, setHasEntered] = useState(() => {
     if (typeof window === "undefined") return true;
     try {
-      return Boolean(sessionStorage.getItem("zenstudy_mobile_welcome_completed"));
+      return Boolean(
+        localStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted) ||
+        sessionStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted)
+      );
     } catch {
       return true;
     }
   });
 
+  // Theo dõi trạng thái nạp bối cảnh ban đầu để đồng bộ đóng Splash Screen chuẩn xác
+  const [isBackgroundReady, setIsBackgroundReady] = useState(false);
+
   return (
     <div className="fixed inset-0 sm:relative sm:w-screen sm:h-dvh overflow-hidden bg-slate-950 text-white select-none font-sans">
       {/* Nền bối cảnh chung */}
-      <StudyBackground scene={state.currentScene} isBlurActive={state.isAnyModalOpen} />
+      <StudyBackground
+        scene={state.currentScene}
+        isBlurActive={state.isAnyModalOpen}
+        onLoaded={() => setIsBackgroundReady(true)}
+      />
 
       {/* Thông báo capsule khi đang tải bối cảnh mới */}
       <AnimatePresence>
@@ -71,11 +96,16 @@ export default function StudySpacePage() {
       {!state.isMobile && <StudyDesktopLayout state={state} />}
       {state.isMobile && <StudyMobileLayout state={state} hasEntered={hasEntered} />}
 
-      {/* Màn hình khởi động Splash Screen chuẩn nhận diện thương hiệu cho Mobile */}
-      {state.isMobile && <MobileSplashScreen />}
+      {/* Màn hình khởi động Splash Screen chuẩn nhận diện thương hiệu cho Mobile (hỗ trợ xem thử trên máy tính qua ?splash=preview) */}
+      {(state.isMobile || isSplashPreview) && (
+        <MobileSplashScreen
+          preview={isSplashPreview}
+          isReady={isBackgroundReady && !state.isPreloadingScene}
+        />
+      )}
 
       {/* Màn hình chào mừng Welcome / Onboarding Screen chuyên nghiệp cho Mobile */}
-      {state.isMobile && (
+      {state.isMobile && !isSplashPreview && (
         <MobileWelcomeScreen
           sceneName={state.currentScene?.name}
           onSelectScene={state.handleSelectScene}
@@ -177,6 +207,13 @@ export default function StudySpacePage() {
       <StudyOnboardingTour
         isOpen={state.isTourOpen ? true : undefined}
         onClose={() => state.setIsTourOpen(false)}
+        onOpenScenes={() => state.setIsScenesOpen(true)}
+        onOpenMixer={() => state.setIsMixerOpen(true)}
+        onTogglePomodoro={() => state.setIsPomodoroVisible((v) => !v)}
+        onOpenChat={() => state.setIsChatOpen(true)}
+        onOpenTasks={() => state.setIsTasksOpen(true)}
+        onOpenNotes={() => state.setIsNotesOpen(true)}
+        onOpenShortcuts={() => state.setIsShortcutsHelpOpen(true)}
       />
     </div>
   );

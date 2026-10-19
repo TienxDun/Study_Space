@@ -61,8 +61,13 @@ export const STORAGE_KEYS = {
   focusSessions: "study_space_focus_sessions_v1",
   // Onboarding Tour
   tourCompleted: "zenstudy_tour_completed",
+  tourQuestState: "zenstudy_tour_quest_state",
+  tourQuestMinimized: "zenstudy_tour_quest_minimized",
+  tourQuestPos: "zenstudy_tour_quest_pos",
   // Cấu hình chế độ xem Mobile Sheet (Toàn màn hình Zen vs Dạng thu nhỏ/khay đáy)
   mobileSheetZenMap: "study_space_mobile_sheet_zen_map",
+  // Màn hình chào mừng Mobile (Chỉ hiện ở lần đầu tiên mở app)
+  mobileWelcomeCompleted: "zenstudy_mobile_welcome_completed",
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

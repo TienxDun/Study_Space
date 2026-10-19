@@ -62,4 +62,146 @@ describe("MobileSplashScreen Component", () => {
     expect(handleFinish).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
   });
+
+  it("renders developer preview toolbar and stays open when preview prop is true", () => {
+    vi.useFakeTimers();
+    act(() => {
+      root.render(<MobileSplashScreen preview={true} duration={400} />);
+    });
+
+    const toolbar = document.body.textContent;
+    expect(toolbar).toContain("Chế độ xem thử");
+    expect(toolbar).toContain("Chạy lại");
+    expect(toolbar).toContain("Đóng");
+
+    // Cho dù chạy qua duration thì màn hình vẫn còn mở
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    const splash = document.querySelector('[aria-label="Màn hình khởi động ứng dụng"]');
+    expect(splash).not.toBeNull();
+
+    vi.useRealTimers();
+  });
+
+  it("triggers onFinish when clicking Đóng in preview toolbar", () => {
+    const handleFinish = vi.fn();
+    act(() => {
+      root.render(<MobileSplashScreen preview={true} onFinish={handleFinish} />);
+    });
+
+    const closeBtn = Array.from(document.querySelectorAll("button")).find(
+      (btn) => btn.textContent?.trim() === "Đóng"
+    );
+    expect(closeBtn).toBeDefined();
+
+    act(() => {
+      closeBtn?.click();
+    });
+
+    expect(handleFinish).toHaveBeenCalledTimes(1);
+  });
+
+  it("resets progress when clicking Chạy lại in preview toolbar", () => {
+    vi.useFakeTimers();
+    act(() => {
+      root.render(<MobileSplashScreen preview={true} duration={400} />);
+    });
+
+    // Chạy tới 100%
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    const replayBtn = Array.from(document.querySelectorAll("button")).find(
+      (btn) => btn.textContent?.trim() === "Chạy lại"
+    );
+    expect(replayBtn).toBeDefined();
+
+    act(() => {
+      replayBtn?.click();
+    });
+
+    const splash = document.querySelector('[aria-label="Màn hình khởi động ứng dụng"]');
+    expect(splash).not.toBeNull();
+
+    vi.useRealTimers();
+  });
+
+  it("waits for isReady to become true before calling onFinish", () => {
+    vi.useFakeTimers();
+    const handleFinish = vi.fn();
+
+    // Render với isReady = false và duration = 400ms
+    act(() => {
+      root.render(
+        <MobileSplashScreen
+          forceShow={true}
+          duration={400}
+          isReady={false}
+          maxDuration={3000}
+          onFinish={handleFinish}
+        />
+      );
+    });
+
+    // Sau 800ms (đã quá duration 400ms) nhưng isReady vẫn false -> Chưa được đóng
+    act(() => {
+      vi.advanceTimersByTime(800);
+    });
+    expect(handleFinish).not.toHaveBeenCalled();
+
+    // Khi dữ liệu nạp xong, chuyển isReady thành true
+    act(() => {
+      root.render(
+        <MobileSplashScreen
+          forceShow={true}
+          duration={400}
+          isReady={true}
+          maxDuration={3000}
+          onFinish={handleFinish}
+        />
+      );
+    });
+
+    // Chạy thêm 750ms để hoàn tất delay thoát
+    act(() => {
+      vi.advanceTimersByTime(750);
+    });
+
+    expect(handleFinish).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it("force closes when maxDuration timeout is reached even if isReady is false", () => {
+    vi.useFakeTimers();
+    const handleFinish = vi.fn();
+
+    act(() => {
+      root.render(
+        <MobileSplashScreen
+          forceShow={true}
+          duration={400}
+          isReady={false}
+          maxDuration={1500}
+          onFinish={handleFinish}
+        />
+      );
+    });
+
+    // Trước khi chạm trần timeout 1500ms
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(handleFinish).not.toHaveBeenCalled();
+
+    // Vượt qua trần timeout 1500ms + exit animation delay
+    act(() => {
+      vi.advanceTimersByTime(1300);
+    });
+
+    expect(handleFinish).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
 });

@@ -16,6 +16,7 @@ import {
 import { STUDY_SCENES, type Scene } from "@/components/study/study-types";
 import { ZenStudyLogo } from "@/components/study/brand/ZenStudyLogo";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 export interface MobileWelcomeScreenProps {
   /** Tên bối cảnh hiện tại */
@@ -28,7 +29,7 @@ export interface MobileWelcomeScreenProps {
   forceOpen?: boolean;
 }
 
-const STORAGE_KEY = "zenstudy_mobile_welcome_completed";
+const STORAGE_KEY = STORAGE_KEYS.mobileWelcomeCompleted;
 
 interface CuratedCard {
   scene: Scene;
@@ -114,7 +115,7 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
   const totalCards = curatedCards.length;
   const activeCard = curatedCards[activeCardIndex] || curatedCards[0];
 
-  // Khởi tạo từ sessionStorage
+  // Khởi tạo từ localStorage (chỉ mở ở lần đầu tiên người dùng vào app)
   useEffect(() => {
     setHasMounted(true);
     if (forceOpen) {
@@ -123,7 +124,7 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
     }
 
     try {
-      const seen = sessionStorage.getItem(STORAGE_KEY);
+      const seen = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
       if (!seen) {
         setIsOpen(true);
       }
@@ -149,6 +150,7 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
   const handleDismiss = useCallback(
     (chosenScene?: Scene) => {
       try {
+        localStorage.setItem(STORAGE_KEY, "true");
         sessionStorage.setItem(STORAGE_KEY, "true");
       } catch {
         // Bỏ qua lỗi storage

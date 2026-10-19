@@ -8,7 +8,8 @@ describe("Onboarding Tour Component", () => {
   it("should render active tour card when isOpen is true", () => {
     const html = renderToString(React.createElement(StudyOnboardingTour, { isOpen: true }));
     expect(html).toContain("Chào bạn tới ZenStudy Space");
-    expect(html).toContain("1 / 12");
+    expect(html).toContain("1 / 3");
+    expect(html).toContain("Không gian &amp; Âm thanh thư giãn");
     expect(html).toContain("Tiếp tục");
     expect(html).toContain("Quay lại");
   });

@@ -152,14 +152,14 @@ export function NoteChatPromptMenu({
           transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
           className={`absolute right-0 top-full mt-1.5 w-[min(320px,calc(100vw-36px))] sm:w-[340px] p-1.5 rounded-2xl border z-50 select-none ${
             isLight
-              ? "bg-white/85 border-slate-200/90 text-slate-800 shadow-[0_16px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl"
-              : "bg-slate-900/65 border-white/20 text-white shadow-[0_20px_50px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.06),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-3xl"
+              ? "bg-white/95 sm:bg-white border-slate-200/90 sm:border-slate-200 text-slate-800 shadow-[0_16px_40px_rgba(0,0,0,0.12)] sm:shadow-[0_20px_50px_rgba(0,0,0,0.18)] backdrop-blur-2xl sm:backdrop-blur-none"
+              : "bg-slate-900/80 sm:bg-slate-900 border-white/20 sm:border-slate-700/80 text-white shadow-[0_20px_50px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.06),inset_0_1px_0_rgba(255,255,255,0.18)] sm:shadow-[0_20px_60px_rgba(0,0,0,0.85),0_0_0_1px_rgba(255,255,255,0.08)] backdrop-blur-3xl sm:backdrop-blur-none"
           }`}
         >
           {/* Header menu */}
           <div
             className={`px-2.5 pt-1.5 pb-2 border-b flex items-center justify-between ${
-              isLight ? "border-slate-200/80" : "border-white/10"
+              isLight ? "border-slate-200/80" : "border-white/10 sm:border-slate-800"
             }`}
           >
             <div>

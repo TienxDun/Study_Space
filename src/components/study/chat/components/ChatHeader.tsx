@@ -46,7 +46,7 @@ export function ChatHeader({
   return (
     <div className="relative z-30 flex items-center justify-between gap-2 pl-3.5 pr-2.5 py-2.5 border-b border-white/10 bg-slate-950/85 backdrop-blur-2xl shadow-xs">
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-        <StudySproutMascot size={26} />
+        <StudySproutMascot size={32} />
         <div className="min-w-0 leading-tight">
           <div className="text-sm font-semibold tracking-tight truncate text-white whitespace-nowrap">
             Trợ lý học tập

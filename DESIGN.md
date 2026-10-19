@@ -253,6 +253,24 @@ components:
     typography: "{typography.caption}"
     rounded: "{rounded.xs}"
     padding: 64px 32px
+  onboarding-modal:
+    backgroundColor: "rgba(0, 0, 0, 0.45)"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.xxl}"
+    padding: 28px
+  onboarding-quest-card:
+    backgroundColor: "rgba(0, 0, 0, 0.60)"
+    hoverBackgroundColor: "rgba(0, 0, 0, 0.65)"
+    backdropBlur: "backdrop-blur-2xl"
+    borderColor: "rgba(255, 255, 255, 0.15)"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.xl}"
+    padding: 16px
+  onboarding-group-card:
+    backgroundColor: "rgba(255, 255, 255, 0.04)"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.lg}"
+    padding: 14px
 ---
 
 ## Overview
@@ -498,6 +516,39 @@ Linear's depth is carried by surface ladder + hairline borders. The brand resist
 - Don't pill-round CTAs.
 - Don't use `#000000` true black as the canvas.
 - Don't combine multiple bright accents in product screenshot mockups.
+
+## Onboarding Tour Specification (Dark Glassmorphism)
+
+> Design standard adapted from [awesome-design-md](https://github.com/voltagent/awesome-design-md).
+> Integrates **Kiểu B** (Welcome Modal Slides) and **Kiểu C** (Interactive Quest Checklist) with **Phương án 2** (3 core groups) for desktop UI.
+
+### 1. Visual Language: Dark Glassmorphism ("Kính mờ bóng đêm")
+- **Modal Canvas (`onboarding-modal`)**: Authentic `glass-panel` dark translucent glass `rgba(0, 0, 0, 0.45)` with `backdrop-filter: blur(40px)`, hairline border `1px solid rgba(255, 255, 255, 0.14)`, ambient top reflection `inset 0 1px 0 rgba(255, 255, 255, 0.15)`, and dual elevation shadow `0 24px 60px rgba(0, 0, 0, 0.6)`. Allows the background scene to softly diffuse through.
+- **Backdrop Overlay**: Soft dark translucent veil `bg-black/55 backdrop-blur-md` preserving the ambience of living scene wallpapers.
+- **Quest Card (`onboarding-quest-card`)**: Desktop corner anchor (`fixed bottom-6 right-20`), exactly synchronized with desktop Sticky Note (`bg-black/60 hover:bg-black/65 backdrop-blur-2xl border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.6)]`) with collapsible floating pill mode.
+- **Accents**: Calibrated emerald `#10b981` (`accent-music-glow`) for progress and completion; calibrated sky `#38bdf8` (`accent-scene-bright`) for interactive targets.
+
+### 2. Group Architecture (Phương án 2)
+1. **Nhóm 1: Không gian & Âm thanh thư giãn (Ambience & Audio)**
+   - Đổi không gian bối cảnh (`ImageIcon` - phím `B`)
+   - Cụm phát nhạc & Playlist Lofi (`MusicNotesIcon` - phím `P`)
+   - Bộ trộn 20+ âm thanh thiên nhiên (`CloudRainIcon` - phím `P`)
+   - Đài phát YouTube & Spotify (`RadioIcon` - phím `E`)
+2. **Nhóm 2: Bộ công cụ tập trung & Năng suất (Productivity Tools)**
+   - Hẹn giờ Pomodoro 25/5 (`TimerIcon` - phím `T`)
+   - Bảng quản lý học tập Kanban (`CheckSquareIcon` - phím `K`)
+   - Sổ tay ghi chép Markdown (`FileTextIcon` - phím `N`)
+3. **Nhóm 3: Kết nối & Trải nghiệm chuyên sâu (Connection & Mastery)**
+   - Phòng học nhóm trực tuyến (`UsersIcon` - phím `G`)
+   - Trợ lý AI ZenBot (`StudySproutMascot` - phím `C`)
+   - Chế độ Zen Mode & Phím tắt (`EyeSlashIcon` - phím `Z`, `QuestionIcon` - phím `?`)
+
+### 3. Interactive Quest Checklist (Kiểu C)
+- **Task 1**: Đổi 1 không gian bối cảnh (`ImageIcon` - B)
+- **Task 2**: Bật âm thanh thiên nhiên thư thái (`CloudRainIcon` - P)
+- **Task 3**: Bật hẹn giờ Pomodoro 25 phút (`TimerIcon` - T)
+- **Task 4**: Gửi lời chào trợ lý AI ZenBot (`StudySproutMascot` - C)
+- **Interactive State**: Direct "Thử ngay" CTA buttons that trigger the exact widget. Real-time checklist state saved in `STORAGE_KEYS.tourCompleted`. Collapses to a non-intrusive floating pill.
 
 ## Responsive Behavior
 
