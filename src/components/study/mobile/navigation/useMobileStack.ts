@@ -61,15 +61,38 @@ export function useMobileStack(options?: UseMobileStackOptions) {
   const canGoBack = stack.length > 1;
   const isOpen = stack.length > 0;
 
+function createSafeHistoryState<T extends Record<string, unknown>>(data: T): T & { __NA: true } {
+  if (typeof window === "undefined") {
+    return { ...data, __NA: true };
+  }
+  const current = window.history.state;
+  return {
+    ...data,
+    __NA: true,
+    ...(current && typeof current === "object" && current.__PRIVATE_NEXTJS_INTERNALS_TREE
+      ? { __PRIVATE_NEXTJS_INTERNALS_TREE: current.__PRIVATE_NEXTJS_INTERNALS_TREE }
+      : {}),
+  };
+}
+
+function getCurrentUrl(): string {
+  if (typeof window === "undefined") return "";
+  return window.location.href;
+}
+
   // Luôn duy trì 1 guard state trong window.history khi ở màn hình chính
   // để chặn trình duyệt thoát app ngay lập tức trong lần back đầu tiên
   const ensureRootHistoryGuard = useCallback(() => {
     if (typeof window === "undefined") return;
     try {
-      if (window.history.state?.studyMobileRootGuard) {
+      if (window.history.state?.studyMobileRootGuard && window.history.state?.__NA) {
         return;
       }
-      window.history.pushState({ studyMobileRootGuard: true }, "");
+      window.history.pushState(
+        createSafeHistoryState({ studyMobileRootGuard: true }),
+        "",
+        getCurrentUrl()
+      );
     } catch {}
   }, []);
 
@@ -136,8 +159,13 @@ export function useMobileStack(options?: UseMobileStackOptions) {
       try {
         historyEntriesCountRef.current += 1;
         window.history.pushState(
-          { studyMobileStack: true, screenId: id, depth: historyEntriesCountRef.current },
-          ""
+          createSafeHistoryState({
+            studyMobileStack: true,
+            screenId: id,
+            depth: historyEntriesCountRef.current,
+          }),
+          "",
+          getCurrentUrl()
         );
       } catch {}
     }
@@ -154,9 +182,16 @@ export function useMobileStack(options?: UseMobileStackOptions) {
 
     if (typeof window !== "undefined") {
       try {
+        const safeState = createSafeHistoryState({
+          studyMobileStack: true,
+          screenId: id,
+          depth: 1,
+        });
+        const currentUrl = getCurrentUrl();
+
         if (currentEntries === 1) {
           // Đang ở 1 root sheet khác -> dùng replaceState để chuyển tab tức thì không race condition
-          window.history.replaceState({ studyMobileStack: true, screenId: id, depth: 1 }, "");
+          window.history.replaceState(safeState, "", currentUrl);
         } else if (currentEntries > 1) {
           // Đang ở sub-screen -> lùi các entry con và giữ entry gốc
           const excessEntries = currentEntries - 1;
@@ -165,12 +200,12 @@ export function useMobileStack(options?: UseMobileStackOptions) {
           window.history.go(-excessEntries);
           setTimeout(() => {
             try {
-              window.history.replaceState({ studyMobileStack: true, screenId: id, depth: 1 }, "");
+              window.history.replaceState(safeState, "", getCurrentUrl());
             } catch {}
           }, 50);
         } else {
           // Đang ở màn hình chính -> push root entry mới
-          window.history.pushState({ studyMobileStack: true, screenId: id, depth: 1 }, "");
+          window.history.pushState(safeState, "", currentUrl);
           historyEntriesCountRef.current = 1;
         }
       } catch {}

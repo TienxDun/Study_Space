@@ -51,7 +51,11 @@ describe("useMobileStack - Navigation & Deduplication Tests", () => {
     expect(hookResult.canGoBack).toBe(false);
     expect(hookResult.isOpen).toBe(false);
     // Component mount sẽ gọi ensureRootHistoryGuard() đẩy 1 guard state
-    expect(pushStateSpy).toHaveBeenCalledWith({ studyMobileRootGuard: true }, "");
+    expect(pushStateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ studyMobileRootGuard: true, __NA: true }),
+      "",
+      window.location.href
+    );
   });
 
   it("openRoot đặt một root screen duy nhất và gọi pushState", () => {
@@ -72,8 +76,9 @@ describe("useMobileStack - Navigation & Deduplication Tests", () => {
     expect(hookResult.canGoBack).toBe(false);
     expect(hookResult.isOpen).toBe(true);
     expect(pushStateSpy).toHaveBeenCalledWith(
-      { studyMobileStack: true, screenId: "tasks", depth: 1 },
-      ""
+      expect.objectContaining({ studyMobileStack: true, screenId: "tasks", depth: 1, __NA: true }),
+      "",
+      window.location.href
     );
   });
 
@@ -97,8 +102,9 @@ describe("useMobileStack - Navigation & Deduplication Tests", () => {
     expect(hookResult.stack.length).toBe(1);
     expect(hookResult.currentScreen?.id).toBe("notes");
     expect(replaceStateSpy).toHaveBeenCalledWith(
-      { studyMobileStack: true, screenId: "notes", depth: 1 },
-      ""
+      expect.objectContaining({ studyMobileStack: true, screenId: "notes", depth: 1, __NA: true }),
+      "",
+      window.location.href
     );
   });
 

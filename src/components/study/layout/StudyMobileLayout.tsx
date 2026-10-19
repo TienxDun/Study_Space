@@ -8,6 +8,7 @@ import { MobileTopBar } from "@/components/study/mobile/top/MobileTopBar";
 import { StudyMobileNav } from "@/components/study/mobile/navigation/StudyMobileNav";
 import { MobileRadialBubbleMenu } from "@/components/study/mobile/navigation/MobileRadialBubbleMenu";
 import { useMobileDoubleTap } from "@/components/study/mobile/hooks/useMobileDoubleTap";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 // Dynamic imports cho các bảng chức năng mobile để giảm tải RAM ban đầu
 const MobileTasksSheet = dynamic(
   () => import("@/components/study/mobile/sheets/MobileTasksSheet").then((mod) => mod.MobileTasksSheet),
@@ -169,86 +170,98 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
 
       {/* Tasks Sheet */}
       {mountedSheets.tasks && (
-        <MobileTasksSheet
-          isOpen={isTasksOpen}
-          onClose={handleMobileCloseAllSheets}
-          onBack={mobileCanGoBack ? handleMobileBack : undefined}
-          backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
-          isEditingDetail={mobileCurrentScreen?.id === "tasks-detail"}
-          onOpenDetail={handleOpenTasksDetail}
-          onCloseDetail={handleCloseDetail}
-        />
+        <ErrorBoundary>
+          <MobileTasksSheet
+            isOpen={isTasksOpen}
+            onClose={handleMobileCloseAllSheets}
+            onBack={mobileCanGoBack ? handleMobileBack : undefined}
+            backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+            isEditingDetail={mobileCurrentScreen?.id === "tasks-detail"}
+            onOpenDetail={handleOpenTasksDetail}
+            onCloseDetail={handleCloseDetail}
+          />
+        </ErrorBoundary>
       )}
 
       {/* Notes Sheet */}
       {mountedSheets.notes && (
-        <MobileNotesSheet
-          isOpen={isNotesOpen}
-          onClose={handleMobileCloseAllSheets}
-          onBack={mobileCanGoBack ? handleMobileBack : undefined}
-          backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
-          isEditingDetail={mobileCurrentScreen?.id === "notes-detail"}
-          onOpenDetail={handleOpenNotesDetail}
-        />
+        <ErrorBoundary>
+          <MobileNotesSheet
+            isOpen={isNotesOpen}
+            onClose={handleMobileCloseAllSheets}
+            onBack={mobileCanGoBack ? handleMobileBack : undefined}
+            backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+            isEditingDetail={mobileCurrentScreen?.id === "notes-detail"}
+            onOpenDetail={handleOpenNotesDetail}
+          />
+        </ErrorBoundary>
       )}
 
       {/* Scene Sheet */}
       {mountedSheets.scenes && (
-        <MobileSceneSheet
-          isOpen={isScenesOpen}
-          onClose={handleMobileCloseAllSheets}
-          onBack={mobileCanGoBack ? handleMobileBack : undefined}
-          backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
-          currentScene={currentScene}
-          pendingScene={pendingScene}
-          onSelectScene={handleSelectScene}
-        />
+        <ErrorBoundary>
+          <MobileSceneSheet
+            isOpen={isScenesOpen}
+            onClose={handleMobileCloseAllSheets}
+            onBack={mobileCanGoBack ? handleMobileBack : undefined}
+            backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+            currentScene={currentScene}
+            pendingScene={pendingScene}
+            onSelectScene={handleSelectScene}
+          />
+        </ErrorBoundary>
       )}
 
       {/* Settings Sheet */}
       {mountedSheets.settings && (
-        <MobileSettingsSheet
-          isOpen={isSettingsOpen}
-          onClose={handleMobileCloseAllSheets}
-          onBack={mobileCanGoBack ? handleMobileBack : undefined}
-          backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
-          onOpenTour={() => setIsTourOpen(true)}
-          showClockSeconds={showClockSeconds}
-          onToggleClockSeconds={handleToggleClockSeconds}
-          isClock12Hour={isClock12Hour}
-          onToggleClock12Hour={handleToggleClock12Hour}
-          durations={pomodoroDurations}
-          onSaveDurations={handleSavePomodoroDurations}
-          soundEnabled={soundEnabled}
-          onToggleSound={handleToggleSound}
-          soundType={soundType}
-          onSelectSoundType={handleSelectSoundType}
-          showStopwatchMilliseconds={showStopwatchMilliseconds}
-          onToggleStopwatchMilliseconds={handleToggleStopwatchMilliseconds}
-          keepAwake={keepAwake}
-          onToggleKeepAwake={handleToggleKeepAwake}
-          wakeLockSupported={wakeLockSupported}
-        />
+        <ErrorBoundary>
+          <MobileSettingsSheet
+            isOpen={isSettingsOpen}
+            onClose={handleMobileCloseAllSheets}
+            onBack={mobileCanGoBack ? handleMobileBack : undefined}
+            backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+            onOpenTour={() => setIsTourOpen(true)}
+            showClockSeconds={showClockSeconds}
+            onToggleClockSeconds={handleToggleClockSeconds}
+            isClock12Hour={isClock12Hour}
+            onToggleClock12Hour={handleToggleClock12Hour}
+            durations={pomodoroDurations}
+            onSaveDurations={handleSavePomodoroDurations}
+            soundEnabled={soundEnabled}
+            onToggleSound={handleToggleSound}
+            soundType={soundType}
+            onSelectSoundType={handleSelectSoundType}
+            showStopwatchMilliseconds={showStopwatchMilliseconds}
+            onToggleStopwatchMilliseconds={handleToggleStopwatchMilliseconds}
+            keepAwake={keepAwake}
+            onToggleKeepAwake={handleToggleKeepAwake}
+            wakeLockSupported={wakeLockSupported}
+          />
+        </ErrorBoundary>
       )}
 
       {/* Focus Stats Sheet */}
       {mountedSheets.stats && (
-        <MobileFocusStatsSheet
-          isOpen={isStatsOpen}
-          onClose={handleMobileCloseAllSheets}
-          onBack={mobileCanGoBack ? handleMobileBack : undefined}
-          backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
-        />
+        <ErrorBoundary>
+          <MobileFocusStatsSheet
+            isOpen={isStatsOpen}
+            onClose={handleMobileCloseAllSheets}
+            onBack={mobileCanGoBack ? handleMobileBack : undefined}
+            backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+          />
+        </ErrorBoundary>
       )}
 
       {/* Chat Sheet */}
       {mountedSheets.chat && (
-        <MobileChatSheet
-          isOpen={isChatOpen}
-          onClose={handleMobileCloseAllSheets}
-          onBack={mobileCanGoBack ? handleMobileBack : undefined}
-          backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
-        />
+        <ErrorBoundary>
+          <MobileChatSheet
+            isOpen={isChatOpen}
+            onClose={handleMobileCloseAllSheets}
+            onBack={mobileCanGoBack ? handleMobileBack : undefined}
+            backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+          />
+        </ErrorBoundary>
       )}
 
       {/* Thanh điều hướng đáy 5 nút */}
@@ -262,11 +275,13 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
 
       {/* Bảng Thêm */}
       {mountedSheets.more && (
-        <MobileMoreSheet
-          isOpen={isMoreOpen}
-          onClose={handleMobileCloseAllSheets}
-          onSelect={handleMoreSelect}
-        />
+        <ErrorBoundary>
+          <MobileMoreSheet
+            isOpen={isMoreOpen}
+            onClose={handleMobileCloseAllSheets}
+            onSelect={handleMoreSelect}
+          />
+        </ErrorBoundary>
       )}
 
       {/* Bong bóng mở nhanh (Radial Menu) */}
