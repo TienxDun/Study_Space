@@ -61,10 +61,9 @@ secrets/
 credentials.json
 token.json
 
-# Cloudflare Workers & Wrangler Secrets / Cache
+# Cloudflare Workers Secrets / Local State
 .dev.vars
 .dev.vars.*
-.wrangler/
 
 # Firebase & GCP Service Accounts / Local State
 *serviceAccountKey*.json

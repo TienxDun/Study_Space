@@ -4,6 +4,7 @@ import {
   getFirestore,
   initializeFirestore,
   persistentLocalCache,
+  terminate,
   type Firestore,
 } from "firebase/firestore";
 import { firebaseConfig as config, firebaseConfigured } from "./firebase-config";
@@ -36,4 +37,16 @@ export function getFirebaseDb(): Firestore {
     db = getFirestore(fbApp); // HMR gọi 2 lần thì dùng lại cái cũ
   }
   return db;
+}
+
+/** Đóng Firestore để có thể xóa cache IndexedDB khi đăng xuất. */
+export async function terminateFirebaseDb(): Promise<void> {
+  if (!db) return;
+  const current = db;
+  db = null;
+  try {
+    await terminate(current);
+  } catch {
+    /* bỏ qua */
+  }
 }

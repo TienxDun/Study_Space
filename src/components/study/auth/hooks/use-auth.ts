@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { firebaseConfigured } from "@/lib/firebase-config";
+import { cloudConfigured, hasUnsyncedChanges, syncNow } from "@/lib/cloud-sync";
+import { broadcastWipe, hasStoredUserData, wipeLocalUserData } from "@/lib/local-data";
 import type { UseAuthReturn } from "../types";
 import type { User } from "firebase/auth";
 
@@ -117,10 +119,42 @@ export function useAuth(): UseAuthReturn {
     }
   }, []);
 
+  // Đăng xuất = kết thúc phiên + xóa sạch dữ liệu của tài khoản khỏi máy này,
+  // để người dùng tiếp theo không đọc được ghi chú/task/chat của người trước.
   const signOutNow = useCallback(async () => {
     const { signOut, getFirebaseAuth } = await loadAuthSdk();
-    await signOut(getFirebaseAuth());
+    const auth = getFirebaseAuth();
+
+    // Cố đẩy nốt thay đổi đang chờ lên mây trước khi xóa.
+    if (auth.currentUser && cloudConfigured()) {
+      try {
+        await syncNow();
+      } catch {
+        /* mất mạng -> hỏi người dùng bên dưới */
+      }
+    }
+
+    const needsWarning = cloudConfigured() ? hasUnsyncedChanges() : hasStoredUserData();
+    if (needsWarning) {
+      const ok =
+        typeof window !== "undefined" &&
+        window.confirm(
+          cloudConfigured()
+            ? "Dữ liệu chưa lưu lên máy chủ sẽ bị xóa khỏi máy này khi đăng xuất. Vẫn tiếp tục?"
+            : "Chưa bật đồng bộ nên đăng xuất sẽ xóa dữ liệu trên máy này. Vẫn tiếp tục?"
+        );
+      if (!ok) return;
+    }
+
+    try {
+      await signOut(auth);
+    } catch {
+      /* vẫn xóa dữ liệu cục bộ */
+    }
+    broadcastWipe();
+    await wipeLocalUserData();
     setUser(null);
+    if (typeof window !== "undefined") window.location.reload();
   }, []);
 
   // Vé gửi kèm mỗi câu hỏi sang Worker (Worker tự kiểm vé thật/giả).

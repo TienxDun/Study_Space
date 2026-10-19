@@ -1,6 +1,7 @@
 "use client";
 
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { deleteLocalImages } from "@/components/study/chat/utils/imageStorage";
 
 /**
  * Đồng bộ dữ liệu học tập lên Cloudflare D1 (qua Worker `data-api`).
@@ -48,9 +49,9 @@ const SYNC_SET = new Set<string>(SYNCED_KEYS);
 const UNION_KEYS = new Set<string>([STORAGE_KEYS.focusSessions]);
 const MAX_FOCUS_SESSIONS = 2000;
 
-const META_KEY = "study_space_cloud_meta_v1";
-const UID_KEY = "study_space_cloud_uid_v1";
-const BOOT_FLAG_PREFIX = "study_space_cloud_boot_";
+export const CLOUD_META_KEY = "study_space_cloud_meta_v1";
+export const CLOUD_UID_KEY = "study_space_cloud_uid_v1";
+export const CLOUD_BOOT_PREFIX = "study_space_cloud_boot_";
 
 const PUSH_DEBOUNCE_MS = 2000;
 const META_FLUSH_MS = 1000; // gộp việc ghi bảng theo dõi xuống đĩa
@@ -78,7 +79,7 @@ export function cloudConfigured(): boolean {
 }
 
 export function bootFlagKey(uid: string): string {
-  return BOOT_FLAG_PREFIX + uid;
+  return CLOUD_BOOT_PREFIX + uid;
 }
 
 /* ---------------- Truy cập localStorage "thô" (không qua bộ chặn) ---------------- */
@@ -125,11 +126,24 @@ function rawRemove(key: string): void {
 function resetLocalSyncedData(): void {
   for (const key of SYNCED_KEYS) rawRemove(key);
   metaCache = {};
-  rawRemove(META_KEY);
+  rawRemove(CLOUD_META_KEY);
+  // Chat cũng là dữ liệu riêng của tài khoản trước -> dọn luôn.
+  try {
+    const s = storage();
+    if (s) {
+      const del: string[] = [];
+      for (let i = 0; i < s.length; i++) {
+        const k = s.key(i);
+        if (k && (k.startsWith("chat-msgs:") || k.startsWith("chat-remember:"))) del.push(k);
+      }
+      for (const k of del) rawRemove(k);
+    }
+  } catch {}
+  void deleteLocalImages();
 }
 
 function readMetaStored(): CloudMeta {
-  const raw = rawGet(META_KEY);
+  const raw = rawGet(CLOUD_META_KEY);
   if (!raw) return {};
   try {
     const parsed = JSON.parse(raw);
@@ -152,7 +166,7 @@ function readMeta(): CloudMeta {
 function persistMeta(): void {
   try {
     if (!metaCache) return;
-    rawSet(META_KEY, JSON.stringify(metaCache));
+    rawSet(CLOUD_META_KEY, JSON.stringify(metaCache));
   } catch {}
 }
 
@@ -440,9 +454,9 @@ export async function startCloudSync(
 ): Promise<{ applied: number }> {
   installInterceptor();
   if (!DATA_API_URL) return { applied: 0 };
-  const lastUid = rawGet(UID_KEY);
+  const lastUid = rawGet(CLOUD_UID_KEY);
   if (lastUid && lastUid !== uid) resetLocalSyncedData();
-  rawSet(UID_KEY, uid);
+  rawSet(CLOUD_UID_KEY, uid);
   tokenFn = getToken;
   active = false; // chưa ghi meta trong lúc kéo về
   bootstrapped = false;
@@ -467,6 +481,46 @@ export function stopCloudSync(): void {
     metaFlushTimer = null;
   }
   persistMeta();
+}
+
+/**
+ * Chưa đăng nhập: vẫn theo dõi thời điểm sửa (chỉ ghi vào máy, không gọi mạng).
+ * Nhờ vậy dữ liệu tạo lúc chưa có tài khoản vẫn được so sánh đúng khi đăng nhập.
+ */
+export function startGuestTracking(): void {
+  installInterceptor();
+  tokenFn = null;
+  active = true;
+  bootstrapped = true;
+}
+
+/** Có thay đổi nào chưa đẩy lên mây không? (dùng để cảnh báo trước khi đăng xuất) */
+export function hasUnsyncedChanges(): boolean {
+  if (pushTimer) return true;
+  try {
+    const meta = readMeta();
+    for (const key of Object.keys(meta)) {
+      const e = meta[key];
+      if (e && e.local > e.synced + TOL_MS) return true;
+    }
+  } catch {}
+  return false;
+}
+
+/** Quên trạng thái trong RAM sau khi dữ liệu trên máy đã bị xóa. */
+export function resetSyncMemory(): void {
+  active = false;
+  bootstrapped = false;
+  tokenFn = null;
+  metaCache = null;
+  if (pushTimer) {
+    clearTimeout(pushTimer);
+    pushTimer = null;
+  }
+  if (metaFlushTimer) {
+    clearTimeout(metaFlushTimer);
+    metaFlushTimer = null;
+  }
 }
 
 /** Đồng bộ ngay (dùng khi tab quay lại / có mạng lại). */

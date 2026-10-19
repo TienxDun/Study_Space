@@ -35,8 +35,8 @@ export default function StudySpacePage() {
   const state = useStudySpaceState();
 
   // Đồng bộ dữ liệu học tập lên Cloudflare D1 khi đã đăng nhập (localStorage vẫn là bản chính).
-  const { user, getToken } = useAuth();
-  useCloudSync(user?.uid, getToken);
+  const { user, loading, getToken } = useAuth();
+  useCloudSync(user?.uid, loading, getToken);
 
   // Cho phép xem thử Splash Screen qua URL (?splash=preview, ?splash=true, ?preview=splash)
   const [isSplashPreview, setIsSplashPreview] = useState(false);

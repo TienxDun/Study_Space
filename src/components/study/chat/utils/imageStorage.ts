@@ -1,7 +1,8 @@
 // Quản lý bộ nhớ đệm ảnh Full HD/Gốc cục bộ bằng IndexedDB trên trình duyệt.
 // Giữ ảnh sắc nét 100% khi xem lại trong chat mà không tốn dung lượng của Firestore.
 
-const DB_NAME = "StudySpaceChatMediaDB";
+export const CHAT_MEDIA_DB_NAME = "StudySpaceChatMediaDB";
+const DB_NAME = CHAT_MEDIA_DB_NAME;
 const STORE_NAME = "chat_images";
 const DB_VERSION = 1;
 
@@ -74,4 +75,20 @@ export async function getLocalImage(id: string): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+/** Xóa toàn bộ ảnh chat đã lưu trên máy (dùng khi đăng xuất / đổi tài khoản). */
+export function deleteLocalImages(): Promise<void> {
+  if (typeof window === "undefined" || !window.indexedDB) return Promise.resolve();
+  return new Promise((resolve) => {
+    try {
+      const req = indexedDB.deleteDatabase(DB_NAME);
+      const done = () => resolve();
+      req.onsuccess = done;
+      req.onerror = done;
+      req.onblocked = done;
+    } catch {
+      resolve();
+    }
+  });
 }

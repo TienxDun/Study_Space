@@ -12,29 +12,20 @@
 | ---------------------------------- | ---------------------------------------------------------------- |
 | `workers/schema.sql`             | Tạo bảng dùng chung cho `data-api` và `chat-proxy`       |
 | `workers/data-api/worker.js`     | Worker API dữ liệu (kiểm vé Firebase + đọc/ghi D1)         |
-| `workers/data-api/wrangler.toml` | Cấu hình deploy bằng Wrangler (tùy chọn)                    |
 | `workers/chat-proxy/worker.js`   | Sổ đếm chuyển sang D1, tự lùi về KV nếu chưa gắn D1    |
 | `src/lib/cloud-sync.ts`          | Lõi đồng bộ localStorage ↔ D1 (LWW, gộp phiên tập trung) |
 | `src/lib/use-cloud-sync.ts`      | Hook gắn đồng bộ vào phiên đăng nhập                    |
+| `src/lib/local-data.ts`          | Xóa sạch dữ liệu trên máy khi đăng xuất / đổi tài khoản |
 
 ---
 
 ## Bước 1 — Tạo database D1
-
-**Cách A — Dashboard (không cần cài gì):**
 
 1. Cloudflare Dashboard → **Storage & Databases → D1 SQL Database** → **Create**.
 2. Đặt tên: `zenspace` → Create.
 3. Mở database → tab **Console** → dán toàn bộ `workers/schema.sql` → **Execute**.
 4. Kiểm tra tab **Tables** thấy 7 bảng: `users`, `user_settings`, `focus_sessions`,
    `chat_usage`, `cf_usage`, `chat_sessions`, `chat_messages`.
-
-**Cách B — Wrangler:**
-
-```powershell
-npx wrangler d1 create zenspace
-npx wrangler d1 execute zenspace --file=workers/schema.sql --remote
-```
 
 ---
 
@@ -159,6 +150,11 @@ Cách chạy (`src/lib/cloud-sync.ts`):
   Đăng xuất: ngừng đồng bộ.
 - Đăng nhập bằng **tài khoản khác** trên cùng máy: dữ liệu đồng bộ của tài khoản cũ
   được xóa trước khi kéo dữ liệu tài khoản mới (không lẫn dữ liệu hai người).
+- **Đăng xuất = xóa sạch dữ liệu trên máy** (ghi chú, task, cài đặt, cache chat, ảnh chat).
+  Nếu còn thay đổi chưa đẩy kịp lên mây, web hỏi lại trước khi xóa; chọn Hủy thì không mất gì.
+  Đăng nhập lại cùng tài khoản sẽ tải dữ liệu từ D1 về.
+- Dùng web **không cần đăng nhập** vẫn được: dữ liệu khách giữ trên máy và khi đăng nhập
+  sẽ gộp theo "bản mới nhất thắng" (chỗ nào tài khoản đã có bản mới hơn thì lấy của tài khoản).
 
 **Dùng nhiều máy:** sửa ở đâu thì máy kia thấy sau ~2 giây (hoặc khi mở lại tab).
 Tránh sửa **cùng một mục** trên hai máy lúc đang offline — bản ghi sau sẽ thắng và bản kia mất.

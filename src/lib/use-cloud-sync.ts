@@ -5,15 +5,16 @@ import {
   bootFlagKey,
   cloudConfigured,
   startCloudSync,
-  stopCloudSync,
+  startGuestTracking,
   syncNow,
 } from "@/lib/cloud-sync";
+import { onRemoteWipe } from "@/lib/local-data";
 
 /**
  * Gắn vòng đời đồng bộ D1 vào phiên đăng nhập.
  * - Đăng nhập: kéo dữ liệu mạng về; nếu có thay đổi thì tải lại trang 1 lần
  *   để giao diện đọc đúng dữ liệu vừa kéo.
- * - Đăng xuất: ngừng đồng bộ (chỉ còn localStorage).
+ * - Đăng xuất: xóa dữ liệu khỏi máy (xem use-auth).
  * - Tab quay lại / có mạng lại: đồng bộ ngay.
  */
 const MIN_PULL_GAP_MS = 20000; // đổi tab liên tục cũng không hỏi máy chủ quá dày
@@ -26,6 +27,7 @@ function isEditing(): boolean {
 
 export function useCloudSync(
   uid: string | null | undefined,
+  loading: boolean,
   getToken: () => Promise<string | null>
 ): void {
   const tokenRef = useRef(getToken);
@@ -36,8 +38,10 @@ export function useCloudSync(
 
   useEffect(() => {
     if (!cloudConfigured()) return;
+    if (loading) return; // chờ biết chắc đã/chưa đăng nhập
     if (!uid) {
-      stopCloudSync();
+      // Chưa đăng nhập: vẫn ghi mốc sửa để lúc đăng nhập so sánh đúng.
+      startGuestTracking();
       return;
     }
     let cancelled = false;
@@ -59,10 +63,17 @@ export function useCloudSync(
     return () => {
       cancelled = true;
     };
-  }, [uid]);
+  }, [uid, loading]);
 
   useEffect(() => {
-    if (!uid || !cloudConfigured()) return;
+    // Tab khác vừa xóa dữ liệu (đăng xuất) -> làm mới để không còn hiển thị dữ liệu cũ.
+    return onRemoteWipe(() => {
+      if (typeof window !== "undefined") window.location.reload();
+    });
+  }, []);
+
+  useEffect(() => {
+    if (loading || !uid || !cloudConfigured()) return;
     let last = Date.now();
     const pull = async () => {
       last = Date.now();
@@ -81,5 +92,5 @@ export function useCloudSync(
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("online", onOnline);
     };
-  }, [uid]);
+  }, [uid, loading]);
 }
