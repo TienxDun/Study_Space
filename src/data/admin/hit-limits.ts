@@ -1,6 +1,6 @@
 export type LimitSeverity = "critical" | "warning" | "info";
 
-export type LimitCategory = "all" | "ai" | "storage" | "realtime" | "client" | "embed";
+export type LimitCategory = "all" | "ai" | "backend" | "storage" | "realtime" | "client" | "embed";
 
 export interface RateLimitMetric {
   label: string;
@@ -9,7 +9,7 @@ export interface RateLimitMetric {
 
 export interface HitLimitItem {
   id: string;
-  category: "ai" | "storage" | "realtime" | "client" | "embed";
+  category: "ai" | "backend" | "storage" | "realtime" | "client" | "embed";
   service: string;
   component: string;
   currentTier: string;
@@ -58,6 +58,36 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     ],
   },
   {
+    id: "zenstudy-chat-daily",
+    category: "ai",
+    service: "ZenStudy Chat Proxy (bộ đếm D1)",
+    component: "Hạn mức hỏi AI của mỗi người (USER_DAILY_LIMIT)",
+    currentTier: "Cấu hình Worker (mặc định 30)",
+    quotaDescription:
+      "Mỗi tài khoản được hỏi tối đa 30 câu/ngày (biến USER_DAILY_LIMIT). Bộ đếm lưu ở bảng chat_usage của D1, mỗi câu tốn 3 dòng ghi (chat_usage + cf_usage.requests + cf_usage.neurons).",
+    rateLimits: [
+      { label: "Số câu / người / ngày", value: "30 câu (USER_DAILY_LIMIT)" },
+      { label: "Dòng D1 ghi mỗi câu", value: "3 dòng" },
+      { label: "Thời điểm reset", value: "00:00 UTC" },
+    ],
+    hitLimitSymptoms: [
+      "Chat báo đã hết lượt hỏi trong ngày và nút gửi bị khóa.",
+      "Worker trả HTTP 429 kèm thông báo hạn mức ngày.",
+    ],
+    errorCode: "HTTP 429 (daily limit)",
+    fallbackMechanism:
+      "Chặn ngay trước khi gọi model nên không đốt quota AI; buffered tin nhắn cũ vẫn đọc được từ cache.",
+    remedyAction:
+      "Đổi USER_DAILY_LIMIT trong phần biến môi trường của worker chat-proxy nếu cần nới; kiểm tra bảng chat_usage để biết ai đang dùng nhiều.",
+    severity: "warning",
+    resetCycle: "00:00 UTC hàng ngày (07:00 giờ VN)",
+    docUrl: "workers/chat-proxy/worker.js",
+    troubleshootingSteps: [
+      "Chạy SELECT * FROM chat_usage ORDER BY day DESC LIMIT 10; trong D1 console.",
+      "Xác nhận biến USER_DAILY_LIMIT đang đặt trên worker, không phải trên web.",
+    ],
+  },
+  {
     id: "groq-llama-70b",
     category: "ai",
     service: "Groq Cloud",
@@ -67,7 +97,8 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     rateLimits: [
       { label: "Requests/phút (RPM)", value: "30 RPM" },
       { label: "Requests/ngày (RPD)", value: "1,000 RPD" },
-      { label: "Tokens/phút (TPM)", value: "6,000 TPM" },
+      { label: "Tokens/phút (TPM)", value: "12,000 TPM" },
+      { label: "Tokens/ngày (TPD)", value: "100,000 TPD" },
     ],
     hitLimitSymptoms: [
       "API trả về mã lỗi HTTP 429 rate_limit_exceeded.",
@@ -97,7 +128,8 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     rateLimits: [
       { label: "Requests/phút (RPM)", value: "30 RPM" },
       { label: "Requests/ngày (RPD)", value: "14,400 RPD" },
-      { label: "Tokens/phút (TPM)", value: "30,000 TPM" },
+      { label: "Tokens/phút (TPM)", value: "6,000 TPM" },
+      { label: "Tokens/ngày (TPD)", value: "500,000 TPD" },
     ],
     hitLimitSymptoms: [
       "HTTP 429 chỉ xảy ra khi gửi liên tục dồn dập vượt 30 requests trong vòng 60 giây.",
@@ -116,6 +148,101 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     ],
   },
   {
+    id: "cf-workers-platform",
+    category: "backend",
+    service: "Cloudflare Workers (Workers Free)",
+    component: "2 Worker: data-api (đồng bộ) + chat-proxy (chat AI)",
+    currentTier: "Workers Free",
+    quotaDescription:
+      "100,000 request/ngày dùng chung cho cả hai worker; 10 ms CPU mỗi lượt; 50 subrequest; script tối đa 64 MiB. Reset 00:00 UTC.",
+    rateLimits: [
+      { label: "Request / ngày (toàn tài khoản)", value: "100,000" },
+      { label: "CPU time / request", value: "10 ms (Free)" },
+      { label: "Subrequest / request", value: "50" },
+      { label: "Kích thước script", value: "64 MiB" },
+    ],
+    hitLimitSymptoms: [
+      "Cloudflare trả Error 1027 cho mọi request của worker.",
+      "Chat báo lỗi mạng, đồng bộ ngừng đẩy dù máy vẫn có mạng.",
+    ],
+    errorCode: "Error 1027 (Daily request limit exceeded)",
+    fallbackMechanism:
+      "Web là static export + Local-First: ghi chú, kanban, đồng hồ vẫn chạy offline; thay đổi nằm chờ trong meta và tự đẩy lại sau khi quota reset.",
+    remedyAction:
+      "Giữ các mốc tiết kiệm đã cấu hình (debounce đẩy 2s, gộp meta 1s, pull tối đa 20s/lần khi quay lại tab); không thêm polling định kỳ; tránh reload liên tục.",
+    severity: "critical",
+    resetCycle: "00:00 UTC hàng ngày (07:00 giờ VN)",
+    docUrl: "https://developers.cloudflare.com/workers/platform/limits/",
+    troubleshootingSteps: [
+      "Mở Cloudflare Dashboard → Workers & Pages → chọn từng worker → Metrics để xem request theo ngày.",
+      "Nếu sát trần, kiểm tra tab /admin mở lâu hoặc nhiều tab cùng lúc đang gọi /health, /settings.",
+      "Tạm dừng các script kiểm tra tự động trước khi quota reset.",
+    ],
+  },
+  {
+    id: "cf-d1",
+    category: "backend",
+    service: "Cloudflare D1 (database zenspace)",
+    component: "Đồng bộ ghi chú/kanban/cài đặt + bộ đếm chat + lịch sử tập trung",
+    currentTier: "Workers Free (D1 free tier)",
+    quotaDescription:
+      "5 triệu dòng đọc/ngày, 100.000 dòng ghi/ngày, 5 GB tổng, tối đa 500 MB mỗi database, 50 query mỗi lượt gọi worker. Từ 01/09/2026 vượt hạn mức là lỗi query, không chỉ chậm.",
+    rateLimits: [
+      { label: "Dòng đọc / ngày", value: "5,000,000" },
+      { label: "Dòng ghi / ngày", value: "100,000" },
+      { label: "Dung lượng tổng", value: "5 GB (mỗi DB tối đa 500 MB)" },
+      { label: "Query / lượt gọi worker", value: "50 (Free)" },
+    ],
+    hitLimitSymptoms: [
+      "Worker trả lỗi D1 (daily limit exceeded / 500) ở /settings hoặc /chat.",
+      "Đồng bộ ngừng đẩy, chat báo hết lượt dù chưa dùng hết 30 câu.",
+    ],
+    errorCode: "D1_ERROR / HTTP 500",
+    fallbackMechanism:
+      "Dữ liệu vẫn nằm đầy đủ trên máy; meta giữ trạng thái chưa đẩy nên lần đồng bộ sau (sau 00:00 UTC) sẽ gửi bù. Không mất dữ liệu.",
+    remedyAction:
+      "Mỗi lần mở app tốn ~23 dòng đọc (1 ensureUser + 22 key), mỗi câu chat tốn 3 dòng ghi, mỗi lần đẩy chỉ ghi các key thay đổi. Giữ debounce, không bấm đồng bộ liên tục.",
+    severity: "critical",
+    resetCycle: "00:00 UTC hàng ngày (07:00 giờ VN)",
+    docUrl: "https://developers.cloudflare.com/d1/platform/pricing/",
+    troubleshootingSteps: [
+      "Cloudflare Dashboard → D1 → zenspace → Metrics: xem Rows read / Rows written trong ngày.",
+      "Kiểm tra bảng lớn: SELECT COUNT(*) FROM focus_sessions; (mỗi phiên là 1 dòng, cap 2.000/người).",
+      "Dọn bớt dữ liệu cũ bằng DELETE có điều kiện nếu chạm 500 MB.",
+    ],
+  },
+  {
+    id: "cf-kv-fallback",
+    category: "backend",
+    service: "Cloudflare Workers KV",
+    component: "Đường lùi của bộ đếm chat khi chat-proxy thiếu binding D1",
+    currentTier: "Workers Free (KV free tier)",
+    quotaDescription:
+      "100.000 lượt đọc/ngày, 1.000 lượt ghi/ngày, 1 GB. Chỉ dùng khi worker chat-proxy không có binding DB; bình thường bộ đếm đã chuyển sang D1.",
+    rateLimits: [
+      { label: "Lượt đọc / ngày", value: "100,000" },
+      { label: "Lượt ghi / ngày (key khác nhau)", value: "1,000" },
+      { label: "Ghi cùng một key", value: "1 lần/giây" },
+      { label: "Dung lượng", value: "1 GB" },
+    ],
+    hitLimitSymptoms: [
+      "Bộ đếm chat dừng tăng sau ~330 câu/ngày (1.000 ghi).",
+      "Log worker xuất hiện nhánh fallback KV thay vì D1.",
+    ],
+    errorCode: "KV PUT 429 / limit exceeded",
+    fallbackMechanism:
+      "Code tự dùng D1 nếu có binding DB; KV chỉ còn cho trường hợp chưa gắn D1 nên không ảnh hưởng cấu hình hiện tại.",
+    remedyAction:
+      "Luôn giữ binding DB cho chat-proxy. Không xóa binding để 'thử' vì sẽ tụt ngay về trần 1.000 ghi/ngày.",
+    severity: "warning",
+    resetCycle: "00:00 UTC hàng ngày",
+    docUrl: "https://developers.cloudflare.com/kv/platform/limits/",
+    troubleshootingSteps: [
+      "Kiểm tra Settings → Bindings của worker chat-proxy có biến DB trỏ tới D1 zenspace.",
+      "Xem nhánh fallback trong workers/chat-proxy/worker.js khi log báo lỗi D1.",
+    ],
+  },
+  {
     id: "cf-r2-storage",
     category: "storage",
     service: "Cloudflare R2",
@@ -125,7 +252,7 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     rateLimits: [
       { label: "Dung lượng lưu trữ", value: "10 GB miễn phí / tháng" },
       { label: "Băng thông tải về (Egress)", value: "0$ Không giới hạn" },
-      { label: "Kích thước 1 file tối đa", value: "5 GB (Khuyến nghị < 50MB)" },
+      { label: "Kích thước 1 file tối đa", value: "5 GB / lần PUT (multipart tới 5 TB)" },
     ],
     hitLimitSymptoms: [
       "Vượt quá 10 GB: Bị chặn upload file mới nếu tài khoản chưa add thẻ thanh toán, hoặc tính phí $0.015 / GB-tháng nếu đã liên kết thẻ.",
@@ -176,31 +303,32 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     category: "realtime",
     service: "LiveKit Cloud",
     component: "Phòng Học Nhóm Âm thanh & Màn hình Trực tuyến",
-    currentTier: "Free Community Plan",
-    quotaDescription: "50 GB băng thông truyền phát (Egress) mỗi tháng; tối đa 100 người dùng kết nối đồng thời; tối đa 20 phòng hoạt động cùng lúc.",
+    currentTier: "Build (Miễn phí)",
+    quotaDescription:
+      "5.000 phút WebRTC mỗi tháng và 50 GB dữ liệu tải xuống mỗi tháng; tối đa 100 người kết nối đồng thời trên toàn bộ project. Không có giới hạn số phòng, chỉ giới hạn tổng người.",
     rateLimits: [
-      { label: "Băng thông dữ liệu (Egress)", value: "50 GB / tháng" },
-      { label: "Số người kết nối đồng thời", value: "Tối đa 100 người" },
-      { label: "Phòng học hoạt động cùng lúc", value: "Tối đa 20 phòng" },
+      { label: "Phút WebRTC (người-tháng)", value: "5,000 phút / tháng" },
+      { label: "Dữ liệu tải xuống (Downstream)", value: "50 GB / tháng" },
+      { label: "Người kết nối đồng thời", value: "Tối đa 100 người" },
       { label: "Thời lượng vé token (TTL)", value: "2 giờ / phiên" },
     ],
     hitLimitSymptoms: [
+      "Hết 5.000 phút: người học không vào được phòng mới cho tới đầu tháng sau (không có phụ phí).",
       "Người tham gia thứ 101 bị từ chối kết nối WebRTC (Connection Rejected).",
-      "API tạo phòng từ chối cấp vé khi vượt 20 phòng hoạt động song song.",
-      "Hết 50 GB băng thông: Phiên họp bị tạm khóa cho đến đầu tháng sau.",
+      "Hết 50 GB tải xuống: phiên video bị chặn, audio vẫn có thể còn.",
     ],
     errorCode: "WebRTC Disconnect / Room Limit Exceeded",
     fallbackMechanism:
       "Phòng tự động giải phóng khi người cuối cùng thoát (RoomServiceClient.listRooms() chỉ giữ phòng có người). LiveKit SDK tự động hạ độ phân giải video (Dynacast) khi mạng yếu.",
     remedyAction:
-      "Khuyến khích người học chỉ bật camera khi cần phát biểu; ưu tiên chế độ voice để tiết kiệm 85% băng thông; cân nhắc self-host máy chủ LiveKit nguồn mở bằng Docker nếu vượt quy mô 100 người.",
+      "Khuyến khích người học chỉ bật camera khi cần phát biểu; ưu tiên chế độ voice để tiết kiệm phần lớn băng thông; 5.000 phút ≈ 83 giờ/1 người nên nhóm 4 người chỉ còn ~20 giờ/tháng — theo dõi ở LiveKit Dashboard.",
     severity: "critical",
     resetCycle: "Reset vào ngày 1 hàng tháng",
-    docUrl: "https://livekit.io/pricing",
+    docUrl: "https://docs.livekit.io/home/cloud/quotas-and-limits",
     troubleshootingSteps: [
       "Kiểm tra số phòng hoạt động qua API /api/livekit-rooms.",
       "Nhắc nhở người tham gia tắt camera khi chỉ cần nghe nhạc hoặc học bài tập trung.",
-      "Kiểm tra dung lượng Egress đã dùng trên Dashboard console của LiveKit Cloud.",
+      "Kiểm tra số phút WebRTC và GB tải xuống đã dùng trên Dashboard console của LiveKit Cloud.",
     ],
   },
   {
@@ -230,6 +358,36 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
       "Mở công cụ quét bộ nhớ ở đầu trang Admin này để xem dung lượng từng key.",
       "Xóa bớt ghi chú hoặc task đã hoàn thành nếu bộ nhớ chạm ngưỡng 4MB.",
       "Bấm nút 'Xuất sao lưu' để lưu file JSON về máy tính cá nhân trước khi dọn dẹp.",
+    ],
+  },
+  {
+    id: "client-chat-media-idb",
+    category: "client",
+    service: "IndexedDB (StudySpaceChatMediaDB)",
+    component: "Ảnh gốc Full HD của chat (bộ nhớ đệm cục bộ)",
+    currentTier: "Browser Storage Quota",
+    quotaDescription:
+      "Ảnh gốc (tối đa 7 MB/ảnh) lưu cục bộ để xem lại nét 100% mà không tốn Firestore. App chưa đặt giới hạn số lượng hay dung lượng, nên mức dùng tăng dần theo thời gian.",
+    rateLimits: [
+      { label: "Kích thước mỗi ảnh", value: "Tối đa 7 MB" },
+      { label: "Số ảnh lưu trữ", value: "Không giới hạn (theo hạn mức trình duyệt)" },
+      { label: "Hạn mức trình duyệt", value: "Chia theo dung lượng đĩa trống, thường vài trăm MB - vài GB" },
+    ],
+    hitLimitSymptoms: [
+      "Ảnh mới không xem lại được nét (chỉ còn hình nhỏ) do ghi IndexedDB thất bại.",
+      "Trình duyệt bắt đầu nén mạnh cache hoặc cảnh báo thiếu dung lượng.",
+    ],
+    errorCode: "DOMException: QuotaExceededError",
+    fallbackMechanism:
+      "Câu hỏi và câu trả lời vẫn hiển thị với hình thu nhỏ lưu ở Firestore; ảnh gốc chỉ mất phần xem lại nét.",
+    remedyAction:
+      "Dùng nút 'Ảnh chat' trong phần chẩn đoán dung lượng để xóa bớt; đăng xuất cũng xóa sạch IndexedDB.",
+    severity: "warning",
+    resetCycle: "Không tự reset (xóa thủ công hoặc khi đăng xuất)",
+    docUrl: "https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API",
+    troubleshootingSteps: [
+      "Bấm 'Quét ảnh chat' trong trang Admin này để xem số ảnh và dung lượng.",
+      "Xóa ảnh chat khi dung lượng vượt vài trăm MB.",
     ],
   },
   {
@@ -294,15 +452,20 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     service: "Google Firebase (Spark Plan)",
     component: "Đồng bộ Tài khoản & Lưu trữ Đám mây Cá nhân (Tùy chọn)",
     currentTier: "Spark Plan (Miễn phí)",
-    quotaDescription: "50,000 lượt đọc (Reads)/ngày; 20,000 lượt ghi (Writes)/ngày; 1 GB dung lượng Firestore miễn phí.",
+    quotaDescription:
+      "Mỗi câu chat ghi 3 document (câu hỏi, câu trả lời, preview phiên) nên 20.000 writes/ngày tương đương ~6.600 câu. Kèm 50.000 reads/ngày, 20.000 deletes/ngày, 1 GiB lưu trữ, 10 GiB egress/tháng và giới hạn 1 MiB mỗi document.",
     rateLimits: [
       { label: "Lượt đọc (Document Reads)", value: "50,000 reads / ngày" },
       { label: "Lượt ghi (Document Writes)", value: "20,000 writes / ngày" },
-      { label: "Dung lượng Firestore", value: "1 GB miễn phí" },
+      { label: "Lượt xóa (Document Deletes)", value: "20,000 deletes / ngày" },
+      { label: "Dung lượng Firestore", value: "1 GiB miễn phí" },
+      { label: "Băng thông ra (Egress)", value: "10 GiB / tháng" },
+      { label: "Kích thước 1 document", value: "1 MiB" },
     ],
     hitLimitSymptoms: [
       "Lỗi RESOURCE_EXHAUSTED khi vượt quá lượt đọc/ghi trong ngày.",
-      "Đồng bộ đám mây tạm dừng cho tới ngày tiếp theo.",
+      "Đồng bộ đám mây và chat tạm dừng cho tới ngày tiếp theo.",
+      "Gửi ảnh/file quá lớn vào chat có thể sinh lỗi document vượt 1 MiB.",
     ],
     errorCode: "FirebaseError: RESOURCE_EXHAUSTED",
     fallbackMechanism:
@@ -315,6 +478,35 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     troubleshootingSteps: [
       "Kiểm tra Usage trên Firebase Console xem lượng Reads/Writes trong ngày.",
       "Đảm bảo các listener Firestore có hủy đăng ký (unsubscribe) khi component unmount.",
+    ],
+  },
+  {
+    id: "firebase-auth",
+    category: "realtime",
+    service: "Firebase Authentication (Spark Plan)",
+    component: "Đăng nhập Email/Mật khẩu & Google cho tài khoản học tập",
+    currentTier: "Spark Plan (Miễn phí)",
+    quotaDescription:
+      "50.000 người dùng hoạt động mỗi tháng (MAU) cho các phương thức đăng nhập tiêu chuẩn; tính theo tháng, không phải theo ngày.",
+    rateLimits: [
+      { label: "Người dùng hoạt động / tháng", value: "50,000 MAU" },
+      { label: "SAML/OIDC (không dùng)", value: "50 MAU" },
+    ],
+    hitLimitSymptoms: [
+      "Đăng nhập/đăng ký mới bị từ chối khi vượt 50.000 MAU.",
+      "Tài khoản đang đăng nhập vẫn hoạt động tới khi token hết hạn.",
+    ],
+    errorCode: "auth/quota-exceeded",
+    fallbackMechanism:
+      "Không cần tài khoản vẫn học được đầy đủ (chế độ khách + Local-First); chỉ mất phần đồng bộ đám mây và chat AI.",
+    remedyAction:
+      "Chỉ chạy một project Firebase; không tạo thêm project song song làm tăng MAU. Nếu vượt, cần nâng lên Blaze.",
+    severity: "info",
+    resetCycle: "Theo tháng (đầu chu kỳ thanh toán)",
+    docUrl: "https://firebase.google.com/pricing",
+    troubleshootingSteps: [
+      "Firebase Console → Authentication → Users xem tổng người dùng.",
+      "Kiểm tra có app/test nào tự tạo tài khoản ảo làm tăng MAU không.",
     ],
   },
 ];

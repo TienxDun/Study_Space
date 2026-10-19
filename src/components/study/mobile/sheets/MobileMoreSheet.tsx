@@ -1,9 +1,23 @@
 "use client";
 
-import React from "react";
-import { FileTextIcon, RadioIcon, ChartBarIcon, UsersIcon, SparkleIcon, SlidersIcon, EyeSlashIcon, ImageIcon } from "@phosphor-icons/react";
+import React, { useState } from "react";
+import {
+  FileTextIcon,
+  RadioIcon,
+  ChartBarIcon,
+  UsersIcon,
+  SparkleIcon,
+  SlidersIcon,
+  EyeSlashIcon,
+  ImageIcon,
+  ArrowsClockwiseIcon,
+  CircleNotchIcon,
+} from "@phosphor-icons/react";
+import { toast } from "sonner";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { MobileAccountCard } from "./MobileAccountCard";
+import { useAuth } from "@/lib/use-auth";
+import { cloudConfigured, syncNow } from "@/lib/cloud-sync";
 import type { MobilePanelId } from "../types";
 
 interface MobileMoreSheetProps {
@@ -12,20 +26,89 @@ interface MobileMoreSheetProps {
   onSelect: (id: MobilePanelId) => void;
 }
 
-function MoreButton({ label, onClick, icon }: { label: string; onClick: () => void; icon: React.ReactNode }) {
+function MoreButton({
+  label,
+  sub,
+  onClick,
+  icon,
+  disabled,
+}: {
+  label: string;
+  sub?: string;
+  onClick: () => void;
+  icon: React.ReactNode;
+  disabled?: boolean;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group w-full min-h-[46px] flex items-center gap-3 px-3 py-1 rounded-2xl bg-white/[0.04] hover:bg-white/[0.1] active:scale-[0.98] border border-white/[0.08] hover:border-white/[0.18] transition-all text-left select-none"
+      disabled={disabled}
+      className="group w-full min-h-[46px] flex items-center gap-3 px-3 py-1 rounded-2xl bg-white/[0.04] hover:bg-white/[0.1] active:scale-[0.98] border border-white/[0.08] hover:border-white/[0.18] transition-all text-left select-none disabled:opacity-60 disabled:cursor-default disabled:active:scale-100"
     >
       <span className="w-9 h-9 rounded-xl bg-white/[0.08] border border-white/[0.15] flex items-center justify-center shrink-0 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] transition-transform group-hover:scale-105">
         {icon}
       </span>
-      <span className="text-[13px] font-medium text-white/90 group-hover:text-white tracking-tight">
-        {label}
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13px] font-medium text-white/90 group-hover:text-white tracking-tight">
+          {label}
+        </span>
+        {sub && <span className="block text-[11px] leading-tight text-white/45 mt-0.5">{sub}</span>}
       </span>
     </button>
+  );
+}
+
+// Bấm để kéo bản mới nhất từ máy chủ về (áp dụng luôn nếu có thay đổi).
+function SyncRow() {
+  const { user, loading, isConfigured } = useAuth();
+  const [busy, setBusy] = useState(false);
+
+  const run = async () => {
+    if (busy || loading) return;
+    if (!isConfigured || !cloudConfigured()) {
+      toast.error("Bản này chưa cấu hình đồng bộ máy chủ.");
+      return;
+    }
+    if (!user) {
+      toast("Đăng nhập rồi mới đồng bộ được nhé");
+      return;
+    }
+    setBusy(true);
+    const t = toast.loading("Đang lấy dữ liệu mới nhất...");
+    try {
+      const res = await syncNow();
+      if (!res.ok) {
+        toast.error("Chưa lấy được dữ liệu, bạn kiểm tra mạng nhé", { id: t });
+        return;
+      }
+      if (res.applied > 0) {
+        toast.success("Đã lấy dữ liệu mới nhất, đang tải lại...", { id: t });
+        window.location.reload();
+        return;
+      }
+      toast.success(res.pushed > 0 ? "Đã gửi thay đổi của bạn lên mây" : "Dữ liệu đã là mới nhất", { id: t });
+    } catch {
+      toast.error("Đồng bộ thất bại, bạn thử lại nhé", { id: t });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <MoreButton
+      label="Đồng bộ"
+      sub="Đồng bộ dữ liệu mới nhất"
+      onClick={() => void run()}
+      disabled={busy}
+      icon={
+        busy ? (
+          <CircleNotchIcon className="w-5 h-5 text-sky-300 animate-spin" />
+        ) : (
+          <ArrowsClockwiseIcon className="w-5 h-5 text-sky-300" />
+        )
+      }
+    />
   );
 }
 
@@ -45,6 +128,9 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
         <section>
           <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/50">Tài khoản</p>
           <MobileAccountCard />
+          <div className="space-y-1.5 pt-1.5">
+            <SyncRow />
+          </div>
         </section>
         <section>
           <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/50">Học và ghi</p>

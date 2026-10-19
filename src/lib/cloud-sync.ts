@@ -366,10 +366,12 @@ export interface SyncResult {
   applied: number;
   pushed: number;
   removed: number;
+  /** false khi chưa bật đồng bộ, chưa có vé, hoặc không gọi được máy chủ. */
+  ok: boolean;
 }
 
 async function syncOnce(): Promise<SyncResult> {
-  const result: SyncResult = { applied: 0, pushed: 0, removed: 0 };
+  const result: SyncResult = { applied: 0, pushed: 0, removed: 0, ok: false };
   if (!active || !tokenFn || syncing) return result;
   syncing = true;
   try {
@@ -382,6 +384,7 @@ async function syncOnce(): Promise<SyncResult> {
     } catch {
       return result; // mất mạng -> để lần sau
     }
+    result.ok = true;
 
     const local: Record<string, string | null> = {};
     for (const key of SYNCED_KEYS) local[key] = rawGet(key);
