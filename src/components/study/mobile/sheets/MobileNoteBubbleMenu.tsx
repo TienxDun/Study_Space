@@ -73,7 +73,7 @@ export const MobileNoteBubbleMenu = React.memo(function MobileNoteBubbleMenu({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: -6 }}
               transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute right-0 top-9.5 z-50 min-w-[210px] p-1.5 rounded-2xl bg-neutral-950/92 backdrop-blur-2xl border border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.85)] text-white select-none"
+              className="absolute right-0 top-full mt-1.5 z-50 w-max min-w-[210px] max-w-[calc(100vw-1.5rem)] p-1.5 rounded-2xl bg-neutral-950/92 backdrop-blur-2xl border border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.85)] text-white select-none"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex flex-col space-y-0.5">
@@ -93,7 +93,7 @@ export const MobileNoteBubbleMenu = React.memo(function MobileNoteBubbleMenu({
                         weight="bold"
                       />
                     </div>
-                    <span className="whitespace-nowrap">Xem & chỉnh sửa</span>
+                    <span className="truncate">Xem & chỉnh sửa</span>
                   </div>
                   <CaretRightIcon className="w-3.5 h-3.5 text-white/40 group-hover:text-white/70 shrink-0 ml-2 transition-colors" weight="bold" />
                 </button>
@@ -116,7 +116,7 @@ export const MobileNoteBubbleMenu = React.memo(function MobileNoteBubbleMenu({
                         weight={note.isPinned ? "fill" : "bold"}
                       />
                     </div>
-                    <span className="whitespace-nowrap">
+                    <span className="truncate">
                       {note.isPinned ? "Bỏ ghim ghi chú" : "Ghim lên đầu"}
                     </span>
                    </div>
@@ -141,7 +141,7 @@ export const MobileNoteBubbleMenu = React.memo(function MobileNoteBubbleMenu({
                         weight="bold"
                       />
                     </div>
-                    <span className="whitespace-nowrap text-rose-300 group-hover:text-rose-200">Xóa ghi chú</span>
+                    <span className="truncate text-rose-300 group-hover:text-rose-200">Xóa ghi chú</span>
                   </div>
                 </button>
               </div>

@@ -18,6 +18,7 @@ interface NoteChatPromptMenuProps {
   isLight: boolean;
   isOpen: boolean;
   onClose: () => void;
+  triggerRef?: React.RefObject<HTMLElement | null>;
 }
 
 interface PromptAction {
@@ -106,19 +107,21 @@ export function NoteChatPromptMenu({
   isLight,
   isOpen,
   onClose,
+  triggerRef,
 }: NoteChatPromptMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
     const handleOutsideClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        onClose();
-      }
+      const target = e.target as Node;
+      if (menuRef.current?.contains(target)) return;
+      if (triggerRef?.current?.contains(target)) return;
+      onClose();
     };
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, triggerRef]);
 
   const handleTriggerAction = (action: PromptAction) => {
     if (!activeNote) return;
@@ -152,8 +155,8 @@ export function NoteChatPromptMenu({
           transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
           className={`absolute right-0 top-full mt-1.5 w-[min(320px,calc(100vw-36px))] sm:w-[340px] p-1.5 rounded-2xl border z-50 select-none ${
             isLight
-              ? "bg-white/95 sm:bg-white border-slate-200/90 sm:border-slate-200 text-slate-800 shadow-[0_16px_40px_rgba(0,0,0,0.12)] sm:shadow-[0_20px_50px_rgba(0,0,0,0.18)] backdrop-blur-2xl sm:backdrop-blur-none"
-              : "bg-slate-900/80 sm:bg-slate-900 border-white/20 sm:border-slate-700/80 text-white shadow-[0_20px_50px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.06),inset_0_1px_0_rgba(255,255,255,0.18)] sm:shadow-[0_20px_60px_rgba(0,0,0,0.85),0_0_0_1px_rgba(255,255,255,0.08)] backdrop-blur-3xl sm:backdrop-blur-none"
+              ? "bg-white border-slate-200 text-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.18)]"
+              : "bg-slate-900 border-slate-700/80 text-white shadow-[0_20px_60px_rgba(0,0,0,0.85),0_0_0_1px_rgba(255,255,255,0.08)]"
           }`}
         >
           {/* Header menu */}

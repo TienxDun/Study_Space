@@ -23,6 +23,7 @@ import { KanbanBoard, KanbanCard, CardPriority } from "../types";
 import { getDeadlineStatus } from "../utils/task-deadline";
 import { startFocusTask } from "@/lib/use-focus-task";
 import { PrioritySignalIcon } from "./PrioritySignalIcon";
+import { SyncStatusBadge } from "@/components/study/sync/SyncStatusBadge";
 
 interface CardDetailModalProps {
   selectedCard: KanbanCard | null;
@@ -361,10 +362,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
 
               {/* Quick Actions (Auto-save, Delete & Close) */}
               <div className="flex items-center gap-1.5 shrink-0">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/[0.08] border border-emerald-500/20 text-emerald-300 text-[11px] font-medium mr-0.5 select-none h-7">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <span>Đã lưu</span>
-                </div>
+                <SyncStatusBadge className="mr-0.5" />
                 <button
                   type="button"
                   onClick={() => promptDeleteCard(selectedCard)}
@@ -402,7 +400,6 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   title="Cột trạng thái"
                 >
                   <span className="truncate flex items-center gap-1">
-                    <span className="text-slate-400 font-normal shrink-0">Cột:</span>
                     <span className="font-semibold text-slate-100 truncate">
                       {currentColumn?.title || "Chọn cột"}
                     </span>
@@ -477,7 +474,6 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   <div className="flex items-center gap-1.5 min-w-0">
                     <PrioritySignalIcon priority={selectedCard.priority || "medium"} className="w-3.5 h-3.5 shrink-0" />
                     <span className="flex items-center gap-1 min-w-0">
-                      <span className="text-slate-400 font-normal shrink-0">Ưu tiên:</span>
                       <span className="font-semibold text-xs whitespace-nowrap">
                         {selectedCard.priority === "high"
                           ? "Cao"
@@ -586,7 +582,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   >
                     <div className="flex items-center gap-1.5 min-w-0 truncate">
                       <CalendarIcon className="w-3 h-3 text-slate-400 shrink-0" />
-                      <span className="truncate">+ Hạn chót</span>
+                      <span className="truncate">Hạn chót</span>
                     </div>
                     <CaretDownIcon className="w-3 h-3 opacity-60 shrink-0" />
                   </button>

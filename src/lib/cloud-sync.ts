@@ -60,6 +60,65 @@ const TOL_MS = 2000; // lệch trong 2 giây coi như bằng nhau (đỡ dập d
 /** Sự kiện phát ra sau mỗi lần đồng bộ xong (dùng cho UI nếu cần). */
 export const EVENT_CLOUD_SYNCED = "study_space_cloud_synced";
 
+/**
+ * Trạng thái đồng bộ để UI hiển thị đúng thực tế thay vì báo "Đã lưu" chung chung.
+ * - `local`: chưa/chẳng đồng bộ lên mây (khách hoặc chưa cấu hình) — dữ liệu chỉ nằm máy.
+ * - `pending`: có thay đổi chưa kịp đẩy lên (đang chờ gộp 2 giây).
+ * - `syncing`: đang gửi/lấy dữ liệu.
+ * - `synced`: đã đồng bộ xong.
+ * - `error`: lần đồng bộ gần nhất thất bại (mất mạng / máy chủ lỗi), sẽ tự thử lại.
+ */
+export type CloudSyncStatus = "local" | "pending" | "syncing" | "synced" | "error";
+
+export interface CloudSyncState {
+  status: CloudSyncStatus;
+  /** Mốc (ms) lần đồng bộ thành công gần nhất; null nếu chưa từng đồng bộ. */
+  lastSyncedAt: number | null;
+}
+
+/** Sự kiện đổi trạng thái đồng bộ (UI đăng ký để vẽ lại). */
+export const EVENT_CLOUD_STATUS = "study_space_cloud_status";
+
+const INITIAL_SYNC_STATE: CloudSyncState = { status: "local", lastSyncedAt: null };
+let syncState: CloudSyncState = INITIAL_SYNC_STATE;
+const statusListeners = new Set<() => void>();
+
+export function getSyncState(): CloudSyncState {
+  return syncState;
+}
+
+/** Snapshot cố định cho SSR / lần render đầu (tránh lệch hydration). */
+export function getServerSyncState(): CloudSyncState {
+  return INITIAL_SYNC_STATE;
+}
+
+export function subscribeSyncState(listener: () => void): () => void {
+  statusListeners.add(listener);
+  return () => {
+    statusListeners.delete(listener);
+  };
+}
+
+function emitSyncState(): void {
+  if (typeof window !== "undefined") {
+    try {
+      window.dispatchEvent(new Event(EVENT_CLOUD_STATUS));
+    } catch {}
+  }
+  for (const listener of statusListeners) {
+    try {
+      listener();
+    } catch {}
+  }
+}
+
+function setSyncStatus(status: CloudSyncStatus, at?: number): void {
+  const lastSyncedAt = at ?? syncState.lastSyncedAt;
+  if (syncState.status === status && syncState.lastSyncedAt === lastSyncedAt) return;
+  syncState = { status, lastSyncedAt };
+  emitSyncState();
+}
+
 export interface CloudMetaEntry {
   local: number;
   synced: number;
@@ -197,6 +256,8 @@ function noteLocalChange(key: string, removed: boolean): void {
   meta[key] = { local: Date.now(), synced: prev.synced, del: removed };
   scheduleMetaFlush();
   schedulePush();
+  // Có vé đăng nhập nghĩa là dữ liệu này sẽ được đẩy lên mây -> báo "chờ đồng bộ".
+  if (tokenFn) setSyncStatus("pending");
 }
 
 function installInterceptor(): void {
@@ -376,12 +437,17 @@ async function syncOnce(): Promise<SyncResult> {
   syncing = true;
   try {
     const token = await tokenFn();
-    if (!token) return result;
+    if (!token) {
+      setSyncStatus("local");
+      return result;
+    }
+    setSyncStatus("syncing");
 
     let server;
     try {
       server = await fetchServer(token);
     } catch {
+      setSyncStatus("error");
       return result; // mất mạng -> để lần sau
     }
     result.ok = true;
@@ -408,6 +474,7 @@ async function syncOnce(): Promise<SyncResult> {
     metaCache = plan.meta;
 
     let at = Date.now();
+    let failed = false;
     const pushKeys = Object.keys(plan.push);
     if (pushKeys.length) {
       const body: Record<string, string> = {};
@@ -419,6 +486,8 @@ async function syncOnce(): Promise<SyncResult> {
         const next = readMeta();
         for (const k of pushKeys) next[k] = { local: at, synced: at, del: false };
         result.pushed = pushKeys.length;
+      } else {
+        failed = true;
       }
     }
     if (plan.remove.length) {
@@ -427,8 +496,12 @@ async function syncOnce(): Promise<SyncResult> {
         const next = readMeta();
         for (const k of plan.remove) next[k] = { local: at, synced: at, del: false };
         result.removed = plan.remove.length;
+      } else {
+        failed = true;
       }
     }
+
+    setSyncStatus(failed ? "error" : "synced", failed ? undefined : Date.now());
 
     try {
       window.dispatchEvent(new Event(EVENT_CLOUD_SYNCED));
@@ -464,7 +537,10 @@ export async function startCloudSync(
   active = false; // chưa ghi meta trong lúc kéo về
   bootstrapped = false;
   const token = await getToken();
-  if (!token) return { applied: 0 };
+  if (!token) {
+    setSyncStatus("local");
+    return { applied: 0 };
+  }
   active = true;
   const result = await syncOnce();
   bootstrapped = true;
@@ -484,6 +560,7 @@ export function stopCloudSync(): void {
     metaFlushTimer = null;
   }
   persistMeta();
+  setSyncStatus("local");
 }
 
 /**
@@ -495,6 +572,7 @@ export function startGuestTracking(): void {
   tokenFn = null;
   active = true;
   bootstrapped = true;
+  setSyncStatus("local");
 }
 
 /** Có thay đổi nào chưa đẩy lên mây không? (dùng để cảnh báo trước khi đăng xuất) */
@@ -524,6 +602,8 @@ export function resetSyncMemory(): void {
     clearTimeout(metaFlushTimer);
     metaFlushTimer = null;
   }
+  syncState = INITIAL_SYNC_STATE;
+  emitSyncState();
 }
 
 /** Đồng bộ ngay (dùng khi tab quay lại / có mạng lại). */

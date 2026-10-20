@@ -21,6 +21,7 @@ import {
 import { motion, AnimatePresence, DragControls } from "framer-motion";
 import { StudyNote, ActiveFormats } from "../types";
 import { NoteChatPromptMenu } from "./NoteChatPromptMenu";
+import { SyncStatusBadge } from "@/components/study/sync/SyncStatusBadge";
 
 interface CompactStickyNoteProps {
   width?: number;
@@ -92,6 +93,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
   const [showMoreMenu, setShowMoreMenu] = React.useState(false);
   const [showAiPromptMenu, setShowAiPromptMenu] = React.useState(false);
   const moreMenuRef = React.useRef<HTMLDivElement>(null);
+  const aiPromptTriggerRef = React.useRef<HTMLButtonElement>(null);
 
   React.useEffect(() => {
     if (!showMoreMenu) return;
@@ -488,6 +490,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
             {/* Nút Hỏi AI về ghi chú kèm Menu lựa chọn Prompt */}
             <div className="relative">
               <button
+                ref={aiPromptTriggerRef}
                 type="button"
                 onClick={() => setShowAiPromptMenu((prev) => !prev)}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
@@ -513,6 +516,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                 isLight={isLight}
                 isOpen={showAiPromptMenu}
                 onClose={() => setShowAiPromptMenu(false)}
+                triggerRef={aiPromptTriggerRef}
               />
             </div>
           </div>
@@ -582,9 +586,12 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 opacity-75">
-                <span>Đã lưu {lastSavedTime}</span>
-              </div>
+              <SyncStatusBadge
+                variant="text"
+                light={isLight}
+                savedTime={lastSavedTime}
+                className="opacity-80 text-[11px] font-medium"
+              />
 
               {/* Resize Handle */}
               <div

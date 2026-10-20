@@ -28,6 +28,7 @@ import { MobileSheetShell } from "./MobileSheetShell";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { MobileUndoSnackbar } from "../feedback/MobileUndoSnackbar";
 import { MobileNoteBubbleMenu } from "./MobileNoteBubbleMenu";
+import { SyncStatusBadge } from "@/components/study/sync/SyncStatusBadge";
 
 interface MobileNotesSheetProps {
   isOpen: boolean;
@@ -93,6 +94,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
   const detailMoreMenuRef = useRef<HTMLDivElement>(null);
 
   const titleInputRef = useRef<HTMLTextAreaElement>(null);
+  const aiPromptTriggerRef = useRef<HTMLButtonElement>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isLongPressTriggeredRef = useRef(false);
   const prevEditingIdRef = useRef<string | null>(null);
@@ -275,14 +277,8 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
         headerRight={
           currentEditingNote ? (
             <div className="flex items-center gap-1.5 shrink-0">
-              {/* Badge Đã lưu nhỏ gọn */}
-              <div
-                title={`Đã lưu tự động lúc ${lastSavedTime === "Vừa xong" ? "vừa xong" : lastSavedTime}`}
-                className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[11px] font-medium select-none h-7 shrink-0"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                <span>Đã lưu</span>
-              </div>
+              {/* Trạng thái đồng bộ thật: chờ / đang gửi / đã đồng bộ / lỗi / chỉ lưu máy */}
+              <SyncStatusBadge savedTime={lastSavedTime} />
 
               {/* Nút Tùy chọn Thêm `...` (Ghim, Sao chép, Xóa) */}
               <div className="relative" ref={detailMoreMenuRef}>
@@ -382,7 +378,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
           {currentEditingNote ? (
             <div className="flex-1 min-h-0 flex flex-col overflow-hidden text-white">
               {/* PHẦN ĐẦU CỐ ĐỊNH (Sticky Top Zone): Tiêu đề + Metadata + Thanh công cụ Toolbar */}
-              <div className="shrink-0 px-4 pt-3 pb-2.5 space-y-2.5 border-b border-white/[0.08] bg-neutral-950/40 backdrop-blur-sm">
+              <div className="relative z-30 shrink-0 px-4 pt-3 pb-2.5 space-y-2.5 border-b border-white/[0.08] bg-neutral-950/40 backdrop-blur-sm">
                 {/* Ô sửa tiêu đề: tự động co giãn 1-2 hàng */}
                 <textarea
                   ref={titleInputRef}
@@ -431,6 +427,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                   {/* Nút Hỏi AI: Ghost Glass Button tinh tế, gọn gàng */}
                   <div className="relative shrink-0">
                     <button
+                      ref={aiPromptTriggerRef}
                       type="button"
                       onClick={() => setShowAiPromptMenu((prev) => !prev)}
                       className={`flex items-center gap-1 h-6 px-2.5 rounded-full text-[11px] font-medium transition-all border active:scale-95 cursor-pointer backdrop-blur-md ${
@@ -453,6 +450,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                       isLight={false}
                       isOpen={showAiPromptMenu}
                       onClose={() => setShowAiPromptMenu(false)}
+                      triggerRef={aiPromptTriggerRef}
                     />
                   </div>
                 </div>

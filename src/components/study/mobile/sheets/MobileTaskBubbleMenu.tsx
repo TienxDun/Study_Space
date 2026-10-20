@@ -97,7 +97,7 @@ export const MobileTaskBubbleMenu = React.memo(function MobileTaskBubbleMenu({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: -6 }}
               transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute right-0 top-9.5 z-50 min-w-[210px] p-1.5 rounded-2xl bg-neutral-950/92 backdrop-blur-2xl border border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.85)] text-white select-none"
+              className="absolute right-0 top-full mt-1.5 z-50 w-max min-w-[210px] max-w-[calc(100vw-1.5rem)] p-1.5 rounded-2xl bg-neutral-950/92 backdrop-blur-2xl border border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.85)] text-white select-none"
               onClick={(e) => e.stopPropagation()}
             >
               {mode === "actions" ? (
@@ -115,10 +115,10 @@ export const MobileTaskBubbleMenu = React.memo(function MobileTaskBubbleMenu({
                       <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/10 flex items-center justify-center shrink-0">
                         <TimerIcon className="w-4 h-4 text-white/80 group-hover:text-white transition-colors" weight="fill" />
                       </div>
-                      <span className="whitespace-nowrap">Học với Pomodoro</span>
+                      <span className="truncate">Học với Pomodoro</span>
                     </div>
                     {hasFocusTime && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-white/10 text-white/70 border border-white/10 shrink-0 ml-2">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-white/10 text-white/70 border border-white/10 shrink-0 ml-2 whitespace-nowrap">
                         {formattedFocusTime}
                       </span>
                     )}
@@ -135,7 +135,7 @@ export const MobileTaskBubbleMenu = React.memo(function MobileTaskBubbleMenu({
                         <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/10 flex items-center justify-center shrink-0">
                           <ArrowRightIcon className="w-4 h-4 text-white/80 group-hover:text-white transition-colors" weight="bold" />
                         </div>
-                        <span className="whitespace-nowrap">Chuyển trạng thái</span>
+                        <span className="truncate">Chuyển trạng thái</span>
                       </div>
                       <CaretRightIcon className="w-3.5 h-3.5 text-white/40 group-hover:text-white/70 shrink-0 ml-2 transition-colors" weight="bold" />
                     </button>
@@ -154,7 +154,7 @@ export const MobileTaskBubbleMenu = React.memo(function MobileTaskBubbleMenu({
                       <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/10 flex items-center justify-center shrink-0">
                         <PencilLineIcon className="w-4 h-4 text-white/80 group-hover:text-white transition-colors" weight="bold" />
                       </div>
-                      <span className="whitespace-nowrap">Chi tiết công việc</span>
+                      <span className="truncate">Chi tiết công việc</span>
                     </div>
                   </button>
 
@@ -174,7 +174,7 @@ export const MobileTaskBubbleMenu = React.memo(function MobileTaskBubbleMenu({
                       <div className="w-7 h-7 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
                         <TrashIcon className="w-4 h-4 text-rose-400 group-hover:text-rose-300 transition-colors" weight="bold" />
                       </div>
-                      <span className="whitespace-nowrap text-rose-300 group-hover:text-rose-200">Xóa việc này</span>
+                      <span className="truncate text-rose-300 group-hover:text-rose-200">Xóa việc này</span>
                     </div>
                   </button>
                 </div>
@@ -204,7 +204,7 @@ export const MobileTaskBubbleMenu = React.memo(function MobileTaskBubbleMenu({
                         }}
                         className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-white/80 hover:text-white hover:bg-white/10 active:scale-[0.98] transition-all cursor-pointer group/col"
                       >
-                        <span className="whitespace-nowrap">{col.title}</span>
+                        <span className="min-w-0 truncate">{col.title}</span>
                         <ArrowRightIcon className="w-3.5 h-3.5 text-white/40 group-hover:text-white/70 shrink-0 ml-2 transition-colors" />
                       </button>
                     ))}
