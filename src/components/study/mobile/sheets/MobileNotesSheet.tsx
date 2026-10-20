@@ -277,9 +277,6 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
         headerRight={
           currentEditingNote ? (
             <div className="flex items-center gap-1.5 shrink-0">
-              {/* Trạng thái đồng bộ thật: chờ / đang gửi / đã đồng bộ / lỗi / chỉ lưu máy */}
-              <SyncStatusBadge savedTime={lastSavedTime} />
-
               {/* Nút Tùy chọn Thêm `...` (Ghim, Sao chép, Xóa) */}
               <div className="relative" ref={detailMoreMenuRef}>
                 <button
@@ -371,6 +368,25 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
               </button>
             </div>
           )
+        }
+        footer={
+          currentEditingNote ? (
+            <div className="px-3.5 py-2 flex items-center justify-between gap-3 text-xs text-white/60 select-none">
+              <div className="flex items-center gap-1.5 min-w-0 text-[11px] text-white/50 truncate">
+                <span className="truncate">
+                  {lastSavedTime
+                    ? `Đã lưu lúc ${lastSavedTime}`
+                    : currentEditingNote.updatedAt
+                      ? `Cập nhật ${new Date(currentEditingNote.updatedAt).toLocaleTimeString("vi-VN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}`
+                      : "Đã lưu tự động"}
+                </span>
+              </div>
+              <SyncStatusBadge savedTime={lastSavedTime} />
+            </div>
+          ) : undefined
         }
       >
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden text-white">

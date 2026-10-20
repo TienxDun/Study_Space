@@ -8,7 +8,7 @@
 [![React](https://img.shields.io/badge/React-19.2-blue?style=for-the-badge&logo=react&logoColor=white)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vitest](https://img.shields.io/badge/Vitest-99_Tests_Passing-6ee7b7?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-274_Tests_Passing-6ee7b7?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg?style=for-the-badge)](LICENSE)
 
 ---
@@ -73,6 +73,14 @@
 
 - Hệ thống Onboarding Tour tương tác trực quan cho người dùng mới làm quen mọi tính năng chỉ trong 30 giây.
 - Tra cứu nhanh toàn bộ phím tắt bằng phím <kbd>?</kbd> hoặc <kbd>H</kbd>.
+
+### ☁️ 8. Đồng Bộ Đám Mây Cloudflare D1 (Cloud Save Snapshot)
+
+- **Mô hình Save Game Snapshot**: Toàn bộ dữ liệu cá nhân (ghi chú, Kanban, hình nền yêu thích, âm thanh đã bật, mục tiêu Pomodoro) được đóng gói và lưu trữ an toàn trên Cloudflare D1.
+- **Tự động lưu ngầm (Auto-Save)**: Tự động phát hiện thay đổi và đồng bộ ngầm sau 2 giây ngừng gõ.
+- **Nút "Đồng bộ ngay" (Sync Now)**: 1-click trên badge trạng thái để kích hoạt lưu tức thì khi cần chuyển sang thiết bị khác.
+- **Khả năng tự phục hồi khi mất mạng (Offline-First)**: Mất mạng ứng dụng vẫn hoạt động bình thường trên LocalStorage và hiển thị cảnh báo offline; khi có mạng lại, hệ thống tự động đẩy bản lưu mới nhất lên đám mây.
+- **Bảo mật máy dùng chung (Safe Sign Out)**: Tự động dọn sạch toàn bộ ghi chú và việc cần làm cá nhân trên trình duyệt khi đăng xuất, đảm bảo người ngồi sau không đọc được dữ liệu riêng tư.
 
 ---
 
@@ -159,9 +167,17 @@ Mở trình duyệt tại địa chỉ: `http://localhost:3001` (khởi chạy v
 npm test
 ```
 
-Thực thi 14 test suites với 99 bài kiểm tra tự động bao phủ logic Pomodoro, Music Player, Sound Mixer, Tasks, Notes, Embed Stream, SEO Schemas...
+Thực thi 39 test suites với 274 bài kiểm tra tự động bao phủ logic Pomodoro, Music Player, Sound Mixer, Tasks, Notes, Embed Stream, SEO Schemas, Cloud Sync Snapshot, v.v.
 
-### 5. Kiểm tra mã nguồn (Linting)
+### 5. Kiểm thử tải cao (Load Testing 200 CCU)
+
+```bash
+npm run test:load
+```
+
+Giả lập 200 người dùng đồng thời thực hiện Ghi (POST /data) và Đọc (GET /data) lên Worker Data-API, thống kê tỷ lệ thành công (100%), độ trễ (min/avg/p95/max) và thông lượng req/giây.
+
+### 6. Kiểm tra mã nguồn (Linting)
 
 ```bash
 npm run lint
@@ -169,7 +185,7 @@ npm run lint
 
 Kiểm tra cú pháp với ESLint và kiểm tra ràng buộc không lạm dụng `!important` trong CSS.
 
-### 6. Build bản phát hành (Production)
+### 7. Build bản phát hành (Production)
 
 ```bash
 npm run build
@@ -186,6 +202,9 @@ Tạo file `.env.local` tại thư mục gốc nếu bạn cần cấu hình cá
 ```env
 # URL website chính thức (dùng để sinh sitemap và metadata SEO)
 NEXT_PUBLIC_SITE_URL=https://zenstudy.space
+
+# URL Worker lưu trữ dữ liệu học tập Cloudflare D1
+NEXT_PUBLIC_DATA_API_URL=https://data-api.your-subdomain.workers.dev
 
 # URL CDN phân phối asset bối cảnh & âm thanh (Cloudflare R2 / Worker)
 NEXT_PUBLIC_STUDY_CDN_URL=https://study-space-shield.leutiendung-hht.workers.dev

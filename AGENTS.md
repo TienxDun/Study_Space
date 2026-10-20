@@ -5,7 +5,8 @@ Next.js 16 + React 19 + Tailwind v4 single-page app with Vietnamese UI. Local-fi
 ## Commands
 
 - `npm run dev` - Turbopack on **http://localhost:3001** (not 3000).
-- `npm test` - all Vitest unit tests. Single file: `npx vitest run src/__tests__/unit/study/<name>.test.ts`.
+- `npm test` - all Vitest unit tests (39 test suites, 274 tests). Single file: `npx vitest run src/__tests__/unit/study/<name>.test.ts`.
+- `npm run test:load` - run 200 concurrent users (200 CCU) load test against Worker simulation.
 - `npm run lint` - ESLint **and** `scripts/check-important.mjs`, which fails on `!important` outside `IMPORTANT-ALLOWED-START/END` blocks in `src/app/globals.css` and `src/app/styles/*.css`.
 - `npx tsc --noEmit` - typecheck; there is no npm script for it.
 - `npm run build` - local build stays in server mode. Static export to `out/` happens only when `GITHUB_ACTIONS` or `CF_PAGES` is set. CI runs build only, so run lint/typecheck/tests yourself.
@@ -15,10 +16,10 @@ Next.js 16 + React 19 + Tailwind v4 single-page app with Vietnamese UI. Local-fi
 
 - The whole app is one client page: `src/app/page.tsx`. Central state and every open/close action live in `src/components/study/hooks/useStudySpaceState.ts`; new features must be threaded through it, then rendered in both layouts.
 - Desktop/mobile split at 640px (`useIsMobile`): `StudyDesktopLayout` vs `StudyMobileLayout`. Mobile navigation is a stack (`useMobileStack`) mapped onto sheet flags by `syncScreenToStates`; do not add a second mobile state machine.
-- Persistence is localStorage-first. Every key lives in `src/lib/storage-keys.ts`; never hardcode key strings. `src/lib/cloud-sync.ts` mirrors only `SYNCED_KEYS` to D1 (last-write-wins, ~2s debounce, focus sessions merged by id) and deliberately excludes machine-specific keys.
+- Persistence is localStorage-first. Every key lives in `src/lib/storage-keys.ts`; never hardcode key strings. `src/lib/simple-cloud-sync.ts` mirrors the entire user workspace as a snapshot document (Save Game Document mode) to D1 via `workers/data-api` (`GET/POST /data`, ~2s debounce, offline auto-recovery, wipe on logout) and deliberately excludes machine-specific keys.
 - Scenes, sounds and tracks are JSON in `src/data/assets/`, typed in `src/components/study/study-types.ts`. Asset URLs must go through `src/lib/asset-resolver.ts` (CDN env or `/study` fallback). `public/study/` is ~465 MB and gitignored, so never assume it exists in CI.
 - `/admin` and everything under `/api/*` are dev-only tools guarded by `NODE_ENV === "development"`; they are not part of the static export. `/admin/scenes` edits `src/data/assets/scenes.json` and writes media into `public/study`.
-- `workers/` are standalone Cloudflare Workers deployed by pasting into the dashboard - not built by Next. Backend setup order is in `docs/DEPLOY.md`; D1 schema and API are in `docs/d1-backend.md` and `workers/schema.sql`.
+- `workers/` are standalone Cloudflare Workers deployed by pasting into the dashboard - not built by Next. Backend setup order is in `docs/DEPLOY.md`; D1 schema and API are in `docs/CLOUD_SYNC_GUIDE.md`, `docs/CLOUD_SYNC_PLAN.md` and `workers/schema.sql`.
 - Missing `NEXT_PUBLIC_*` Firebase/CDN/worker URLs degrade the app to local-only. `src/lib/firebase-config.ts` exists so the Firebase SDK is only imported when configured.
 
 ## Conventions

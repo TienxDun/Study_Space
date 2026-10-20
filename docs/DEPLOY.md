@@ -8,7 +8,7 @@
 Các key từng dán ở khung chat coi như đã lộ:
 
 1. **Groq:** vào `console.groq.com/keys` → tạo key mới → cập nhật Secret `GROQ_API_KEY` của Worker → **xóa key cũ**.
-3. Kiểm tra repo không dính secret: `git grep -l "gsk_\|AIza" -- .` phải ra trắng (`.env.local` đã gitignore, không commit).
+2. Kiểm tra repo không dính secret: `git grep -l "gsk_\|AIza" -- .` phải ra trắng (`.env.local` đã gitignore, không commit).
 
 ## Bước 1 — Deploy Worker `chat-proxy`
 
@@ -46,14 +46,7 @@ Các key từng dán ở khung chat coi như đã lộ:
    | `FIREBASE_PROJECT_ID` | Text  | `zenspace-d10m13y26`                           |
    | `ALLOWED_ORIGINS`     | Text  | `https://zenstudy.space,http://localhost:3001` |
 3. Settings → Bindings → Add → D1 database: Variable name: `DB` → Database: `zenspace`.
-4. Mở D1 Database `zenspace` → Console → chạy lệnh:
-   ```sql
-   CREATE TABLE IF NOT EXISTS user_data (
-     uid        TEXT PRIMARY KEY,
-     data_json  TEXT NOT NULL,
-     updated_at INTEGER NOT NULL
-   );
-   ```
+4. Mở D1 Database `zenspace` → tab **Console** → dán toàn bộ file `workers/schema.sql` → bấm **Execute** (để xóa sạch bảng thừa và tạo 2 bảng `user_data` + `chat_usage`).
 5. Lấy địa chỉ Worker: `https://data-api.<bạn>.workers.dev` → điền vào `NEXT_PUBLIC_DATA_API_URL` ở Bước 3.
 
 ## Bước 2 — Firebase (Xác thực Google)
@@ -85,7 +78,9 @@ Các key từng dán ở khung chat coi như đã lộ:
 - [ ] Acc A không đọc được dữ liệu acc B (mở 2 trình duyệt test).
 - [ ] `/status?token=...`: `workersAI.requestsToday` tăng, không có `lastAuthError` mới.
 - [ ] Dùng hết 30 câu: báo "mai quay lại" (test bằng acc phụ hoặc hạ `USER_DAILY_LIMIT` tạm thời).
-- [ ] Đồng bộ: đổi ghi chú ở laptop → F5 trên điện thoại (cùng acc) thấy thay đổi.
+- [ ] Đồng bộ D1: đổi ghi chú ở laptop → F5 trên tab ẩn danh / điện thoại (cùng acc) thấy thay đổi nguyên vẹn.
+- [ ] Nút "Đồng bộ ngay": bấm vào badge góc trên → hiện toast "Đã sao lưu lên đám mây thành công!".
+- [ ] Kiểm thử tải: chạy `npm run test:load` đạt 100% thành công cho 200 CCU.
 - [ ] Phòng học nhóm: chưa đăng nhập → chỉ thấy nút Google; đăng nhập → vào phòng, máy thứ 2 cùng tên phòng thấy nhau.
 - [ ] `curl.exe -X POST https://<worker-livekit>/token` không kèm vé → **401** (không lấy được vé chùa).
 
