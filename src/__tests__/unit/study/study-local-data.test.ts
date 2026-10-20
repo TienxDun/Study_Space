@@ -1,8 +1,13 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from "vitest";
-import { hasStoredUserData, shouldWipeKey } from "@/lib/local-data";
+import {
+  hasStoredUserData,
+  shouldWipeKey,
+  CLOUD_BOOT_PREFIX,
+  CLOUD_META_KEY,
+  CLOUD_UID_KEY,
+} from "@/lib/local-data";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
-import { CLOUD_BOOT_PREFIX, CLOUD_META_KEY, CLOUD_UID_KEY } from "@/lib/cloud-sync";
 
 describe("shouldWipeKey", () => {
   it("xóa mọi key dữ liệu học tập", () => {

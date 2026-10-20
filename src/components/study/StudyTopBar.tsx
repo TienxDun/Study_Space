@@ -260,7 +260,7 @@ export const StudyTopBar = ({
                 <TopBarUserProfile />
               </span>
               <div className="hidden md:flex items-center h-8 rounded-xl border border-white/15 bg-white/10 shadow-xs overflow-visible">
-                <SyncStatusBadge variant="text" className="px-2.5 h-full rounded-none hover:bg-white/5" />
+                <SyncStatusBadge variant="text" iconOnly className="px-2 h-full rounded-none hover:bg-white/5" />
                 <div className="w-px h-4 bg-white/15 shrink-0" />
                 <TopBarUserProfile bare />
               </div>

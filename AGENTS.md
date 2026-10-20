@@ -5,7 +5,7 @@ Next.js 16 + React 19 + Tailwind v4 single-page app with Vietnamese UI. Local-fi
 ## Commands
 
 - `npm run dev` - Turbopack on **http://localhost:3001** (not 3000).
-- `npm test` - all Vitest unit tests (39 test suites, 274 tests). Single file: `npx vitest run src/__tests__/unit/study/<name>.test.ts`.
+- `npm test` - all Vitest unit tests (37 test suites, 233 tests). Single file: `npx vitest run src/__tests__/unit/study/<name>.test.ts`.
 - `npm run test:load` - run 200 concurrent users (200 CCU) load test against Worker simulation.
 - `npm run lint` - ESLint **and** `scripts/check-important.mjs`, which fails on `!important` outside `IMPORTANT-ALLOWED-START/END` blocks in `src/app/globals.css` and `src/app/styles/*.css`.
 - `npx tsc --noEmit` - typecheck; there is no npm script for it.

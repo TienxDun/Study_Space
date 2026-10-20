@@ -575,7 +575,7 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
             }`}
           >
             <div className="flex items-center gap-2 font-medium">
-              <span className="px-2 py-0.5 rounded-md bg-black/10 dark:bg-white/5 border border-black/5 dark:border-white/5 flex items-center gap-1 font-mono">
+              <span className="flex items-center gap-1 opacity-75">
                 <span>{wordCount} từ</span>
               </span>
               {checklistStats.total > 0 && (

@@ -154,7 +154,7 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
                     toast.error("Không thể kết nối máy chủ.");
                   }
                 }}
-                className="text-[11px] text-sky-300 hover:text-sky-200 underline font-medium cursor-pointer"
+                className="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-300 hover:text-sky-200 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
               >
                 Đồng bộ ngay
               </button>

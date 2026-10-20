@@ -41,6 +41,7 @@ interface SyncStatusBadgeProps {
   variant?: "pill" | "text";
   light?: boolean;
   className?: string;
+  iconOnly?: boolean;
 }
 
 export const SyncStatusBadge = React.memo(function SyncStatusBadge({
@@ -48,6 +49,7 @@ export const SyncStatusBadge = React.memo(function SyncStatusBadge({
   variant = "pill",
   light = false,
   className,
+  iconOnly = false,
 }: SyncStatusBadgeProps) {
   const { state, lastSyncedAt } = useSyncStatus();
   const [isManualSyncing, setIsManualSyncing] = useState(false);
@@ -134,7 +136,7 @@ export const SyncStatusBadge = React.memo(function SyncStatusBadge({
         )}
       >
         {icon}
-        <span className="text-xs">{view.label}</span>
+        {!iconOnly && <span className="text-xs">{view.label}</span>}
       </button>
     );
   }
@@ -152,7 +154,7 @@ export const SyncStatusBadge = React.memo(function SyncStatusBadge({
       )}
     >
       {icon}
-      <span>{view.label}</span>
+      {!iconOnly && <span>{view.label}</span>}
     </button>
   );
 });

@@ -8,7 +8,7 @@
 [![React](https://img.shields.io/badge/React-19.2-blue?style=for-the-badge&logo=react&logoColor=white)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vitest](https://img.shields.io/badge/Vitest-274_Tests_Passing-6ee7b7?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-233_Tests_Passing-6ee7b7?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg?style=for-the-badge)](LICENSE)
 
 ---
@@ -167,7 +167,7 @@ Mở trình duyệt tại địa chỉ: `http://localhost:3001` (khởi chạy v
 npm test
 ```
 
-Thực thi 39 test suites với 274 bài kiểm tra tự động bao phủ logic Pomodoro, Music Player, Sound Mixer, Tasks, Notes, Embed Stream, SEO Schemas, Cloud Sync Snapshot, v.v.
+Thực thi 37 test suites với 233 bài kiểm tra tự động bao phủ logic Pomodoro, Music Player, Sound Mixer, Tasks, Notes, Embed Stream, SEO Schemas, Cloud Sync Snapshot, v.v.
 
 ### 5. Kiểm thử tải cao (Load Testing 200 CCU)
 

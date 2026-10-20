@@ -1,8 +1,13 @@
 "use client";
 
 import { STORAGE_KEYS } from "@/lib/storage-keys";
-import { CLOUD_BOOT_PREFIX, CLOUD_META_KEY, CLOUD_UID_KEY, resetSyncMemory } from "@/lib/cloud-sync";
+import { stopCloudSync } from "@/lib/simple-cloud-sync";
 import { CHAT_MEDIA_DB_NAME } from "@/components/study/chat/utils/imageStorage";
+
+// Các tiền tố và key đồng bộ từ hệ thống cũ để dọn sạch máy khi đăng xuất
+export const CLOUD_BOOT_PREFIX = "study_space_cloud_boot_";
+export const CLOUD_META_KEY = "study_space_cloud_meta_v1";
+export const CLOUD_UID_KEY = "study_space_cloud_uid";
 
 // Cache chat cũng là dữ liệu riêng của người dùng, phải xóa cùng.
 const EXTRA_PREFIXES = ["chat-msgs:", "chat-remember:"];
@@ -108,7 +113,7 @@ async function wipeIndexedDb(): Promise<void> {
  * phiên tạm (sessionStorage), ảnh chat (IndexedDB) và cache Firestore.
  */
 export async function wipeLocalUserData(): Promise<void> {
-  resetSyncMemory();
+  stopCloudSync();
   try {
     const ls = window.localStorage;
     for (const key of listWipeKeys()) ls.removeItem(key);
