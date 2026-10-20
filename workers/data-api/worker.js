@@ -25,10 +25,10 @@
 
 const CERT_URL = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
 const MAX_KEY_LEN = 100;
-const MAX_VALUE_LEN = 1_500_000; // < trần 2MB/ô của D1, chừa biên an toàn (giữ nguyên ở Mốc 1)
+const MAX_VALUE_LEN = 1_200_000; // 1.2MB chừa biên an toàn cho trần 2MB/ô của SQLite D1
 const MAX_SETTINGS_PER_CALL = 200;
 const MAX_FOCUS_BATCH = 200;
-const MAX_ACCOUNT_SETTINGS_BYTES = 5_000_000; // 5MB / tài khoản cho bảng user_settings
+const MAX_ACCOUNT_SETTINGS_BYTES = 5_000_000; // 5MB / tài khoản (cảnh báo ở Mốc 1, siết ở Mốc 3)
 const MAX_FOCUS_SESSIONS_PER_USER = 2000;
 const FOCUS_PRUNE_THRESHOLD = 2100;
 
@@ -40,10 +40,10 @@ function getByteLength(str) {
 
 const mem = { certAt: 0, certs: {} };
 
-// Bộ đếm rate limit trong RAM của Worker (không tốn lượt ghi D1)
+// Bộ đếm rate limit trong RAM của Worker (mỗi isolate quản lý cục bộ để chặn vòng lặp)
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 phút
-const RATE_LIMIT_MAX = 120; // 120 request / phút / uid
+const RATE_LIMIT_MAX = 180; // 180 request / phút / uid (đủ rộng cho nhiều tab/thiết bị)
 const MAX_RATE_LIMIT_ENTRIES = 5000;
 
 function checkRateLimit(key) {
@@ -89,7 +89,7 @@ function corsHeaders(req, env) {
   return {
     "Access-Control-Allow-Origin": isAllowed ? (origin || allowedList[0] || "*") : "null",
     "Access-Control-Allow-Methods": "GET, PUT, POST, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Sync-Version",
     "Access-Control-Max-Age": "86400",
   };
 }
@@ -348,20 +348,24 @@ const worker = {
         const entries = Object.entries(incoming);
         if (entries.length > MAX_SETTINGS_PER_CALL) return json({ error: "Gửi quá nhiều key một lần." }, 413);
 
-        // Kiểm tra tổng dung lượng hiện tại của tài khoản (Task 1.5)
-        let currentTotalBytes = 0;
+        const isV2 = req.headers.get("X-Sync-Version") === "2";
+
+        // Kiểm tra dung lượng hiện tại của tài khoản (ghi log cảnh báo ở Mốc 1)
         try {
           const row = await db.prepare("SELECT COALESCE(SUM(LENGTH(value)), 0) AS total FROM user_settings WHERE uid = ?").bind(uid).first();
-          currentTotalBytes = Number(row && row.total) || 0;
+          const currentTotalBytes = Number(row && row.total) || 0;
+          if (currentTotalBytes > MAX_ACCOUNT_SETTINGS_BYTES) {
+            console.warn(`[Quota Warning] User ${uid} đang sử dụng ${currentTotalBytes} bytes (> 5MB)`);
+          }
         } catch {}
 
         const now = Date.now();
         const stmts = [];
         const rejected = [];
-        let addedBytes = 0;
 
         for (const [key, val] of entries) {
           if (typeof key !== "string" || !key || key.length > MAX_KEY_LEN) {
+            if (!isV2) return json({ error: `Key "${key}" không hợp lệ.` }, 400);
             rejected.push({ key, reason: "INVALID_KEY" });
             continue;
           }
@@ -370,28 +374,29 @@ const worker = {
             raw = val; // web gửi chuỗi thô -> lưu nguyên vẹn, khôi phục đúng từng byte
           } else {
             try { raw = JSON.stringify(val); } catch {
+              if (!isV2) return json({ error: `Không thể chuyển đổi "${key}" thành JSON.` }, 400);
               rejected.push({ key, reason: "SERIALIZATION_FAILED" });
               continue;
             }
           }
           if (typeof raw !== "string") {
+            if (!isV2) return json({ error: `Giá trị "${key}" không hợp lệ.` }, 400);
             rejected.push({ key, reason: "INVALID_VALUE" });
             continue;
           }
 
-          // Đo kích thước bằng byte (UTF-8) thay vì ký tự (Task 1.1)
+          // Đo kích thước bằng byte UTF-8
           const bytes = getByteLength(raw);
           if (bytes > MAX_VALUE_LEN) {
-            rejected.push({ key, reason: "KEY_TOO_LARGE", bytes, max: MAX_VALUE_LEN });
+            // Client cũ (không có X-Sync-Version: 2): Giữ nguyên mã 413 để không đánh dấu đã sync sai
+            if (!isV2) {
+              return json({ error: `Giá trị "${key}" quá lớn (${bytes} bytes > ${MAX_VALUE_LEN}).` }, 413);
+            }
+            // Client mới (X-Sync-Version: 2): Bỏ qua riêng key này và tiếp tục lưu các key khác
+            rejected.push({ key, reason: "KEY_TOO_LARGE" });
             continue;
           }
 
-          if (currentTotalBytes + addedBytes + bytes > MAX_ACCOUNT_SETTINGS_BYTES) {
-            rejected.push({ key, reason: "ACCOUNT_QUOTA_EXCEEDED", bytes, maxTotal: MAX_ACCOUNT_SETTINGS_BYTES });
-            continue;
-          }
-
-          addedBytes += bytes;
           stmts.push(db.prepare(
             `INSERT INTO user_settings (uid, key, value, updated_at) VALUES (?, ?, ?, ?)
              ON CONFLICT(uid, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
@@ -403,7 +408,7 @@ const worker = {
           ok: true,
           saved: stmts.length,
           at: now,
-          rejected: rejected.length ? rejected : undefined,
+          rejected: isV2 && rejected.length ? rejected : undefined,
         });
       }
       if (url.pathname === "/settings" && req.method === "DELETE") {
@@ -447,7 +452,8 @@ const worker = {
           if (input) {
             validSessions.push(input);
           } else {
-            rejected.push({ item, reason: "INVALID_FOCUS_SESSION" });
+            const rejectedId = (item && typeof item === "object" && typeof item.id === "string") ? item.id : "unknown";
+            rejected.push({ id: rejectedId, reason: "INVALID_FOCUS_SESSION" });
           }
         }
 

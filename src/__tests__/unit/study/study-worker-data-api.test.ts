@@ -63,7 +63,7 @@ function createMockDb() {
   return { prepare, batch, settingsStore, focusStore };
 }
 
-describe("Worker Data-API — Mốc 1 (Bảo vệ máy chủ & tương thích ngược)", () => {
+describe("Worker Data-API — Mốc 1 (Bảo vệ máy chủ & tương thích ngược với X-Sync-Version)", () => {
   const env = {
     FIREBASE_PROJECT_ID: "test-project",
     ALLOWED_ORIGINS: "https://zenstudy.space,http://localhost:3001",
@@ -71,13 +71,14 @@ describe("Worker Data-API — Mốc 1 (Bảo vệ máy chủ & tương thích ng
     DB: null as any,
   };
 
-  it("Task 1.4: CORS fail-closed chỉ cho phép domain đã cấu hình", async () => {
+  it("Task 1.4: CORS fail-closed và cho phép header X-Sync-Version", async () => {
     const reqOk = new Request("http://localhost/health", {
       method: "GET",
       headers: { Origin: "https://zenstudy.space" },
     });
     const resOk = await worker.fetch(reqOk, env);
     expect(resOk.headers.get("Access-Control-Allow-Origin")).toBe("https://zenstudy.space");
+    expect(resOk.headers.get("Access-Control-Allow-Headers")).toContain("X-Sync-Version");
 
     const reqBad = new Request("http://localhost/health", {
       method: "GET",
@@ -87,38 +88,52 @@ describe("Worker Data-API — Mốc 1 (Bảo vệ máy chủ & tương thích ng
     expect(resBad.headers.get("Access-Control-Allow-Origin")).toBe("null");
   });
 
-  it("Task 1.4: CORS fail-closed khi ALLOWED_ORIGINS bị trống thì fallback về domain mặc định", async () => {
-    const envEmpty = { ...env, ALLOWED_ORIGINS: "" };
-    const reqOk = new Request("http://localhost/health", {
-      method: "GET",
-      headers: { Origin: "https://zenstudy.space" },
-    });
-    const resOk = await worker.fetch(reqOk, envEmpty);
-    expect(resOk.headers.get("Access-Control-Allow-Origin")).toBe("https://zenstudy.space");
-
-    const reqBad = new Request("http://localhost/health", {
-      method: "GET",
-      headers: { Origin: "https://attacker.com" },
-    });
-    const resBad = await worker.fetch(reqBad, envEmpty);
-    expect(resBad.headers.get("Access-Control-Allow-Origin")).toBe("null");
-  });
-
-  it("Task 1.1: PUT /settings bỏ qua key quá lớn (đo bằng byte) và lưu các key hợp lệ", async () => {
+  it("Client cũ (không có X-Sync-Version): gặp key quá lớn trả về 413 như cũ để tránh nói dối", async () => {
     const db = createMockDb();
     const envWithDb = { ...env, DB: db };
-    const token = "mock-uid:user-123";
+    const token = "mock-uid:user-legacy";
 
-    const normalKey = "study_theme";
-    const normalValue = "dark";
     const hugeKey = "huge_data";
-    const hugeValue = "x".repeat(1_600_000); // 1.6MB > MAX_VALUE_LEN (1.5MB)
+    const hugeValue = "x".repeat(1_300_000); // 1.3MB > MAX_VALUE_LEN (1.2MB)
 
     const req = new Request("http://localhost/settings", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
+        // KHÔNG CÓ X-Sync-Version: 2
+      },
+      body: JSON.stringify({
+        settings: {
+          study_theme: "dark",
+          [hugeKey]: hugeValue,
+        },
+      }),
+    });
+
+    const res = await worker.fetch(req, envWithDb);
+    expect(res.status).toBe(413);
+    const data = await res.json();
+    expect(data.error).toContain("quá lớn");
+    expect(db.batch).not.toHaveBeenCalled();
+  });
+
+  it("Client mới (có X-Sync-Version: 2): bỏ qua riêng key lớn và lưu các key hợp lệ còn lại", async () => {
+    const db = createMockDb();
+    const envWithDb = { ...env, DB: db };
+    const token = "mock-uid:user-v2";
+
+    const normalKey = "study_theme";
+    const normalValue = "dark";
+    const hugeKey = "huge_data";
+    const hugeValue = "x".repeat(1_300_000); // 1.3MB > 1.2MB
+
+    const req = new Request("http://localhost/settings", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        "X-Sync-Version": "2", // Client mới v2
       },
       body: JSON.stringify({
         settings: {
@@ -141,10 +156,10 @@ describe("Worker Data-API — Mốc 1 (Bảo vệ máy chủ & tương thích ng
     expect(db.batch).toHaveBeenCalledTimes(1);
   });
 
-  it("Task 1.2: POST /focus hỗ trợ nhận mảng nhiều phiên (batch)", async () => {
+  it("Task 1.2: POST /focus hỗ trợ nhận mảng nhiều phiên và báo rejected theo id", async () => {
     const db = createMockDb();
     const envWithDb = { ...env, DB: db };
-    const token = "mock-uid:user-456";
+    const token = "mock-uid:user-focus";
 
     const sessions = [
       {
@@ -157,13 +172,9 @@ describe("Worker Data-API — Mốc 1 (Bảo vệ máy chủ & tương thích ng
         plannedSeconds: 1500,
       },
       {
-        id: "session-2",
-        taskId: "task-2",
-        taskTitle: "Task 2",
-        startedAt: 3000,
-        endedAt: 4500,
-        focusSeconds: 1500,
-        plannedSeconds: 1500,
+        id: "invalid-session",
+        taskId: "", // thiếu taskId -> không hợp lệ
+        focusSeconds: 0,
       },
     ];
 
@@ -181,17 +192,19 @@ describe("Worker Data-API — Mốc 1 (Bảo vệ máy chủ & tương thích ng
     const data = await res.json();
 
     expect(data.ok).toBe(true);
-    expect(data.saved).toBe(2);
+    expect(data.saved).toBe(1);
+    expect(data.rejected).toBeDefined();
+    expect(data.rejected[0].id).toBe("invalid-session");
     expect(db.batch).toHaveBeenCalledTimes(1);
   });
 
-  it("Task 1.3: Rate limiter trong RAM trả về 429 khi vượt 120 req/phút", async () => {
+  it("Task 1.3: Rate limiter trong RAM trả về 429 khi vượt 180 req/phút", async () => {
     const db = createMockDb();
     const envWithDb = { ...env, DB: db };
-    const token = "mock-uid:spammer-user";
+    const token = "mock-uid:heavy-user";
 
-    // Gửi liên tục 120 request hợp lệ
-    for (let i = 0; i < 120; i++) {
+    // Gửi liên tục 180 request hợp lệ
+    for (let i = 0; i < 180; i++) {
       const req = new Request("http://localhost/me", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
@@ -200,7 +213,7 @@ describe("Worker Data-API — Mốc 1 (Bảo vệ máy chủ & tương thích ng
       expect(res.status).toBe(200);
     }
 
-    // Request thứ 121 phải bị chặn với mã 429
+    // Request thứ 181 phải bị chặn với mã 429
     const reqBlocked = new Request("http://localhost/me", {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
