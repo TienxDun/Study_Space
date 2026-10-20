@@ -4,6 +4,14 @@ export interface StudyNote {
   content: string;
   updatedAt: number;
   isPinned?: boolean;
+  deletedAt?: number;
+  restoredAt?: number;
+}
+
+export function isNoteActive(note: StudyNote): boolean {
+  if (!note) return false;
+  if (!note.deletedAt) return true;
+  return Boolean(note.restoredAt) && (note.restoredAt ?? 0) > note.deletedAt;
 }
 
 export interface StudyNotesWidgetProps {

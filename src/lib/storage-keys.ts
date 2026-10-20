@@ -57,6 +57,12 @@ export const STORAGE_KEYS = {
   activeFocusTask: "study_space_active_focus_task",
   // Focus sessions log (ghi nhận thời gian tập trung theo task)
   focusSessions: "study_space_focus_sessions_v1",
+  // Quản lý epoch đời của focus sessions theo UID
+  focusEpoch: "study_space_focus_epoch",
+  // Hàng đợi đẩy focus sessions offline theo UID
+  pendingFocusQueue: "study_space_pending_focus_queue",
+  // Mốc thời gian máy chủ đồng bộ gần nhất (Delta Sync)
+  lastSyncedAt: "study_space_last_synced_at",
   // Onboarding Tour
   tourCompleted: "zenstudy_tour_completed",
   tourQuestState: "zenstudy_tour_quest_state",

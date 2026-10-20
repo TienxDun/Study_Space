@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { MobileAccountCard } from "./MobileAccountCard";
 import { useAuth } from "@/lib/use-auth";
-import { cloudConfigured, syncNow } from "@/lib/cloud-sync";
+import { cloudConfigured, syncNow } from "@/lib/simple-cloud-sync";
 import type { MobilePanelId } from "../types";
 
 interface MobileMoreSheetProps {
@@ -75,19 +75,14 @@ function SyncRow() {
       return;
     }
     setBusy(true);
-    const t = toast.loading("Đang lấy dữ liệu mới nhất...");
+    const t = toast.loading("Đang đồng bộ dữ liệu...");
     try {
-      const res = await syncNow();
-      if (!res.ok) {
-        toast.error("Chưa lấy được dữ liệu, bạn kiểm tra mạng nhé", { id: t });
+      const ok = await syncNow();
+      if (!ok) {
+        toast.error("Chưa thể kết nối máy chủ, dữ liệu đã lưu an toàn trên máy.", { id: t });
         return;
       }
-      if (res.applied > 0) {
-        toast.success("Đã lấy dữ liệu mới nhất, đang tải lại...", { id: t });
-        window.location.reload();
-        return;
-      }
-      toast.success(res.pushed > 0 ? "Đã gửi thay đổi của bạn lên mây" : "Dữ liệu đã là mới nhất", { id: t });
+      toast.success("Đã đồng bộ dữ liệu lên đám mây thành công!", { id: t });
     } catch {
       toast.error("Đồng bộ thất bại, bạn thử lại nhé", { id: t });
     } finally {

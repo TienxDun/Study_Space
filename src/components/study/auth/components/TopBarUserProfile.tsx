@@ -6,12 +6,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CircleNotchIcon, SignOutIcon } from "@phosphor-icons/react";
 import { useAuth } from "@/lib/use-auth";
 import { GoogleIcon } from "./GoogleIcon";
+import { toast } from "sonner";
+import { SyncStatusBadge } from "@/components/study/sync/SyncStatusBadge";
+import { syncNow } from "@/lib/simple-cloud-sync";
 
 /**
  * Nút hồ sơ tài khoản và bảng menu đăng nhập / đăng xuất trên TopBar.
  * Hỗ trợ tự đóng khi click ra ngoài, avatar fallback và giao diện chuẩn glass-panel.
  */
-export const TopBarUserProfile = () => {
+interface TopBarUserProfileProps {
+  bare?: boolean;
+}
+
+export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {}) => {
   const { user, loading, isSigningIn, signIn, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
@@ -45,7 +52,11 @@ export const TopBarUserProfile = () => {
       <button
         onClick={signIn}
         disabled={isSigningIn}
-        className="h-8 px-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-slate-200 hover:text-white transition-all active:scale-95 flex items-center gap-1.5 text-xs font-semibold cursor-pointer shadow-xs shrink-0"
+        className={`h-8 px-2.5 rounded-xl transition-all active:scale-95 flex items-center gap-1.5 text-xs font-semibold cursor-pointer shadow-xs shrink-0 ${
+          bare
+            ? "bg-transparent border border-transparent text-slate-200 hover:text-white hover:bg-white/5"
+            : "bg-white/10 hover:bg-white/15 border border-white/15 text-slate-200 hover:text-white"
+        }`}
         title="Đăng nhập tài khoản Google"
         aria-label="Đăng nhập tài khoản Google"
       >
@@ -66,7 +77,9 @@ export const TopBarUserProfile = () => {
         className={`h-8 pl-1 pr-2 rounded-xl border transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs group ${
           isOpen
             ? "bg-white/20 border-white/25 text-white shadow-[0_0_12px_rgba(255,255,255,0.2)]"
-            : "bg-white/10 hover:bg-white/15 border-white/15 text-slate-200 hover:text-white"
+            : bare
+              ? "bg-transparent border-transparent text-slate-200 hover:text-white hover:bg-white/5"
+              : "bg-white/10 hover:bg-white/15 border-white/15 text-slate-200 hover:text-white"
         }`}
         title={`${user.displayName || user.email} (Bấm để xem hồ sơ)`}
         aria-label={`${user.displayName || user.email}, bấm để xem hồ sơ`}
@@ -128,7 +141,26 @@ export const TopBarUserProfile = () => {
               </div>
             </div>
 
-            <div className="pt-3 flex items-center justify-between">
+            {/* Đồng bộ đám mây & Nút sync ngay */}
+            <div className="py-2.5 my-2 border-y border-white/10 flex items-center justify-between text-xs">
+              <SyncStatusBadge variant="text" />
+              <button
+                type="button"
+                onClick={async () => {
+                  const ok = await syncNow();
+                  if (ok) {
+                    toast.success("Đã đồng bộ lên đám mây thành công!");
+                  } else {
+                    toast.error("Không thể kết nối máy chủ.");
+                  }
+                }}
+                className="text-[11px] text-sky-300 hover:text-sky-200 underline font-medium cursor-pointer"
+              >
+                Đồng bộ ngay
+              </button>
+            </div>
+
+            <div className="pt-2 flex items-center justify-between">
               <span className="text-[11px] font-medium text-emerald-300/90 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 Google Connected

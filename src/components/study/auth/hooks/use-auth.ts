@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { firebaseConfigured } from "@/lib/firebase-config";
-import { cloudConfigured, hasUnsyncedChanges, syncNow } from "@/lib/cloud-sync";
-import { broadcastWipe, hasStoredUserData, wipeLocalUserData } from "@/lib/local-data";
+import { cloudConfigured, syncNow, clearLocalUserData } from "@/lib/simple-cloud-sync";
+import { broadcastWipe, hasStoredUserData } from "@/lib/local-data";
 import type { UseAuthReturn } from "../types";
 import type { User } from "firebase/auth";
 
@@ -125,23 +125,19 @@ export function useAuth(): UseAuthReturn {
     const { signOut, getFirebaseAuth } = await loadAuthSdk();
     const auth = getFirebaseAuth();
 
-    // Cố đẩy nốt thay đổi đang chờ lên mây trước khi xóa.
-    if (auth.currentUser && cloudConfigured()) {
+    // Cố đẩy nốt thay đổi đang chờ lên mây nếu có mạng
+    if (auth.currentUser && cloudConfigured() && typeof navigator !== "undefined" && navigator.onLine) {
       try {
         await syncNow();
-      } catch {
-        /* mất mạng -> hỏi người dùng bên dưới */
-      }
+      } catch {}
     }
 
-    const needsWarning = cloudConfigured() ? hasUnsyncedChanges() : hasStoredUserData();
-    if (needsWarning) {
+    // Với tài khoản khách (chưa đăng nhập): hỏi xác nhận trước khi xóa dữ liệu cục bộ
+    if (!auth.currentUser && hasStoredUserData()) {
       const ok =
         typeof window !== "undefined" &&
         window.confirm(
-          cloudConfigured()
-            ? "Dữ liệu chưa lưu lên máy chủ sẽ bị xóa khỏi máy này khi đăng xuất. Vẫn tiếp tục?"
-            : "Chưa bật đồng bộ nên đăng xuất sẽ xóa dữ liệu trên máy này. Vẫn tiếp tục?"
+          "Bạn đang dùng tài khoản khách (chưa đăng nhập). Đăng xuất sẽ xóa toàn bộ dữ liệu trên thiết bị này. Bạn có chắc chắn muốn tiếp tục?"
         );
       if (!ok) return;
     }
@@ -152,18 +148,18 @@ export function useAuth(): UseAuthReturn {
       /* vẫn xóa dữ liệu cục bộ */
     }
     broadcastWipe();
-    await wipeLocalUserData();
+    clearLocalUserData();
     setUser(null);
     if (typeof window !== "undefined") window.location.reload();
   }, []);
 
   // Vé gửi kèm mỗi câu hỏi sang Worker (Worker tự kiểm vé thật/giả).
-  const getToken = useCallback(async (): Promise<string | null> => {
+  const getToken = useCallback(async (forceRefresh?: boolean): Promise<string | null> => {
     const { getFirebaseAuth } = await loadAuthSdk();
     const u = getFirebaseAuth().currentUser;
     if (!u) return null;
     try {
-      return await u.getIdToken();
+      return await u.getIdToken(forceRefresh);
     } catch {
       return null;
     }

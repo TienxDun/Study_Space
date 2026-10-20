@@ -1,8 +1,7 @@
-import type { CloudSyncStatus } from "@/lib/cloud-sync";
+import type { SyncState } from "@/lib/simple-cloud-sync";
 
 /**
  * Suy diễn nội dung hiển thị từ trạng thái đồng bộ (hàm thuần, dễ test).
- * Tách khỏi component để nhãn/tooltip không bị fix cứng rải rác.
  */
 export interface SyncStatusView {
   label: string;
@@ -18,50 +17,53 @@ export function formatClockTime(ts: number): string {
 }
 
 export function getSyncStatusView(opts: {
-  status: CloudSyncStatus;
+  status: SyncState;
   lastSyncedAt: number | null;
-  /** Giờ lưu local gần nhất (chỉ để nhắc trong tooltip khi dữ liệu còn nằm máy). */
   savedTime?: string;
 }): SyncStatusView {
   const { status, lastSyncedAt, savedTime } = opts;
-  const localHint = savedTime ? `Đã lưu trên máy lúc ${savedTime}` : "Dữ liệu vẫn lưu trên thiết bị này";
+  const localHint = savedTime
+    ? `Đã lưu trên máy lúc ${savedTime}`
+    : "Dữ liệu vẫn an toàn trên máy";
 
   switch (status) {
-    case "pending":
-      return {
-        label: "Chờ đồng bộ",
-        title: "Có thay đổi chưa gửi lên mây, đang chờ đồng bộ",
-        tone: "amber",
-        motion: "pulse",
-      };
     case "syncing":
       return {
-        label: "Đang đồng bộ",
-        title: "Đang gửi dữ liệu lên mây...",
+        label: "Đang lưu...",
+        title: "Đang gửi dữ liệu lên Cloudflare D1...",
         tone: "sky",
         motion: "spin",
       };
+    case "offline":
+      return {
+        label: "Đang offline",
+        title: `Mất mạng hoặc mạng yếu. ${localHint}, sẽ tự động lưu khi có mạng.`,
+        tone: "amber",
+        motion: null,
+      };
     case "error":
       return {
-        label: "Chưa đồng bộ",
-        title: `Chưa gửi được lên mây, sẽ tự thử lại. ${localHint}.`,
+        label: "Lỗi kết nối",
+        title: `Chưa gửi được lên đám mây. ${localHint}. Bấm để thử lại ngay.`,
         tone: "rose",
         motion: null,
       };
     case "synced": {
       const at = lastSyncedAt ? formatClockTime(lastSyncedAt) : "";
       return {
-        label: "Đã đồng bộ",
-        title: at ? `Đã đồng bộ lên mây lúc ${at}` : "Đã đồng bộ lên mây",
+        label: "Đã lưu đám mây",
+        title: at
+          ? `Đã sao lưu lên Cloudflare D1 lúc ${at}. Bấm để đồng bộ ngay.`
+          : "Đã sao lưu lên Cloudflare D1. Bấm để đồng bộ ngay.",
         tone: "emerald",
         motion: null,
       };
     }
-    case "local":
+    case "idle":
     default:
       return {
-        label: "Đã lưu",
-        title: `Chỉ lưu trên thiết bị này. ${localHint}.`,
+        label: "Đã lưu trên máy",
+        title: `Dữ liệu đang lưu trên thiết bị này. Đăng nhập để tự động sao lưu.`,
         tone: "emerald",
         motion: null,
       };
