@@ -25,22 +25,69 @@
 
 const CERT_URL = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
 const MAX_KEY_LEN = 100;
-const MAX_VALUE_LEN = 1_500_000; // < trần 2MB/ô của D1, chừa biên an toàn
+const MAX_VALUE_LEN = 1_500_000; // < trần 2MB/ô của D1, chừa biên an toàn (giữ nguyên ở Mốc 1)
 const MAX_SETTINGS_PER_CALL = 200;
+const MAX_FOCUS_BATCH = 200;
+const MAX_ACCOUNT_SETTINGS_BYTES = 5_000_000; // 5MB / tài khoản cho bảng user_settings
+const MAX_FOCUS_SESSIONS_PER_USER = 2000;
+const FOCUS_PRUNE_THRESHOLD = 2100;
+
+const textEncoder = new TextEncoder();
+function getByteLength(str) {
+  if (typeof str !== "string") return 0;
+  return textEncoder.encode(str).byteLength;
+}
 
 const mem = { certAt: 0, certs: {} };
+
+// Bộ đếm rate limit trong RAM của Worker (không tốn lượt ghi D1)
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 phút
+const RATE_LIMIT_MAX = 120; // 120 request / phút / uid
+const MAX_RATE_LIMIT_ENTRIES = 5000;
+
+function checkRateLimit(key) {
+  const now = Date.now();
+  if (rateLimitMap.size > MAX_RATE_LIMIT_ENTRIES) {
+    for (const [k, v] of rateLimitMap.entries()) {
+      if (now > v.resetAt) rateLimitMap.delete(k);
+    }
+    if (rateLimitMap.size > MAX_RATE_LIMIT_ENTRIES) rateLimitMap.clear();
+  }
+
+  let record = rateLimitMap.get(key);
+  if (!record || now > record.resetAt) {
+    record = { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS };
+    rateLimitMap.set(key, record);
+    return { allowed: true, remaining: RATE_LIMIT_MAX - 1 };
+  }
+
+  record.count++;
+  if (record.count > RATE_LIMIT_MAX) {
+    const retryAfterSeconds = Math.max(1, Math.ceil((record.resetAt - now) / 1000));
+    return { allowed: false, retryAfter: retryAfterSeconds };
+  }
+  return { allowed: true, remaining: RATE_LIMIT_MAX - record.count };
+}
 
 function d1(env) {
   return env && env.DB && typeof env.DB.prepare === "function" ? env.DB : null;
 }
 
+const DEFAULT_ALLOWED_ORIGINS = [
+  "https://zenstudy.space",
+  "http://localhost:3001",
+  "http://localhost:3000",
+];
+
 function corsHeaders(req, env) {
   const origin = req.headers.get("Origin") || "";
-  const allowed = String(env.ALLOWED_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);
-  const allowAll = allowed.length === 0 || allowed.includes("*");
-  const ok = allowAll || allowed.includes(origin);
+  const rawAllowed = String(env.ALLOWED_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const allowedList = rawAllowed.length > 0 ? rawAllowed : DEFAULT_ALLOWED_ORIGINS;
+  const allowAll = allowedList.includes("*");
+  const isAllowed = allowAll || allowedList.includes(origin);
   return {
-    "Access-Control-Allow-Origin": ok ? origin || "*" : "null",
+    "Access-Control-Allow-Origin": isAllowed ? (origin || allowedList[0] || "*") : "null",
     "Access-Control-Allow-Methods": "GET, PUT, POST, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400",
@@ -103,6 +150,10 @@ async function getGoogleCerts() {
   return mem.certs;
 }
 async function verifyFirebaseToken(env, token) {
+  // Cho phép test nội bộ mô phỏng các kịch bản mạng và token mà không phụ thuộc certs Google thật
+  if (env && env.TEST_MODE && typeof token === "string" && token.startsWith("mock-uid:")) {
+    return { uid: token.slice(9) };
+  }
   const fail = (code) => ({ code });
   try {
     const pid = String(env.FIREBASE_PROJECT_ID || "").trim();
@@ -259,6 +310,22 @@ const worker = {
     }
     const uid = checked.uid;
 
+    // Kiểm tra giới hạn tần suất trong RAM theo uid (Task 1.3)
+    const rl = checkRateLimit(`uid:${uid}`);
+    if (!rl.allowed) {
+      return new Response(
+        JSON.stringify({ error: "Quá nhiều yêu cầu, vui lòng thử lại sau.", code: "RATE_LIMITED" }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Retry-After": String(rl.retryAfter),
+            ...cors,
+          },
+        }
+      );
+    }
+
     try {
       await ensureUser(db, uid, null);
 
@@ -280,25 +347,64 @@ const worker = {
         }
         const entries = Object.entries(incoming);
         if (entries.length > MAX_SETTINGS_PER_CALL) return json({ error: "Gửi quá nhiều key một lần." }, 413);
+
+        // Kiểm tra tổng dung lượng hiện tại của tài khoản (Task 1.5)
+        let currentTotalBytes = 0;
+        try {
+          const row = await db.prepare("SELECT COALESCE(SUM(LENGTH(value)), 0) AS total FROM user_settings WHERE uid = ?").bind(uid).first();
+          currentTotalBytes = Number(row && row.total) || 0;
+        } catch {}
+
         const now = Date.now();
         const stmts = [];
+        const rejected = [];
+        let addedBytes = 0;
+
         for (const [key, val] of entries) {
-          if (typeof key !== "string" || !key || key.length > MAX_KEY_LEN) continue;
+          if (typeof key !== "string" || !key || key.length > MAX_KEY_LEN) {
+            rejected.push({ key, reason: "INVALID_KEY" });
+            continue;
+          }
           let raw;
           if (typeof val === "string") {
             raw = val; // web gửi chuỗi thô -> lưu nguyên vẹn, khôi phục đúng từng byte
           } else {
-            try { raw = JSON.stringify(val); } catch { continue; }
+            try { raw = JSON.stringify(val); } catch {
+              rejected.push({ key, reason: "SERIALIZATION_FAILED" });
+              continue;
+            }
           }
-          if (typeof raw !== "string") continue;
-          if (raw.length > MAX_VALUE_LEN) return json({ error: `Giá trị "${key}" quá lớn.` }, 413);
+          if (typeof raw !== "string") {
+            rejected.push({ key, reason: "INVALID_VALUE" });
+            continue;
+          }
+
+          // Đo kích thước bằng byte (UTF-8) thay vì ký tự (Task 1.1)
+          const bytes = getByteLength(raw);
+          if (bytes > MAX_VALUE_LEN) {
+            rejected.push({ key, reason: "KEY_TOO_LARGE", bytes, max: MAX_VALUE_LEN });
+            continue;
+          }
+
+          if (currentTotalBytes + addedBytes + bytes > MAX_ACCOUNT_SETTINGS_BYTES) {
+            rejected.push({ key, reason: "ACCOUNT_QUOTA_EXCEEDED", bytes, maxTotal: MAX_ACCOUNT_SETTINGS_BYTES });
+            continue;
+          }
+
+          addedBytes += bytes;
           stmts.push(db.prepare(
             `INSERT INTO user_settings (uid, key, value, updated_at) VALUES (?, ?, ?, ?)
              ON CONFLICT(uid, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
           ).bind(uid, key, raw, now));
         }
+
         if (stmts.length) await db.batch(stmts);
-        return json({ ok: true, saved: stmts.length, at: now });
+        return json({
+          ok: true,
+          saved: stmts.length,
+          at: now,
+          rejected: rejected.length ? rejected : undefined,
+        });
       }
       if (url.pathname === "/settings" && req.method === "DELETE") {
         let body = null;
@@ -325,15 +431,65 @@ const worker = {
       if (url.pathname === "/focus" && req.method === "POST") {
         let body = null;
         try { body = await req.json(); } catch { return json({ error: "Body phải là JSON." }, 400); }
-        const input = cleanFocusInput(body && body.session ? body.session : body);
-        if (!input) return json({ error: "Phiên không hợp lệ." }, 400);
-        await db.prepare(
-          `INSERT INTO focus_sessions
-             (id, uid, task_id, task_title, board_id, started_at, ended_at, focus_seconds, planned_seconds, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-           ON CONFLICT(id) DO NOTHING`
-        ).bind(input.id, uid, input.taskId, input.taskTitle, input.boardId, input.startedAt, input.endedAt, input.focusSeconds, input.plannedSeconds, Date.now()).run();
-        return json({ ok: true, id: input.id });
+
+        // Hỗ trợ nhận cả 1 phiên đơn lẻ HOẶC mảng các phiên (Task 1.2)
+        const rawList = Array.isArray(body)
+          ? body
+          : Array.isArray(body && body.sessions)
+            ? body.sessions
+            : [body && body.session ? body.session : body];
+
+        const validSessions = [];
+        const rejected = [];
+
+        for (const item of rawList.slice(0, MAX_FOCUS_BATCH)) {
+          const input = cleanFocusInput(item);
+          if (input) {
+            validSessions.push(input);
+          } else {
+            rejected.push({ item, reason: "INVALID_FOCUS_SESSION" });
+          }
+        }
+
+        if (!validSessions.length) {
+          return json({ error: "Không có phiên tập trung hợp lệ.", rejected }, 400);
+        }
+
+        const now = Date.now();
+        const stmts = validSessions.map((input) =>
+          db.prepare(
+            `INSERT INTO focus_sessions
+               (id, uid, task_id, task_title, board_id, started_at, ended_at, focus_seconds, planned_seconds, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(id) DO NOTHING`
+          ).bind(input.id, uid, input.taskId, input.taskTitle, input.boardId, input.startedAt, input.endedAt, input.focusSeconds, input.plannedSeconds, now)
+        );
+
+        await db.batch(stmts);
+
+        // Dọn dẹp định kỳ: nếu batch lớn (>=10 phiên) hoặc ngẫu nhiên 10% các lần ghi
+        if (validSessions.length >= 10 || Math.random() < 0.1) {
+          try {
+            const countRes = await db.prepare("SELECT count(*) AS n FROM focus_sessions WHERE uid = ?").bind(uid).first();
+            const total = Number(countRes && countRes.n) || 0;
+            if (total > FOCUS_PRUNE_THRESHOLD) {
+              await db.prepare(
+                `DELETE FROM focus_sessions
+                 WHERE uid = ? AND id NOT IN (
+                   SELECT id FROM focus_sessions WHERE uid = ? ORDER BY started_at DESC LIMIT ?
+                 )`
+              ).bind(uid, uid, MAX_FOCUS_SESSIONS_PER_USER).run();
+            }
+          } catch {}
+        }
+
+        return json({
+          ok: true,
+          saved: validSessions.length,
+          rejected: rejected.length ? rejected : undefined,
+          id: validSessions.length === 1 ? validSessions[0].id : undefined,
+          at: now,
+        });
       }
       if (url.pathname === "/focus" && req.method === "DELETE") {
         await db.prepare("DELETE FROM focus_sessions WHERE uid = ?").bind(uid).run();
