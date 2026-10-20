@@ -319,8 +319,11 @@ export function MobileSheetShell({
           />
         </div>
 
-        {/* Tiêu đề & Nút thao tác dạng kính */}
-        <div className="flex items-center justify-between px-3.5 pb-2.5 pt-0.5 border-b border-white/[0.12] gap-2">
+
+        {/* Tiêu đề & Nút thao tác dạng kính: Cân đối 2 bên qua trục giữa (thanh kéo) */}
+        <div className="grid grid-cols-2 items-center px-3.5 pb-2.5 pt-0.5 border-b border-white/[0.12] gap-2">
+          {/* Nửa bên trái: Nút Quay lại + Tiêu đề / Bộ chuyển bảng */}
+          <div className="flex items-center gap-1.5 min-w-0 justify-start">
           {/* Nút Quay lại (Back Button) khi ở Stack cấp 2 trở lên */}
           {onBack && (
             <button
@@ -335,14 +338,17 @@ export function MobileSheetShell({
           )}
 
           {typeof title === "string" ? (
-            <h3 className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate flex-1 text-left">
+            <h3 className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate text-left">
             {title}
             </h3>
           ) : (
-            <div className="flex-1 min-w-0 flex items-center">{title}</div>
+            <div className="min-w-0 flex items-center max-w-full">{title}</div>
           )}
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          </div>
+
+          {/* Nửa bên phải: Nút thao tác mở rộng + Zen Mode + Đóng */}
+          <div className="flex items-center justify-end gap-1.5 shrink-0">
             {headerRight}
 
             {/* Nút chuyển chế độ Full-Screen Zen Overlay / Khay đáy */}

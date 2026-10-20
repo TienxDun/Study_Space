@@ -44,7 +44,7 @@ export function useKanbanBoards() {
   const [addingCardColId, setAddingCardColId] = useState<string | null>(null);
   const [newCardTitle, setNewCardTitle] = useState("");
   const [newCardDescription, setNewCardDescription] = useState("");
-  const [newCardPriority, setNewCardPriority] = useState<CardPriority>("medium");
+  const [newCardPriority, setNewCardPriority] = useState<CardPriority>("low");
   const [newCardDueDate, setNewCardDueDate] = useState<string>("");
 
   // Adding & Editing Column
@@ -193,7 +193,7 @@ export function useKanbanBoards() {
 
       setNewCardTitle("");
       setNewCardDescription("");
-      setNewCardPriority("medium");
+       setNewCardPriority("low");
       setNewCardDueDate("");
       setAddingCardColId(null);
 

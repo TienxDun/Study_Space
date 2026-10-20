@@ -325,6 +325,7 @@ export async function pushData(): Promise<boolean> {
 // ---------- Tự động lưu sau 2 giây (Debounce) ----------
 export function scheduleAutoSave() {
   if (!activeUid || !tokenProvider) return;
+  currentState = "pending";
 
   pendingChanges = true;
   notifyStatusChange();

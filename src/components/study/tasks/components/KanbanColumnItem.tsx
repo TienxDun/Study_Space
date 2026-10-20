@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
 import {
   DotsSixVerticalIcon,
   TrashIcon,
@@ -107,33 +106,13 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
 }: KanbanColumnItemProps) {
   const prevColumn = colIdx > 0 ? columns[colIdx - 1] : null;
   const nextColumn = colIdx < totalColumns - 1 ? columns[colIdx + 1] : null;
-  const [isPriorityOpen, setIsPriorityOpen] = useState(false);
   const [isDueDateOpen, setIsDueDateOpen] = useState(false);
   const addCardContainerRef = useRef<HTMLDivElement>(null);
-  const priorityBtnRef = useRef<HTMLButtonElement>(null);
-  const priorityMenuRef = useRef<HTMLDivElement>(null);
-  const [priorityMenuCoords, setPriorityMenuCoords] = useState<{
-    top: number;
-    left: number;
-  } | null>(null);
 
-  const togglePriorityMenu = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!isPriorityOpen) {
-      if (priorityBtnRef.current) {
-        const rect = priorityBtnRef.current.getBoundingClientRect();
-        const menuHeight = 110;
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const openUpwards = spaceBelow < menuHeight && rect.top > menuHeight;
-        setPriorityMenuCoords({
-          top: openUpwards ? rect.top - menuHeight - 6 : rect.bottom + 6,
-          left: rect.left,
-        });
-      }
-      setIsPriorityOpen(true);
-    } else {
-      setIsPriorityOpen(false);
-    }
+  const cycleNewCardPriority = () => {
+    const next =
+      newCardPriority === "low" ? "medium" : newCardPriority === "medium" ? "high" : "low";
+    setNewCardPriority(next);
   };
 
   useEffect(() => {
@@ -142,38 +121,19 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
       if (
-        priorityMenuRef.current?.contains(target) ||
-        priorityBtnRef.current?.contains(target)
-      ) {
-        return;
-      }
-
-      if (
         addCardContainerRef.current &&
         !addCardContainerRef.current.contains(target)
       ) {
         setAddingCardColId(null);
-        setIsPriorityOpen(false);
         setIsDueDateOpen(false);
-      } else if (isPriorityOpen) {
-        setIsPriorityOpen(false);
       }
     };
 
-    const handleScrollOrResize = () => {
-      if (isPriorityOpen) setIsPriorityOpen(false);
-    };
-
     document.addEventListener("mousedown", handleClickOutside);
-    window.addEventListener("scroll", handleScrollOrResize, true);
-    window.addEventListener("resize", handleScrollOrResize);
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("scroll", handleScrollOrResize, true);
-      window.removeEventListener("resize", handleScrollOrResize);
     };
-  }, [addingCardColId, column.id, isPriorityOpen, setAddingCardColId]);
+  }, [addingCardColId, column.id, setAddingCardColId]);
 
   return (
     <div
@@ -355,9 +315,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
               type="text"
               placeholder="Nhập tên nhiệm vụ..."
               value={newCardTitle}
-              onFocus={() => {
-                setIsPriorityOpen(false);
-              }}
+               onFocus={() => {}}
               onChange={(e) => setNewCardTitle(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -366,9 +324,8 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                     handleAddCard(column.id);
                   }
                 } else if (e.key === "Escape") {
-                  setAddingCardColId(null);
-                  setIsPriorityOpen(false);
-                  setIsDueDateOpen(false);
+                   setAddingCardColId(null);
+                   setIsDueDateOpen(false);
                 }
               }}
               className="w-full px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.06] focus:bg-white/[0.08] border border-white/10 focus:border-white/25 text-xs font-semibold text-white placeholder-white/30 focus:outline-none transition-all"
@@ -531,9 +488,8 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                 {/* Priority Chip */}
                 <div className="relative">
                   <button
-                    ref={priorityBtnRef}
                     type="button"
-                    onClick={togglePriorityMenu}
+                    onClick={cycleNewCardPriority}
                     className={`h-6 px-2 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                       newCardPriority === "high"
                         ? "bg-rose-500/10 border-rose-500/30 text-rose-300"
@@ -549,53 +505,14 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                     </span>
                   </button>
 
-                  {/* Priority Menu (Portalled to document.body to prevent clipping by overflow-y-auto / column bounds) */}
-                  {isPriorityOpen && priorityMenuCoords && typeof document !== "undefined" && createPortal(
-                    <div
-                      ref={priorityMenuRef}
-                      style={{
-                        position: "fixed",
-                        top: priorityMenuCoords.top,
-                        left: priorityMenuCoords.left,
-                        width: "112px",
-                      }}
-                      className="p-1 rounded-xl bg-[#1a1d24] border border-white/15 shadow-2xl z-[99999] space-y-0.5 animate-in fade-in zoom-in-95 duration-100"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {[
-                        { value: "low", label: "Thấp" },
-                        { value: "medium", label: "Vừa" },
-                        { value: "high", label: "Cao" },
-                      ].map((item) => (
-                        <button
-                          key={item.value}
-                          type="button"
-                          onClick={() => {
-                            setNewCardPriority(item.value as CardPriority);
-                            setIsPriorityOpen(false);
-                          }}
-                          className={`w-full px-2 py-1 rounded-lg text-xs font-medium text-left flex items-center gap-1.5 cursor-pointer transition-colors ${
-                            newCardPriority === item.value
-                              ? "bg-white/15 text-white font-bold"
-                              : "text-slate-300 hover:bg-white/10 hover:text-white"
-                          }`}
-                        >
-                          <PrioritySignalIcon priority={item.value as CardPriority} className="w-3 h-3 shrink-0" />
-                          <span>{item.label}</span>
-                        </button>
-                      ))}
-                    </div>,
-                    document.body
-                  )}
                 </div>
 
                 {/* Due Date Toggle Button */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsPriorityOpen(false);
-                    setIsDueDateOpen(!isDueDateOpen);
-                  }}
+                    onClick={() => {
+                      setIsDueDateOpen(!isDueDateOpen);
+                    }}
                   className={`h-6 rounded-lg border text-xs font-medium flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                     newCardDueDate || isDueDateOpen
                       ? "px-2 bg-sky-500/15 border-sky-400/40 text-sky-200 font-medium"
@@ -622,7 +539,6 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
                   type="button"
                   onClick={() => {
                     setAddingCardColId(null);
-                    setIsPriorityOpen(false);
                     setIsDueDateOpen(false);
                   }}
                   className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer whitespace-nowrap shrink-0"
@@ -658,7 +574,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
             setAddingCardColId(column.id);
             setNewCardTitle("");
             _setNewCardDescription("");
-            setNewCardPriority("medium");
+             setNewCardPriority("low");
             setNewCardDueDate("");
           }}
           className="w-full mt-2 py-2 px-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-white/60 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-2 border border-dashed border-white/10 hover:border-white/20 cursor-pointer"

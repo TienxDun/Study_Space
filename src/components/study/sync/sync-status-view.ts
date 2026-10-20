@@ -27,6 +27,13 @@ export function getSyncStatusView(opts: {
     : "Dữ liệu vẫn an toàn trên máy";
 
   switch (status) {
+    case "pending":
+      return {
+        label: "Đang chờ lưu...",
+        title: "Có thay đổi mới, sẽ tự động lưu sau 2 giây.",
+        tone: "sky",
+        motion: "pulse",
+      };
     case "syncing":
       return {
         label: "Đang lưu...",

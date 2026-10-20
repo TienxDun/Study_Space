@@ -319,7 +319,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
         backLabel={selectedCard ? undefined : backLabel}
         sheetId="tasks"
         title={
-          <div ref={boardMenuRef} className="relative flex items-center min-w-0">
+          <div ref={boardMenuRef} className="relative flex items-center min-w-0 max-w-full">
             <button
               type="button"
               onClick={() => {
@@ -329,13 +329,13 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
               }}
               aria-haspopup="true"
               aria-expanded={showBoardMenu}
-              className="flex items-center gap-1.5 px-2.5 py-1 -ml-1 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 text-white transition-all max-w-full text-left cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/15 active:scale-95 border border-white/15 text-white transition-all max-w-full text-left cursor-pointer min-w-0 shadow-sm"
               title="Chuyển bảng học tập"
             >
-              <span className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate max-w-[150px] xs:max-w-[190px]">
+              <span className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate shrink-0 max-w-[calc(50vw-4.5rem)]">
                 {currentBoard?.title || "Nhiệm vụ học tập"}
               </span>
-              <span className="text-[10px] font-semibold text-white/70 bg-white/10 px-1.5 py-0.5 rounded-full shrink-0">
+              <span className="text-[10px] font-semibold text-white/70 bg-white/15 px-1.5 py-0.5 rounded-full shrink-0">
                 {allCardsWithColumn.length}
               </span>
               <CaretDownIcon

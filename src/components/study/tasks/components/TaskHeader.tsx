@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import {
-  CheckSquareIcon,
   CaretDownIcon,
   PencilLineIcon,
   TrashIcon,
@@ -96,7 +95,6 @@ export const TaskHeader = React.memo(function TaskHeader({
               onClick={() => setIsBoardDropdownOpen(!isBoardDropdownOpen)}
               className="px-3.5 py-1.5 rounded-2xl bg-white/10 hover:bg-white/20 text-sm sm:text-base font-black text-white flex items-center gap-2 transition-all cursor-pointer border border-white/10 shadow-sm max-w-[200px] sm:max-w-xs"
             >
-              <CheckSquareIcon className="w-4 h-4 text-emerald-400 flex-shrink-0" />
               <span className="truncate max-w-[110px] sm:max-w-[180px]" title={currentBoard.title}>
                 {currentBoard.title}
               </span>
