@@ -26,7 +26,6 @@
 4. Xóa đoạn là mất luôn, không thùng rác ✅
 5. Acc mới thấy màn hình trống + gợi ý ✅
 6. Bạn tự publish Rules + deploy Worker ✅
-7. Model free bàn to: Qwen3-30B, Sea-Lion 27B, GPT-OSS 20B, Llama 70B, Gemini Flash + OpenRouter lọc context ≥ 32K, bỏ model Alpha ✅
 8. Admin xếp thứ tự đường gọi (tối đa 5, thử từ trên xuống), Worker chạy theo cấu hình ✅
 
 ## Việc đã làm trong code (chờ bạn deploy mới có tác dụng)

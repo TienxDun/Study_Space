@@ -17,6 +17,14 @@ describe("shouldWipeKey", () => {
     expect(shouldWipeKey(`${CLOUD_BOOT_PREFIX}abc`)).toBe(true);
   });
 
+  it("xóa các key động theo UID (lastSyncedAt, focusEpoch, pendingFocusQueue, backups)", () => {
+    const testUid = "user-1234-xyz";
+    expect(shouldWipeKey(`${STORAGE_KEYS.lastSyncedAt}_${testUid}`)).toBe(true);
+    expect(shouldWipeKey(`${STORAGE_KEYS.focusEpoch}_${testUid}`)).toBe(true);
+    expect(shouldWipeKey(`${STORAGE_KEYS.pendingFocusQueue}_${testUid}`)).toBe(true);
+    expect(shouldWipeKey("study_space_backup_multiNotes_1670000000")).toBe(true);
+  });
+
   it("xóa cache chat của mọi tài khoản", () => {
     expect(shouldWipeKey("chat-msgs:uid1:sess1")).toBe(true);
     expect(shouldWipeKey("chat-remember:uid1")).toBe(true);

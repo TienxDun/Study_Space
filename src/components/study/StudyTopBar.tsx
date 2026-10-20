@@ -19,6 +19,7 @@ import { ZenStudyLogo } from "./brand/ZenStudyLogo";
 import { FocusStatsModal } from "./stats/FocusStatsModal";
 import { StudyAboutModal } from "./StudyAboutModal";
 import { TopBarUserProfile } from "./auth";
+import { SyncStatusBadge } from "./sync/SyncStatusBadge";
 import type { TimerTab } from "./pomodoro/types";
 
 export interface StudyTopBarProps {
@@ -255,7 +256,14 @@ export const StudyTopBar = ({
               <div className="w-[1px] h-4 bg-white/15 mx-0.5 sm:mx-1 shrink-0" />
 
               {/* Unified User Profile Pill / Button */}
-              <TopBarUserProfile />
+              <span className="md:hidden">
+                <TopBarUserProfile />
+              </span>
+              <div className="hidden md:flex items-center h-8 rounded-xl border border-white/15 bg-white/10 shadow-xs overflow-visible">
+                <SyncStatusBadge variant="text" className="px-2.5 h-full rounded-none hover:bg-white/5" />
+                <div className="w-px h-4 bg-white/15 shrink-0" />
+                <TopBarUserProfile bare />
+              </div>
             </div>
           </motion.header>
         )}

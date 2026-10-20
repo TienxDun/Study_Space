@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { toast } from "sonner";
-import { StudyNote } from "../types";
+import { StudyNote, isNoteActive } from "../types";
 import { DEFAULT_NOTES } from "../constants/default-notes";
 import { sanitizeStoredNoteContent, markdownToHtml } from "../utils/note-markdown";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
@@ -95,13 +95,14 @@ export function useStudyNotes() {
               ...n,
               content: sanitizeStoredNoteContent(n.content),
             }));
-            if (formatted.length === 0) {
-              setNotes([]);
+            const activeFormatted = formatted.filter(isNoteActive);
+            if (activeFormatted.length === 0) {
+              setNotes(formatted);
               setActiveNoteId("");
               return;
             }
             setNotes(formatted);
-            setActiveNoteId(formatted[0].id);
+            setActiveNoteId(activeFormatted[0].id);
             localStorage.setItem(STORAGE_MULTI_KEY, JSON.stringify(formatted));
             localStorage.setItem(TEMPLATE_UPGRADE_KEY, "true");
             return;
@@ -168,7 +169,8 @@ export function useStudyNotes() {
 
   // Active note lookup
   const activeNote = useMemo(() => {
-    return notes.find((n) => n.id === activeNoteId) || null;
+    const found = notes.find((n) => n.id === activeNoteId);
+    return found && isNoteActive(found) ? found : null;
   }, [notes, activeNoteId]);
 
   // Checklist statistics (from activeNote HTML)
@@ -189,19 +191,22 @@ export function useStudyNotes() {
     return { total, completed, percent };
   }, [activeNote]);
 
-  // Sorted notes (Pinned first, then latest updated)
+  // Sorted notes (Pinned first, then latest updated) — chỉ hiển thị ghi chú chưa bị xóa (active)
   const sortedNotes = useMemo(() => {
-    return [...notes].sort((a, b) => {
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
-      return b.updatedAt - a.updatedAt;
-    });
+    return notes
+      .filter(isNoteActive)
+      .sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return b.updatedAt - a.updatedAt;
+      });
   }, [notes]);
 
-  // Filtered and Sorted notes (Pinned first, then latest updated)
+  // Filtered and Sorted notes (Pinned first, then latest updated) — chỉ tìm trong ghi chú active
   const filteredNotes = useMemo(() => {
     return notes
       .filter((n) => {
+        if (!isNoteActive(n)) return false;
         if (!searchQuery.trim()) return true;
         const strippedContent = n.content.replace(/<[^>]*>/g, " ").toLowerCase();
         return (
@@ -274,18 +279,50 @@ export function useStudyNotes() {
     setNoteToDelete(note);
   }, []);
 
+  const handleRestoreNote = useCallback(
+    (noteId: string, restoredContent?: string) => {
+      const now = Date.now();
+      const updated = notes.map((n) =>
+        n.id === noteId
+          ? {
+              ...n,
+              deletedAt: undefined,
+              restoredAt: now,
+              updatedAt: now,
+              content: n.content || restoredContent || "",
+            }
+          : n
+      );
+      saveNotesToStorage(updated);
+      setActiveNoteId(noteId);
+      toast.success("Đã khôi phục ghi chú");
+    },
+    [notes, saveNotesToStorage]
+  );
+
   const handleConfirmDeleteNote = useCallback(() => {
     if (!noteToDelete) return;
     const idToDelete = noteToDelete.id;
     const noteTitle = noteToDelete.title || "Ghi chú";
-    const updated = notes.filter((n) => n.id !== idToDelete);
+    const prevContent = noteToDelete.content;
+    const now = Date.now();
+    // Soft-delete tombstone: gán deletedAt, xóa rỗng content để giữ dung lượng nhẹ (~45 bytes)
+    const updated = notes.map((n) =>
+      n.id === idToDelete ? { ...n, deletedAt: now, content: "", updatedAt: now } : n
+    );
     saveNotesToStorage(updated);
+    const remainingActive = updated.filter(isNoteActive);
     if (activeNoteId === idToDelete) {
-      setActiveNoteId(updated.length > 0 ? updated[0].id : "");
+      setActiveNoteId(remainingActive.length > 0 ? remainingActive[0].id : "");
     }
     setNoteToDelete(null);
-    toast.success(`Đã xóa "${noteTitle}"`);
-  }, [noteToDelete, notes, activeNoteId, saveNotesToStorage]);
+    toast.success(`Đã xóa "${noteTitle}"`, {
+      action: {
+        label: "Hoàn tác",
+        onClick: () => handleRestoreNote(idToDelete, prevContent),
+      },
+    });
+  }, [noteToDelete, notes, activeNoteId, saveNotesToStorage, handleRestoreNote]);
 
   return {
     notes,
@@ -308,6 +345,7 @@ export function useStudyNotes() {
     updateNoteContent,
     promptDeleteNote,
     handleConfirmDeleteNote,
+    handleRestoreNote,
     saveNotesToStorage,
   };
 }

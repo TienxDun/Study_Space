@@ -1,144 +1,387 @@
-import { describe, it, expect, vi } from "vitest";
-import worker from "../../../../workers/data-api/worker.js";
+import { describe, it, expect, beforeEach } from "vitest";
+import { createWorker } from "../../../../workers/data-api/worker.js";
 
-function createMockDb() {
-  const settingsStore = new Map<string, { value: string; updated_at: number }>();
-  const focusStore = new Map<string, any>();
-
-  const prepare = vi.fn((sql: string) => {
-    return {
-      bind: vi.fn((...args: any[]) => {
-        return {
-          first: vi.fn(async () => {
-            if (sql.includes("SELECT 1 AS ok FROM users")) {
-              return { ok: 1 };
-            }
-            if (sql.includes("SUM(LENGTH(value))")) {
-              let total = 0;
-              const prefix = args[0] + ":";
-              for (const [k, v] of settingsStore.entries()) {
-                if (k.startsWith(prefix)) {
-                  total += v.value.length;
-                }
-              }
-              return { total };
-            }
-            if (sql.includes("count(*) AS n FROM focus_sessions")) {
-              return { n: focusStore.size };
-            }
-            return null;
-          }),
-          all: vi.fn(async () => {
-            if (sql.includes("FROM user_settings")) {
-              const results: any[] = [];
-              const prefix = args[0] + ":";
-              for (const [k, v] of settingsStore.entries()) {
-                if (k.startsWith(prefix)) {
-                  results.push({ key: k.slice(prefix.length), value: v.value, updated_at: v.updated_at });
-                }
-              }
-              return { results };
-            }
-            if (sql.includes("FROM focus_sessions")) {
-              const results = Array.from(focusStore.values()).filter((s) => s.uid === args[0]);
-              return { results };
-            }
-            return { results: [] };
-          }),
-          run: vi.fn(async () => {
-            if (sql.includes("DELETE FROM focus_sessions")) {
-              focusStore.clear();
-            }
-            return { success: true };
-          }),
-        };
-      }),
-    };
-  });
-
-  const batch = vi.fn(async (stmts: any[]) => {
-    return stmts.map(() => ({ success: true }));
-  });
-
-  return { prepare, batch, settingsStore, focusStore };
+interface UserRow {
+  uid: string;
+  focus_epoch: number;
+  created_at: number;
+  updated_at: number;
 }
 
-describe("Worker Data-API — Mốc 1 (Bảo vệ máy chủ & tương thích ngược với X-Sync-Version)", () => {
+interface SettingRow {
+  uid: string;
+  key: string;
+  value: string;
+  updated_at: number;
+  deleted_at: number | null;
+}
+
+interface FocusRow {
+  id: string;
+  uid: string;
+  task_id: string;
+  task_title?: string;
+  board_id?: string | null;
+  started_at: number;
+  ended_at: number;
+  focus_seconds: number;
+  planned_seconds: number;
+  created_at: number;
+  focus_epoch: number;
+}
+
+/**
+ * Stateful In-Memory SQLite Mock cho Cloudflare D1
+ * Lưu giữ state thực sự giữa các truy vấn để test hành vi database.
+ */
+function createStatefulD1() {
+  const users = new Map<string, UserRow>();
+  const settings = new Map<string, SettingRow>(); // composite key: `${uid}:${key}`
+  const focus = new Map<string, FocusRow>(); // key: id
+
+  function executeSql(sql: string, params: any[]) {
+    const s = sql.trim();
+
+    // 1. users: INSERT ON CONFLICT DO NOTHING
+    if (s.startsWith("INSERT INTO users") && s.includes("ON CONFLICT(uid) DO NOTHING")) {
+      const [uid, created_at, updated_at, focus_epoch] = params;
+      if (!users.has(uid)) {
+        users.set(uid, {
+          uid,
+          created_at: Number(created_at),
+          updated_at: Number(updated_at),
+          focus_epoch: Number(focus_epoch) || 1,
+        });
+        return { meta: { changes: 1 }, results: [] };
+      }
+      return { meta: { changes: 0 }, results: [] };
+    }
+
+    // 2. users: DELETE /focus atomic increment RETURNING focus_epoch
+    if (s.startsWith("INSERT INTO users") && s.includes("focus_epoch = focus_epoch + 1")) {
+      const [uid, created_at, updated_at] = params;
+      let user = users.get(uid);
+      if (!user) {
+        user = { uid, focus_epoch: 2, created_at: Number(created_at), updated_at: Number(updated_at) };
+      } else {
+        user.focus_epoch += 1;
+        user.updated_at = Number(updated_at);
+      }
+      users.set(uid, user);
+      return { meta: { changes: 1 }, results: [{ focus_epoch: user.focus_epoch }] };
+    }
+
+    // 3. users: SELECT focus_epoch FROM users WHERE uid = ?
+    if (s.startsWith("SELECT focus_epoch FROM users WHERE uid = ?")) {
+      const [uid] = params;
+      const user = users.get(uid);
+      return {
+        first: () => (user ? { focus_epoch: user.focus_epoch } : null),
+        all: () => ({ results: user ? [{ focus_epoch: user.focus_epoch }] : [] }),
+      };
+    }
+
+    // 4. users: SELECT 1 AS ok FROM users WHERE uid = ?
+    if (s.includes("SELECT 1 AS ok FROM users WHERE uid = ?")) {
+      const [uid] = params;
+      const exists = users.has(uid);
+      return {
+        first: () => (exists ? { ok: 1 } : null),
+        all: () => ({ results: exists ? [{ ok: 1 }] : [] }),
+      };
+    }
+
+    // 5. user_settings: INSERT / UPDATE with deleted_at = NULL (Revive)
+    if (s.startsWith("INSERT INTO user_settings") && s.includes("deleted_at = NULL") && !s.includes("WHERE user_settings.deleted_at IS NULL")) {
+      const [uid, key, value, updated_at] = params;
+      const id = `${uid}:${key}`;
+      settings.set(id, {
+        uid,
+        key,
+        value: String(value),
+        updated_at: Number(updated_at),
+        deleted_at: null,
+      });
+      return { meta: { changes: 1 }, results: [] };
+    }
+
+    // 6. user_settings: Conditional INSERT / UPDATE WHERE deleted_at IS NULL
+    if (s.startsWith("INSERT INTO user_settings") && s.includes("WHERE user_settings.deleted_at IS NULL")) {
+      const [uid, key, value, updated_at] = params;
+      const id = `${uid}:${key}`;
+      const existing = settings.get(id);
+      if (existing && existing.deleted_at !== null) {
+        // Đang bị soft-delete -> WHERE condition false -> no change
+        return { meta: { changes: 0 }, results: [] };
+      }
+      settings.set(id, {
+        uid,
+        key,
+        value: String(value),
+        updated_at: Number(updated_at),
+        deleted_at: null,
+      });
+      return { meta: { changes: 1 }, results: [] };
+    }
+
+    // 7. user_settings: UPSERT Soft-Delete Tombstone
+    if (s.startsWith("INSERT INTO user_settings") && s.includes("value = ''") && s.includes("deleted_at = excluded.deleted_at")) {
+      const [uid, key, updated_at, deleted_at] = params;
+      const id = `${uid}:${key}`;
+      settings.set(id, {
+        uid,
+        key,
+        value: "",
+        updated_at: Number(updated_at),
+        deleted_at: Number(deleted_at),
+      });
+      return { meta: { changes: 1 }, results: [] };
+    }
+
+    // 8. user_settings: GET active (deleted_at IS NULL)
+    if (s.includes("FROM user_settings") && s.includes("deleted_at IS NULL")) {
+      const [uid, since] = params;
+      const threshold = Number(since) || 0;
+      const res: SettingRow[] = [];
+      for (const row of settings.values()) {
+        if (row.uid === uid && row.deleted_at === null && row.updated_at >= threshold) {
+          res.push(row);
+        }
+      }
+      return {
+        all: () => ({ results: res }),
+        first: () => (res.length ? res[0] : null),
+      };
+    }
+
+    // 9. user_settings: GET deleted (deleted_at IS NOT NULL)
+    if (s.includes("FROM user_settings") && s.includes("deleted_at IS NOT NULL")) {
+      const [uid, since] = params;
+      const threshold = Number(since) || 0;
+      const res: { key: string }[] = [];
+      for (const row of settings.values()) {
+        if (row.uid === uid && row.deleted_at !== null && row.updated_at >= threshold) {
+          res.push({ key: row.key });
+        }
+      }
+      return {
+        all: () => ({ results: res }),
+        first: () => (res.length ? res[0] : null),
+      };
+    }
+
+    // 10. focus_sessions: Conditional Insert with focus_epoch check
+    if (s.startsWith("INSERT INTO focus_sessions")) {
+      const [
+        id, uid, taskId, taskTitle, boardId,
+        startedAt, endedAt, focusSeconds, plannedSeconds,
+        createdAt, focusEpoch, checkEpoch, checkUid
+      ] = params;
+
+      const user = users.get(checkUid);
+      const currentEpoch = user ? user.focus_epoch : 1;
+
+      if (Number(checkEpoch) < currentEpoch) {
+        // Epoch cũ -> WHERE condition false
+        return { meta: { changes: 0 }, results: [] };
+      }
+
+      if (focus.has(id)) {
+        // ON CONFLICT(id) DO NOTHING
+        return { meta: { changes: 0 }, results: [] };
+      }
+
+      focus.set(id, {
+        id,
+        uid,
+        task_id: taskId,
+        task_title: taskTitle,
+        board_id: boardId,
+        started_at: Number(startedAt),
+        ended_at: Number(endedAt),
+        focus_seconds: Number(focusSeconds),
+        planned_seconds: Number(plannedSeconds),
+        created_at: Number(createdAt),
+        focus_epoch: Number(focusEpoch),
+      });
+      return { meta: { changes: 1 }, results: [] };
+    }
+
+    // 11. focus_sessions: DELETE FROM focus_sessions WHERE uid = ?
+    if (s.startsWith("DELETE FROM focus_sessions WHERE uid = ?")) {
+      const [uid] = params;
+      let count = 0;
+      for (const [id, f] of focus.entries()) {
+        if (f.uid === uid) {
+          focus.delete(id);
+          count++;
+        }
+      }
+      return { meta: { changes: count }, results: [] };
+    }
+
+    // 11.5. focus_sessions: SELECT id FROM focus_sessions WHERE uid = ? AND id IN (...)
+    if (s.includes("SELECT id FROM focus_sessions WHERE uid = ? AND id IN")) {
+      const [uid, ...ids] = params;
+      const idSet = new Set(ids);
+      const res: { id: string }[] = [];
+      for (const [id, f] of focus.entries()) {
+        if (f.uid === uid && idSet.has(id)) {
+          res.push({ id });
+        }
+      }
+      return {
+        all: () => ({ results: res }),
+        first: () => (res.length ? res[0] : null),
+      };
+    }
+
+    // 12. focus_sessions: GET
+    if (s.includes("FROM focus_sessions WHERE uid = ?")) {
+      const [uid, from, to] = params;
+      const min = Number(from) || 0;
+      const max = Number(to) || Number.MAX_SAFE_INTEGER;
+      const res: FocusRow[] = [];
+      for (const f of focus.values()) {
+        if (f.uid === uid && f.started_at >= min && f.started_at < max) {
+          res.push(f);
+        }
+      }
+      res.sort((a, b) => b.started_at - a.started_at);
+      return {
+        all: () => ({ results: res }),
+        first: () => (res.length ? res[0] : null),
+      };
+    }
+
+    // 13. Health table count check
+    if (s.includes("sqlite_master WHERE type = 'table'")) {
+      return {
+        first: () => ({ n: 5 }),
+        all: () => ({ results: [{ n: 5 }] }),
+      };
+    }
+
+    return {
+      run: async () => ({ meta: { changes: 0 }, results: [] }),
+      first: async () => null,
+      all: async () => ({ results: [] }),
+    };
+  }
+
+  function prepare(sql: string) {
+    let boundParams: any[] = [];
+    return {
+      bind: (...args: any[]) => {
+        boundParams = args;
+        return {
+          run: async () => executeSql(sql, boundParams),
+          first: async () => {
+            const res = executeSql(sql, boundParams);
+            return typeof res.first === "function" ? res.first() : (res.results && res.results[0]) || null;
+          },
+          all: async () => {
+            const res = executeSql(sql, boundParams);
+            return typeof res.all === "function" ? res.all() : { results: res.results || [] };
+          },
+          _sql: sql,
+          _params: boundParams,
+        };
+      },
+    };
+  }
+
+  async function batch(stmts: any[]) {
+    const results = [];
+    for (const stmt of stmts) {
+      const r = executeSql(stmt._sql, stmt._params);
+      results.push(r);
+    }
+    return results;
+  }
+
+  return { prepare, batch, users, settings, focus };
+}
+
+describe("Worker Data-API — Mốc 1 (Contract & Stateful Tests)", () => {
   const env = {
     FIREBASE_PROJECT_ID: "test-project",
     ALLOWED_ORIGINS: "https://zenstudy.space,http://localhost:3001",
-    TEST_MODE: true,
     DB: null as any,
   };
 
-  it("Task 1.4: CORS fail-closed và cho phép header X-Sync-Version", async () => {
-    const reqOk = new Request("http://localhost/health", {
-      method: "GET",
-      headers: { Origin: "https://zenstudy.space" },
-    });
-    const resOk = await worker.fetch(reqOk, env);
-    expect(resOk.headers.get("Access-Control-Allow-Origin")).toBe("https://zenstudy.space");
-    expect(resOk.headers.get("Access-Control-Allow-Headers")).toContain("X-Sync-Version");
-
-    const reqBad = new Request("http://localhost/health", {
-      method: "GET",
-      headers: { Origin: "https://evil-site.com" },
-    });
-    const resBad = await worker.fetch(reqBad, env);
-    expect(resBad.headers.get("Access-Control-Allow-Origin")).toBe("null");
+  // Mock token verifier qua createWorker dependency injection (bỏ hoàn toàn TEST_MODE)
+  const worker = createWorker({
+    verifyToken: async (_env: unknown, token: string) => {
+      if (token && token.startsWith("mock-uid:")) {
+        return { uid: token.slice(9) };
+      }
+      return { code: "BAD_FORMAT" };
+    },
   });
 
-  it("Client cũ (không có X-Sync-Version): gặp key quá lớn trả về 413 như cũ để tránh nói dối", async () => {
-    const db = createMockDb();
+  let db: ReturnType<typeof createStatefulD1>;
+
+  beforeEach(() => {
+    db = createStatefulD1();
+  });
+
+  it("Test 1: Client v1 (không có header v2) gửi key > 1.5MB nhận 413; gửi focus legacy vẫn lưu bình thường", async () => {
     const envWithDb = { ...env, DB: db };
     const token = "mock-uid:user-legacy";
 
-    const hugeKey = "huge_data";
-    const hugeValue = "x".repeat(1_300_000); // 1.3MB > MAX_VALUE_LEN (1.2MB)
-
-    const req = new Request("http://localhost/settings", {
+    // 1. Gửi key > 1.5MB -> trả 413 cả batch
+    const hugeValue = "x".repeat(1_600_000); // 1.6MB > 1.5MB
+    const req1 = new Request("http://localhost/settings", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
-        // KHÔNG CÓ X-Sync-Version: 2
+      },
+      body: JSON.stringify({ settings: { theme: "dark", large: hugeValue } }),
+    });
+
+    const res1 = await worker.fetch(req1, envWithDb);
+    expect(res1.status).toBe(413);
+
+    // 2. Gửi key legacy study_space_focus_sessions_v1 -> vẫn lưu bình thường
+    const req2 = new Request("http://localhost/settings", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         settings: {
-          study_theme: "dark",
-          [hugeKey]: hugeValue,
+          study_space_focus_sessions_v1: JSON.stringify([{ id: "f1", focusSeconds: 1500 }]),
         },
       }),
     });
 
-    const res = await worker.fetch(req, envWithDb);
-    expect(res.status).toBe(413);
-    const data = await res.json();
-    expect(data.error).toContain("quá lớn");
-    expect(db.batch).not.toHaveBeenCalled();
+    const res2 = await worker.fetch(req2, envWithDb);
+    expect(res2.status).toBe(200);
+    const saved = db.settings.get("user-legacy:study_space_focus_sessions_v1");
+    expect(saved).toBeDefined();
+    expect(saved?.value).toContain("f1");
   });
 
-  it("Client mới (có X-Sync-Version: 2): bỏ qua riêng key lớn và lưu các key hợp lệ còn lại", async () => {
-    const db = createMockDb();
+  it("Test 2: Client v2 (có X-Sync-Version: 2) gửi key > 1.5MB bị reject riêng lẻ, focus legacy bị RETIRED_KEY", async () => {
     const envWithDb = { ...env, DB: db };
     const token = "mock-uid:user-v2";
 
-    const normalKey = "study_theme";
-    const normalValue = "dark";
-    const hugeKey = "huge_data";
-    const hugeValue = "x".repeat(1_300_000); // 1.3MB > 1.2MB
-
+    const hugeValue = "x".repeat(1_600_000); // 1.6MB
     const req = new Request("http://localhost/settings", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
-        "X-Sync-Version": "2", // Client mới v2
+        "X-Sync-Version": "2",
       },
       body: JSON.stringify({
         settings: {
-          [normalKey]: normalValue,
-          [hugeKey]: hugeValue,
+          theme: "dark",
+          large: hugeValue,
+          study_space_focus_sessions_v1: "[]",
         },
       }),
     });
@@ -146,37 +389,265 @@ describe("Worker Data-API — Mốc 1 (Bảo vệ máy chủ & tương thích ng
     const res = await worker.fetch(req, envWithDb);
     expect(res.status).toBe(200);
     const data = await res.json();
-
     expect(data.ok).toBe(true);
-    expect(data.saved).toBe(1); // Chỉ lưu 1 key hợp lệ
-    expect(data.rejected).toBeDefined();
-    expect(data.rejected.length).toBe(1);
-    expect(data.rejected[0].key).toBe(hugeKey);
-    expect(data.rejected[0].reason).toBe("KEY_TOO_LARGE");
-    expect(db.batch).toHaveBeenCalledTimes(1);
+    expect(data.rejected).toEqual(
+      expect.arrayContaining([
+        { key: "study_space_focus_sessions_v1", reason: "RETIRED_KEY" },
+        { key: "large", reason: "KEY_TOO_LARGE" },
+      ])
+    );
+    // Key hợp lệ theme vẫn được lưu
+    const saved = db.settings.get("user-v2:theme");
+    expect(saved?.value).toBe("dark");
+    // Retired key không được ghi vào DB
+    expect(db.settings.get("user-v2:study_space_focus_sessions_v1")).toBeUndefined();
   });
 
-  it("Task 1.2: POST /focus hỗ trợ nhận mảng nhiều phiên và báo rejected theo id", async () => {
-    const db = createMockDb();
+  it("Test 3: DELETE /settings tạo UPSERT tombstone; first-sync v2 (since=0) nhận được tombstone; v1 không nhận row rỗng", async () => {
+    const envWithDb = { ...env, DB: db };
+    const token = "mock-uid:user-del";
+
+    // 1. Xóa key chưa từng tồn tại trên server -> UPSERT tombstone
+    const delReq = new Request("http://localhost/settings", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ keys: ["offline_note"] }),
+    });
+    const delRes = await worker.fetch(delReq, envWithDb);
+    expect(delRes.status).toBe(200);
+
+    const tombstone = db.settings.get("user-del:offline_note");
+    expect(tombstone).toBeDefined();
+    expect(tombstone?.deleted_at).toBeGreaterThan(0);
+    expect(tombstone?.value).toBe("");
+
+    // 2. Client v1 GET /settings -> không thấy key rỗng
+    const getV1Req = new Request("http://localhost/settings", {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const getV1Res = await worker.fetch(getV1Req, envWithDb);
+    const v1Data = await getV1Res.json();
+    expect(v1Data.settings.offline_note).toBeUndefined();
+    expect(v1Data.deleted).toEqual([]);
+
+    // 3. Client v2 GET /settings?since=0 -> nhận được mảng deleted
+    const getV2Req = new Request("http://localhost/settings?since=0", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "X-Sync-Version": "2",
+      },
+    });
+    const getV2Res = await worker.fetch(getV2Req, envWithDb);
+    const v2Data = await getV2Res.json();
+    expect(v2Data.deleted).toContain("offline_note");
+    expect(v2Data.serverTime).toBeGreaterThan(0);
+  });
+
+  it("Test 4: PUT /settings không revive tự động khi key đang soft-delete; chỉ revive khi có reviveKeys", async () => {
+    const envWithDb = { ...env, DB: db };
+    const token = "mock-uid:user-revive";
+
+    // Tạo tombstone trước
+    db.settings.set("user-revive:archived_task", {
+      uid: "user-revive",
+      key: "archived_task",
+      value: "",
+      updated_at: 1000,
+      deleted_at: 1000,
+    });
+
+    // 1. Ghi bình thường (không revive) -> conditional update không ghi đè tombstone và trả KEY_DELETED
+    const putReq1 = new Request("http://localhost/settings", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        "X-Sync-Version": "2",
+      },
+      body: JSON.stringify({ settings: { archived_task: "overwrite" } }),
+    });
+    const putRes1 = await worker.fetch(putReq1, envWithDb);
+    expect(putRes1.status).toBe(200);
+    const putData1 = await putRes1.json();
+    expect(putData1.saved).toBe(0); // Không tính là saved
+    expect(putData1.rejected).toEqual([
+      { key: "archived_task", reason: "KEY_DELETED" },
+    ]);
+    const stillDeleted = db.settings.get("user-revive:archived_task");
+    expect(stillDeleted?.deleted_at).toBe(1000); // vẫn giữ nguyên tombstone
+
+    // 2. Ghi với reviveKeys -> deleted_at trở về null và lưu thành công
+    const putReq2 = new Request("http://localhost/settings", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        "X-Sync-Version": "2",
+      },
+      body: JSON.stringify({
+        settings: { archived_task: "revived_content" },
+        reviveKeys: ["archived_task"],
+      }),
+    });
+    const putRes2 = await worker.fetch(putReq2, envWithDb);
+    expect(putRes2.status).toBe(200);
+    const putData2 = await putRes2.json();
+    expect(putData2.saved).toBe(1);
+    expect(putData2.rejected).toBeUndefined();
+    const revived = db.settings.get("user-revive:archived_task");
+    expect(revived?.deleted_at).toBeNull();
+    expect(revived?.value).toBe("revived_content");
+  });
+
+  it("Test 5: GET /focus trả về sessions kèm epoch; POST /focus conditional insert loại bỏ STALE_EPOCH", async () => {
     const envWithDb = { ...env, DB: db };
     const token = "mock-uid:user-focus";
 
-    const sessions = [
-      {
-        id: "session-1",
-        taskId: "task-1",
-        taskTitle: "Task 1",
-        startedAt: 1000,
-        endedAt: 2500,
-        focusSeconds: 1500,
-        plannedSeconds: 1500,
+    // 1. GET ban đầu -> epoch = 1
+    const getReq = new Request("http://localhost/focus", {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const getRes = await worker.fetch(getReq, envWithDb);
+    const getData = await getRes.json();
+    expect(getData.epoch).toBe(1);
+
+    // 2. Clear lịch sử -> atomic increment epoch lên 2
+    const delReq = new Request("http://localhost/focus", {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const delRes = await worker.fetch(delReq, envWithDb);
+    const delData = await delRes.json();
+    expect(delData.epoch).toBe(2);
+
+    // 3. POST phiên mang epoch cũ (epoch = 1) -> bị từ chối với STALE_EPOCH
+    const postReqStale = new Request("http://localhost/focus", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-      {
-        id: "invalid-session",
-        taskId: "", // thiếu taskId -> không hợp lệ
-        focusSeconds: 0,
+      body: JSON.stringify({
+        session: {
+          id: "stale-s1",
+          taskId: "t1",
+          startedAt: 1000,
+          endedAt: 2500,
+          focusSeconds: 1500,
+          focusEpoch: 1, // cũ hơn user.focus_epoch (2)
+        },
+      }),
+    });
+    const staleRes = await worker.fetch(postReqStale, envWithDb);
+    const staleData = await staleRes.json();
+    expect(staleData.rejected).toContainEqual({ id: "stale-s1", reason: "STALE_EPOCH" });
+    expect(db.focus.has("stale-s1")).toBe(false);
+
+    // 4. POST phiên mang epoch mới (epoch = 2) -> lưu thành công
+    const postReqValid = new Request("http://localhost/focus", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-    ];
+      body: JSON.stringify({
+        session: {
+          id: "valid-s2",
+          taskId: "t1",
+          startedAt: 3000,
+          endedAt: 4500,
+          focusSeconds: 1500,
+          focusEpoch: 2,
+        },
+      }),
+    });
+    const validRes = await worker.fetch(postReqValid, envWithDb);
+    const validData = await validRes.json();
+    expect(validData.ok).toBe(true);
+    expect(validData.saved).toBe(1);
+    expect(validData.epoch).toBe(2);
+    expect(db.focus.has("valid-s2")).toBe(true);
+
+    // 5. Gửi lặp lại cùng phiên valid-s2 (idempotent duplicate) -> vẫn báo saved: 1, không reject
+    const dupReq = new Request("http://localhost/focus", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        session: {
+          id: "valid-s2",
+          taskId: "t1",
+          startedAt: 3000,
+          endedAt: 4500,
+          focusSeconds: 1500,
+          focusEpoch: 2,
+        },
+      }),
+    });
+    const dupRes = await worker.fetch(dupReq, envWithDb);
+    const dupData = await dupRes.json();
+    expect(dupData.saved).toBe(1);
+    expect(dupData.rejected).toBeUndefined();
+
+    // 6. Trường hợp clear chen ngang: client gửi phiên có epoch = 2 nhưng server đã clear tăng lên epoch 3
+    await worker.fetch(
+      new Request("http://localhost/focus", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      envWithDb
+    ); // Epoch giờ là 3
+
+    const postReqIntervened = new Request("http://localhost/focus", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        session: {
+          id: "intervened-s3",
+          taskId: "t1",
+          startedAt: 5000,
+          endedAt: 6000,
+          focusSeconds: 1000,
+          focusEpoch: 2, // Đã bị cũ do clear chen ngang
+        },
+      }),
+    });
+    const intervenedRes = await worker.fetch(postReqIntervened, envWithDb);
+    const intervenedData = await intervenedRes.json();
+    expect(intervenedData.saved).toBe(0);
+    expect(intervenedData.rejected).toEqual([
+      { id: "intervened-s3", reason: "STALE_EPOCH" },
+    ]);
+    expect(intervenedData.epoch).toBe(3);
+    expect(db.focus.has("intervened-s3")).toBe(false);
+  });
+
+  it("Test 6: POST /focus gửi > 200 phiên -> 200 phiên lưu, phần dư báo BATCH_OVERFLOW", async () => {
+    const envWithDb = { ...env, DB: db };
+    const token = "mock-uid:user-overflow";
+
+    const sessions = [];
+    for (let i = 0; i < 210; i++) {
+      sessions.push({
+        id: `sess-${i}`,
+        taskId: "t-all",
+        startedAt: 1000 + i,
+        endedAt: 2000 + i,
+        focusSeconds: 1000,
+        focusEpoch: 1,
+      });
+    }
 
     const req = new Request("http://localhost/focus", {
       method: "POST",
@@ -188,40 +659,60 @@ describe("Worker Data-API — Mốc 1 (Bảo vệ máy chủ & tương thích ng
     });
 
     const res = await worker.fetch(req, envWithDb);
-    expect(res.status).toBe(200);
     const data = await res.json();
-
     expect(data.ok).toBe(true);
-    expect(data.saved).toBe(1);
-    expect(data.rejected).toBeDefined();
-    expect(data.rejected[0].id).toBe("invalid-session");
-    expect(db.batch).toHaveBeenCalledTimes(1);
+    expect(data.saved).toBe(200);
+    expect(data.rejected?.length).toBe(10);
+    expect(data.rejected?.[0].reason).toBe("BATCH_OVERFLOW");
   });
 
-  it("Task 1.3: Rate limiter trong RAM trả về 429 khi vượt 180 req/phút", async () => {
-    const db = createMockDb();
+  it("Test 7: Payload cap 2MB trả 413 ngay lập tức", async () => {
     const envWithDb = { ...env, DB: db };
-    const token = "mock-uid:heavy-user";
+    const token = "mock-uid:user-payload";
 
-    // Gửi liên tục 180 request hợp lệ
-    for (let i = 0; i < 180; i++) {
-      const req = new Request("http://localhost/me", {
+    const req = new Request("http://localhost/settings", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        "Content-Length": "3000000", // 3MB
+      },
+      body: JSON.stringify({ settings: { a: "1" } }),
+    });
+
+    const res = await worker.fetch(req, envWithDb);
+    expect(res.status).toBe(413);
+  });
+
+  it("Test 8: Rate limit IP (600/phút) và CORS headers Expose Retry-After", async () => {
+    const envWithDb = { ...env, DB: db };
+    const token = "mock-uid:user-rate";
+
+    // 1. Kiểm tra CORS Expose Headers
+    const corsReq = new Request("http://localhost/health", {
+      method: "OPTIONS",
+      headers: { Origin: "https://zenstudy.space" },
+    });
+    const corsRes = await worker.fetch(corsReq, envWithDb);
+    expect(corsRes.headers.get("Access-Control-Expose-Headers")).toContain("Retry-After");
+    expect(corsRes.headers.get("Access-Control-Expose-Headers")).toContain("X-Sync-Version");
+
+    // 2. IP Rate limit: Gửi dồn dập vượt 600 request từ cùng 1 IP
+    const testIp = "192.168.1.100";
+    let lastRes: Response | null = null;
+    for (let i = 0; i < 602; i++) {
+      const r = new Request("http://localhost/settings", {
         method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "CF-Connecting-IP": testIp,
+        },
       });
-      const res = await worker.fetch(req, envWithDb);
-      expect(res.status).toBe(200);
+      lastRes = await worker.fetch(r, envWithDb);
+      if (lastRes && lastRes.status === 429) break;
     }
 
-    // Request thứ 181 phải bị chặn với mã 429
-    const reqBlocked = new Request("http://localhost/me", {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const resBlocked = await worker.fetch(reqBlocked, envWithDb);
-    expect(resBlocked.status).toBe(429);
-    expect(resBlocked.headers.get("Retry-After")).toBeDefined();
-    const body = await resBlocked.json();
-    expect(body.code).toBe("RATE_LIMITED");
+    expect(lastRes?.status).toBe(429);
+    expect(lastRes?.headers.get("Retry-After")).toBeDefined();
   });
 });

@@ -7,6 +7,16 @@ import { CHAT_MEDIA_DB_NAME } from "@/components/study/chat/utils/imageStorage";
 // Cache chat cũng là dữ liệu riêng của người dùng, phải xóa cùng.
 const EXTRA_PREFIXES = ["chat-msgs:", "chat-remember:"];
 
+const DYNAMIC_PREFIXES = [
+  CLOUD_BOOT_PREFIX,
+  `${STORAGE_KEYS.lastSyncedAt}_`,
+  `${STORAGE_KEYS.focusEpoch}_`,
+  `${STORAGE_KEYS.pendingFocusQueue}_`,
+  "study_space_last_prune_check_",
+  "study_space_backup_",
+  ...EXTRA_PREFIXES,
+];
+
 const OWN_KEYS = new Set<string>([
   ...Object.values(STORAGE_KEYS),
   CLOUD_META_KEY,
@@ -15,8 +25,7 @@ const OWN_KEYS = new Set<string>([
 
 export function shouldWipeKey(key: string): boolean {
   if (OWN_KEYS.has(key)) return true;
-  if (key.startsWith(CLOUD_BOOT_PREFIX)) return true;
-  return EXTRA_PREFIXES.some((p) => key.startsWith(p));
+  return DYNAMIC_PREFIXES.some((p) => key.startsWith(p));
 }
 
 function listWipeKeys(): string[] {

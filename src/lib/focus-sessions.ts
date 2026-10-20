@@ -34,6 +34,8 @@ export interface FocusSession {
   /** Trong log luôn true — skip/reset không ghi phiên. */
   completed: boolean;
   schemaVersion: 1;
+  /** Số đời (epoch) lịch sử xóa của user để chống hồi sinh phiên sau khi clear */
+  focusEpoch?: number;
 }
 
 export interface FocusSessionInput {
@@ -44,6 +46,7 @@ export interface FocusSessionInput {
   endedAt: number;
   focusSeconds: number;
   plannedSeconds: number;
+  focusEpoch?: number;
 }
 
 export interface FocusSessionStore {
@@ -82,6 +85,7 @@ function sanitizeSession(s: FocusSession): FocusSession | null {
     plannedSeconds: Math.max(0, Math.floor(Number(s.plannedSeconds) || 0)),
     completed: true,
     schemaVersion: FOCUS_SESSIONS_SCHEMA_VERSION,
+    focusEpoch: typeof s.focusEpoch === "number" ? s.focusEpoch : undefined,
   };
 }
 
@@ -151,16 +155,39 @@ let cachedFocusList: FocusSession[] = [];
 export const focusSessionStore: FocusSessionStore =
   new LocalStorageFocusSessionStore();
 
+function getStoredFocusEpoch(): number {
+  try {
+    if (typeof window === "undefined") return 1;
+    const uid = localStorage.getItem("study_space_cloud_uid_v1");
+    if (uid) {
+      const val = localStorage.getItem(`${STORAGE_KEYS.focusEpoch}_${uid}`);
+      if (val) return Number(val) || 1;
+    }
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(`${STORAGE_KEYS.focusEpoch}_`)) {
+        const val = localStorage.getItem(k);
+        if (val) return Number(val) || 1;
+      }
+    }
+    return 1;
+  } catch {
+    return 1;
+  }
+}
+
 /** Ghi 1 phiên focus đã hoàn thành. Skip/reset không gọi hàm này. */
 export function logFocusSession(
   input: FocusSessionInput,
   store: FocusSessionStore = focusSessionStore
 ): FocusSession | null {
+  const currentEpoch = input.focusEpoch ?? getStoredFocusEpoch();
   const session = sanitizeSession({
     ...input,
     id: createSessionId(),
     completed: true,
     schemaVersion: FOCUS_SESSIONS_SCHEMA_VERSION,
+    focusEpoch: currentEpoch,
   });
   if (!session) return null;
   store.append(session);
