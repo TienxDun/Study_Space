@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { saveStorageJSON } from "@/lib/safe-storage";
+import { EVENT_CLOUD_SYNCED } from "@/lib/simple-cloud-sync";
 import {
   KanbanBoard,
   KanbanCard,
@@ -67,15 +68,19 @@ export function useKanbanBoards() {
   const [dragOverColTargetId, setDragOverColTargetId] = useState<string | null>(null);
   const [dragOverColPosition, setDragOverColPosition] = useState<"before" | "after" | null>(null);
 
-  // Load from localStorage
-  useEffect(() => {
+  // Nạp dữ liệu từ localStorage và đồng bộ lại khi cloud pull xong (F5 / đổi tab)
+  const loadFromStorage = useCallback(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setBoards(parsed);
+        } else {
+          setBoards(DEFAULT_BOARDS);
         }
+      } else {
+        setBoards(DEFAULT_BOARDS);
       }
       const savedActive = localStorage.getItem(ACTIVE_BOARD_KEY);
       if (savedActive) {
@@ -83,6 +88,35 @@ export function useKanbanBoards() {
       }
     } catch {}
   }, []);
+
+  useEffect(() => {
+    loadFromStorage();
+    const onCloudSynced = () => loadFromStorage();
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === STORAGE_KEY || e.key === ACTIVE_BOARD_KEY) {
+        loadFromStorage();
+      }
+    };
+    window.addEventListener(EVENT_CLOUD_SYNCED, onCloudSynced);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(EVENT_CLOUD_SYNCED, onCloudSynced);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [loadFromStorage]);
+
+  // Đảm bảo activeBoardId luôn trỏ tới một bảng tồn tại; nếu không thì sửa và lưu lại
+  useEffect(() => {
+    if (boards.length === 0) return;
+    if (!boards.some((b) => b.id === activeBoardId)) {
+      const preferred = boards.find((b) => (b.cards?.length ?? 0) > 0) || boards[0];
+      const nextId = preferred.id;
+      setActiveBoardId(nextId);
+      try {
+        localStorage.setItem(ACTIVE_BOARD_KEY, nextId);
+      } catch {}
+    }
+  }, [boards, activeBoardId]);
 
   // Listen to Pomodoro completion events to synchronize task pomodoros in real time
   useEffect(() => {
@@ -128,7 +162,9 @@ export function useKanbanBoards() {
       setBoards((prevBoards) => {
         const activeBoard = prevBoards.find((b) => b.id === activeBoardId) || prevBoards[0] || DEFAULT_BOARDS[0];
         const updated = prevBoards.map((b) => (b.id === activeBoard.id ? mutator(b) : b));
-        saveStorageJSON(STORAGE_KEY, updated);
+        queueMicrotask(() => {
+          saveStorageJSON(STORAGE_KEY, updated);
+        });
         return updated;
       });
     },
@@ -389,7 +425,9 @@ export function useKanbanBoards() {
         cards.splice(Math.min(stash.index, cards.length), 0, stash.card);
         return { ...b, cards };
       });
-      saveStorageJSON(STORAGE_KEY, updated);
+      queueMicrotask(() => {
+        saveStorageJSON(STORAGE_KEY, updated);
+      });
       return updated;
     });
     setLastDeletedCard(null);
@@ -685,7 +723,12 @@ export function useKanbanBoards() {
     const boardTitle = boardToDelete.title;
     const updated = boards.filter((b) => b.id !== boardId);
     saveBoards(updated);
-    setActiveBoardId(updated[0].id);
+    const preferred = updated.find((b) => (b.cards?.length ?? 0) > 0) || updated[0];
+    const nextId = preferred?.id ?? "board-default";
+    setActiveBoardId(nextId);
+    try {
+      localStorage.setItem(ACTIVE_BOARD_KEY, nextId);
+    } catch {}
     setBoardToDelete(null);
     toast.success(`Đã xóa bảng "${boardTitle}"`);
   }, [boardToDelete, boards, saveBoards]);

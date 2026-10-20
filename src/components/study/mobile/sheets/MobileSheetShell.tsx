@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 interface MobileSheetShellProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title: ReactNode;
   sheetId?: string;
   headerRight?: ReactNode;
   onBack?: () => void;
@@ -53,10 +53,11 @@ export function MobileSheetShell({
 }: MobileSheetShellProps) {
   const effectiveSheetId =
     sheetId ||
-    title
+    (typeof title === "string" ? title
       .replace(/\s*\([^)]*\)\s*/g, "")
       .trim()
-      .toLowerCase();
+      .toLowerCase()
+      : "sheet");
 
   const getSavedZenMode = useCallback((): boolean => {
     if (typeof window === "undefined") return defaultZenMode;
@@ -275,9 +276,9 @@ export function MobileSheetShell({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      panelKey={`mobile-sheet-${title}`}
+      panelKey={`mobile-sheet-${typeof title === "string" ? title : sheetId || "sheet"}`}
       panelRef={setCombinedRef}
-      ariaLabel={title}
+      ariaLabel={typeof title === "string" ? title : sheetId || "Bảng điều khiển"}
       initial={{ opacity: 0, y: 72, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={
@@ -333,9 +334,13 @@ export function MobileSheetShell({
             </button>
           )}
 
-          <h3 className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate flex-1 text-left">
+          {typeof title === "string" ? (
+            <h3 className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate flex-1 text-left">
             {title}
-          </h3>
+            </h3>
+          ) : (
+            <div className="flex-1 min-w-0 flex items-center">{title}</div>
+          )}
 
           <div className="flex items-center gap-1.5 shrink-0">
             {headerRight}
@@ -361,7 +366,7 @@ export function MobileSheetShell({
             <button
               type="button"
               onClick={onClose}
-              aria-label={`Đóng ${title}`}
+              aria-label={typeof title === "string" ? `Đóng ${title}` : "Đóng"}
               className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all shadow-sm"
             >
               <XIcon className="w-4 h-4" weight="bold" />

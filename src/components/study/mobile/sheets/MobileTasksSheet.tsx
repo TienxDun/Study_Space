@@ -5,10 +5,13 @@ import {
   CheckCircleIcon,
   CircleIcon,
   PlusIcon,
+  TrashIcon,
   CheckSquareIcon,
   MagnifyingGlassIcon,
   XIcon,
   TimerIcon,
+  CaretDownIcon,
+  CheckIcon,
 } from "@phosphor-icons/react";
 import { useKanbanBoards } from "../../tasks/hooks/useKanbanBoards";
 import { getDeadlineStatus } from "../../tasks/utils/task-deadline";
@@ -19,6 +22,7 @@ import { MobileUndoSnackbar } from "../feedback/MobileUndoSnackbar";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { KanbanCard, CardPriority } from "../../tasks/types";
 import { useFocusStats } from "@/lib/use-focus-stats";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { formatFocusDuration } from "@/lib/focus-sessions";
 import { startFocusTask } from "@/lib/use-focus-task";
 import { MobileTaskBubbleMenu } from "./MobileTaskBubbleMenu";
@@ -43,6 +47,14 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
   onCloseDetail,
 }: MobileTasksSheetProps) {
   const {
+    boards,
+    activeBoardId,
+    setActiveBoardId,
+    handleCreateBoard,
+    promptDeleteBoard,
+    boardToDelete,
+    setBoardToDelete,
+    handleConfirmDeleteBoard,
     currentBoard,
     updateCurrentBoard,
     searchQuery,
@@ -69,6 +81,10 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
 
   // Tab lọc theo cột: "all" hoặc column.id
   const [selectedColumnFilter, setSelectedColumnFilter] = useState<string>("all");
+  const [isCreatingBoard, setIsCreatingBoard] = useState(false);
+  const [newBoardTitle, setNewBoardTitle] = useState("");
+  const [showBoardMenu, setShowBoardMenu] = useState(false);
+  const boardMenuRef = useRef<HTMLDivElement>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [quickTitle, setQuickTitle] = useState("");
   const [quickPriority, setQuickPriority] = useState<CardPriority>("low");
@@ -106,6 +122,42 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
     setActiveMenuCardId(null);
   }, [selectedColumnFilter, searchQuery, isOpen]);
 
+  // Đóng popover chuyển bảng khi chạm ra ngoài hoặc nhấn phím Escape
+  React.useEffect(() => {
+    if (!showBoardMenu) return;
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      if (boardMenuRef.current && !boardMenuRef.current.contains(e.target as Node)) {
+        setShowBoardMenu(false);
+        setIsCreatingBoard(false);
+        setNewBoardTitle("");
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowBoardMenu(false);
+        setIsCreatingBoard(false);
+        setNewBoardTitle("");
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showBoardMenu]);
+
+  // Tự động đóng popover chuyển bảng khi sheet bị đóng
+  React.useEffect(() => {
+    if (!isOpen) {
+      setShowBoardMenu(false);
+      setIsCreatingBoard(false);
+      setNewBoardTitle("");
+    }
+  }, [isOpen]);
+
   // Điều hướng xem/sửa chi tiết task đồng bộ cùng Mobile Stack Navigation
   const handleSelectCard = React.useCallback(
     (card: KanbanCard | null) => {
@@ -136,6 +188,14 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
       setSelectedCard(null);
     }
   }, [isOpen, selectedCard, setSelectedCard]);
+
+  const submitNewBoard = () => {
+    const title = newBoardTitle.trim();
+    if (!title) return;
+    handleCreateBoard(title);
+    setNewBoardTitle("");
+    setIsCreatingBoard(false);
+  };
 
   const cycleQuickPriority = () => {
     setQuickPriority((prev) => {
@@ -258,7 +318,152 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
         onBack={selectedCard ? undefined : onBack}
         backLabel={selectedCard ? undefined : backLabel}
         sheetId="tasks"
-        title={`Việc cần làm (${allCardsWithColumn.length})`}
+        title={
+          <div ref={boardMenuRef} className="relative flex items-center min-w-0">
+            <button
+              type="button"
+              onClick={() => {
+                setShowBoardMenu((prev) => !prev);
+                setIsCreatingBoard(false);
+                setNewBoardTitle("");
+              }}
+              aria-haspopup="true"
+              aria-expanded={showBoardMenu}
+              className="flex items-center gap-1.5 px-2.5 py-1 -ml-1 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 text-white transition-all max-w-full text-left cursor-pointer"
+              title="Chuyển bảng học tập"
+            >
+              <span className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate max-w-[150px] xs:max-w-[190px]">
+                {currentBoard?.title || "Nhiệm vụ học tập"}
+              </span>
+              <span className="text-[10px] font-semibold text-white/70 bg-white/10 px-1.5 py-0.5 rounded-full shrink-0">
+                {allCardsWithColumn.length}
+              </span>
+              <CaretDownIcon
+                className={`w-3.5 h-3.5 text-white/60 shrink-0 transition-transform duration-200 ${
+                  showBoardMenu ? "rotate-180 text-white" : ""
+                }`}
+                weight="bold"
+              />
+            </button>
+
+            {/* Popover Menu chuyển bảng dạng Liquid Glass */}
+            {showBoardMenu && (
+              <div className="absolute left-0 top-full mt-2 w-64 max-w-[calc(100vw-3.5rem)] rounded-2xl bg-neutral-950/95 backdrop-blur-2xl border border-white/20 p-2 shadow-[0_20px_48px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.2)] z-50 text-white animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/40">
+                  Danh sách bảng học tập
+                </div>
+
+                <div className="max-h-52 overflow-y-auto space-y-0.5 no-scrollbar py-0.5">
+                  {boards.map((b) => {
+                    const isActive = b.id === activeBoardId;
+                    return (
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveBoardId(b.id);
+                          try {
+                            localStorage.setItem(STORAGE_KEYS.activeBoard, b.id);
+                          } catch {}
+                          setShowBoardMenu(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs transition-all text-left cursor-pointer ${
+                          isActive
+                            ? "bg-white/15 text-white font-semibold shadow-sm"
+                            : "text-white/80 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        <span className="truncate pr-2">{b.title}</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] text-white/50 px-1.5 py-0.5 rounded-md bg-white/5">
+                            {b.cards.length}
+                          </span>
+                          {isActive && <CheckIcon className="w-3.5 h-3.5 text-emerald-400" weight="bold" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="h-px bg-white/10 my-1.5" />
+
+                {/* Chức năng tạo bảng mới */}
+                {isCreatingBoard ? (
+                  <div className="p-1.5 bg-white/5 rounded-xl border border-white/10 space-y-2">
+                    <input
+                      type="text"
+                      value={newBoardTitle}
+                      onChange={(e) => setNewBoardTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          submitNewBoard();
+                          setShowBoardMenu(false);
+                        } else if (e.key === "Escape") {
+                          setIsCreatingBoard(false);
+                          setNewBoardTitle("");
+                        }
+                      }}
+                      placeholder="Tên bảng mới..."
+                      autoFocus
+                      className="lg-input h-8 w-full px-2.5 text-xs text-white bg-black/40 border-white/20 rounded-lg placeholder:text-white/40"
+                    />
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCreatingBoard(false);
+                          setNewBoardTitle("");
+                        }}
+                        className="h-7 px-2.5 rounded-lg text-[11px] text-white/70 hover:bg-white/10 transition-colors cursor-pointer"
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          submitNewBoard();
+                          setShowBoardMenu(false);
+                        }}
+                        disabled={!newBoardTitle.trim()}
+                        className="h-7 px-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-bold disabled:opacity-40 transition-colors cursor-pointer"
+                      >
+                        Tạo bảng
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewBoardTitle("");
+                      setIsCreatingBoard(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-semibold text-emerald-300 hover:bg-emerald-500/15 transition-all cursor-pointer"
+                  >
+                    <PlusIcon className="w-4 h-4 text-emerald-400" weight="bold" />
+                    <span>Tạo bảng mới</span>
+                  </button>
+                )}
+
+                {/* Xóa bảng hiện tại (khi có nhiều hơn 1 bảng) */}
+                {boards.length > 1 && !isCreatingBoard && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowBoardMenu(false);
+                      promptDeleteBoard(currentBoard);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-medium text-rose-300 hover:bg-rose-500/15 transition-all cursor-pointer"
+                  >
+                    <TrashIcon className="w-4 h-4 text-rose-400" />
+                    <span className="truncate">Xóa bảng &quot;{currentBoard?.title}&quot;</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        }
         heightClassName="h-[68dvh] max-h-[72dvh]"
         contentScroll={false}
         onSwipeLeft={goToNextFilter}
@@ -369,7 +574,8 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
           </div>
         }
       >
-        <div className="flex-1 min-h-0 flex flex-col space-y-2.5 pt-1 select-none">
+        <div className="flex-1 min-h-0 flex flex-col space-y-2 pt-0.5 select-none">
+
           {/* Thanh tìm kiếm mở rộng khi cần */}
           {isSearchOpen && (
             <div className="px-3">
@@ -616,6 +822,18 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
           backLabel={backLabel || "Kế hoạch"}
         />
       )}
+
+      {/* Modal xác nhận xóa bảng học tập */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(boardToDelete)}
+        onClose={() => setBoardToDelete(null)}
+        onConfirm={handleConfirmDeleteBoard}
+        title="Xác nhận xóa bảng học tập"
+        description="Bạn có chắc chắn muốn xóa toàn bộ bảng này và tất cả các thẻ công việc bên trong không?"
+        itemName={boardToDelete?.title}
+        confirmText="Xóa bảng"
+        cancelText="Hủy bỏ"
+      />
 
       {/* Modal xác nhận xóa thẻ công việc */}
       <ConfirmDeleteModal

@@ -283,22 +283,21 @@ export const CardDetailModal = React.memo(function CardDetailModal({
       >
           <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
 
-          {/* Thanh nắm tay kéo (Pill Handle) cho Mobile để vuốt xuống đóng thẻ */}
-          <div
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onTouchCancel={handleTouchCancel}
-            className="pt-2.5 pb-1 flex items-center justify-center sm:hidden select-none cursor-grab active:cursor-grabbing touch-none border-b border-white/[0.06] bg-white/[0.02]"
-          >
-            <span
-              aria-hidden="true"
-              className="h-1.5 w-12 rounded-full bg-white/30 hover:bg-white/50 active:bg-white/60 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.4)]"
-            />
-          </div>
-
           {/* Header: Title, Board Info & Action Bar */}
-          <div className="px-4 sm:px-6 pt-3.5 sm:pt-5 pb-3.5 border-b border-white/10 space-y-3 bg-white/[0.01]">
+          <div className="px-4 sm:px-6 pt-2.5 sm:pt-5 pb-3.5 border-b border-white/10 space-y-3 bg-white/[0.01]">
+            {/* Thanh nắm tay kéo (Pill Handle) cho Mobile - tích hợp liền mạch vào đỉnh thẻ */}
+            <div
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
+              className="pb-1.5 flex items-center justify-center sm:hidden select-none cursor-grab active:cursor-grabbing touch-none shrink-0"
+            >
+              <span
+                aria-hidden="true"
+                className="h-1.5 w-12 rounded-full bg-white/30 hover:bg-white/50 active:bg-white/60 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.4)]"
+              />
+            </div>
             <div className="flex items-center justify-between gap-2.5 sm:gap-3">
               {/* Nút Quay lại cho Mobile / Stack Navigation */}
               {onBack && (
@@ -355,14 +354,10 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                   </div>
                 </div>
 
-                <div className="text-[11px] text-slate-400 flex items-center mt-0.5 px-0.5">
-                  <span className="text-slate-400 font-medium">{currentBoard.title}</span>
-                </div>
               </div>
 
-              {/* Quick Actions (Auto-save, Delete & Close) */}
+              {/* Quick Actions (Delete & Close) */}
               <div className="flex items-center gap-1.5 shrink-0">
-                <SyncStatusBadge className="mr-0.5" />
                 <button
                   type="button"
                   onClick={() => promptDeleteCard(selectedCard)}
@@ -966,6 +961,20 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Footer Bar: Trạng thái đồng bộ mây đồng nhất với các thẻ khác */}
+          <div className="shrink-0 px-4 sm:px-6 py-2.5 border-t border-white/10 bg-neutral-950/80 backdrop-blur-md flex items-center justify-between text-xs select-none">
+            <div className="flex items-center gap-2 text-[11px] text-slate-400 truncate">
+              <span className="font-medium text-slate-300 truncate">{currentBoard.title}</span>
+              {currentColumn && (
+                <>
+                  <span className="opacity-40">•</span>
+                  <span className="truncate">{currentColumn.title}</span>
+                </>
+              )}
+            </div>
+            <SyncStatusBadge variant="text" className="text-[11px] font-medium" />
           </div>
         </motion.div>
       </ModalShell>

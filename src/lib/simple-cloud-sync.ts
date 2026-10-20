@@ -4,7 +4,7 @@
  * Tinh giản, nhẹ nhàng, không CAS, không Tombstone.
  */
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { STORAGE_KEYS } from "./storage-keys";
 import { focusSessionStore } from "./focus-sessions";
 
@@ -52,6 +52,7 @@ const SETTINGS_KEYS = [
   STORAGE_KEYS.slideshowEnabled,
   STORAGE_KEYS.slideshowIntervalMin,
   STORAGE_KEYS.activeFocusTask,
+  STORAGE_KEYS.activeBoard,
 ] as const;
 
 let apiBaseUrl =
@@ -78,24 +79,53 @@ let pendingChanges = false;
 let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 let lastErrorMessage = "";
 
+let isNotifyScheduled = false;
+
 function notifyStatusChange() {
   if (typeof window === "undefined") return;
-  try {
-    window.dispatchEvent(
-      new CustomEvent(EVENT_SYNC_STATUS_CHANGED, {
-        detail: getSyncStatus(),
-      })
-    );
-  } catch {}
+  if (isNotifyScheduled) return;
+  isNotifyScheduled = true;
+
+  const dispatch = () => {
+    isNotifyScheduled = false;
+    try {
+      window.dispatchEvent(
+        new CustomEvent(EVENT_SYNC_STATUS_CHANGED, {
+          detail: getSyncStatus(),
+        })
+      );
+    } catch {}
+  };
+
+  if (typeof queueMicrotask === "function") {
+    queueMicrotask(dispatch);
+  } else {
+    setTimeout(dispatch, 0);
+  }
 }
 
+let cachedStatus: SyncStatusInfo = {
+  state: "idle",
+  lastSyncedAt: 0,
+  hasPendingChanges: false,
+};
+
 export function getSyncStatus(): SyncStatusInfo {
-  return {
+  if (
+    cachedStatus.state === currentState &&
+    cachedStatus.lastSyncedAt === lastSyncedTime &&
+    cachedStatus.hasPendingChanges === pendingChanges &&
+    cachedStatus.errorMessage === (lastErrorMessage || undefined)
+  ) {
+    return cachedStatus;
+  }
+  cachedStatus = {
     state: currentState,
     lastSyncedAt: lastSyncedTime,
     hasPendingChanges: pendingChanges,
     errorMessage: lastErrorMessage || undefined,
   };
+  return cachedStatus;
 }
 
 // ---------- Đóng gói dữ liệu từ máy ----------
@@ -428,24 +458,18 @@ export function clearLocalUserData() {
 }
 
 // ---------- Hook React Theo Dõi Trạng Thái ----------
+function subscribeSyncStatus(onStoreChange: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener(EVENT_SYNC_STATUS_CHANGED, onStoreChange);
+  return () => {
+    window.removeEventListener(EVENT_SYNC_STATUS_CHANGED, onStoreChange);
+  };
+}
+
 export function useSyncStatus(): SyncStatusInfo {
-  const [status, setStatus] = useState<SyncStatusInfo>(getSyncStatus);
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const customEvt = e as CustomEvent<SyncStatusInfo>;
-      if (customEvt.detail) {
-        setStatus(customEvt.detail);
-      } else {
-        setStatus(getSyncStatus());
-      }
-    };
-
-    window.addEventListener(EVENT_SYNC_STATUS_CHANGED, handler);
-    return () => {
-      window.removeEventListener(EVENT_SYNC_STATUS_CHANGED, handler);
-    };
-  }, []);
-
-  return status;
+  return useSyncExternalStore(
+    subscribeSyncStatus,
+    getSyncStatus,
+    getSyncStatus
+  );
 }
