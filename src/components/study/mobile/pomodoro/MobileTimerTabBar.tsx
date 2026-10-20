@@ -33,14 +33,14 @@ export const MobileTimerTabBar = memo(function MobileTimerTabBar({ currentTab, o
     <div
       aria-hidden={!visible}
       className={cn(
-        "mb-1 z-20 items-center gap-2.5 transition-all duration-300 flex sm:hidden",
+        "w-full mb-1 z-20 items-center gap-2.5 transition-all duration-300 flex sm:hidden",
         visible
           ? "opacity-100 translate-y-0 pointer-events-auto"
           : "opacity-0 -translate-y-1.5 pointer-events-none"
       )}
     >
       <div
-        className="lg-bar flex items-center gap-0.5 p-0.5"
+        className="lg-bar w-full flex items-center gap-0.5 p-0.5"
         onPointerMove={handleSpot}
         onPointerDown={(e) => {
           handleSpot(e);
@@ -59,7 +59,7 @@ export const MobileTimerTabBar = memo(function MobileTimerTabBar({ currentTab, o
               aria-pressed={isActive}
               tabIndex={visible ? 0 : -1}
               className={cn(
-                "lg-seg relative w-24 inline-flex items-center justify-center rounded-full py-1 min-h-[38px] text-[11px] font-black uppercase tracking-wider text-center cursor-pointer",
+                "lg-seg relative flex-1 min-w-0 inline-flex items-center justify-center rounded-full py-1 min-h-[38px] text-[11px] font-black uppercase tracking-wider text-center cursor-pointer",
                 isActive ? "text-white" : "text-white/80 hover:text-white font-bold"
               )}
             >

@@ -601,7 +601,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 4, scale: 0.97 }}
                         transition={{ duration: 0.12 }}
-                        className="absolute top-full mt-1.5 left-0 sm:left-auto sm:right-0 w-80 p-3.5 rounded-2xl bg-black/40 backdrop-blur-2xl border border-white/15 shadow-2xl z-50 space-y-3"
+                        className="absolute top-full mt-1.5 right-0 w-[min(20rem,calc(100vw-3rem))] sm:w-80 p-3.5 rounded-2xl bg-black/40 backdrop-blur-2xl border border-white/15 shadow-2xl z-50 space-y-3"
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -773,7 +773,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                 setSelectedCard(null);
                 closeAllPopovers();
               }}
-              className="w-full h-9 px-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-amber-400/20 to-amber-500/20 hover:from-amber-500/30 hover:to-amber-500/30 active:scale-[0.99] text-amber-200 font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border border-amber-400/35 shadow-sm"
+              className="w-full min-h-9 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-amber-400/20 to-amber-500/20 hover:from-amber-500/30 hover:to-amber-500/30 active:scale-[0.99] text-amber-200 font-semibold text-xs flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center transition-all cursor-pointer border border-amber-400/35 shadow-sm"
               title="Bắt đầu phiên tập trung Pomodoro cho nhiệm vụ này"
             >
               <PlayIcon className="w-3.5 h-3.5 fill-amber-300 text-amber-300 shrink-0" />

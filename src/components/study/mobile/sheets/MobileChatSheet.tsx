@@ -239,7 +239,7 @@ export function MobileChatSheet({
       <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden text-white select-none">
         {/* Thông báo dạng pill nổi phía trên */}
         {notice && (
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 px-3.5 py-1.5 rounded-full bg-neutral-900/95 border border-white/20 text-xs text-white shadow-xl pointer-events-none animate-in fade-in zoom-in-95 duration-150">
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 w-max max-w-[calc(100%-1.5rem)] px-3.5 py-1.5 rounded-2xl bg-neutral-900/95 border border-white/20 text-xs text-white text-center break-words leading-snug shadow-xl pointer-events-none animate-in fade-in zoom-in-95 duration-150">
             {notice}
           </div>
         )}
