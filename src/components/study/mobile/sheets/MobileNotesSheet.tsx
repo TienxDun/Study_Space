@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 import { useStudyNotes } from "../../notes/hooks/useStudyNotes";
 import { useRichTextEditor, flattenNestedTodos } from "../../notes/hooks/useRichTextEditor";
+import { parseNoteChecklistStats } from "../../notes/utils/note-checklist";
 import { NoteChatPromptMenu } from "../../notes/components/NoteChatPromptMenu";
 import { StudyNote } from "../../notes/types";
 import { MobileSheetShell } from "./MobileSheetShell";
@@ -49,17 +50,6 @@ function extractPlainText(html: string): string {
     .replace(/&nbsp;/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-// Đếm số checklist hoàn thành và tổng số checklist trong nội dung HTML
-function parseChecklistStats(html: string) {
-  if (!html) return { total: 0, done: 0 };
-  const doneMatches = html.match(/class=["'][^"']*todo-done[^"']*["']/g) || [];
-  const allTodoMatches = html.match(/class=["'][^"']*todo-item[^"']*["']/g) || [];
-  return {
-    total: allTodoMatches.length,
-    done: doneMatches.length,
-  };
 }
 
 export const MobileNotesSheet = React.memo(function MobileNotesSheet({
@@ -192,7 +182,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
 
   // Thống kê to-do trong ghi chú đang mở
   const checklistStats = useMemo(() => {
-    return parseChecklistStats(currentEditingNote?.content || "");
+    return parseNoteChecklistStats(currentEditingNote?.content || "");
   }, [currentEditingNote?.content]);
 
   // Khi mở note để sửa, đồng bộ nội dung HTML vào khung gõ (chỉ đồng bộ khi đổi note, gõ chữ không nạp lại để khỏi mất chỗ gõ)
@@ -642,7 +632,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                 {filteredNotes.length > 0 ? (
                   filteredNotes.map((note, idx) => {
                     const snippet = extractPlainText(note.content);
-                    const stats = parseChecklistStats(note.content);
+                    const stats = parseNoteChecklistStats(note.content);
                     const isMenuOpen = activeMenuNoteId === note.id;
 
                     return (

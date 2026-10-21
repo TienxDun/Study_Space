@@ -575,14 +575,16 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
             }`}
           >
             <div className="flex items-center gap-2 font-medium">
+              {checklistStats.total > 0 && (
+                <>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                    {checklistStats.completed}/{checklistStats.total} việc
+                  </span>
+                </>
+              )}
               <span className="flex items-center gap-1 opacity-75">
                 <span>{wordCount} từ</span>
               </span>
-              {checklistStats.total > 0 && (
-                <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold">
-                  {checklistStats.completed}/{checklistStats.total} việc
-                </span>
-              )}
             </div>
 
             <div className="flex items-center gap-2">

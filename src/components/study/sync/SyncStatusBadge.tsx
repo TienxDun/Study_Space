@@ -22,18 +22,18 @@ const PILL_TONES: Record<SyncStatusView["tone"], string> = {
     "bg-rose-500/15 border-rose-500/30 text-rose-300 hover:bg-rose-500/25",
 };
 
-const TEXT_TONES_DARK: Record<SyncStatusView["tone"], string> = {
-  emerald: "text-emerald-400 hover:text-emerald-300",
-  amber: "text-amber-300 hover:text-amber-200",
-  sky: "text-sky-300 hover:text-sky-200",
-  rose: "text-rose-300 hover:text-rose-200",
+const TEXT_TONES_DARK: Record<SyncStatusView["tone"], { base: string; hover: string }> = {
+  emerald: { base: "text-emerald-400", hover: "hover:text-emerald-300" },
+  amber: { base: "text-amber-300", hover: "hover:text-amber-200" },
+  sky: { base: "text-sky-300", hover: "hover:text-sky-200" },
+  rose: { base: "text-rose-300", hover: "hover:text-rose-200" },
 };
 
-const TEXT_TONES_LIGHT: Record<SyncStatusView["tone"], string> = {
-  emerald: "text-emerald-600 hover:text-emerald-500",
-  amber: "text-amber-600 hover:text-amber-500",
-  sky: "text-sky-600 hover:text-sky-500",
-  rose: "text-rose-600 hover:text-rose-500",
+const TEXT_TONES_LIGHT: Record<SyncStatusView["tone"], { base: string; hover: string }> = {
+  emerald: { base: "text-emerald-600", hover: "hover:text-emerald-500" },
+  amber: { base: "text-amber-600", hover: "hover:text-amber-500" },
+  sky: { base: "text-sky-600", hover: "hover:text-sky-500" },
+  rose: { base: "text-rose-600", hover: "hover:text-rose-500" },
 };
 
 interface SyncStatusBadgeProps {
@@ -42,6 +42,8 @@ interface SyncStatusBadgeProps {
   light?: boolean;
   className?: string;
   iconOnly?: boolean;
+  /** Chỉ hiển thị trạng thái, không bấm để đồng bộ (dùng trong menu hồ sơ). */
+  interactive?: boolean;
 }
 
 export const SyncStatusBadge = React.memo(function SyncStatusBadge({
@@ -50,6 +52,7 @@ export const SyncStatusBadge = React.memo(function SyncStatusBadge({
   light = false,
   className,
   iconOnly = false,
+  interactive = true,
 }: SyncStatusBadgeProps) {
   const { state, lastSyncedAt } = useSyncStatus();
   const [isManualSyncing, setIsManualSyncing] = useState(false);
@@ -123,6 +126,25 @@ export const SyncStatusBadge = React.memo(function SyncStatusBadge({
     const tone = light
       ? TEXT_TONES_LIGHT[view.tone]
       : TEXT_TONES_DARK[view.tone];
+    const content = (
+      <>
+        {icon}
+        {!iconOnly && <span className="text-xs">{view.label}</span>}
+      </>
+    );
+
+    if (!interactive) {
+      return (
+        <span
+          role="status"
+          title={view.label}
+          className={cn("flex items-center gap-1.5 select-none", tone.base, className)}
+        >
+          {content}
+        </span>
+      );
+    }
+
     return (
       <button
         type="button"
@@ -131,12 +153,12 @@ export const SyncStatusBadge = React.memo(function SyncStatusBadge({
         title={view.title}
         className={cn(
           "flex items-center gap-1.5 select-none transition-colors cursor-pointer",
-          tone,
+          tone.base,
+          tone.hover,
           className
         )}
       >
-        {icon}
-        {!iconOnly && <span className="text-xs">{view.label}</span>}
+        {content}
       </button>
     );
   }

@@ -9,6 +9,7 @@ import { GoogleIcon } from "./GoogleIcon";
 import { toast } from "sonner";
 import { SyncStatusBadge } from "@/components/study/sync/SyncStatusBadge";
 import { syncNow } from "@/lib/simple-cloud-sync";
+import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 
 /**
  * Nút hồ sơ tài khoản và bảng menu đăng nhập / đăng xuất trên TopBar.
@@ -21,8 +22,10 @@ interface TopBarUserProfileProps {
 export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {}) => {
   const { user, loading, isSigningIn, signIn, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setAvatarError(false);
@@ -73,6 +76,7 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
   return (
     <div className="relative shrink-0" ref={dropdownRef}>
       <button
+        ref={triggerRef}
         onClick={() => setIsOpen((prev) => !prev)}
         className={`h-8 pl-1 pr-2 rounded-xl border transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs group ${
           isOpen
@@ -142,8 +146,8 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
             </div>
 
             {/* Đồng bộ đám mây & Nút sync ngay */}
-            <div className="py-2.5 my-2 border-y border-white/10 flex items-center justify-between text-xs">
-              <SyncStatusBadge variant="text" />
+            <div className="py-2.5 border-b border-white/10 flex items-center justify-between text-xs">
+              <SyncStatusBadge variant="text" interactive={false} />
               <button
                 type="button"
                 onClick={async () => {
@@ -166,9 +170,10 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
                 Google Connected
               </span>
               <button
+                type="button"
                 onClick={() => {
-                  signOut();
                   setIsOpen(false);
+                  setIsLogoutConfirmOpen(true);
                 }}
                 className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-300 hover:text-rose-200 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
               >
@@ -179,6 +184,19 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmDeleteModal
+        isOpen={isLogoutConfirmOpen}
+        onClose={() => {
+          setIsLogoutConfirmOpen(false);
+          triggerRef.current?.focus();
+        }}
+        onConfirm={() => void signOut()}
+        title="Đăng xuất khỏi ZenStudy?"
+        description="Dữ liệu đã đồng bộ vẫn còn trên đám mây, nhưng dữ liệu trên thiết bị này sẽ bị xoá. Nếu đang offline, thay đổi chưa đồng bộ có thể mất."
+        confirmText="Đăng xuất"
+        cancelText="Ở lại"
+      />
     </div>
   );
 };
