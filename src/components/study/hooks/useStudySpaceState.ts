@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { STUDY_SCENES, StudyEmbedItem } from "@/components/study/study-types";
 import { useScenePreloader } from "@/lib/use-scene-preloader";
 import {
@@ -408,16 +408,47 @@ export function useStudySpaceState() {
     } catch {}
   }, []);
 
+  const isFullscreenRef = useRef(false);
+  useEffect(() => {
+    isFullscreenRef.current = isFullscreen;
+  }, [isFullscreen]);
+
   const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-      setIsFullscreen(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
-      }
-      setIsFullscreen(false);
+    const next = !isFullscreenRef.current;
+    if (typeof document !== "undefined") {
+      try {
+        if (next) {
+          if (!document.fullscreenElement) {
+            const el = document.documentElement as HTMLElement & {
+              requestFullscreen?: () => Promise<void>;
+              webkitRequestFullscreen?: () => void;
+            };
+            const req = el.requestFullscreen || el.webkitRequestFullscreen;
+            if (typeof req === "function") {
+              const result = req.call(el);
+              if (result && typeof (result as Promise<void>).catch === "function") {
+                (result as Promise<void>).catch(() => {});
+              }
+            }
+          }
+        } else {
+          const doc = document as Document & {
+            exitFullscreen?: () => Promise<void>;
+            webkitExitFullscreen?: () => void;
+          };
+          if (document.fullscreenElement && (doc.exitFullscreen || doc.webkitExitFullscreen)) {
+            const exit = doc.exitFullscreen || doc.webkitExitFullscreen;
+            if (typeof exit === "function") {
+              const result = exit.call(doc);
+              if (result && typeof (result as Promise<void>).catch === "function") {
+                (result as Promise<void>).catch(() => {});
+              }
+            }
+          }
+        }
+      } catch {}
     }
+    setIsFullscreen(next);
   }, []);
 
   useStudyKeyboard({

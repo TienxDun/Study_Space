@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   GridLayout,
   ParticipantTile,
@@ -10,23 +10,31 @@ import {
   useTracks,
   RoomAudioRenderer,
   StartAudio,
+  ConnectionQualityIndicator,
 } from "@livekit/components-react";
-import { Track } from "livekit-client";
+import { Track, RoomEvent } from "livekit-client";
 import {
   SignOutIcon,
   ChatTextIcon,
   PaperPlaneTiltIcon,
   XIcon,
-  CopyIcon,
   CheckIcon,
   SparkleIcon,
+  CircleNotchIcon,
+  LinkSimpleIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
+import { RoomSessionTimer } from "../../rooms/RoomSessionTimer";
+import { buildInviteLink } from "@/lib/meet-invite";
 
 interface MobileRoomViewProps {
   roomName: string;
   onLeave: () => void;
+  remainingMinutes?: number | null;
+  sessionMaxMinutes?: number;
+  audioDeviceId?: string;
+  videoDeviceId?: string;
 }
 
 const formatTime = (ts: number) =>
@@ -36,8 +44,71 @@ const formatTime = (ts: number) =>
     hour12: false,
   });
 
-export function MobileRoomView({ roomName, onLeave }: MobileRoomViewProps) {
+function MobileParticipantTile({ trackRef, ...rest }: any) {
+  return (
+    <div className="relative w-full h-full">
+      <ParticipantTile trackRef={trackRef} {...rest} />
+      <div
+        className="absolute top-2 right-2 z-10 pointer-events-none bg-black/50 backdrop-blur-md rounded-md p-1 border border-white/10 text-emerald-300 flex items-center justify-center shadow-sm"
+        title="Chất lượng kết nối"
+      >
+        <ConnectionQualityIndicator participant={trackRef?.participant} className="w-3.5 h-3.5 [&_svg]:w-3.5 [&_svg]:h-3.5" />
+      </div>
+    </div>
+  );
+}
+
+export function MobileRoomView({
+  roomName,
+  onLeave,
+  remainingMinutes,
+  sessionMaxMinutes = 120,
+  audioDeviceId,
+  videoDeviceId,
+}: MobileRoomViewProps) {
   const room = useRoomContext();
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const [canShareScreen, setCanShareScreen] = useState(false);
+
+  // Kích hoạt đúng microphone và camera mà người dùng đã chọn từ bước xem trước (Pre-join)
+  useEffect(() => {
+    if (!room) return;
+    if (audioDeviceId) {
+      room.switchActiveDevice("audioinput", audioDeviceId).catch(() => {});
+    }
+    if (videoDeviceId) {
+      room.switchActiveDevice("videoinput", videoDeviceId).catch(() => {});
+    }
+  }, [room, audioDeviceId, videoDeviceId]);
+
+  // Kiểm tra hỗ trợ chia sẻ màn hình trên thiết bị mobile (iOS Safari không hỗ trợ getDisplayMedia)
+  useEffect(() => {
+    if (
+      typeof navigator !== "undefined" &&
+      navigator.mediaDevices &&
+      typeof navigator.mediaDevices.getDisplayMedia === "function"
+    ) {
+      setCanShareScreen(true);
+    }
+  }, []);
+
+  // Lắng nghe trạng thái tái kết nối (Reconnect)
+  useEffect(() => {
+    const handleReconnecting = () => setIsReconnecting(true);
+    const handleReconnected = () => setIsReconnecting(false);
+    const handleDisconnected = () => setIsReconnecting(false);
+
+    room.on(RoomEvent.Reconnecting, handleReconnecting);
+    room.on(RoomEvent.Reconnected, handleReconnected);
+    room.on(RoomEvent.Disconnected, handleDisconnected);
+
+    return () => {
+      room.off(RoomEvent.Reconnecting, handleReconnecting);
+      room.off(RoomEvent.Reconnected, handleReconnected);
+      room.off(RoomEvent.Disconnected, handleDisconnected);
+    };
+  }, [room]);
+
   const tracks = useTracks(
     [
       { source: Track.Source.Camera, withPlaceholder: true },
@@ -52,6 +123,18 @@ export function MobileRoomView({ roomName, onLeave }: MobileRoomViewProps) {
   const [seenCount, setSeenCount] = useState(0);
   const [copied, setCopied] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const hasExpiredRef = useRef(false);
+
+  const handleSessionExpire = useCallback(() => {
+    if (hasExpiredRef.current) return;
+    hasExpiredRef.current = true;
+    toast.error(`Phiên học đã đạt giới hạn ${sessionMaxMinutes} phút`);
+    try {
+      room.disconnect();
+    } catch {}
+    onLeave();
+  }, [room, onLeave, sessionMaxMinutes]);
 
   const unreadCount =
     !chatOpen && chatMessages.length > seenCount
@@ -81,12 +164,15 @@ export function MobileRoomView({ roomName, onLeave }: MobileRoomViewProps) {
     } catch {}
   };
 
-  const handleCopyRoomName = async () => {
+  const handleCopyInviteLink = async () => {
     try {
-      await navigator.clipboard.writeText(roomName);
+      await navigator.clipboard.writeText(buildInviteLink(roomName));
       setCopied(true);
+      toast.success("Đã copy link mời");
       setTimeout(() => setCopied(false), 2000);
-    } catch {}
+    } catch {
+      toast.error("Không thể copy link mời");
+    }
   };
 
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
@@ -100,36 +186,55 @@ export function MobileRoomView({ roomName, onLeave }: MobileRoomViewProps) {
       {/* Phát âm thanh LiveKit */}
       <RoomAudioRenderer />
 
+      {/* Banner cảnh báo khi phòng đang kết nối lại (Reconnect) */}
+      {isReconnecting && (
+        <div className="bg-amber-500/90 text-slate-950 font-bold text-xs py-1.5 px-3 text-center shrink-0 flex items-center justify-center gap-2 animate-pulse shadow-md z-30">
+          <CircleNotchIcon className="w-4 h-4 animate-spin text-slate-950" />
+          <span>Đang kết nối lại...</span>
+        </div>
+      )}
+
       {/* Thông báo nếu trình duyệt chặn tự phát âm thanh */}
       <StartAudio
         label="🔊 Chạm vào đây để nghe tiếng bạn bè"
         className="mx-3 mt-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-medium cursor-pointer text-center shrink-0 z-30"
       />
 
-      {/* Thanh trạng thái phụ siêu tinh gọn (chỉ hiện số người & nút copy, không chiếm diện tích) */}
-      <div className="flex items-center justify-between px-3.5 py-1.5 text-xs border-b border-white/[0.08] shrink-0 bg-white/[0.02]">
-        <div className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-[11px] text-slate-300 font-medium">
-            {room.numParticipants} thành viên đang học
+      {/* Thanh trạng thái phụ siêu tinh gọn (chỉ hiện số người, đồng hồ phiên độc lập & nút copy link mời) */}
+      <div className="flex items-center justify-between px-3.5 py-1.5 text-xs border-b border-white/[0.08] shrink-0 bg-white/[0.02] gap-1.5">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+          <span className="text-[11px] text-slate-300 font-medium truncate">
+            {room.numParticipants} bạn
           </span>
+          {/* Đồng hồ phiên cô lập: tính theo Date.now(), chuyển tab không mất giờ, ngắt 1 lần */}
+          <RoomSessionTimer
+            sessionMaxMinutes={sessionMaxMinutes}
+            onExpire={handleSessionExpire}
+            compact
+          />
+          {typeof remainingMinutes === "number" && remainingMinutes < 300 && (
+            <span className="text-[10px] text-amber-300 bg-amber-500/15 border border-amber-400/25 px-1.5 py-0.5 rounded truncate">
+              Còn ~{remainingMinutes}p
+            </span>
+          )}
         </div>
 
         <button
           type="button"
-          onClick={handleCopyRoomName}
-          className="h-6 px-2 rounded-lg bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-[11px] font-medium text-slate-300 hover:text-white flex items-center gap-1 transition-all cursor-pointer"
-          title="Sao chép tên phòng"
+          onClick={handleCopyInviteLink}
+          className="h-6 px-2 rounded-lg bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-[11px] font-medium text-slate-300 hover:text-white flex items-center gap-1 transition-all cursor-pointer shrink-0"
+          title="Sao chép link mời phòng"
         >
           {copied ? (
             <>
               <CheckIcon className="w-3 h-3 text-emerald-400" />
-              <span className="text-emerald-400">Đã sao chép</span>
+              <span className="text-emerald-400">Đã chép</span>
             </>
           ) : (
             <>
-              <CopyIcon className="w-3 h-3 text-slate-400" />
-              <span>Chép mã phòng</span>
+              <LinkSimpleIcon className="w-3 h-3 text-emerald-400" />
+              <span>Link mời</span>
             </>
           )}
         </button>
@@ -140,7 +245,7 @@ export function MobileRoomView({ roomName, onLeave }: MobileRoomViewProps) {
         {tracks.length > 0 ? (
           <div className="w-full h-full overflow-y-auto custom-study-scroll rounded-2xl [&_.lk-grid-layout]:gap-2 [&_.lk-participant-tile]:rounded-2xl [&_.lk-participant-tile]:border [&_.lk-participant-tile]:border-white/15 [&_.lk-participant-tile]:overflow-hidden [&_.lk-participant-tile]:bg-slate-900/90 [&_.lk-participant-tile]:shadow-md">
             <GridLayout tracks={tracks} className="h-full">
-              <ParticipantTile />
+              <MobileParticipantTile />
             </GridLayout>
           </div>
         ) : (
@@ -154,7 +259,7 @@ export function MobileRoomView({ roomName, onLeave }: MobileRoomViewProps) {
               Đang đợi bạn bè tham gia
             </h3>
             <p className="text-[11px] text-slate-400 max-w-[220px] leading-relaxed mb-3">
-              Gửi tên phòng{" "}
+              Gửi link mời phòng{" "}
               <strong className="text-emerald-300 font-mono font-semibold">
                 {roomName}
               </strong>{" "}
@@ -162,18 +267,18 @@ export function MobileRoomView({ roomName, onLeave }: MobileRoomViewProps) {
             </p>
             <button
               type="button"
-              onClick={handleCopyRoomName}
+              onClick={handleCopyInviteLink}
               className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 active:scale-95 border border-white/15 text-[11px] font-semibold text-slate-200 flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
             >
               {copied ? (
                 <>
                   <CheckIcon className="w-3 h-3 text-emerald-400" />
-                  <span>Đã sao chép!</span>
+                  <span>Đã chép link!</span>
                 </>
               ) : (
                 <>
-                  <CopyIcon className="w-3 h-3" />
-                  <span>Sao chép tên phòng</span>
+                  <LinkSimpleIcon className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Sao chép link mời</span>
                 </>
               )}
             </button>
@@ -181,7 +286,7 @@ export function MobileRoomView({ roomName, onLeave }: MobileRoomViewProps) {
         )}
       </main>
 
-      {/* Thanh điều khiển cuộc gọi dưới đáy: ĐÃ GIẢM ĐỘ DÀY (Mỏng gọn, thanh lịch, chuẩn ProMax) */}
+      {/* Thanh điều khiển cuộc gọi dưới đáy */}
       <footer className="shrink-0 py-1.5 px-3 flex items-center justify-center z-20">
         <div className="flex items-center gap-3 px-3.5 py-1.5 rounded-full bg-slate-900/95 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.85)]">
           {/* Nút Micro */}
@@ -195,6 +300,16 @@ export function MobileRoomView({ roomName, onLeave }: MobileRoomViewProps) {
             source={Track.Source.Camera}
             className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center cursor-pointer active:scale-95 transition-all [&_svg]:w-4.5 [&_svg]:h-4.5 aria-pressed:bg-emerald-500 aria-pressed:border-emerald-400 aria-pressed:text-slate-950 aria-pressed:shadow-[0_0_12px_rgba(52,211,153,0.5)]"
           />
+
+          {/* Nút Chia sẻ màn hình Mobile (chỉ hiện khi trình duyệt hỗ trợ getDisplayMedia) */}
+          {canShareScreen && (
+            <TrackToggle
+              source={Track.Source.ScreenShare}
+              captureOptions={{ audio: true }}
+              className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center cursor-pointer active:scale-95 transition-all [&_svg]:w-4.5 [&_svg]:h-4.5 aria-pressed:bg-emerald-500 aria-pressed:border-emerald-400 aria-pressed:text-slate-950 aria-pressed:shadow-[0_0_12px_rgba(52,211,153,0.5)]"
+              title="Chia sẻ màn hình"
+            />
+          )}
 
           {/* Nút Chat */}
           <button

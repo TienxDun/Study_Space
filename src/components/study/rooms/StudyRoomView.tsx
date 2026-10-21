@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
-  GridLayout,
   ParticipantTile,
   TrackToggle,
   useChat,
@@ -10,8 +9,10 @@ import {
   useTracks,
   RoomAudioRenderer,
   StartAudio,
+  ConnectionQualityIndicator,
 } from "@livekit/components-react";
-import { Track } from "livekit-client";
+import { Track, RoomEvent } from "livekit-client";
+import { getTrackReferenceId } from "@livekit/components-core";
 import {
   SignOutIcon,
   ChatTextIcon,
@@ -19,9 +20,13 @@ import {
   XIcon,
   CornersOutIcon,
   CornersInIcon,
+  LinkSimpleIcon,
+  CircleNotchIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
+import { RoomSessionTimer } from "./RoomSessionTimer";
+import { buildInviteLink } from "@/lib/meet-invite";
 
 interface StudyRoomViewProps {
   roomName: string;
@@ -31,6 +36,10 @@ interface StudyRoomViewProps {
   onDragStart?: (e: React.PointerEvent) => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
+  remainingMinutes?: number | null;
+  sessionMaxMinutes?: number;
+  audioDeviceId?: string;
+  videoDeviceId?: string;
 }
 
 const formatTime = (ts: number) =>
@@ -39,6 +48,28 @@ const formatTime = (ts: number) =>
     minute: "2-digit",
     hour12: false,
   });
+
+/**
+ * Tile người tham gia kèm chỉ báo chất lượng mạng ở góc trên phải
+ * (không che tên người dùng và icon mic/cam ở góc dưới trái).
+ */
+function RoomParticipantTile({ trackRef, ...rest }: any) {
+  return (
+    <div className="relative w-full h-full">
+      <ParticipantTile
+        trackRef={trackRef}
+        className="w-full h-full rounded-2xl overflow-hidden border border-white/10"
+        {...rest}
+      />
+      <div
+        className="absolute top-2 right-2 z-10 pointer-events-none bg-black/50 backdrop-blur-md rounded-md p-1 border border-white/10 text-emerald-300 flex items-center justify-center shadow-sm"
+        title="Chất lượng kết nối"
+      >
+        <ConnectionQualityIndicator participant={trackRef?.participant} className="w-3.5 h-3.5 [&_svg]:w-3.5 [&_svg]:h-3.5" />
+      </div>
+    </div>
+  );
+}
 
 // Ô soạn tin tách riêng giữ state `draft` cục bộ: gõ phím chỉ vẽ lại đúng ô này,
 // không kéo theo lưới video LiveKit (rất nặng) re-render mỗi ký tự.
@@ -90,8 +121,42 @@ export const StudyRoomView = ({
   onDragStart,
   isFullscreen = false,
   onToggleFullscreen,
+  remainingMinutes,
+  sessionMaxMinutes = 120,
+  audioDeviceId,
+  videoDeviceId,
 }: StudyRoomViewProps) => {
   const room = useRoomContext();
+  const [isReconnecting, setIsReconnecting] = useState(false);
+
+  // Kích hoạt đúng microphone và camera mà người dùng đã chọn từ bước xem trước (Pre-join)
+  useEffect(() => {
+    if (!room) return;
+    if (audioDeviceId) {
+      room.switchActiveDevice("audioinput", audioDeviceId).catch(() => {});
+    }
+    if (videoDeviceId) {
+      room.switchActiveDevice("videoinput", videoDeviceId).catch(() => {});
+    }
+  }, [room, audioDeviceId, videoDeviceId]);
+
+  // Lắng nghe trạng thái tái kết nối (Reconnect)
+  useEffect(() => {
+    const handleReconnecting = () => setIsReconnecting(true);
+    const handleReconnected = () => setIsReconnecting(false);
+    const handleDisconnected = () => setIsReconnecting(false);
+
+    room.on(RoomEvent.Reconnecting, handleReconnecting);
+    room.on(RoomEvent.Reconnected, handleReconnected);
+    room.on(RoomEvent.Disconnected, handleDisconnected);
+
+    return () => {
+      room.off(RoomEvent.Reconnecting, handleReconnecting);
+      room.off(RoomEvent.Reconnected, handleReconnected);
+      room.off(RoomEvent.Disconnected, handleDisconnected);
+    };
+  }, [room]);
+
   const tracks = useTracks(
     [
       { source: Track.Source.Camera, withPlaceholder: true },
@@ -105,6 +170,18 @@ export const StudyRoomView = ({
   const unreadCount = !chatOpen && chatMessages.length > seenCount
     ? chatMessages.length - seenCount
     : 0;
+
+  const hasExpiredRef = useRef(false);
+
+  const handleSessionExpire = useCallback(() => {
+    if (hasExpiredRef.current) return;
+    hasExpiredRef.current = true;
+    toast.error(`Phiên học đã đạt giới hạn ${sessionMaxMinutes} phút`);
+    try {
+      room.disconnect();
+    } catch {}
+    onLeave();
+  }, [room, onLeave, sessionMaxMinutes]);
 
   const toggleChat = () => {
     setChatOpen((v) => {
@@ -120,6 +197,15 @@ export const StudyRoomView = ({
     [send]
   );
 
+  const handleCopyInviteLink = async () => {
+    try {
+      await navigator.clipboard.writeText(buildInviteLink(roomName));
+      toast.success("Đã copy link mời");
+    } catch {
+      toast.error("Không thể copy link mời");
+    }
+  };
+
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
 
   const handleConfirmLeave = () => {
@@ -130,6 +216,14 @@ export const StudyRoomView = ({
     <div className="flex flex-col h-full">
       {/* Phát âm thanh của các thành viên khác trong phòng */}
       <RoomAudioRenderer />
+
+      {/* Banner cảnh báo khi phòng đang kết nối lại (Reconnect) */}
+      {isReconnecting && (
+        <div className="bg-amber-500/90 text-slate-950 font-bold text-xs py-1.5 px-4 text-center shrink-0 flex items-center justify-center gap-2 animate-pulse shadow-md z-30">
+          <CircleNotchIcon className="w-4 h-4 animate-spin text-slate-950" />
+          <span>Đang kết nối lại...</span>
+        </div>
+      )}
 
       {/* Hiển thị nút bật tiếng nếu trình duyệt chặn tự động phát âm thanh */}
       <StartAudio
@@ -149,6 +243,19 @@ export const StudyRoomView = ({
           <span className="text-[11px] text-slate-400 shrink-0">
             {room.numParticipants} người
           </span>
+
+          {typeof remainingMinutes === "number" && remainingMinutes < 300 && (
+            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-semibold border border-amber-400/30">
+              Còn ~{remainingMinutes}p tháng này
+            </span>
+          )}
+
+          {/* Đồng hồ phiên: hiển thị thời lượng đã học và đếm ngược hạn mức */}
+          <RoomSessionTimer
+            sessionMaxMinutes={sessionMaxMinutes}
+            onExpire={handleSessionExpire}
+          />
+
           {isFullscreen && (
             <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold border border-emerald-400/30">
               Toàn màn hình
@@ -156,6 +263,20 @@ export const StudyRoomView = ({
           )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
+          {/* Nút copy link mời */}
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={handleCopyInviteLink}
+            className="group inline-flex items-center h-8 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white text-xs font-semibold transition-all duration-200 cursor-pointer overflow-hidden"
+            title="Copy link mời tham gia phòng"
+            aria-label="Copy link mời"
+          >
+            <LinkSimpleIcon className="w-4 h-4 shrink-0 text-emerald-400 transition-transform duration-200 group-hover:scale-110" />
+            <span className="max-w-0 opacity-0 overflow-hidden whitespace-nowrap group-hover:max-w-28 group-hover:opacity-100 group-hover:ml-1.5 group-focus-visible:max-w-28 group-focus-visible:opacity-100 group-focus-visible:ml-1.5 transition-all duration-200 ease-out">
+              Copy link mời
+            </span>
+          </button>
+
           {onToggleFullscreen && (
             <button
               onPointerDown={(e) => e.stopPropagation()}
@@ -200,9 +321,19 @@ export const StudyRoomView = ({
       <div className={`flex-1 min-h-0 flex ${sideBySide ? "flex-row" : "flex-col"}`}>
         <div className="flex-1 min-w-0 min-h-0 overflow-y-auto p-3 sm:p-4 custom-study-scroll">
           {tracks.length > 0 ? (
-            <GridLayout tracks={tracks} className="h-full">
-              <ParticipantTile className="rounded-2xl overflow-hidden border border-white/10" />
-            </GridLayout>
+            <div
+              className={`grid gap-2 h-full auto-rows-fr ${
+                tracks.length <= 1
+                  ? "grid-cols-1"
+                  : tracks.length <= 4
+                    ? "grid-cols-2"
+                    : "grid-cols-3"
+              }`}
+            >
+              {tracks.map((track) => (
+                <RoomParticipantTile key={getTrackReferenceId(track)} trackRef={track} />
+              ))}
+            </div>
           ) : (
             <div className="h-full flex items-center justify-center">
               <p className="text-xs text-slate-400">Đang chờ mọi người vào...</p>

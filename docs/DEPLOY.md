@@ -24,19 +24,42 @@ Các key từng dán ở khung chat coi như đã lộ:
 4. Kiểm tra: mở `/health` phải thấy `{"ok":true,"aiBinding":true,"kv":true}`.
 5. Đổi model mặc định: mở trang admin local `http://localhost:3001/admin/chat` → thẻ Model → chọn → Đổi model (lưu vào KV, có hiệu lực ngay, không cần deploy lại). API tương ứng: `GET/POST /models?token=...`.
 
-## Bước 1b — Deploy Worker `livekit-rooms` (phòng học nhóm)
+## Bước 1b — Deploy Worker `livekit` (phòng học nhóm)
 
-1. Dashboard → Workers & Pages → Create Worker → đặt tên `livekit-rooms` → Edit code → dán `workers/livekit-rooms/worker.js` → Deploy.
-2. Settings → Variables:| Tên                    | Loại            | Giá trị                                                                      |
-   | ----------------------- | ---------------- | ------------------------------------------------------------------------------ |
-   | `LIVEKIT_URL`         | **Secret** | `wss://<project>.livekit.cloud`                                              |
-   | `LIVEKIT_API_KEY`     | **Secret** | API key của LiveKit                                                           |
-   | `LIVEKIT_API_SECRET`  | **Secret** | API secret của LiveKit (không đưa vào web)                                |
-   | `FIREBASE_PROJECT_ID` | Text được     | `zenspace-d10m13y26` (**bắt buộc** — dùng để kiểm vé Firebase) |
-   | `ALLOWED_ORIGINS`     | Text được     | `https://zenstudy.space,http://localhost:3001`                               |
-   | `ADMIN_TOKEN`         | **Secret** | không bắt buộc — chỉ để xem `/rooms?token=...` ngoài web             |
-3. Lấy địa chỉ worker (`https://livekit-rooms.<bạn>.workers.dev`) → điền vào `NEXT_PUBLIC_LIVEKIT_TOKEN_URL` ở Bước 3.
-4. Kiểm tra: `curl.exe -i -X POST https://<worker>/token` phải trả **401** (thiếu vé Firebase). Vào phòng từ web sau khi đăng nhập mới được phát vé.
+1. Dashboard → Workers & Pages → chọn Worker `livekit` đã có → Edit code → dán `workers/livekit-rooms/worker.js` → Deploy.
+   - Nếu chưa có Worker: Create Worker → đặt tên `livekit`.
+   - Không tạo Worker `livekit-rooms`: `livekit-rooms` chỉ là tên thư mục source; Worker Cloudflare giữ tên `livekit` để không đổi URL.
+2. Settings → Variables:| Tên                        | Loại            | Giá trị                                                                         |
+   | --------------------------- | ---------------- | --------------------------------------------------------------------------------- |
+   | `LIVEKIT_URL`             | **Secret** | `wss://<project>.livekit.cloud`                                                 |
+   | `LIVEKIT_API_KEY`         | **Secret** | API key của LiveKit                                                              |
+   | `LIVEKIT_API_SECRET`      | **Secret** | API secret của LiveKit (không đưa vào web)                                   |
+   | `FIREBASE_PROJECT_ID`     | Text được     | `zenspace-d10m13y26` (**bắt buộc** — dùng để kiểm vé Firebase)    |
+   | `ALLOWED_ORIGINS`         | Text được     | `https://zenstudy.space,http://localhost:3001`                                  |
+   | `ADMIN_TOKEN`             | **Secret** | chuỗi khó đoán — dùng để gọi `GET /rooms?token=...` và `GET /usage` |
+   | `MAX_ROOM_PARTICIPANTS`   | Text được     | `6` (mặc định 6, tối đa người / phòng)                                  |
+   | `LIVEKIT_MONTHLY_MINUTES` | Text được     | `4500` (ngưỡng an toàn chặn quota, gói Build 5.000)                        |
+   | `QUOTA_ENFORCE`           | Text được     | `true` (đặt `false` để tắt guard khẩn cấp mà không cần sửa code)   |
+   | `ROOM_EMPTY_TIMEOUT_SEC`  | Text được     | `300` (giây phòng tự hủy khi trống)                                        |
+   | `SESSION_MAX_MINUTES`     | Text được     | `120` (thời lượng tối đa một phiên học, tự ngắt)                      |
+3. Settings → Bindings → Add → D1 database: Variable name `DB` trỏ tới database `zenspace` (dùng chung với `data-api`).
+4. Mở D1 Database `zenspace` → tab **Console** → dán nội dung file `workers/livekit-schema.sql` → bấm **Execute** (tạo các bảng `meet_events`, `meet_sessions`, `meet_usage_month`, `meet_rooms`).
+5. **Seed số phút đã dùng trong tháng hiện tại** trước khi bật guard (lấy số phút đã dùng từ LiveKit Cloud Dashboard):
+   ```sql
+   INSERT INTO meet_usage_month (month, participant_seconds, updated_at)
+   VALUES ('2026-10', 0, 0)
+   ON CONFLICT(month) DO UPDATE SET participant_seconds = excluded.participant_seconds;
+   -- Thay số 0 bằng (số phút đã dùng trong tháng × 60)
+   ```
+6. Cấu hình Webhook trong LiveKit Cloud:
+   - LiveKit Cloud Console → Settings → Webhooks → Add Webhook.
+   - URL: `https://livekit.<bạn>.workers.dev/webhook/livekit`
+   - Signing API Key: Chọn key ứng với `LIVEKIT_API_KEY`.
+   - Bấm "Send a test event" để kiểm tra Worker trả về HTTP 200.
+7. Giữ địa chỉ worker (`https://livekit.<bạn>.workers.dev`) trong `NEXT_PUBLIC_LIVEKIT_TOKEN_URL` ở Bước 3. Nếu URL này không đổi thì không cần build lại frontend.
+8. Kiểm tra:
+   - `curl.exe -i -X POST https://<worker>/token` phải trả **401** (thiếu vé Firebase).
+   - Kiểm tra hạn mức và số phòng: `curl.exe -i "https://<worker>/usage?token=<ADMIN_TOKEN>"` trả JSON thống kê tháng hiện tại (không chứa email hay uid người dùng).
 
 ## Bước 1c — Deploy Worker `data-api` (Kho Dữ Liệu Học Tập D1 Snapshot)
 
@@ -65,7 +88,7 @@ Các key từng dán ở khung chat coi như đã lộ:
    - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
    - `NEXT_PUBLIC_CHAT_API_URL` = `https://chat-proxy.<bạn>.workers.dev`
    - `NEXT_PUBLIC_DATA_API_URL` = `https://data-api.<bạn>.workers.dev` (kho dữ liệu học tập D1, xem Bước 1c)
-   - `NEXT_PUBLIC_LIVEKIT_TOKEN_URL` = `https://livekit-rooms.<bạn>.workers.dev` (phòng học nhóm, xem Bước 1b)
+   - `NEXT_PUBLIC_LIVEKIT_TOKEN_URL` = `https://livekit.<bạn>.workers.dev` (phòng học nhóm, xem Bước 1b)
    - **Tuyệt đối không thêm `GROQ_API_KEY` hay `ADMIN_TOKEN` vào đây.**
 2. Deployments → Retry deployment (web tĩnh: đổi env phải đăng lại).
 3. Kiểm tra: mở `zenstudy.space` → bong bóng chat → đăng nhập → hỏi 1 câu → F5 vẫn còn lịch sử.

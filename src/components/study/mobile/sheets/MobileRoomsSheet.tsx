@@ -12,11 +12,13 @@ import {
   SparkleIcon,
   VideoCameraIcon,
   ShieldCheckIcon,
+  LinkSimpleIcon,
 } from "@phosphor-icons/react";
 import { GoogleIcon } from "@/components/study/auth";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { MobileRoomView } from "../rooms/MobileRoomView";
 import { MobileActiveRoomPill } from "../rooms/MobileActiveRoomPill";
+import { RoomPreJoinView, type PreJoinChoices } from "@/components/study/rooms/RoomPreJoinView";
 import type { User } from "firebase/auth";
 
 export interface MobileRoomsSheetProps {
@@ -47,6 +49,20 @@ export interface MobileRoomsSheetProps {
   isAvailable: boolean;
   onBack?: () => void;
   backLabel?: string;
+  maxParticipants?: number;
+  remainingMinutes?: number | null;
+  quotaStatus?: string;
+  sessionMaxMinutes?: number;
+  preJoinConfig?: { room: string; name: string } | null;
+  onPreJoinSubmit?: (choices: PreJoinChoices) => void;
+  onPreJoinCancel?: () => void;
+  initialMedia?: {
+    audio: boolean;
+    video: boolean;
+    audioDeviceId?: string;
+    videoDeviceId?: string;
+  };
+  handleCopyLobbyInvite?: () => void;
 }
 
 export function MobileRoomsSheet({
@@ -77,6 +93,15 @@ export function MobileRoomsSheet({
   joinedRoom,
   handleLeave,
   isAvailable,
+  maxParticipants = 6,
+  remainingMinutes,
+  quotaStatus = "ok",
+  sessionMaxMinutes = 120,
+  preJoinConfig = null,
+  onPreJoinSubmit,
+  onPreJoinCancel,
+  initialMedia = { audio: false, video: false },
+  handleCopyLobbyInvite,
 }: MobileRoomsSheetProps) {
   // Khi ĐÃ VÀO PHÒNG: LiveKitRoom luôn giữ kết nối ngầm kể cả khi đóng bảng để chuyển tab
   if (token) {
@@ -85,8 +110,22 @@ export function MobileRoomsSheet({
         token={token}
         serverUrl={serverUrl}
         connect
-        audio={false}
-        video={false}
+        audio={
+          initialMedia.audio
+            ? (initialMedia.audioDeviceId ? { deviceId: initialMedia.audioDeviceId } : true)
+            : false
+        }
+        video={
+          initialMedia.video
+            ? (initialMedia.videoDeviceId ? { deviceId: initialMedia.videoDeviceId } : true)
+            : false
+        }
+        options={{
+          audioCaptureDefaults: initialMedia.audioDeviceId ? { deviceId: initialMedia.audioDeviceId } : undefined,
+          videoCaptureDefaults: initialMedia.videoDeviceId ? { deviceId: initialMedia.videoDeviceId } : undefined,
+          adaptiveStream: true,
+          dynacast: true,
+        }}
         className="w-full h-full min-h-0"
         onDisconnected={handleLeave}
       >
@@ -103,7 +142,14 @@ export function MobileRoomsSheet({
           title={`Phòng: ${joinedRoom}`}
           heightClassName="h-[84dvh] max-h-[88dvh]"
         >
-          <MobileRoomView roomName={joinedRoom} onLeave={handleLeave} />
+          <MobileRoomView
+            roomName={joinedRoom}
+            onLeave={handleLeave}
+            remainingMinutes={remainingMinutes}
+            sessionMaxMinutes={sessionMaxMinutes}
+            audioDeviceId={initialMedia.audioDeviceId}
+            videoDeviceId={initialMedia.videoDeviceId}
+          />
         </MobileSheetShell>
 
         {/* Thanh capsule nhỏ nổi trên thanh navbar khi đóng bảng để làm việc khác */}
@@ -115,6 +161,29 @@ export function MobileRoomsSheet({
           />
         )}
       </LiveKitRoom>
+    );
+  }
+
+  // Khi ĐANG Ở BƯỚC PRE-JOIN: Hiển thị giao diện kiểm tra mic/cam
+  if (preJoinConfig && onPreJoinSubmit && onPreJoinCancel) {
+    return (
+      <MobileSheetShell
+        isOpen={isOpen}
+        onClose={onClose}
+        onBack={onBack}
+        backLabel={backLabel}
+        sheetId="rooms"
+        title="Kiểm tra thiết bị"
+        maxHeightClassName="h-auto max-h-[88dvh]"
+      >
+        <RoomPreJoinView
+          roomName={preJoinConfig.room}
+          displayName={preJoinConfig.name}
+          onJoin={onPreJoinSubmit}
+          onCancel={onPreJoinCancel}
+          joining={joining}
+        />
+      </MobileSheetShell>
     );
   }
 
@@ -145,6 +214,12 @@ export function MobileRoomsSheet({
       }
     >
       <div className="flex-1 flex flex-col px-3 pt-2 pb-4 space-y-4 text-white">
+        {quotaStatus === "unknown" && (
+          <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-400/30 text-amber-200 text-xs text-center font-medium">
+            Không kiểm tra được hạn mức tháng
+          </div>
+        )}
+
         {authLoading ? (
           /* Trạng thái đang kiểm tra phiên đăng nhập */
           <div className="flex-1 flex flex-col items-center justify-center py-16 text-center text-slate-400 text-xs">
@@ -168,7 +243,7 @@ export function MobileRoomsSheet({
             </h3>
             <p className="text-xs text-slate-300 leading-relaxed mb-5 max-w-[280px]">
               Để giữ môi trường học tập văn minh và an toàn, vui lòng kết nối tài
-              khoản Google để tham gia cùng các bạn.
+              khoản Google để tham gia cùng các bạn (tối đa {maxParticipants} người/phòng).
             </p>
 
             {/* 3 tính năng nổi bật phong cách Liquid Glass */}
@@ -188,8 +263,8 @@ export function MobileRoomsSheet({
                   <SparkleIcon className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-white">Đồng bộ Pomodoro</p>
-                  <p className="text-[11px] text-slate-400">Cùng đếm giờ tập trung và nghỉ ngơi</p>
+                  <p className="text-xs font-semibold text-white">Trò chuyện cùng nhau</p>
+                  <p className="text-[11px] text-slate-400">Trò chuyện và học cùng nhau</p>
                 </div>
               </div>
 
@@ -215,7 +290,7 @@ export function MobileRoomsSheet({
               type="button"
               onClick={signIn}
               disabled={isSigningIn}
-              className="w-full min-h-[48px] py-3 px-5 rounded-2xl text-xs font-bold text-slate-950 bg-white hover:bg-slate-100 active:scale-[0.98] shadow-[0_8px_25px_rgba(255,255,255,0.25)] transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
+              className="w-full min-h-[48px] py-3.5 px-5 rounded-2xl text-xs font-bold text-slate-950 bg-white hover:bg-slate-100 active:scale-[0.98] shadow-[0_8px_25px_rgba(255,255,255,0.25)] transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60"
             >
               {isSigningIn ? (
                 <>
@@ -264,7 +339,7 @@ export function MobileRoomsSheet({
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-slate-200">
-                    Phòng đang mở
+                    Phòng đang mở (tối đa {maxParticipants} người)
                   </span>
                   {openRooms.length > 0 && (
                     <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-400/30">
@@ -324,12 +399,26 @@ export function MobileRoomsSheet({
 
             {/* 3. Hoặc Tạo phòng mới */}
             <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/[0.08] space-y-2">
-              <label
-                htmlFor="mobile-room-name"
-                className="text-xs font-bold text-slate-200"
-              >
-                Hoặc tạo phòng mới
-              </label>
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="mobile-room-name"
+                  className="text-xs font-bold text-slate-200"
+                >
+                  Hoặc tạo phòng mới
+                </label>
+                {handleCopyLobbyInvite && (
+                  <button
+                    type="button"
+                    onClick={handleCopyLobbyInvite}
+                    disabled={!roomName.trim()}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer disabled:opacity-40"
+                    title={roomName.trim() ? "Sao chép link mời phòng này" : "Nhập tên phòng trước"}
+                  >
+                    <LinkSimpleIcon className="w-3.5 h-3.5" />
+                    <span>Copy link mời</span>
+                  </button>
+                )}
+              </div>
               <input
                 id="mobile-room-name"
                 value={roomName}
@@ -351,7 +440,7 @@ export function MobileRoomsSheet({
                 <p className="flex items-start gap-2 text-[11px] leading-relaxed text-slate-400">
                   <VideoCameraIcon className="w-3.5 h-3.5 mt-[1px] shrink-0 text-slate-500" weight="bold" />
                   <span>
-                    Mic và camera <span className="font-semibold text-slate-200">mặc định tắt</span> khi vừa vào.
+                    Có thể xem trước và tùy chỉnh mic/camera trước khi vào.
                   </span>
                 </p>
               </div>
