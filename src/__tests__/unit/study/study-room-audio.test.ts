@@ -7,9 +7,19 @@ vi.mock("@livekit/components-react", () => ({
   RoomAudioRenderer: () => React.createElement("div", { "data-testid": "livekit-room-audio-renderer" }),
   StartAudio: ({ label }: { label: string }) =>
     React.createElement("button", { "data-testid": "livekit-start-audio" }, label),
-  useRoomContext: () => ({ numParticipants: 3, disconnect: vi.fn() }),
+  useRoomContext: () => ({ numParticipants: 3, disconnect: vi.fn(), on: vi.fn(), off: vi.fn() }),
   useTracks: () => [],
   useChat: () => ({ chatMessages: [], send: vi.fn() }),
+  useParticipants: () => [],
+  useLocalParticipant: () => ({
+    localParticipant: {
+      identity: "user-test",
+      name: "Học viên",
+      attributes: {},
+      setAttributes: async () => {},
+    },
+  }),
+  ConnectionQualityIndicator: () => null,
   TrackToggle: ({ source }: { source: string }) =>
     React.createElement("button", { "data-testid": `track-toggle-${source}` }, source),
   GridLayout: ({ children }: { children: React.ReactNode }) =>

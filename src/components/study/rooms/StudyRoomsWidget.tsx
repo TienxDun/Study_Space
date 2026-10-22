@@ -20,6 +20,7 @@ import { useFloatingSize } from "@/lib/use-floating-size";
 import { useAuth, GoogleIcon } from "@/components/study/auth";
 import { useIsMobile } from "@/components/study/mobile/hooks/useIsMobile";
 import { MobileRoomsSheet } from "@/components/study/mobile/sheets/MobileRoomsSheet";
+import type { PomodoroSoundType } from "@/components/study/study-sound";
 import { StudyRoomView } from "./StudyRoomView";
 import { RoomPreJoinView, type PreJoinChoices } from "./RoomPreJoinView";
 import { buildInviteLink, readInviteRoom } from "@/lib/meet-invite";
@@ -30,6 +31,8 @@ export interface StudyRoomsWidgetProps {
   onOpen?: () => void;
   onBack?: () => void;
   backLabel?: string;
+  soundEnabled?: boolean;
+  soundType?: PomodoroSoundType;
 }
 
 const ROOM_MARGIN = 16;
@@ -64,7 +67,15 @@ const getCenter = (w: number, h: number) => {
 
 // Phòng học nhóm dạng thẻ bay: kéo đi được, đổi cỡ được,
 // nhớ chỗ y như thẻ ghi chú.
-export const StudyRoomsWidget = ({ isOpen, onClose, onOpen, onBack, backLabel }: StudyRoomsWidgetProps) => {
+export const StudyRoomsWidget = ({
+  isOpen,
+  onClose,
+  onOpen,
+  onBack,
+  backLabel,
+  soundEnabled,
+  soundType,
+}: StudyRoomsWidgetProps) => {
   const {
     user,
     loading: authLoading,
@@ -493,6 +504,8 @@ const getLiveKitEndpoints = () => {
         onOpen={onOpen}
         onBack={onBack}
         backLabel={backLabel}
+        soundEnabled={soundEnabled}
+        soundType={soundType}
         user={user}
         authLoading={authLoading}
         isSigningIn={isSigningIn}
@@ -559,7 +572,7 @@ const getLiveKitEndpoints = () => {
               });
             }}
             initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
+            animate={isFullscreen ? { opacity: 1, scale: 1, x: 0, y: 0 } : { opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.97 }}
             transition={{
               opacity: { duration: 0.16, ease: "easeOut" },
@@ -584,10 +597,10 @@ const getLiveKitEndpoints = () => {
                     height: token ? roomSize.height : "auto",
                   }
             }
-            className={`hidden sm:flex pointer-events-auto fixed flex-col select-none transform-gpu will-change-transform ${
+            className={`hidden sm:flex pointer-events-auto fixed flex-col select-none will-change-transform ${isFullscreen ? "" : "transform-gpu"} ${
               isFullscreen
-                ? "inset-0 w-screen h-screen rounded-none bg-slate-950/95 backdrop-blur-3xl z-[90] border-none shadow-none"
-                : `min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] rounded-3xl bg-black/60 backdrop-blur-2xl border overflow-hidden z-[70] ${
+                ? "inset-0 w-screen h-screen rounded-none bg-[#111827]/95 backdrop-blur-3xl z-[90] border-none shadow-none"
+                : `min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] rounded-3xl bg-[#111827]/60 backdrop-blur-2xl border overflow-hidden z-[70] ${
                     isDragging
                       ? "shadow-[0_30px_80px_rgba(0,0,0,0.65)] ring-2 ring-emerald-500/40 cursor-grabbing border-white/15"
                       : "shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-white/15"
@@ -878,7 +891,7 @@ const getLiveKitEndpoints = () => {
                 }
                 options={{
                   audioCaptureDefaults: initialMedia.audioDeviceId ? { deviceId: initialMedia.audioDeviceId } : undefined,
-                  videoCaptureDefaults: initialMedia.videoDeviceId ? { deviceId: initialMedia.videoDeviceId } : undefined,
+                  videoCaptureDefaults: undefined,
                   adaptiveStream: true,
                   dynacast: true,
                 }}
@@ -896,6 +909,8 @@ const getLiveKitEndpoints = () => {
                   sessionMaxMinutes={sessionMaxMinutes}
                   audioDeviceId={initialMedia.audioDeviceId}
                   videoDeviceId={initialMedia.videoDeviceId}
+                  soundEnabled={soundEnabled}
+                  soundType={soundType}
                 />
               </LiveKitRoom>
             )}

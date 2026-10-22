@@ -19,6 +19,7 @@ import { MobileSheetShell } from "./MobileSheetShell";
 import { MobileRoomView } from "../rooms/MobileRoomView";
 import { MobileActiveRoomPill } from "../rooms/MobileActiveRoomPill";
 import { RoomPreJoinView, type PreJoinChoices } from "@/components/study/rooms/RoomPreJoinView";
+import type { PomodoroSoundType } from "@/components/study/study-sound";
 import type { User } from "firebase/auth";
 
 export interface MobileRoomsSheetProps {
@@ -63,6 +64,8 @@ export interface MobileRoomsSheetProps {
     videoDeviceId?: string;
   };
   handleCopyLobbyInvite?: () => void;
+  soundEnabled?: boolean;
+  soundType?: PomodoroSoundType;
 }
 
 export function MobileRoomsSheet({
@@ -102,6 +105,8 @@ export function MobileRoomsSheet({
   onPreJoinCancel,
   initialMedia = { audio: false, video: false },
   handleCopyLobbyInvite,
+  soundEnabled,
+  soundType,
 }: MobileRoomsSheetProps) {
   // Khi ĐÃ VÀO PHÒNG: LiveKitRoom luôn giữ kết nối ngầm kể cả khi đóng bảng để chuyển tab
   if (token) {
@@ -149,6 +154,8 @@ export function MobileRoomsSheet({
             sessionMaxMinutes={sessionMaxMinutes}
             audioDeviceId={initialMedia.audioDeviceId}
             videoDeviceId={initialMedia.videoDeviceId}
+            soundEnabled={soundEnabled}
+            soundType={soundType}
           />
         </MobileSheetShell>
 

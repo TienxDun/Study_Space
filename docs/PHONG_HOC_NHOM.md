@@ -1,7 +1,8 @@
 # Phòng học nhóm (LiveKit) — Hiện trạng triển khai
 
-Cập nhật: 21/10/2026  
-Phạm vi: Phase 0 (giới hạn miễn phí, đếm phút, ổn định webhook)
+Cập nhật: 22/10/2026
+Phạm vi: Phase 0–2 (giới hạn miễn phí, đếm phút, trải nghiệm phòng, tương tác học tập)
+Trạng thái: Phase 0/1 đạt code/test; Phase 2 đạt code/unit test; P2-6 chờ kiểm thử thủ công.
 
 ## 1. Tổng quan
 
@@ -49,14 +50,14 @@ Phase 0 tập trung vào ba việc:
 
 ## 3. Giới hạn đang áp dụng
 
-| Giới hạn | Giá trị | Cách xử lý |
-| --- | --- | --- |
-| Số người mỗi phòng | 6 | Người thứ 7 nhận lỗi `ROOM_FULL` (HTTP 409) |
-| Thời lượng một phiên | 120 phút | Đồng hồ đếm ngược, tự ngắt khi hết giờ |
-| Phút WebRTC mỗi tháng | 4.500 phút | Chặn vào phòng mới bằng `QUOTA_EXCEEDED` (HTTP 429) |
-| Thời gian phòng trống | 300 giây | LiveKit tự đóng phòng sau 5 phút không còn ai |
-| Hiệu lực token vào phòng | 2 giờ | Token hết hạn sau 2 giờ |
-| Hạn mức thật của gói Build | 5.000 phút/tháng | Đặt ngưỡng chặn ở 4.500 để có khoảng an toàn |
+| Giới hạn                      | Giá trị          | Cách xử lý                                              |
+| ------------------------------- | ------------------ | ---------------------------------------------------------- |
+| Số người mỗi phòng         | 6                  | Người thứ 7 nhận lỗi `ROOM_FULL` (HTTP 409)         |
+| Thời lượng một phiên       | 120 phút          | Đồng hồ đếm ngược, tự ngắt khi hết giờ          |
+| Phút WebRTC mỗi tháng        | 4.500 phút        | Chặn vào phòng mới bằng `QUOTA_EXCEEDED` (HTTP 429) |
+| Thời gian phòng trống        | 300 giây          | LiveKit tự đóng phòng sau 5 phút không còn ai       |
+| Hiệu lực token vào phòng    | 2 giờ             | Token hết hạn sau 2 giờ                                 |
+| Hạn mức thật của gói Build | 5.000 phút/tháng | Đặt ngưỡng chặn ở 4.500 để có khoảng an toàn    |
 
 Các giá trị trên có thể đổi bằng biến môi trường của Worker, không cần sửa code.
 
@@ -145,19 +146,19 @@ Không trả uid hay email người dùng.
 
 ## 6. Cấu hình Worker
 
-| Biến | Mặc định | Ý nghĩa |
-| --- | --- | --- |
-| `LIVEKIT_URL` | — | `wss://<project>.livekit.cloud` |
-| `LIVEKIT_API_KEY` | — | API key LiveKit |
-| `LIVEKIT_API_SECRET` | — | API secret LiveKit, phải để dạng Secret |
-| `FIREBASE_PROJECT_ID` | — | Project Firebase dùng để kiểm tra token đăng nhập |
-| `ALLOWED_ORIGINS` | — | Danh sách domain được gọi Worker, cách nhau dấu phẩy |
-| `ADMIN_TOKEN` | — | Token xem `/rooms` và `/usage` |
-| `MAX_ROOM_PARTICIPANTS` | `6` | Số người tối đa mỗi phòng (2–20) |
-| `LIVEKIT_MONTHLY_MINUTES` | `4500` | Ngưỡng chặn phút tháng (100–5000) |
-| `QUOTA_ENFORCE` | `true` | Đặt `false` để tạm tắt chặn hạn mức |
-| `ROOM_EMPTY_TIMEOUT_SEC` | `300` | Giây giữ phòng trống trước khi đóng |
-| `SESSION_MAX_MINUTES` | `120` | Thời lượng tối đa một phiên (15–240) |
+| Biến                       | Mặc định | Ý nghĩa                                                    |
+| --------------------------- | ----------- | ------------------------------------------------------------ |
+| `LIVEKIT_URL`             | —          | `wss://<project>.livekit.cloud`                            |
+| `LIVEKIT_API_KEY`         | —          | API key LiveKit                                              |
+| `LIVEKIT_API_SECRET`      | —          | API secret LiveKit, phải để dạng Secret                  |
+| `FIREBASE_PROJECT_ID`     | —          | Project Firebase dùng để kiểm tra token đăng nhập     |
+| `ALLOWED_ORIGINS`         | —          | Danh sách domain được gọi Worker, cách nhau dấu phẩy |
+| `ADMIN_TOKEN`             | —          | Token xem `/rooms` và `/usage`                          |
+| `MAX_ROOM_PARTICIPANTS`   | `6`       | Số người tối đa mỗi phòng (2–20)                     |
+| `LIVEKIT_MONTHLY_MINUTES` | `4500`    | Ngưỡng chặn phút tháng (100–5000)                      |
+| `QUOTA_ENFORCE`           | `true`    | Đặt `false` để tạm tắt chặn hạn mức               |
+| `ROOM_EMPTY_TIMEOUT_SEC`  | `300`     | Giây giữ phòng trống trước khi đóng                  |
+| `SESSION_MAX_MINUTES`     | `120`     | Thời lượng tối đa một phiên (15–240)                 |
 
 Binding D1:
 
@@ -168,12 +169,12 @@ Binding D1:
 
 File schema: `workers/livekit-schema.sql`.
 
-| Bảng | Mục đích |
-| --- | --- |
-| `meet_events` | Chống xử lý trùng webhook |
-| `meet_sessions` | Mỗi lần vào phòng là một phiên, lưu giờ vào/ra và số giây |
-| `meet_usage_month` | Tổng số giây đã dùng theo tháng, dùng để chặn hạn mức |
-| `meet_rooms` | Đã tạo sẵn cho giai đoạn sau (host/khóa phòng), Phase 0 chưa dùng |
+| Bảng                | Mục đích                                                                 |
+| -------------------- | --------------------------------------------------------------------------- |
+| `meet_events`      | Chống xử lý trùng webhook                                               |
+| `meet_sessions`    | Mỗi lần vào phòng là một phiên, lưu giờ vào/ra và số giây      |
+| `meet_usage_month` | Tổng số giây đã dùng theo tháng, dùng để chặn hạn mức          |
+| `meet_rooms`       | Đã tạo sẵn cho giai đoạn sau (host/khóa phòng), Phase 0 chưa dùng |
 
 Trigger:
 
@@ -205,26 +206,46 @@ Lưu ý: nếu database đã tạo từ trước, phải chạy lại file schem
 - Fail-open khi D1 lỗi.
 - Tắt hạn mức bằng `QUOTA_ENFORCE=false`.
 
-Kiểm tra gần nhất:
+Kiểm tra gần nhất (22/10/2026):
 
-- `npm test`: 42 test suites, 261 test pass.
+- `npm test`: 48 test files, 311 test pass.
 - `npx tsc --noEmit`: 0 lỗi.
-- `npm run lint`: 0 error, 9 warning có từ trước.
+- `npm run lint`: 0 error, 10 warning.
+- `npm run build`: pass.
 
-## 10. Chưa có trong Phase 0
+## 10. Trạng thái học tập, giơ tay, Pomodoro đồng bộ, reaction (Phase 2)
+
+Tính năng tương tác trực tiếp trong phòng học nhóm:
+
+- **Bản chất kỹ thuật:** Đây là tính năng **client-only**, sử dụng `Participant Attributes` và `Data Channel` của LiveKit Room. **Hoàn toàn không tốn thêm phút LiveKit**, không can thiệp Worker hay cơ sở dữ liệu D1.
+- **Trạng thái học tập cá nhân:** Mỗi người có thể chọn trạng thái: `Tập trung` (emerald), `Nghỉ ngơi` (amber), `Cần giúp` (rose) hoặc `Bình thường`. Huy hiệu hiển thị trực quan ở góc trên trái khung hình video.
+- **Giơ tay phát biểu:** Cho phép bật/tắt giơ tay. Khi một thành viên giơ tay, biểu tượng bàn tay xuất hiện trên tile video và các thành viên khác nhận được thông báo toast nhẹ (chống spam).
+- **Pomodoro đồng bộ:** Bất kỳ ai trong phòng cũng có thể khởi tạo hoặc bấm "Đổi chu kỳ" để bắt đầu timer mới ghi đè timer cũ (kể cả khi owner rời phòng). Thời gian đếm ngược được tính từ mốc thời gian thực (`startedAt + duration`), đảm bảo đồng bộ cho tất cả thành viên. Khi hết giờ, owner tự động chuyển focus → nghỉ → focus; tất cả thành viên nhận toast + âm thanh + rung. Owner có thể bấm "Dừng" để kết thúc chuỗi tự động.
+- **Mục tiêu học tập cá nhân:** Người dùng có thể đặt mục tiêu cá nhân ngắn gọn (tối đa 120 ký tự) cho phiên học. Mục tiêu hiển thị trên thanh công cụ và hiển thị trực tiếp trên khung hình video của bạn để các bạn cùng phòng cùng thấy và cùng cố gắng.
+- **Reaction (Cảm xúc nhanh):** Thả 6 biểu tượng cảm xúc (👍, 👏, ❤️, 😂, 🎉, 🔥) bay lên sinh động trên khu vực video. Reaction được truyền qua Data Channel không tin cậy (lossy), điều tiết tốc độ tối đa 1 reaction/700ms, tự động biến mất sau 2.5 giây và **không lưu lịch sử**.
+
+### Manual test P2-6 — CHỜ KIỂM THỬ THỦ CÔNG
+
+Đây là hạng mục duy nhất còn lại của Phase 2. Checklist với 2 tài khoản thực tế:
+
+- [X] 2 tài khoản cùng phòng, thấy status của nhau
+- [X] Giơ tay có toast, hạ tay rồi giơ lại vẫn toast
+- [X] Owner rời phòng, timer vẫn còn, người khác ghi đè được
+- [X] Hết giờ tự chuyển phase, tất cả nhận toast + âm thanh, không cần bấm
+- [X] Mục tiêu hiện trên tile
+- [X] Reaction hai chiều, tự biến mất
+- [X] Mobile 320/375px không tràn ngang, menu reaction không bị cắt
+- [X] Badge không che tên/mic/cam/nút chat/rời phòng
+
+## 11. Chưa có trong các Phase hiện tại
 
 Các mục sau thuộc giai đoạn sau, chưa triển khai:
 
-- Link mời phòng dạng `?room=...`.
-- Màn hình trước khi vào phòng (pre-join), chọn mic/cam trước.
-- Hiển thị chất lượng kết nối và nút kết nối lại.
-- Chia sẻ màn hình trên mobile.
 - Host, khóa phòng, phòng chờ, quyền quản lý người tham gia.
-- Reaction và đồng bộ Pomodoro theo thời gian thực.
 - Giao diện xem lịch sử điểm danh và quản trị phòng.
 - Giới hạn 120 phút hiện được kiểm soát ở trình duyệt; chưa chặn phía server.
 
-## 11. Checklist khi deploy
+## 12. Checklist khi deploy
 
 1. Chạy `workers/livekit-schema.sql` trên D1 để tạo bảng và trigger.
 2. Nhập số phút đã dùng trong tháng hiện tại vào `meet_usage_month`.
@@ -239,31 +260,37 @@ Các mục sau thuộc giai đoạn sau, chưa triển khai:
    - Đồng hồ phiên chạy đúng.
    - Vào/rời phòng rồi gọi `/usage`, số phút tăng một lần.
 
-## 12. Lỗi thường gặp
+## 13. Lỗi thường gặp
 
-| Hiện tượng | Nguyên nhân thường gặp | Cách kiểm tra |
-| --- | --- | --- |
-| HTTP 429 `QUOTA_EXCEEDED` | Đã chạm ngưỡng phút tháng | Gọi `/usage` xem `usedMinutes` |
-| HTTP 409 `ROOM_FULL` | Phòng đã đủ 6 người | Đổi phòng hoặc chờ người khác ra |
-| "Không kiểm tra được hạn mức" | Thiếu binding `DB` hoặc D1 lỗi | Kiểm tra binding và log Worker |
-| Số phút không tăng | Thiếu trigger, webhook chưa bật, sai chữ ký | Chạy lại schema; xem log webhook; kiểm tra signing key |
-| Webhook trả 401 | Sai `LIVEKIT_API_SECRET` hoặc signing API key | Đối chiếu key trong LiveKit Console và Worker |
-| Danh sách phòng lỗi 502 | Sai `LIVEKIT_URL` hoặc API key | Kiểm tra secret của Worker |
-| Lỗi CORS | Thiếu domain trong `ALLOWED_ORIGINS` | Thêm đúng domain, không có dấu `/` cuối |
-| Không phát được token | Thiếu `FIREBASE_PROJECT_ID` hoặc chưa đăng nhập | Kiểm tra biến và token Firebase |
+| Hiện tượng                        | Nguyên nhân thường gặp                             | Cách kiểm tra                                           |
+| ------------------------------------ | ------------------------------------------------------- | --------------------------------------------------------- |
+| HTTP 429 `QUOTA_EXCEEDED`          | Đã chạm ngưỡng phút tháng                        | Gọi `/usage` xem `usedMinutes`                       |
+| HTTP 409 `ROOM_FULL`               | Phòng đã đủ 6 người                              | Đổi phòng hoặc chờ người khác ra                  |
+| "Không kiểm tra được hạn mức" | Thiếu binding `DB` hoặc D1 lỗi                     | Kiểm tra binding và log Worker                          |
+| Số phút không tăng               | Thiếu trigger, webhook chưa bật, sai chữ ký        | Chạy lại schema; xem log webhook; kiểm tra signing key |
+| Webhook trả 401                     | Sai `LIVEKIT_API_SECRET` hoặc signing API key        | Đối chiếu key trong LiveKit Console và Worker         |
+| Danh sách phòng lỗi 502           | Sai `LIVEKIT_URL` hoặc API key                       | Kiểm tra secret của Worker                              |
+| Lỗi CORS                            | Thiếu domain trong `ALLOWED_ORIGINS`                 | Thêm đúng domain, không có dấu `/` cuối          |
+| Không phát được token           | Thiếu `FIREBASE_PROJECT_ID` hoặc chưa đăng nhập | Kiểm tra biến và token Firebase                        |
 
-## 13. File liên quan
+## 14. File liên quan
 
-| File | Vai trò |
-| --- | --- |
-| `workers/livekit-rooms/worker.js` | Phát token, danh sách phòng, hạn mức, webhook |
-| `workers/livekit-schema.sql` | Bảng D1 và trigger đếm phút |
-| `src/components/study/rooms/StudyRoomsWidget.tsx` | Sảnh phòng và cửa sổ phòng desktop |
-| `src/components/study/rooms/StudyRoomView.tsx` | Giao diện trong phòng desktop |
-| `src/components/study/rooms/RoomSessionTimer.tsx` | Đồng hồ phiên dùng chung |
-| `src/components/study/mobile/sheets/MobileRoomsSheet.tsx` | Sảnh phòng mobile |
-| `src/components/study/mobile/rooms/MobileRoomView.tsx` | Giao diện trong phòng mobile |
-| `src/app/api/livekit-token/route.ts` | Phát token cho môi trường dev |
-| `src/app/api/livekit-rooms/route.ts` | Danh sách phòng cho môi trường dev |
-| `src/__tests__/unit/study/meet-*.test.ts` | Test token, hạn mức, webhook |
-| `docs/DEPLOY.md` | Hướng dẫn deploy Worker và D1 |
+| File                                                        | Vai trò                                                               |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `workers/livekit-rooms/worker.js`                         | Phát token, danh sách phòng, hạn mức, webhook                     |
+| `workers/livekit-schema.sql`                              | Bảng D1 và trigger đếm phút                                       |
+| `src/components/study/rooms/StudyRoomsWidget.tsx`         | Sảnh phòng và cửa sổ phòng desktop                               |
+| `src/components/study/rooms/StudyRoomView.tsx`            | Giao diện trong phòng desktop                                        |
+| `src/components/study/rooms/RoomStudyBar.tsx`             | Thanh công cụ Pomodoro, trạng thái, giơ tay, mục tiêu, reaction |
+| `src/components/study/rooms/RoomStudyLayer.tsx`           | Tầng tương tác học tập tích hợp cho phòng học                |
+| `src/components/study/rooms/RoomReactionsOverlay.tsx`     | Hiệu ứng cảm xúc reaction bay lên                                 |
+| `src/components/study/rooms/useMeetStudyState.ts`         | Hook quản lý logic trạng thái và đồng bộ Pomodoro              |
+| `src/components/study/rooms/meet-protocol.ts`             | Protocol thuần và hàm tiện ích Phase 2                            |
+| `src/components/study/rooms/RoomSessionTimer.tsx`         | Đồng hồ phiên dùng chung                                          |
+| `src/components/study/mobile/sheets/MobileRoomsSheet.tsx` | Sảnh phòng mobile                                                    |
+| `src/components/study/mobile/rooms/MobileRoomView.tsx`    | Giao diện trong phòng mobile                                         |
+| `src/app/api/livekit-token/route.ts`                      | Phát token cho môi trường dev                                      |
+| `src/app/api/livekit-rooms/route.ts`                      | Danh sách phòng cho môi trường dev                                |
+| `src/__tests__/unit/study/meet-*.test.ts`                 | Test token, hạn mức, webhook, protocol, timer                        |
+| `src/__tests__/unit/study/room-study-bar.test.tsx`        | Test thanh công cụ tương tác học tập                            |
+| `docs/DEPLOY.md`                                          | Hướng dẫn deploy Worker và D1                                      |

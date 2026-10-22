@@ -22,11 +22,16 @@ import {
   CornersInIcon,
   LinkSimpleIcon,
   CircleNotchIcon,
+  HandWavingIcon,
+  TargetIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
+import type { PomodoroSoundType } from "@/components/study/study-sound";
 import { RoomSessionTimer } from "./RoomSessionTimer";
 import { buildInviteLink } from "@/lib/meet-invite";
+import { RoomStudyLayer } from "./RoomStudyLayer";
+import { MEET_ATTR } from "./meet-protocol";
 
 interface StudyRoomViewProps {
   roomName: string;
@@ -40,6 +45,8 @@ interface StudyRoomViewProps {
   sessionMaxMinutes?: number;
   audioDeviceId?: string;
   videoDeviceId?: string;
+  soundEnabled?: boolean;
+  soundType?: PomodoroSoundType;
 }
 
 const formatTime = (ts: number) =>
@@ -51,9 +58,23 @@ const formatTime = (ts: number) =>
 
 /**
  * Tile người tham gia kèm chỉ báo chất lượng mạng ở góc trên phải
- * (không che tên người dùng và icon mic/cam ở góc dưới trái).
+ * và huy hiệu trạng thái / giơ tay ở góc trên trái (Phase 2).
  */
 function RoomParticipantTile({ trackRef, ...rest }: any) {
+  const attrs = trackRef?.participant?.attributes;
+  const status = attrs?.[MEET_ATTR.status];
+  const isHandRaised = attrs?.[MEET_ATTR.hand] === "1";
+  const goal = (attrs?.[MEET_ATTR.goal] || "").trim();
+
+  const statusLabel =
+    status === "focus"
+      ? "Tập trung"
+      : status === "break"
+      ? "Nghỉ"
+      : status === "help"
+      ? "Cần giúp"
+      : null;
+
   return (
     <div className="relative w-full h-full">
       <ParticipantTile
@@ -61,8 +82,48 @@ function RoomParticipantTile({ trackRef, ...rest }: any) {
         className="w-full h-full rounded-2xl overflow-hidden border border-white/10"
         {...rest}
       />
+
+      {/* Huy hiệu trạng thái, giơ tay và mục tiêu góc trên trái */}
+      <div className="absolute top-2 left-2 z-10 pointer-events-none flex items-center gap-1.5 max-w-[calc(100%-4rem)]">
+        {isHandRaised && (
+          <div
+            className="p-1 rounded-md bg-amber-500/90 text-slate-950 flex items-center justify-center shadow-md animate-bounce"
+            title="Đang giơ tay phát biểu"
+          >
+            <HandWavingIcon className="w-3.5 h-3.5" weight="fill" />
+          </div>
+        )}
+
+        {statusLabel && (
+          <div
+            className={`px-2 py-0.5 rounded-md text-[10px] font-bold border backdrop-blur-md shadow-sm truncate ${
+              status === "focus"
+                ? "bg-emerald-500/80 text-slate-950 border-emerald-400/50"
+                : status === "break"
+                ? "bg-amber-500/80 text-slate-950 border-amber-400/50"
+                : "bg-rose-500/80 text-white border-rose-400/50"
+            }`}
+            title={goal ? `Mục tiêu: ${goal}` : undefined}
+          >
+            {statusLabel}
+          </div>
+        )}
+
+        {/* Mục tiêu học tập cá nhân hiển thị thực sự cho cả phòng cùng thấy */}
+        {goal && (
+          <div
+            className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-black/70 backdrop-blur-md border border-teal-400/40 text-teal-200 shadow-sm flex items-center gap-1 max-w-[140px] truncate pointer-events-auto"
+            title={`Mục tiêu: ${goal}`}
+          >
+            <TargetIcon className="w-3 h-3 text-teal-400 shrink-0" weight="bold" />
+            <span className="truncate">{goal}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Chỉ báo chất lượng mạng ở góc trên phải */}
       <div
-        className="absolute top-2 right-2 z-10 pointer-events-none bg-black/50 backdrop-blur-md rounded-md p-1 border border-white/10 text-emerald-300 flex items-center justify-center shadow-sm"
+        className="absolute top-2 right-2 z-10 pointer-events-none text-emerald-300 flex items-center justify-center shadow-sm"
         title="Chất lượng kết nối"
       >
         <ConnectionQualityIndicator participant={trackRef?.participant} className="w-3.5 h-3.5 [&_svg]:w-3.5 [&_svg]:h-3.5" />
@@ -125,6 +186,8 @@ export const StudyRoomView = ({
   sessionMaxMinutes = 120,
   audioDeviceId,
   videoDeviceId,
+  soundEnabled,
+  soundType,
 }: StudyRoomViewProps) => {
   const room = useRoomContext();
   const [isReconnecting, setIsReconnecting] = useState(false);
@@ -213,7 +276,7 @@ export const StudyRoomView = ({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="relative flex flex-col h-full">
       {/* Phát âm thanh của các thành viên khác trong phòng */}
       <RoomAudioRenderer />
 
@@ -316,6 +379,9 @@ export const StudyRoomView = ({
           </button>
         </div>
       </div>
+
+      {/* Tầng công cụ tương tác học tập: Pomodoro đồng bộ, Trạng thái, Giơ tay, Mục tiêu, Reaction (Phase 2) */}
+      <RoomStudyLayer soundEnabled={soundEnabled} soundType={soundType} />
 
       {/* Giữa: thẻ rộng thì chat đứng cạnh, thẻ hẹp thì chat nằm dưới */}
       <div className={`flex-1 min-h-0 flex ${sideBySide ? "flex-row" : "flex-col"}`}>

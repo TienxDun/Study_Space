@@ -58,6 +58,10 @@ export const ModalShell = ({
   const [mounted, setMounted] = useState(false);
   const innerRef = useRef<HTMLDivElement>(null);
   const prevFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     setMounted(true);
@@ -72,7 +76,7 @@ export const ModalShell = ({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== "Tab") return;
@@ -110,7 +114,7 @@ export const ModalShell = ({
       document.removeEventListener("keydown", onKey, true);
       prevFocusRef.current?.focus?.();
     };
-  }, [isOpen, mounted, onClose]);
+    }, [isOpen, mounted]);
 
   const content = (
     <AnimatePresence>

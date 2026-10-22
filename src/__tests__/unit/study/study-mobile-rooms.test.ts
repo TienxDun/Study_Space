@@ -26,7 +26,17 @@ vi.mock("@livekit/components-react", () => ({
   StartAudio: () => null,
   useTracks: () => [],
   useChat: () => ({ chatMessages: [], send: vi.fn() }),
-  useRoomContext: () => ({ numParticipants: 2 }),
+  useRoomContext: () => ({ numParticipants: 2, on: vi.fn(), off: vi.fn() }),
+  useParticipants: () => [],
+  useLocalParticipant: () => ({
+    localParticipant: {
+      identity: "user-test",
+      name: "Học viên",
+      attributes: {},
+      setAttributes: async () => {},
+    },
+  }),
+  ConnectionQualityIndicator: () => null,
   GridLayout: ({ children }: { children: React.ReactNode }) => children,
   ParticipantTile: () => null,
   TrackToggle: () => null,

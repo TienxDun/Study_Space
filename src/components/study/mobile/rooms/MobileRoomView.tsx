@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  GridLayout,
   ParticipantTile,
   TrackToggle,
   useChat,
@@ -11,8 +10,10 @@ import {
   RoomAudioRenderer,
   StartAudio,
   ConnectionQualityIndicator,
+  useMaybeTrackRefContext,
 } from "@livekit/components-react";
 import { Track, RoomEvent } from "livekit-client";
+import { getTrackReferenceId } from "@livekit/components-core";
 import {
   SignOutIcon,
   ChatTextIcon,
@@ -22,11 +23,16 @@ import {
   SparkleIcon,
   CircleNotchIcon,
   LinkSimpleIcon,
+  HandWavingIcon,
+  TargetIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
+import type { PomodoroSoundType } from "@/components/study/study-sound";
 import { RoomSessionTimer } from "../../rooms/RoomSessionTimer";
 import { buildInviteLink } from "@/lib/meet-invite";
+import { RoomStudyLayer } from "../../rooms/RoomStudyLayer";
+import { MEET_ATTR } from "../../rooms/meet-protocol";
 
 interface MobileRoomViewProps {
   roomName: string;
@@ -35,6 +41,8 @@ interface MobileRoomViewProps {
   sessionMaxMinutes?: number;
   audioDeviceId?: string;
   videoDeviceId?: string;
+  soundEnabled?: boolean;
+  soundType?: PomodoroSoundType;
 }
 
 const formatTime = (ts: number) =>
@@ -45,14 +53,70 @@ const formatTime = (ts: number) =>
   });
 
 function MobileParticipantTile({ trackRef, ...rest }: any) {
+  const contextTrackRef = useMaybeTrackRefContext();
+  const resolvedTrackRef = trackRef ?? contextTrackRef;
+  const attrs = resolvedTrackRef?.participant?.attributes;
+  const status = attrs?.[MEET_ATTR.status];
+  const isHandRaised = attrs?.[MEET_ATTR.hand] === "1";
+  const goal = (attrs?.[MEET_ATTR.goal] || "").trim();
+
+  const statusLabel =
+    status === "focus"
+      ? "Tập trung"
+      : status === "break"
+      ? "Nghỉ"
+      : status === "help"
+      ? "Cần giúp"
+      : null;
+
   return (
     <div className="relative w-full h-full">
-      <ParticipantTile trackRef={trackRef} {...rest} />
+      <ParticipantTile trackRef={resolvedTrackRef} className="w-full h-full" {...rest} />
+
+      {/* Huy hiệu trạng thái, giơ tay và mục tiêu góc trên trái (mobile nhỏ gọn) */}
+      <div className="absolute top-1.5 left-1.5 z-10 pointer-events-none flex items-center gap-1 max-w-[calc(100%-3.5rem)]">
+        {isHandRaised && (
+          <div
+            className="p-0.5 rounded bg-amber-500/90 text-slate-950 flex items-center justify-center shadow-md animate-bounce"
+            title="Đang giơ tay phát biểu"
+          >
+            <HandWavingIcon className="w-3 h-3" weight="fill" />
+          </div>
+        )}
+
+        {statusLabel && (
+          <div
+            className={`px-1.5 py-0.5 rounded text-[9px] font-bold border backdrop-blur-md shadow-sm truncate ${
+              status === "focus"
+                ? "bg-emerald-500/80 text-slate-950 border-emerald-400/50"
+                : status === "break"
+                ? "bg-amber-500/80 text-slate-950 border-amber-400/50"
+                : "bg-rose-500/80 text-white border-rose-400/50"
+            }`}
+            title={goal ? `Mục tiêu: ${goal}` : undefined}
+          >
+            {statusLabel}
+          </div>
+        )}
+
+        {/* Mục tiêu học tập cá nhân hiển thị thực sự trên mobile */}
+        {goal && (
+          <div
+            className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-black/70 backdrop-blur-md border border-teal-400/40 text-teal-200 shadow-sm flex items-center gap-1 max-w-[100px] truncate pointer-events-auto"
+            title={`Mục tiêu: ${goal}`}
+          >
+            <TargetIcon className="w-2.5 h-2.5 text-teal-400 shrink-0" weight="bold" />
+            <span className="truncate">{goal}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Chỉ báo chất lượng mạng góc trên phải */}
       <div
-        className="absolute top-2 right-2 z-10 pointer-events-none bg-black/50 backdrop-blur-md rounded-md p-1 border border-white/10 text-emerald-300 flex items-center justify-center shadow-sm"
+        className="absolute top-2 right-2 z-10 pointer-events-none text-emerald-300 flex items-center justify-center shadow-sm"
         title="Chất lượng kết nối"
       >
-        <ConnectionQualityIndicator participant={trackRef?.participant} className="w-3.5 h-3.5 [&_svg]:w-3.5 [&_svg]:h-3.5" />
+        <ConnectionQualityIndicator participant={resolvedTrackRef?.participant} className="w-3.5 h-3.5 [&_svg]:w-3.5 [&_svg]:h-3.5" />
       </div>
     </div>
   );
@@ -65,6 +129,8 @@ export function MobileRoomView({
   sessionMaxMinutes = 120,
   audioDeviceId,
   videoDeviceId,
+  soundEnabled,
+  soundType,
 }: MobileRoomViewProps) {
   const room = useRoomContext();
   const [isReconnecting, setIsReconnecting] = useState(false);
@@ -176,13 +242,15 @@ export function MobileRoomView({
   };
 
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
+  const [micEnabled, setMicEnabled] = useState(false);
+  const [camEnabled, setCamEnabled] = useState(false);
 
   const handleLeaveRoom = () => {
     setIsLeaveConfirmOpen(true);
   };
 
   return (
-    <div className="relative flex flex-col h-full w-full bg-slate-950 text-white overflow-hidden select-none">
+    <div className="relative flex flex-col h-full w-full bg-[#111827] text-white overflow-hidden select-none">
       {/* Phát âm thanh LiveKit */}
       <RoomAudioRenderer />
 
@@ -240,13 +308,21 @@ export function MobileRoomView({
         </button>
       </div>
 
+      {/* Thanh công cụ tương tác học tập di động: Pomodoro, Trạng thái, Giơ tay, Mục tiêu, Reaction (Phase 2) */}
+      <RoomStudyLayer compact soundEnabled={soundEnabled} soundType={soundType} />
+
       {/* Vùng hiển thị Video các thành viên (Mở rộng tối đa không gian) */}
       <main className="flex-1 min-h-0 relative p-2 overflow-hidden flex flex-col justify-center">
         {tracks.length > 0 ? (
-          <div className="w-full h-full overflow-y-auto custom-study-scroll rounded-2xl [&_.lk-grid-layout]:gap-2 [&_.lk-participant-tile]:rounded-2xl [&_.lk-participant-tile]:border [&_.lk-participant-tile]:border-white/15 [&_.lk-participant-tile]:overflow-hidden [&_.lk-participant-tile]:bg-slate-900/90 [&_.lk-participant-tile]:shadow-md">
-            <GridLayout tracks={tracks} className="h-full">
-              <MobileParticipantTile />
-            </GridLayout>
+          <div className="w-full h-full overflow-y-auto custom-study-scroll rounded-2xl grid gap-2 grid-cols-1 p-2 content-start">
+            {tracks.map((track) => (
+              <div
+                key={getTrackReferenceId(track)}
+                className="rounded-2xl border border-white/15 overflow-hidden bg-slate-900/90 shadow-md aspect-video"
+              >
+                <MobileParticipantTile trackRef={track} />
+              </div>
+            ))}
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
@@ -292,13 +368,40 @@ export function MobileRoomView({
           {/* Nút Micro */}
           <TrackToggle
             source={Track.Source.Microphone}
-            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center cursor-pointer active:scale-95 transition-all [&_svg]:w-4.5 [&_svg]:h-4.5 aria-pressed:bg-emerald-500 aria-pressed:border-emerald-400 aria-pressed:text-slate-950 aria-pressed:shadow-[0_0_12px_rgba(52,211,153,0.5)]"
+            onChange={(enabled) => setMicEnabled(enabled)}
+            className={`w-9 h-9 rounded-full flex items-center justify-center cursor-pointer active:scale-95 transition-all [&_svg]:w-4.5 [&_svg]:h-4.5 ${
+              micEnabled
+                ? "bg-emerald-400/15 border border-emerald-400/70 text-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.35)]"
+                : "bg-white/[0.08] hover:bg-white/[0.16] border border-white/20 text-white/90"
+            }`}
           />
 
           {/* Nút Camera */}
           <TrackToggle
             source={Track.Source.Camera}
-            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center cursor-pointer active:scale-95 transition-all [&_svg]:w-4.5 [&_svg]:h-4.5 aria-pressed:bg-emerald-500 aria-pressed:border-emerald-400 aria-pressed:text-slate-950 aria-pressed:shadow-[0_0_12px_rgba(52,211,153,0.5)]"
+            captureOptions={{ facingMode: "user" }}
+            onChange={(enabled) => setCamEnabled(enabled)}
+            onDeviceError={(error) => {
+              const name = error?.name || "";
+              const message =
+                name === "NotAllowedError"
+                  ? "Bạn chưa cấp quyền camera"
+                  : name === "NotFoundError"
+                  ? "Không tìm thấy camera"
+                  : name === "NotReadableError"
+                  ? "Camera đang được ứng dụng khác sử dụng"
+                  : name === "OverconstrainedError"
+                  ? "Camera không hỗ trợ chế độ này"
+                  : name === "TypeError"
+                  ? "Trình duyệt không hỗ trợ camera"
+                  : "Không bật được camera";
+              toast.error(message);
+            }}
+            className={`w-9 h-9 rounded-full flex items-center justify-center cursor-pointer active:scale-95 transition-all [&_svg]:w-4.5 [&_svg]:h-4.5 ${
+              camEnabled
+                ? "bg-emerald-400/15 border border-emerald-400/70 text-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.35)]"
+                : "bg-white/[0.08] hover:bg-white/[0.16] border border-white/20 text-white/90"
+            }`}
           />
 
           {/* Nút Chia sẻ màn hình Mobile (chỉ hiện khi trình duyệt hỗ trợ getDisplayMedia) */}
@@ -306,7 +409,7 @@ export function MobileRoomView({
             <TrackToggle
               source={Track.Source.ScreenShare}
               captureOptions={{ audio: true }}
-              className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center cursor-pointer active:scale-95 transition-all [&_svg]:w-4.5 [&_svg]:h-4.5 aria-pressed:bg-emerald-500 aria-pressed:border-emerald-400 aria-pressed:text-slate-950 aria-pressed:shadow-[0_0_12px_rgba(52,211,153,0.5)]"
+              className="w-9 h-9 rounded-full bg-white/[0.08] hover:bg-white/[0.16] border border-white/20 text-white/90 flex items-center justify-center cursor-pointer active:scale-95 transition-all [&_svg]:w-4.5 [&_svg]:h-4.5 aria-pressed:bg-emerald-400/15 aria-pressed:border-emerald-400/70 aria-pressed:text-emerald-300 aria-pressed:shadow-[0_0_20px_rgba(52,211,153,0.35)]"
               title="Chia sẻ màn hình"
             />
           )}

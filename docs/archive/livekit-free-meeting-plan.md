@@ -1,10 +1,12 @@
 # Kế hoạch: Phòng học nhóm LiveKit trên gói Build (0đ)
 
+> **ĐÃ LƯU TRỮ:** Kế hoạch chi tiết cũ. Trạng thái hiện tại xem [`../LIVEKIT_ROADMAP.md`](../LIVEKIT_ROADMAP.md).
+
 - **Ngày:** 2026-10-21
 - **Người thực hiện:** Gemini
 - **Người nghiệm thu:** opencode (theo checklist §9)
-- **Trạng thái:** Phase 0 và Phase 1 đã nghiệm thu phần code/tự động; kiểm thử media thực tế trước khi deploy.
-- **Chạy tiếp:** Phase 0 và Phase 1 đã xong. Báo cáo để nghiệm thu trước khi sang Phase 2.
+- **Trạng thái:** Đã lưu trữ; không dùng file này để theo dõi tiến độ.
+- **Chạy tiếp:** Xem [`../LIVEKIT_ROADMAP.md`](../LIVEKIT_ROADMAP.md).
 
 ---
 
@@ -351,7 +353,7 @@ export const MEET_ATTR = {
 
 ### P2-3. Hành vi Pomodoro
 - Preset 15/3, 25/5, 50/10. Bất kỳ ai cũng bắt đầu được; người bắt đầu được dừng.
-- Không tự chuyển phase. Hết giờ hiện thông báo + rung nhẹ (nếu trình duyệt cho phép), người bắt đầu bấm "Bắt đầu nghỉ".
+- Tự động chuyển phase khi hết giờ. Hết giờ hiện thông báo + âm thanh + rung nhẹ (nếu trình duyệt cho phép), sau đó owner tự chuyển focus ↔ nghỉ; owner có thể bấm "Dừng".
 - Khi bắt đầu focus: không tự bật/tắt mic của người khác; chỉ hiện gợi ý.
 
 ### P2-4. Test Phase 2

@@ -215,6 +215,8 @@ export default function StudySpacePage() {
         }}
         onBack={state.isMobile && state.mobileCanGoBack ? state.handleMobileBack : undefined}
         backLabel={state.isMobile && state.mobileCanGoBack ? state.mobilePrevScreen?.title : undefined}
+        soundEnabled={state.soundEnabled}
+        soundType={state.soundType}
       />
 
       {/* Bảng phím tắt bàn phím */}

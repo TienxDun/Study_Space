@@ -1,5 +1,7 @@
 # Task Phase 1 — Trải nghiệm phòng học nhóm
 
+> **ĐÃ LƯU TRỮ:** Phase 1 đã đạt code/test. Trạng thái hiện tại xem [`../LIVEKIT_ROADMAP.md`](../LIVEKIT_ROADMAP.md).
+
 ## Bối cảnh
 
 Phase 0 đã được nghiệm thu: giới hạn 6 người/phòng, hạn mức 4.500 phút/tháng, đồng hồ phiên 120 phút, webhook đếm phút chống trùng, fail-open khi D1 lỗi.
