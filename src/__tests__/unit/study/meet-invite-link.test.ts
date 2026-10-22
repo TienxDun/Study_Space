@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { buildInviteLink, readInviteRoom } from "@/lib/meet-invite";
+import { describe, it, expect, afterEach } from "vitest";
+import { buildInviteLink, readInviteRoom, getMeetEndpoints } from "@/lib/meet-invite";
 
 describe("Meet Invite Link Utilities", () => {
   describe("buildInviteLink", () => {
@@ -59,6 +59,38 @@ describe("Meet Invite Link Utilities", () => {
       const res = readInviteRoom(`?room=  ${long}  `);
       expect(res).toBe("a".repeat(32));
       expect(res?.length).toBe(32);
+    });
+  });
+
+  describe("getMeetEndpoints", () => {
+    const originalEnv = process.env.NEXT_PUBLIC_LIVEKIT_TOKEN_URL;
+
+    afterEach(() => {
+      process.env.NEXT_PUBLIC_LIVEKIT_TOKEN_URL = originalEnv;
+    });
+
+    it("returns null endpoints and isAvailable false when env var is absent", () => {
+      delete process.env.NEXT_PUBLIC_LIVEKIT_TOKEN_URL;
+      const endpoints = getMeetEndpoints();
+      expect(endpoints).toEqual({
+        baseUrl: "",
+        tokenUrl: null,
+        roomsUrl: null,
+        historyUrl: null,
+        isAvailable: false,
+      });
+    });
+
+    it("correctly resolves tokenUrl, roomsUrl, and historyUrl when env var is provided", () => {
+      process.env.NEXT_PUBLIC_LIVEKIT_TOKEN_URL = "https://livekit.example.workers.dev/token";
+      const endpoints = getMeetEndpoints();
+      expect(endpoints).toEqual({
+        baseUrl: "https://livekit.example.workers.dev",
+        tokenUrl: "https://livekit.example.workers.dev/token",
+        roomsUrl: "https://livekit.example.workers.dev/rooms",
+        historyUrl: "https://livekit.example.workers.dev/history",
+        isAvailable: true,
+      });
     });
   });
 });

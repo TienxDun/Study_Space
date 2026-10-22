@@ -15,6 +15,7 @@ import { ModalShell } from "../ui/ModalShell";
 import { IconBtn } from "../ui/IconBtn";
 import { BrandIcon } from "../ui/BrandIcon";
 import { ZenStudyLogo } from "./brand/ZenStudyLogo";
+import { APP_VERSION_LABEL } from "@/lib/version";
 
 const FacebookBrandIcon = ({ className }: { className?: string }) => (
   <BrandIcon path={siFacebook.path} className={className} />
@@ -122,7 +123,7 @@ export const StudyAboutModal = ({ isOpen, onClose }: StudyAboutModalProps) => {
               Giới thiệu ZenStudy Space
             </h3>
             <p className="text-xs text-slate-400 font-medium">
-              Không gian học tập giúp bạn tập trung hơn
+              Không gian học tập giúp bạn tập trung hơn · <span className="font-mono text-emerald-400/90 font-semibold">{APP_VERSION_LABEL}</span>
             </p>
           </div>
         </div>

@@ -36,10 +36,25 @@ BEGIN
     updated_at = excluded.updated_at;
 END;
 
+DROP TABLE IF EXISTS meet_audit_logs;
+DROP TABLE IF EXISTS meet_rooms;
+
 CREATE TABLE IF NOT EXISTS meet_rooms (
   name TEXT PRIMARY KEY,
   host_uid TEXT NOT NULL,
   host_identity TEXT NOT NULL,
+  co_host_uids TEXT NOT NULL DEFAULT '[]',
   locked INTEGER NOT NULL DEFAULT 0,
+  password_hash TEXT,
   created_at INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS meet_audit_logs (
+  id TEXT PRIMARY KEY,
+  room TEXT NOT NULL,
+  action TEXT NOT NULL,
+  actor_uid TEXT NOT NULL,
+  target_identity TEXT,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_meet_audit_room ON meet_audit_logs(room, created_at);

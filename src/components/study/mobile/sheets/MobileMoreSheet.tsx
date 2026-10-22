@@ -19,6 +19,7 @@ import { MobileAccountCard } from "./MobileAccountCard";
 import { useAuth } from "@/lib/use-auth";
 import { cloudConfigured, syncNow } from "@/lib/simple-cloud-sync";
 import type { MobilePanelId } from "../types";
+import { APP_VERSION_LABEL } from "@/lib/version";
 
 interface MobileMoreSheetProps {
   isOpen: boolean;
@@ -150,6 +151,11 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
             <MoreButton label="Chế độ Zen (Toàn màn hình)" onClick={() => go("pomodoro")} icon={<EyeSlashIcon className="w-5 h-5 text-slate-200" />} />
           </div>
         </section>
+        <div className="pt-3 pb-2 text-center select-none">
+          <p className="text-[11px] font-mono text-white/40 tracking-tight">
+            ZenStudy Space · {APP_VERSION_LABEL}
+          </p>
+        </div>
         {/* Bóng mờ đáy: báo còn nội dung bên dưới, vuốt lên để xem */}
         <div
           aria-hidden="true"

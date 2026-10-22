@@ -394,7 +394,7 @@ export function RoomStudyBar({
           <div
             ref={presetsMenuRef}
             style={{ top: `${presetsPos.top}px`, left: `${presetsPos.left}px` }}
-            className="fixed z-[100] w-44 py-1.5 rounded-2xl bg-slate-900/95 border border-white/15 shadow-2xl backdrop-blur-2xl transition-all duration-150 select-none"
+            className="fixed z-[100] w-44 py-1.5 rounded-2xl bg-neutral-950/96 border border-white/20 shadow-[0_24px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl transition-all duration-150 select-none"
           >
             <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
               {timer ? "Bắt đầu chu kỳ mới" : "Chọn chu kỳ Pomodoro"}
@@ -426,7 +426,7 @@ export function RoomStudyBar({
           <div
             ref={statusMenuRef}
             style={{ top: `${statusPos.top}px`, left: `${statusPos.left}px` }}
-            className="fixed z-[100] w-36 py-1.5 rounded-2xl bg-slate-900/95 border border-white/15 shadow-2xl backdrop-blur-2xl transition-all duration-150 select-none"
+            className="fixed z-[100] w-36 py-1.5 rounded-2xl bg-neutral-950/96 border border-white/20 shadow-[0_24px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl transition-all duration-150 select-none"
           >
             <button
               type="button"
@@ -481,7 +481,7 @@ export function RoomStudyBar({
           <div
             ref={reactionsMenuRef}
             style={{ top: `${reactionsPos.top}px`, left: `${reactionsPos.left}px` }}
-            className="fixed z-[100] p-2 rounded-2xl bg-slate-900/95 border border-white/15 shadow-2xl backdrop-blur-2xl flex items-center gap-1.5 transition-all duration-150 select-none"
+            className="fixed z-[100] p-2 rounded-2xl bg-neutral-950/96 border border-white/20 shadow-[0_24px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl flex items-center gap-1.5 transition-all duration-150 select-none"
           >
             {MEET_REACTIONS.map((emoji) => (
               <button

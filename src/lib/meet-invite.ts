@@ -40,3 +40,24 @@ export function readInviteRoom(search: string): string | null {
     return null;
   }
 }
+
+export function getMeetEndpoints() {
+  const raw = process.env.NEXT_PUBLIC_LIVEKIT_TOKEN_URL;
+  if (!raw) {
+    return {
+      baseUrl: "",
+      tokenUrl: null,
+      roomsUrl: null,
+      historyUrl: null,
+      isAvailable: false,
+    };
+  }
+  const baseUrl = raw.replace(/\/(token|rooms)$/, "");
+  return {
+    baseUrl,
+    tokenUrl: `${baseUrl}/token`,
+    roomsUrl: `${baseUrl}/rooms`,
+    historyUrl: `${baseUrl}/history`,
+    isAvailable: true,
+  };
+}

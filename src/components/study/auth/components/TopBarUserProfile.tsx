@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { SyncStatusBadge } from "@/components/study/sync/SyncStatusBadge";
 import { syncNow } from "@/lib/simple-cloud-sync";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
+import { APP_VERSION_LABEL } from "@/lib/version";
 
 /**
  * Nút hồ sơ tài khoản và bảng menu đăng nhập / đăng xuất trên TopBar.
@@ -180,6 +181,14 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
                 <SignOutIcon className="w-3.5 h-3.5" />
                 <span>Đăng xuất</span>
               </button>
+            </div>
+
+            {/* Chân thẻ hồ sơ: Phiên bản ứng dụng */}
+            <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px] select-none">
+              <span className="text-slate-400">Phiên bản</span>
+              <span className="font-mono text-emerald-300 font-semibold px-2 py-0.5 rounded-md bg-white/[0.06] border border-white/10">
+                {APP_VERSION_LABEL}
+              </span>
             </div>
           </motion.div>
         )}

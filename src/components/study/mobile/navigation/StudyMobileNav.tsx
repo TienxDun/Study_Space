@@ -128,7 +128,7 @@ export const StudyMobileNav = React.memo(function StudyMobileNav({
       <div className="relative mx-3 pointer-events-auto">
         {/* Thanh capsule kính lỏng: mờ + đậm màu nền, viền sáng trên, bóng trung tính */}
         <div
-          className="lg-bar p-1 flex items-stretch h-[58px]"
+          className="lg-bar p-1 flex items-stretch h-[58px] rounded-full overflow-hidden transition-all"
           onPointerMove={handlePointerMove}
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerEnd}

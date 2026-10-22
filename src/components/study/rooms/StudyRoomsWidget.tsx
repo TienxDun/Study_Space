@@ -11,6 +11,7 @@ import {
   ArrowClockwiseIcon,
   SignInIcon,
   LockKeyIcon,
+  KeyIcon,
   VideoCameraIcon,
   LinkSimpleIcon,
 } from "@phosphor-icons/react";
@@ -96,7 +97,14 @@ export const StudyRoomsWidget = ({
   const [joinedRoom, setJoinedRoom] = useState("");
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [openRooms, setOpenRooms] = useState<{ name: string; count: number }[]>([]);
+  const [openRooms, setOpenRooms] = useState<
+    { name: string; count: number; isLocked?: boolean; hasPassword?: boolean }[]
+  >([]);
+  const [userRole, setUserRole] = useState<"host" | "co-host" | "member">("member");
+  const [isHost, setIsHost] = useState(false);
+  const [isCoHost, setIsCoHost] = useState(false);
+  const [isRoomLocked, setIsRoomLocked] = useState(false);
+  const [roomHasPassword, setRoomHasPassword] = useState(false);
   const [maxParticipants, setMaxParticipants] = useState<number>(6);
   const [remainingMinutes, setRemainingMinutes] = useState<number | null>(null);
   const [quotaStatus, setQuotaStatus] = useState<string>("ok");
@@ -108,7 +116,11 @@ export const StudyRoomsWidget = ({
   useEffect(() => {
     isFullscreenRef.current = isFullscreen;
   }, [isFullscreen]);
-  const [preJoinConfig, setPreJoinConfig] = useState<{ room: string; name: string } | null>(null);
+  const [preJoinConfig, setPreJoinConfig] = useState<{
+    room: string;
+    name: string;
+    passwordMode: "required" | "optional-create" | "none";
+  } | null>(null);
   const [initialMedia, setInitialMedia] = useState<{
     audio: boolean;
     video: boolean;
@@ -287,7 +299,7 @@ const getLiveKitEndpoints = () => {
   };
 };
 
-  const doJoin = useCallback(async (room: string, name: string) => {
+  const doJoin = useCallback(async (room: string, name: string, password?: string) => {
     const { tokenUrl, isAvailable } = getLiveKitEndpoints();
     if (!isAvailable || !tokenUrl) {
       setError("Chưa cấu hình máy chủ phòng học nhóm (NEXT_PUBLIC_LIVEKIT_TOKEN_URL).");
@@ -305,10 +317,30 @@ const getLiveKitEndpoints = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${idToken}`,
         },
-        body: JSON.stringify({ room, name }),
+        body: JSON.stringify({ room, name, password }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        if (data?.code === "ROOM_PASSWORD_REQUIRED") {
+          // Tự động mở lại Pre-join view với chế độ passwordMode = "required"
+          setPreJoinConfig({
+            room,
+            name,
+            passwordMode: "required",
+          });
+          throw new Error("Phòng này yêu cầu mật khẩu. Vui lòng nhập mật khẩu để vào.");
+        }
+        if (data?.code === "INVALID_PASSWORD") {
+          setPreJoinConfig({
+            room,
+            name,
+            passwordMode: "required",
+          });
+          throw new Error("Mật khẩu phòng không đúng. Vui lòng thử lại.");
+        }
+        if (data?.code === "ROOM_LOCKED") {
+          throw new Error("Phòng đang bị khóa bởi trưởng phòng.");
+        }
         if (res.status === 409 || data?.code === "ROOM_FULL") {
           throw new Error(data?.error || "Phòng đã đủ người. Thử phòng khác nhé.");
         }
@@ -322,6 +354,11 @@ const getLiveKitEndpoints = () => {
       setToken(data.token);
       setServerUrl(data.url);
       setJoinedRoom(data.room);
+      setUserRole(data.role || "member");
+      setIsHost(Boolean(data.isHost));
+      setIsCoHost(Boolean(data.isCoHost));
+      setIsRoomLocked(Boolean(data.isLocked));
+      setRoomHasPassword(Boolean(data.hasPassword));
       if (typeof data.maxParticipants === "number") setMaxParticipants(data.maxParticipants);
       if (typeof data.remainingMinutes === "number") setRemainingMinutes(data.remainingMinutes);
       if (typeof data.sessionMaxMinutes === "number") setSessionMaxMinutes(data.sessionMaxMinutes);
@@ -371,12 +408,32 @@ const getLiveKitEndpoints = () => {
   }, [roomName]);
 
   const handleStartJoin = useCallback(
-    (targetRoom: string, targetName: string) => {
+    (
+      targetRoom: string,
+      targetName: string,
+      explicitPasswordMode?: "required" | "optional-create" | "none"
+    ) => {
       if (!targetRoom.trim() || !targetName.trim() || joining) return;
       setError(null);
-      setPreJoinConfig({ room: targetRoom.trim(), name: targetName.trim() });
+
+      // Xác định passwordMode nếu chưa truyền rõ:
+      let mode = explicitPasswordMode;
+      if (!mode) {
+        const found = openRooms.find((r) => r.name === targetRoom.trim());
+        if (found) {
+          mode = found.hasPassword ? "required" : "none";
+        } else {
+          mode = "optional-create";
+        }
+      }
+
+      setPreJoinConfig({
+        room: targetRoom.trim(),
+        name: targetName.trim(),
+        passwordMode: mode,
+      });
     },
-    [joining]
+    [joining, openRooms]
   );
 
   const handleJoin = useCallback(() => {
@@ -384,13 +441,17 @@ const getLiveKitEndpoints = () => {
     handleStartJoin(roomName.trim(), resolvedDisplayName);
   }, [resolvedDisplayName, roomName, joining, handleStartJoin]);
 
-  const handleJoinListed = (name: string) => {
+  const handleJoinListed = (roomItem: { name: string; hasPassword?: boolean }) => {
     if (!resolvedDisplayName) {
       setError("Nhập tên hiển thị của bạn ở dưới trước rồi bấm Vào.");
       return;
     }
-    setRoomName(name);
-    handleStartJoin(name, resolvedDisplayName);
+    setRoomName(roomItem.name);
+    handleStartJoin(
+      roomItem.name,
+      resolvedDisplayName,
+      roomItem.hasPassword ? "required" : "none"
+    );
   };
 
   const handlePreJoinSubmit = useCallback(
@@ -404,7 +465,7 @@ const getLiveKitEndpoints = () => {
         videoDeviceId: choices.videoDeviceId,
       });
       setPreJoinConfig(null);
-      await doJoin(room, name);
+      await doJoin(room, name, choices.password);
     },
     [preJoinConfig, doJoin]
   );
@@ -537,6 +598,12 @@ const getLiveKitEndpoints = () => {
         onPreJoinCancel={handlePreJoinCancel}
         initialMedia={initialMedia}
         handleCopyLobbyInvite={handleCopyLobbyInvite}
+        userRole={userRole}
+        isHost={isHost}
+        isCoHost={isCoHost}
+        initialIsLocked={isRoomLocked}
+        initialHasPassword={roomHasPassword}
+        getIdToken={getToken}
       />
     );
   }
@@ -634,6 +701,7 @@ const getLiveKitEndpoints = () => {
                   <RoomPreJoinView
                     roomName={preJoinConfig.room}
                     displayName={preJoinConfig.name}
+                    passwordMode={preJoinConfig.passwordMode}
                     onJoin={handlePreJoinSubmit}
                     onCancel={handlePreJoinCancel}
                     joining={joining}
@@ -792,13 +860,25 @@ const getLiveKitEndpoints = () => {
                                   className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-colors"
                                 >
                                   <div className="min-w-0">
-                                    <p className="text-xs font-bold truncate">{r.name}</p>
+                                    <div className="flex items-center gap-1.5">
+                                      <p className="text-xs font-bold truncate">{r.name}</p>
+                                      {r.isLocked && (
+                                        <span className="p-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px]" title="Phòng đang khóa">
+                                          <LockKeyIcon className="w-3 h-3" weight="fill" />
+                                        </span>
+                                      )}
+                                      {r.hasPassword && (
+                                        <span className="p-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px]" title="Có mật khẩu bảo vệ">
+                                          <KeyIcon className="w-3 h-3" />
+                                        </span>
+                                      )}
+                                    </div>
                                     <p className="text-[11px] text-emerald-300/90">
                                       {r.count} người đang học
                                     </p>
                                   </div>
                                   <button
-                                    onClick={() => handleJoinListed(r.name)}
+                                    onClick={() => handleJoinListed(r)}
                                     disabled={joining}
                                     className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-40 shrink-0"
                                   >
@@ -911,6 +991,12 @@ const getLiveKitEndpoints = () => {
                   videoDeviceId={initialMedia.videoDeviceId}
                   soundEnabled={soundEnabled}
                   soundType={soundType}
+                  userRole={userRole}
+                  isHost={isHost}
+                  isCoHost={isCoHost}
+                  initialIsLocked={isRoomLocked}
+                  initialHasPassword={roomHasPassword}
+                  getIdToken={getToken}
                 />
               </LiveKitRoom>
             )}

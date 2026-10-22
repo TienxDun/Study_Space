@@ -2,7 +2,7 @@
 
 Cập nhật: 22/10/2026
 Phạm vi: Phase 0–2 (giới hạn miễn phí, đếm phút, trải nghiệm phòng, tương tác học tập)
-Trạng thái: Phase 0/1 đạt code/test; Phase 2 đạt code/unit test; P2-6 chờ kiểm thử thủ công.
+Trạng thái: Phase 0/1 đạt code/test; Phase 2 hoàn thành (code/unit test + P2-6 thủ công).
 
 ## 1. Tổng quan
 
@@ -224,7 +224,7 @@ Tính năng tương tác trực tiếp trong phòng học nhóm:
 - **Mục tiêu học tập cá nhân:** Người dùng có thể đặt mục tiêu cá nhân ngắn gọn (tối đa 120 ký tự) cho phiên học. Mục tiêu hiển thị trên thanh công cụ và hiển thị trực tiếp trên khung hình video của bạn để các bạn cùng phòng cùng thấy và cùng cố gắng.
 - **Reaction (Cảm xúc nhanh):** Thả 6 biểu tượng cảm xúc (👍, 👏, ❤️, 😂, 🎉, 🔥) bay lên sinh động trên khu vực video. Reaction được truyền qua Data Channel không tin cậy (lossy), điều tiết tốc độ tối đa 1 reaction/700ms, tự động biến mất sau 2.5 giây và **không lưu lịch sử**.
 
-### Manual test P2-6 — CHỜ KIỂM THỬ THỦ CÔNG
+### Manual test P2-6 — ĐÃ KIỂM THỬ THỦ CÔNG
 
 Đây là hạng mục duy nhất còn lại của Phase 2. Checklist với 2 tài khoản thực tế:
 

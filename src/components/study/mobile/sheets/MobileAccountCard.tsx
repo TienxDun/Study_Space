@@ -5,6 +5,7 @@ import Image from "next/image";
 import { CircleNotchIcon, SignOutIcon } from "@phosphor-icons/react";
 import { useAuth } from "@/lib/use-auth";
 import { GoogleIcon } from "@/components/study/auth/components/GoogleIcon";
+import { APP_VERSION_LABEL } from "@/lib/version";
 
 // Thẻ tài khoản RIÊNG cho bảng Thêm trên mobile.
 // Xếp dọc khoa học: avatar + tên + mail đầy đủ, nút đăng xuất full hàng dưới.
@@ -73,10 +74,13 @@ export function MobileAccountCard() {
         <p className="text-xs text-slate-400 truncate" title={user.email || undefined}>
           {user.email}
         </p>
-        <p className="mt-0.5 text-[11px] font-medium text-emerald-300/90 flex items-center gap-1.5 whitespace-nowrap">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-          Google Connected
-        </p>
+        <div className="mt-0.5 flex items-center gap-2">
+          <p className="text-[11px] font-medium text-emerald-300/90 flex items-center gap-1.5 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            Google Connected
+          </p>
+          <span className="text-[10px] font-mono text-white/50">· {APP_VERSION_LABEL}</span>
+        </div>
       </div>
       {/* Nút đăng xuất gọn dạng icon tròn, không chen chữ */}
       <button

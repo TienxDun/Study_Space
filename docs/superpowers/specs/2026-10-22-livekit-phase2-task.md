@@ -473,7 +473,7 @@ Chuẩn bị 2 tài khoản, cùng vào một phòng.
 - [x] Không sửa Worker/D1/schema.
 - [x] Không thêm localStorage key.
 - [x] Không commit.
-- [ ] P2-6 kiểm thử thủ công với 2 tài khoản thật.
+- [x] P2-6 kiểm thử thủ công với 2 tài khoản thật.
 
 ## Mẫu báo cáo
 

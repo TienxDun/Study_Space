@@ -9,7 +9,6 @@ import {
   useTracks,
   RoomAudioRenderer,
   StartAudio,
-  ConnectionQualityIndicator,
   useMaybeTrackRefContext,
 } from "@livekit/components-react";
 import { Track, RoomEvent } from "livekit-client";
@@ -25,14 +24,22 @@ import {
   LinkSimpleIcon,
   HandWavingIcon,
   TargetIcon,
+  CrownIcon,
+  StarIcon,
+  ShieldCheckIcon,
+  ClockCounterClockwiseIcon,
+  MicrophoneSlashIcon,
+  UserMinusIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import type { PomodoroSoundType } from "@/components/study/study-sound";
 import { RoomSessionTimer } from "../../rooms/RoomSessionTimer";
-import { buildInviteLink } from "@/lib/meet-invite";
+import { buildInviteLink, getMeetEndpoints } from "@/lib/meet-invite";
 import { RoomStudyLayer } from "../../rooms/RoomStudyLayer";
 import { MEET_ATTR } from "../../rooms/meet-protocol";
+import { RoomHostControlsModal } from "../../rooms/RoomHostControlsModal";
+import { RoomHistoryModal } from "../../rooms/RoomHistoryModal";
 
 interface MobileRoomViewProps {
   roomName: string;
@@ -43,6 +50,12 @@ interface MobileRoomViewProps {
   videoDeviceId?: string;
   soundEnabled?: boolean;
   soundType?: PomodoroSoundType;
+  userRole?: "host" | "co-host" | "member";
+  isHost?: boolean;
+  isCoHost?: boolean;
+  initialIsLocked?: boolean;
+  initialHasPassword?: boolean;
+  getIdToken?: () => Promise<string | null>;
 }
 
 const formatTime = (ts: number) =>
@@ -52,13 +65,27 @@ const formatTime = (ts: number) =>
     hour12: false,
   });
 
-function MobileParticipantTile({ trackRef, ...rest }: any) {
+function MobileParticipantTile({
+  trackRef,
+  localRole,
+  canModerate,
+  isLocalHost,
+  onMute,
+  onKick,
+  onToggleCoHost,
+  ...rest
+}: any) {
   const contextTrackRef = useMaybeTrackRefContext();
   const resolvedTrackRef = trackRef ?? contextTrackRef;
   const attrs = resolvedTrackRef?.participant?.attributes;
   const status = attrs?.[MEET_ATTR.status];
   const isHandRaised = attrs?.[MEET_ATTR.hand] === "1";
   const goal = (attrs?.[MEET_ATTR.goal] || "").trim();
+  const isLocal = resolvedTrackRef?.participant?.isLocal;
+
+  const roleAttr = attrs?.["zen.role"];
+  const isTargetHost = (isLocal && localRole === "host") || roleAttr === "host";
+  const isTargetCoHost = (isLocal && localRole === "co-host") || roleAttr === "co-host";
 
   const statusLabel =
     status === "focus"
@@ -70,11 +97,31 @@ function MobileParticipantTile({ trackRef, ...rest }: any) {
       : null;
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full group/tile">
       <ParticipantTile trackRef={resolvedTrackRef} className="w-full h-full" {...rest} />
 
-      {/* Huy hiệu trạng thái, giơ tay và mục tiêu góc trên trái (mobile nhỏ gọn) */}
-      <div className="absolute top-1.5 left-1.5 z-10 pointer-events-none flex items-center gap-1 max-w-[calc(100%-3.5rem)]">
+      {/* Huy hiệu vai trò, trạng thái, giơ tay và mục tiêu góc trên trái (mobile nhỏ gọn) */}
+      <div className="absolute top-1.5 left-1.5 z-10 pointer-events-none flex items-center gap-1 max-w-[calc(100%-4rem)] flex-wrap">
+        {isTargetHost && (
+          <div
+            className="px-1 py-0.5 rounded bg-amber-500/90 text-slate-950 font-bold text-[9px] flex items-center gap-0.5 shadow-sm border border-amber-300 pointer-events-auto"
+            title="Trưởng phòng"
+          >
+            <CrownIcon className="w-2.5 h-2.5 text-slate-950" weight="fill" />
+            <span>Host</span>
+          </div>
+        )}
+
+        {isTargetCoHost && (
+          <div
+            className="px-1 py-0.5 rounded bg-sky-500/90 text-white font-bold text-[9px] flex items-center gap-0.5 shadow-sm border border-sky-300 pointer-events-auto"
+            title="Phó phòng"
+          >
+            <StarIcon className="w-2.5 h-2.5 text-white" weight="fill" />
+            <span>Phó</span>
+          </div>
+        )}
+
         {isHandRaised && (
           <div
             className="p-0.5 rounded bg-amber-500/90 text-slate-950 flex items-center justify-center shadow-md animate-bounce"
@@ -111,13 +158,48 @@ function MobileParticipantTile({ trackRef, ...rest }: any) {
         )}
       </div>
 
-      {/* Chỉ báo chất lượng mạng góc trên phải */}
-      <div
-        className="absolute top-2 right-2 z-10 pointer-events-none text-emerald-300 flex items-center justify-center shadow-sm"
-        title="Chất lượng kết nối"
-      >
-        <ConnectionQualityIndicator participant={resolvedTrackRef?.participant} className="w-3.5 h-3.5 [&_svg]:w-3.5 [&_svg]:h-3.5" />
-      </div>
+      {/* Nút hành động nhanh của Host & Phó phòng trên mobile */}
+      {canModerate && !isLocal && (
+        <div className="absolute top-1.5 right-1.5 z-20 flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onMute?.(resolvedTrackRef?.participant?.identity)}
+            className="p-1 rounded bg-black/70 active:bg-rose-500/80 text-white border border-white/20 transition-colors shadow-sm"
+            title="Tắt micro"
+            aria-label="Tắt micro"
+          >
+            <MicrophoneSlashIcon className="w-2.5 h-2.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onKick?.(
+                resolvedTrackRef?.participant?.identity,
+                resolvedTrackRef?.participant?.name || "Học viên"
+              )
+            }
+            className="p-1 rounded bg-black/70 active:bg-rose-500/80 text-white border border-white/20 transition-colors shadow-sm"
+            title="Mời rời phòng"
+            aria-label="Mời rời phòng"
+          >
+            <UserMinusIcon className="w-2.5 h-2.5" />
+          </button>
+          {isLocalHost && (
+            <button
+              type="button"
+              onClick={() => onToggleCoHost?.(resolvedTrackRef?.participant?.identity)}
+              className={`p-1 rounded bg-black/70 text-white border border-white/20 transition-colors shadow-sm ${
+                isTargetCoHost ? "text-amber-300" : "text-sky-300"
+              }`}
+              title={isTargetCoHost ? "Hủy quyền Phó phòng" : "Bổ nhiệm Phó phòng"}
+              aria-label="Chỉ định hoặc hủy Phó phòng"
+            >
+              <StarIcon className="w-2.5 h-2.5" weight={isTargetCoHost ? "fill" : "regular"} />
+            </button>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }
@@ -131,10 +213,93 @@ export function MobileRoomView({
   videoDeviceId,
   soundEnabled,
   soundType,
+  userRole = "member",
+  isHost = false,
+  isCoHost = false,
+  initialIsLocked = false,
+  initialHasPassword = false,
+  getIdToken,
 }: MobileRoomViewProps) {
   const room = useRoomContext();
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [canShareScreen, setCanShareScreen] = useState(false);
+  const [kickTarget, setKickTarget] = useState<{ identity: string; name: string } | null>(null);
+  const [isHostControlsOpen, setIsHostControlsOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isLockedState, setIsLockedState] = useState(initialIsLocked);
+  const [hasPasswordState, setHasPasswordState] = useState(initialHasPassword);
+
+  const handleMuteParticipant = async (identity: string) => {
+    const { baseUrl } = getMeetEndpoints();
+    if (!baseUrl || !identity || !getIdToken) return;
+    try {
+      const token = await getIdToken();
+      if (!token) throw new Error("Chưa đăng nhập.");
+      const res = await fetch(`${baseUrl}/rooms/${encodeURIComponent(roomName)}/mute`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ identity }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Không thể tắt micro.");
+      toast.success("Đã gửi yêu cầu tắt micro");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
+    }
+  };
+
+  const handleKickParticipant = async (identity: string) => {
+    const { baseUrl } = getMeetEndpoints();
+    if (!baseUrl || !identity || !getIdToken) return;
+    try {
+      const token = await getIdToken();
+      if (!token) throw new Error("Chưa đăng nhập.");
+      const res = await fetch(`${baseUrl}/rooms/${encodeURIComponent(roomName)}/kick`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ identity }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Không thể mời rời phòng.");
+      toast.success("Đã mời học viên rời khỏi phòng");
+      setKickTarget(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
+    }
+  };
+
+  const handleToggleCoHost = async (targetIdentity: string) => {
+    const { baseUrl } = getMeetEndpoints();
+    if (!baseUrl || !targetIdentity || !getIdToken) return;
+    const targetUid = targetIdentity.replace(/^user-/, "");
+    const targetPart = room.getParticipantByIdentity(targetIdentity);
+    const isCurrentlyCoHost = targetPart?.attributes?.["zen.role"] === "co-host";
+    const method = isCurrentlyCoHost ? "DELETE" : "POST";
+
+    try {
+      const token = await getIdToken();
+      if (!token) throw new Error("Chưa đăng nhập.");
+      const res = await fetch(`${baseUrl}/rooms/${encodeURIComponent(roomName)}/co-host`, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ targetUid, targetIdentity }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Không thể cập nhật quyền Phó phòng.");
+      toast.success(isCurrentlyCoHost ? "Đã hủy quyền Phó phòng" : "Đã bổ nhiệm làm Phó phòng ⭐");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
+    }
+  };
 
   // Kích hoạt đúng microphone và camera mà người dùng đã chọn từ bước xem trước (Pre-join)
   useEffect(() => {
@@ -288,24 +453,48 @@ export function MobileRoomView({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={handleCopyInviteLink}
-          className="h-6 px-2 rounded-lg bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-[11px] font-medium text-slate-300 hover:text-white flex items-center gap-1 transition-all cursor-pointer shrink-0"
-          title="Sao chép link mời phòng"
-        >
-          {copied ? (
-            <>
-              <CheckIcon className="w-3 h-3 text-emerald-400" />
-              <span className="text-emerald-400">Đã chép</span>
-            </>
-          ) : (
-            <>
-              <LinkSimpleIcon className="w-3 h-3 text-emerald-400" />
-              <span>Link mời</span>
-            </>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsHistoryOpen(true)}
+            className="h-6 px-1.5 rounded-lg bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-[10px] font-medium text-slate-300 hover:text-white flex items-center gap-1 transition-all cursor-pointer"
+            title="Lịch sử phòng"
+          >
+            <ClockCounterClockwiseIcon className="w-3 h-3 text-emerald-400" />
+            <span>Lịch sử</span>
+          </button>
+
+          {(isHost || isCoHost) && (
+            <button
+              type="button"
+              onClick={() => setIsHostControlsOpen(true)}
+              className="h-6 px-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 active:scale-95 border border-amber-400/25 text-[10px] font-bold text-amber-300 flex items-center gap-1 transition-all cursor-pointer"
+              title="Quản lý phòng"
+            >
+              <ShieldCheckIcon className="w-3 h-3 text-amber-400" />
+              <span>Quản lý</span>
+            </button>
           )}
-        </button>
+
+          <button
+            type="button"
+            onClick={handleCopyInviteLink}
+            className="h-6 px-2 rounded-lg bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-[11px] font-medium text-slate-300 hover:text-white flex items-center gap-1 transition-all cursor-pointer shrink-0"
+            title="Sao chép link mời phòng"
+          >
+            {copied ? (
+              <>
+                <CheckIcon className="w-3 h-3 text-emerald-400" />
+                <span className="text-emerald-400">Đã chép</span>
+              </>
+            ) : (
+              <>
+                <LinkSimpleIcon className="w-3 h-3 text-emerald-400" />
+                <span>Link mời</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Thanh công cụ tương tác học tập di động: Pomodoro, Trạng thái, Giơ tay, Mục tiêu, Reaction (Phase 2) */}
@@ -320,7 +509,15 @@ export function MobileRoomView({
                 key={getTrackReferenceId(track)}
                 className="rounded-2xl border border-white/15 overflow-hidden bg-slate-900/90 shadow-md aspect-video"
               >
-                <MobileParticipantTile trackRef={track} />
+                <MobileParticipantTile
+                  trackRef={track}
+                  localRole={userRole}
+                  canModerate={isHost || isCoHost}
+                  isLocalHost={isHost}
+                  onMute={handleMuteParticipant}
+                  onKick={(id: string, name: string) => setKickTarget({ identity: id, name })}
+                  onToggleCoHost={handleToggleCoHost}
+                />
               </div>
             ))}
           </div>
@@ -553,6 +750,39 @@ export function MobileRoomView({
         description={`Bạn có chắc muốn rời khỏi phòng "${roomName}" không?`}
         confirmText="Rời phòng"
         cancelText="Ở lại"
+      />
+
+      {/* Hộp thoại xác nhận mời học viên ra khỏi phòng */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(kickTarget)}
+        onClose={() => setKickTarget(null)}
+        onConfirm={() => kickTarget && handleKickParticipant(kickTarget.identity)}
+        title="Mời ra khỏi phòng học"
+        description={`Bạn có chắc muốn mời "${kickTarget?.name}" rời khỏi phòng học này không?`}
+        confirmText="Mời rời phòng"
+        cancelText="Hủy"
+      />
+
+      {/* Modal Quản trị phòng học */}
+      <RoomHostControlsModal
+        isOpen={isHostControlsOpen}
+        onClose={() => setIsHostControlsOpen(false)}
+        roomName={roomName}
+        isHost={Boolean(isHost)}
+        isCoHost={Boolean(isCoHost)}
+        isLocked={isLockedState}
+        hasPassword={hasPasswordState}
+        onUpdateLockState={(l) => setIsLockedState(l)}
+        onUpdatePasswordState={(p) => setHasPasswordState(p)}
+        getIdToken={getIdToken || (async () => null)}
+      />
+
+      {/* Modal Xem lịch sử giờ học của phòng */}
+      <RoomHistoryModal
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        roomName={roomName}
+        getIdToken={getIdToken || (async () => null)}
       />
     </div>
   );

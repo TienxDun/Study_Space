@@ -19,6 +19,10 @@ import {
   UserIcon,
   DoorIcon,
   CaretDownIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  LockKeyIcon,
+  KeyIcon,
 } from "@phosphor-icons/react";
 
 export interface PreJoinChoices {
@@ -26,6 +30,7 @@ export interface PreJoinChoices {
   videoEnabled: boolean;
   audioDeviceId?: string;
   videoDeviceId?: string;
+  password?: string;
 }
 
 interface RoomPreJoinViewProps {
@@ -34,6 +39,15 @@ interface RoomPreJoinViewProps {
   onJoin: (choices: PreJoinChoices) => void;
   onCancel: () => void;
   joining?: boolean;
+  /**
+   * Chế độ mật khẩu:
+   * - "required": Phòng đã tồn tại và có mật khẩu -> Bắt buộc nhập
+   * - "optional-create": Phòng mới chưa tồn tại -> Tùy chọn đặt mật khẩu (thu gọn mặc định)
+   * - "none": Phòng công khai đã tồn tại -> Ẩn hoàn toàn ô mật khẩu
+   */
+  passwordMode?: "required" | "optional-create" | "none";
+  /** Ẩn header nội bộ (khi đã có header của sheet cha, tránh trùng lặp). */
+  hideHeader?: boolean;
 }
 
 /**
@@ -50,10 +64,15 @@ export function RoomPreJoinView({
   onJoin,
   onCancel,
   joining = false,
+  passwordMode = "optional-create",
+  hideHeader = false,
 }: RoomPreJoinViewProps) {
   const [audioEnabled, setAudioEnabled] = useState(false);
   // Mở lên thấy camera ngay để người dùng xem trước theo đúng yêu cầu
   const [videoEnabled, setVideoEnabled] = useState(true);
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSettingPassword, setIsSettingPassword] = useState(false);
   const [mediaError, setMediaError] = useState<string | null>(null);
 
   // Lưu thiết bị người dùng chủ động chọn qua MediaDeviceMenu
@@ -178,17 +197,27 @@ export function RoomPreJoinView({
   };
 
   const handleConfirmJoin = () => {
+    // Nếu ở chế độ optional-create nhưng không bật toggle đặt mật khẩu thì không gửi password
+    const effectivePassword =
+      passwordMode === "required"
+        ? password.trim()
+        : passwordMode === "optional-create" && isSettingPassword
+        ? password.trim()
+        : undefined;
+
     onJoin({
       audioEnabled,
       videoEnabled,
       audioDeviceId: currentAudioId,
       videoDeviceId: currentVideoId,
+      password: effectivePassword,
     });
   };
 
   return (
     <div className="flex flex-col h-full select-none">
       {/* Header */}
+      {!hideHeader && (
       <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 shrink-0">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -210,6 +239,7 @@ export function RoomPreJoinView({
           <XIcon className="w-4 h-4" />
         </button>
       </div>
+      )}
 
       {/* Thân Pre-join */}
       <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-4 custom-study-scroll">
@@ -334,6 +364,95 @@ export function RoomPreJoinView({
               <CaretDownIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             </MediaDeviceMenu>
           </div>
+
+          {/* Mật khẩu phòng: Chỉ xuất hiện khi cần thiết */}
+          {passwordMode === "required" && (
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-400/30 space-y-2 animate-fadeIn">
+              <span className="block text-[11px] font-semibold text-amber-300 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <KeyIcon className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Mật khẩu phòng (Bắt buộc)</span>
+                </span>
+                <span className="text-[10px] text-amber-400/80 font-normal">Phòng này đã được bảo vệ</span>
+              </span>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Nhập mật khẩu để vào phòng..."
+                  className="w-full px-3 py-2 pr-9 rounded-xl bg-black/60 border border-amber-400/40 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-400 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-400 hover:text-white transition-colors cursor-pointer z-10"
+                  title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="w-4 h-4" />
+                  ) : (
+                    <EyeIcon className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {passwordMode === "optional-create" && (
+            <div className="space-y-2 pt-1 border-t border-white/10">
+              <label className="flex items-center justify-between cursor-pointer select-none group">
+                <div className="flex items-center gap-2">
+                  <span className="p-1 rounded-lg bg-white/5 border border-white/10 text-slate-400 group-hover:text-emerald-400 transition-colors">
+                    <LockKeyIcon className="w-3.5 h-3.5" />
+                  </span>
+                  <div>
+                    <p className="text-[11px] font-semibold text-slate-300 group-hover:text-white transition-colors">
+                      Đặt mật khẩu bảo vệ phòng
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      Chỉ những người có mật khẩu mới được vào
+                    </p>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={isSettingPassword}
+                  onChange={(e) => {
+                    setIsSettingPassword(e.target.checked);
+                    if (!e.target.checked) setPassword("");
+                  }}
+                  className="w-4 h-4 rounded text-emerald-500 bg-black/40 border-white/20 focus:ring-0 focus:ring-offset-0 cursor-pointer accent-emerald-500"
+                />
+              </label>
+
+              {isSettingPassword && (
+                <div className="relative pt-1 animate-fadeIn">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Nhập mật khẩu cho phòng mới..."
+                    className="w-full px-3 py-2 pr-9 rounded-xl bg-black/50 border border-emerald-400/30 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-400/60 transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-400 hover:text-white transition-colors cursor-pointer z-10"
+                    title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showPassword ? (
+                      <EyeSlashIcon className="w-4 h-4" />
+                    ) : (
+                      <EyeIcon className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

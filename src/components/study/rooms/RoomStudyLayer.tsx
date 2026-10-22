@@ -90,25 +90,35 @@ export function RoomStudyLayer({
         onClose={() => setIsGoalModalOpen(false)}
         ariaLabel="Thiết lập mục tiêu học tập cá nhân"
         backdropClassName="z-[95] bg-black/40 backdrop-blur-sm"
-        panelClassName="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-md p-5 rounded-2xl bg-slate-900 border border-white/15 shadow-2xl backdrop-blur-2xl text-white z-[100] select-none"
+        panelClassName="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-md p-0 rounded-3xl bg-neutral-950/96 border border-white/20 shadow-[0_24px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl text-white z-[100] select-none overflow-hidden"
       >
-        <div className="flex items-center justify-between pb-3 border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <TargetIcon className="w-4 h-4 text-teal-400" weight="bold" />
-            <h3 className="text-sm font-bold text-white">Mục tiêu học tập của bạn</h3>
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-400/50 to-transparent pointer-events-none z-10" />
+
+        <div className="relative px-5 pt-5 pb-4 border-b border-white/10 bg-white/[0.02]">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-500/15 text-teal-300 border border-teal-500/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+                <TargetIcon className="w-5 h-5" weight="fill" />
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-base font-semibold text-white">Mục tiêu học tập</h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">Hiển thị cho cả phòng cùng thấy</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsGoalModalOpen(false)}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 text-slate-300 hover:text-white transition-colors"
+              title="Đóng"
+              aria-label="Đóng"
+            >
+              <XIcon className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsGoalModalOpen(false)}
-            className="p-1 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-            title="Đóng"
-          >
-            <XIcon className="w-4 h-4" />
-          </button>
         </div>
 
-        <div className="py-4 space-y-2">
-          <p className="text-xs text-slate-300">
+        <div className="px-5 py-4 space-y-3">
+          <p className="text-xs text-slate-300 leading-relaxed">
             Đặt mục tiêu ngắn gọn cho phiên học này (tối đa 120 ký tự). Mục tiêu hiển thị trực tiếp trên khung hình của bạn để các bạn cùng phòng cùng thấy và cùng cố gắng.
           </p>
 
@@ -119,21 +129,21 @@ export function RoomStudyLayer({
               placeholder="VD: Làm 5 bài tập Giải tích chương 2, không mở mạng xã hội..."
               rows={3}
               maxLength={120}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/15 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-teal-400/50 resize-none transition-colors"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/15 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-teal-400/60 focus:ring-2 focus:ring-teal-400/20 resize-none transition-colors"
             />
-            <div className="text-right text-[10px] text-slate-400 pr-1 tabular-nums">
+            <div className="text-right text-[10px] text-slate-400 pr-1 tabular-nums mt-1">
               {goalDraft.length}/120
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-white/10">
+        <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-white/10 bg-white/[0.02]">
           <div>
             {local.goal && (
               <button
                 type="button"
                 onClick={handleClearGoal}
-                className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold border border-rose-400/20 transition-all cursor-pointer flex items-center gap-1.5"
+                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold border border-rose-400/20 transition-all cursor-pointer"
               >
                 <TrashIcon className="w-3.5 h-3.5" />
                 <span>Xóa mục tiêu</span>
@@ -144,14 +154,14 @@ export function RoomStudyLayer({
             <button
               type="button"
               onClick={() => setIsGoalModalOpen(false)}
-              className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold border border-white/10 transition-all cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold border border-white/10 transition-all cursor-pointer"
             >
               Hủy
             </button>
             <button
               type="button"
               onClick={handleSaveGoal}
-              className="px-4 py-1.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+              className="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
             >
               <CheckIcon className="w-3.5 h-3.5" weight="bold" />
               <span>Lưu mục tiêu</span>

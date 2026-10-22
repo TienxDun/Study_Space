@@ -1,7 +1,7 @@
 # Lộ trình phòng học nhóm LiveKit
 
 - **Cập nhật:** 22/10/2026
-- **Trạng thái:** Phase 0 và Phase 1 đạt code/test; Phase 2 đạt code/unit test, còn P2-6 kiểm thử thủ công; Phase 3 chưa bắt đầu.
+- **Trạng thái:** Phase 0 và Phase 1 đạt code/test; Phase 2 đạt code/unit test và P2-6 đã kiểm thử thủ công; Phase 3 chưa bắt đầu.
 - **Nguồn thông tin vận hành:** [`PHONG_HOC_NHOM.md`](./PHONG_HOC_NHOM.md)
 
 ## 1. Mục tiêu
@@ -32,7 +32,7 @@ Các giá trị cấu hình được bằng biến môi trường của Worker, 
 |---|---|---|
 | Phase 0 | Quota, giới hạn phòng, webhook đếm phút, fail-open | Đạt code/test |
 | Phase 1 | Link mời, pre-join, reconnect, screen share mobile | Đạt code/test |
-| Phase 2 | Trạng thái học tập, giơ tay, Pomodoro đồng bộ, reaction | Đạt code/unit; chờ P2-6 |
+| Phase 2 | Trạng thái học tập, giơ tay, Pomodoro đồng bộ, reaction | Hoàn thành |
 | Phase 3 | Host, moderation, admin, lịch sử giờ học | Chưa bắt đầu |
 
 ### Phase 2 — phần còn lại

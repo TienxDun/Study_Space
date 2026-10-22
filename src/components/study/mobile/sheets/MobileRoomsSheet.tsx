@@ -9,6 +9,7 @@ import {
   ArrowClockwiseIcon,
   SignInIcon,
   LockKeyIcon,
+  KeyIcon,
   SparkleIcon,
   VideoCameraIcon,
   ShieldCheckIcon,
@@ -35,10 +36,10 @@ export interface MobileRoomsSheetProps {
   setDisplayName: (val: string) => void;
   roomName: string;
   setRoomName: (val: string) => void;
-  openRooms: { name: string; count: number }[];
+  openRooms: { name: string; count: number; isLocked?: boolean; hasPassword?: boolean }[];
   loadingRooms: boolean;
   loadOpenRooms: () => void;
-  handleJoinListed: (name: string) => void;
+  handleJoinListed: (roomItem: { name: string; hasPassword?: boolean }) => void;
   handleJoin: () => void;
   canJoin: boolean;
   joining: boolean;
@@ -54,7 +55,11 @@ export interface MobileRoomsSheetProps {
   remainingMinutes?: number | null;
   quotaStatus?: string;
   sessionMaxMinutes?: number;
-  preJoinConfig?: { room: string; name: string } | null;
+  preJoinConfig?: {
+    room: string;
+    name: string;
+    passwordMode: "required" | "optional-create" | "none";
+  } | null;
   onPreJoinSubmit?: (choices: PreJoinChoices) => void;
   onPreJoinCancel?: () => void;
   initialMedia?: {
@@ -66,6 +71,12 @@ export interface MobileRoomsSheetProps {
   handleCopyLobbyInvite?: () => void;
   soundEnabled?: boolean;
   soundType?: PomodoroSoundType;
+  userRole?: "host" | "co-host" | "member";
+  isHost?: boolean;
+  isCoHost?: boolean;
+  initialIsLocked?: boolean;
+  initialHasPassword?: boolean;
+  getIdToken?: () => Promise<string | null>;
 }
 
 export function MobileRoomsSheet({
@@ -107,6 +118,12 @@ export function MobileRoomsSheet({
   handleCopyLobbyInvite,
   soundEnabled,
   soundType,
+  userRole = "member",
+  isHost = false,
+  isCoHost = false,
+  initialIsLocked = false,
+  initialHasPassword = false,
+  getIdToken,
 }: MobileRoomsSheetProps) {
   // Khi ĐÃ VÀO PHÒNG: LiveKitRoom luôn giữ kết nối ngầm kể cả khi đóng bảng để chuyển tab
   if (token) {
@@ -156,6 +173,12 @@ export function MobileRoomsSheet({
             videoDeviceId={initialMedia.videoDeviceId}
             soundEnabled={soundEnabled}
             soundType={soundType}
+            userRole={userRole}
+            isHost={isHost}
+            isCoHost={isCoHost}
+            initialIsLocked={initialIsLocked}
+            initialHasPassword={initialHasPassword}
+            getIdToken={getIdToken}
           />
         </MobileSheetShell>
 
@@ -174,22 +197,31 @@ export function MobileRoomsSheet({
   // Khi ĐANG Ở BƯỚC PRE-JOIN: Hiển thị giao diện kiểm tra mic/cam
   if (preJoinConfig && onPreJoinSubmit && onPreJoinCancel) {
     return (
-      <MobileSheetShell
-        isOpen={isOpen}
-        onClose={onClose}
-        onBack={onBack}
-        backLabel={backLabel}
-        sheetId="rooms"
-        title="Kiểm tra thiết bị"
-        maxHeightClassName="h-auto max-h-[88dvh]"
-      >
-        <RoomPreJoinView
-          roomName={preJoinConfig.room}
-          displayName={preJoinConfig.name}
-          onJoin={onPreJoinSubmit}
-          onCancel={onPreJoinCancel}
-          joining={joining}
-        />
+        <MobileSheetShell
+          isOpen={isOpen}
+          onClose={onClose}
+          onBack={onBack}
+          backLabel={backLabel}
+          sheetId="rooms"
+          title={
+            <span className="flex items-center gap-2">
+              <span>Kiểm tra thiết bị</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-400/30 shrink-0">
+                Bước xem trước
+              </span>
+            </span>
+          }
+          maxHeightClassName="h-auto max-h-[88dvh]"
+        >
+          <RoomPreJoinView
+            roomName={preJoinConfig.room}
+            displayName={preJoinConfig.name}
+            passwordMode={preJoinConfig.passwordMode}
+            onJoin={onPreJoinSubmit}
+            onCancel={onPreJoinCancel}
+            joining={joining}
+            hideHeader
+          />
       </MobileSheetShell>
     );
   }
@@ -379,9 +411,21 @@ export function MobileRoomsSheet({
                       className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] transition-all"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-white truncate">
-                          {r.name}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-bold text-white truncate">
+                            {r.name}
+                          </p>
+                          {r.isLocked && (
+                            <span className="p-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px]" title="Phòng đang khóa">
+                              <LockKeyIcon className="w-3 h-3" weight="fill" />
+                            </span>
+                          )}
+                          {r.hasPassword && (
+                            <span className="p-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px]" title="Có mật khẩu bảo vệ">
+                              <KeyIcon className="w-3 h-3" />
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                           <span className="text-[11px] text-emerald-300/90 font-medium">
@@ -391,7 +435,7 @@ export function MobileRoomsSheet({
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleJoinListed(r.name)}
+                        onClick={() => handleJoinListed(r)}
                         disabled={joining}
                         className="min-h-[36px] px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 text-xs font-bold transition-all cursor-pointer disabled:opacity-40 flex items-center gap-1.5 shrink-0 shadow-sm"
                       >
