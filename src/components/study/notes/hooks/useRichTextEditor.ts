@@ -233,6 +233,9 @@ export function useRichTextEditor({ onContentChange }: UseRichTextEditorProps) {
 
   const triggerInputSave = useCallback(() => {
     if (!editorRef.current) return;
+    if (!(editorRef.current.innerText || "").trim()) {
+      editorRef.current.innerHTML = "";
+    }
     const newHtml = editorRef.current.innerHTML;
     updateCountsFromDom();
     recordTypingChange(newHtml);

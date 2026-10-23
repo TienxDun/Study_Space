@@ -368,8 +368,9 @@
   margin-top: 3px;
 }
 
-.study-editor-content-light .todo-checked-text {
-  text-decoration: line-through;
-  opacity: 0.55;
-  color: #64748b;
+.study-editor-content:empty::before,
+.study-editor-content-light:empty::before {
+  content: attr(data-placeholder);
+  color: rgba(148, 163, 184, 0.7);
+  pointer-events: none;
 }

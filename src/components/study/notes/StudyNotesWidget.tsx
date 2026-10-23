@@ -222,7 +222,7 @@ export const StudyNotesWidget = ({
 
         const syncDom = () => {
           if (editorRef.current) {
-            const initialHtml = activeNote.content || "<p><br></p>";
+            const initialHtml = activeNote.content || "";
             editorRef.current.innerHTML = initialHtml;
             const changed = flattenNestedTodos(editorRef.current);
             const finalHtml = editorRef.current.innerHTML;

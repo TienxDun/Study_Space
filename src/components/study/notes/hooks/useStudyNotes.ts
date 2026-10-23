@@ -227,7 +227,7 @@ export function useStudyNotes() {
       id: `note-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       title: "Ghi chú không tên",
       isPinned: false,
-      content: "<p>Bắt đầu ghi chép nội dung...</p>",
+      content: "",
       updatedAt: Date.now(),
     };
     const updated = [newNote, ...notes];
