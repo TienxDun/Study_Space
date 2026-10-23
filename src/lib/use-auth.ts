@@ -3,4 +3,4 @@
  * Thư mục nguồn auth: @/components/study/auth
  */
 export { useAuth } from "@/components/study/auth";
-export type { AuthUser, UseAuthReturn } from "@/components/study/auth";
+export type { UseAuthReturn } from "@/components/study/auth";

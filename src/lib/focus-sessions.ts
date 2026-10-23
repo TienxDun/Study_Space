@@ -299,17 +299,6 @@ export function getMonthSummary(
   return getFocusSummary(sessions, start.getTime(), end.getTime());
 }
 
-/** Tổng số giây đã tập trung vào 1 task cụ thể (mọi thời gian). */
-export function getTaskTotalSeconds(
-  sessions: FocusSession[],
-  taskId: string
-): number {
-  let total = 0;
-  for (const s of sessions) {
-    if (s && s.taskId === taskId) total += s.focusSeconds;
-  }
-  return total;
-}
 
 /** "45 giây" • "25 phút" • "1 giờ 5 phút" • "2 giờ" — dùng cho toast/thống kê. */
 export function formatFocusDuration(totalSeconds: number): string {

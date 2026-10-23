@@ -12,9 +12,6 @@
   padding-top: var(--app-safe-top);
 }
 
-.top-safe-sticky {
-  top: calc(0.75rem + var(--app-safe-top));
-}
 
 .bottom-nav-safe {
   padding-bottom: calc(var(--app-safe-bottom) + var(--mobile-nav-safe-gap));
@@ -22,9 +19,6 @@
   padding-right: max(0.25rem, var(--app-safe-right));
 }
 
-.bottom-nav-content {
-  min-height: var(--mobile-nav-height);
-}
 
 .pb-safe {
   padding-bottom: var(--app-safe-bottom);
@@ -38,12 +32,6 @@
     );
   }
 
-  .scroll-to-top-safe {
-    bottom: calc(
-      var(--mobile-nav-height) + var(--app-safe-bottom) +
-        var(--mobile-nav-safe-gap) + 1rem
-    );
-  }
 
   /* Tab Stopwatch (mobile): dính cả cột xuống đáy để đồng hồ nằm thấp nhất.
      Bảng vòng luôn giữ chỗ cố định nên mở bảng hay bấm thêm vòng cũng không nhảy.
@@ -108,7 +96,6 @@
    tạo cảm giác ứng dụng native phẳng mượt mà nhưng vẫn duy trì momentum touch scrolling */
 @media (max-width: 639px), (pointer: coarse) {
   .custom-study-scroll,
-  .custom-scrollbar,
   .no-scrollbar,
   .scrollbar-none,
   [class*="overflow-y-auto"],

@@ -19,28 +19,8 @@
   }
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
-  border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #cbd5e1;
-}
 
 @layer utilities {
-  .vertical-text {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-  }
 
   .scrollbar-none {
     -ms-overflow-style: none;
@@ -64,7 +44,6 @@ summary {
 }
 
 /* Modern Minimalist Glassmorphism Scrollbar */
-.custom-scrollbar,
 .custom-study-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.25) transparent;

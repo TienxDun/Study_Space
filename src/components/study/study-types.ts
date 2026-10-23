@@ -17,14 +17,6 @@ export type Track = LegacyTrack;
 export type AmbientSound = LegacyAmbientSound;
 export type Scene = LegacyScene;
 
-export interface StudyTask {
-  id: string;
-  text: string;
-  completed: boolean;
-  pomodoros: number;
-  priority: "low" | "medium" | "high";
-  createdAt: number;
-}
 
 export interface KanbanChecklistItem {
   id: string;

@@ -1,8 +1,8 @@
 # Phòng học nhóm (LiveKit) — Hiện trạng triển khai
 
 Cập nhật: 22/10/2026
-Phạm vi: Phase 0–2 (giới hạn miễn phí, đếm phút, trải nghiệm phòng, tương tác học tập)
-Trạng thái: Phase 0/1 đạt code/test; Phase 2 hoàn thành (code/unit test + P2-6 thủ công).
+Phạm vi: Phase 0–3 (giới hạn miễn phí, đếm phút, trải nghiệm phòng, tương tác học tập)
+Trạng thái: Phase 0/1 đạt code/test; Phase 2 hoàn thành (code/unit test + P2-6 thủ công); Phase 3 (host, khóa phòng, mật khẩu, đồng host) đã triển khai.
 
 ## 1. Tổng quan
 
@@ -241,7 +241,7 @@ Tính năng tương tác trực tiếp trong phòng học nhóm:
 
 Các mục sau thuộc giai đoạn sau, chưa triển khai:
 
-- Host, khóa phòng, phòng chờ, quyền quản lý người tham gia.
+- Host, khóa phòng, mật khẩu phòng, đồng host: đã triển khai Phase 3.
 - Giao diện xem lịch sử điểm danh và quản trị phòng.
 - Giới hạn 120 phút hiện được kiểm soát ở trình duyệt; chưa chặn phía server.
 

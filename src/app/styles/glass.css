@@ -171,41 +171,8 @@
   .lg-bubble {
     background: rgba(10, 12, 18, 0.94);
   }
-  .lg-sheet {
-    background: rgba(10, 12, 18, 0.96);
-  }
 }
 
-/* Tấm kính cho bảng mobile, học công thức nền mờ của Glass Surface React Bits
-   (bản tối, giấy phép MIT của tác giả được giữ trong chú thích code) */
-.lg-sheet {
-  position: relative;
-  border-radius: 1.5rem;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.09),
-      transparent 42%,
-      transparent 64%,
-      rgba(255, 255, 255, 0.04)
-    ),
-    linear-gradient(180deg, rgba(22, 26, 38, 0.55), rgba(8, 10, 16, 0.62));
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.06);
-}
-
-/* Máy cảm ứng yếu: giảm mờ để mở bảng mượt hơn, giống cách glass-panel đang làm */
-@media (pointer: coarse) {
-  .lg-sheet {
-    backdrop-filter: blur(14px) saturate(140%);
-    -webkit-backdrop-filter: blur(14px) saturate(140%);
-  }
-}
 
 /* Đốm sáng đi theo ngón tay trên thanh kính (học từ mẫu 001 Lucianlabs) */
 .lg-spot {
@@ -247,97 +214,6 @@
     0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
-/* Nút / Tab đang kích hoạt: Chuẩn Obsidian Liquid Glass */
-/* IMPORTANT-ALLOWED-START: lg-tab-active-override */
-.lg-tab-active {
-  position: relative;
-  overflow: hidden;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.22),
-      rgba(255, 255, 255, 0.08) 50%,
-      rgba(255, 255, 255, 0.02)
-    ),
-    rgba(10, 12, 18, 0.65) !important;
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.4),
-    inset 0 1px 1.5px rgba(255, 255, 255, 0.45),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.25) !important;
-  color: #ffffff !important;
-  font-weight: 600;
-}
-/* IMPORTANT-ALLOWED-END */
-
-.lg-tab-active::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent);
-  pointer-events: none;
-}
-
-/* Ô / Tab đang chọn dạng kính nhuốm màu xanh ngọc (emerald) — bản desktop:
-   vẫn giữ đủ ánh sáng kính (vệt gương, viền sáng trên) nhưng pha sắc xanh
-   ngọc theo màu thương hiệu. Đứng riêng, không phụ thuộc lg-tab-active. */
-.lg-tab-active-tint {
-  position: relative;
-  overflow: hidden;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.16),
-      rgba(255, 255, 255, 0.05) 50%,
-      rgba(255, 255, 255, 0.02)
-    ),
-    rgba(16, 185, 129, 0.16);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  border: 1px solid rgba(52, 211, 153, 0.5);
-  box-shadow:
-    0 4px 18px rgba(0, 0, 0, 0.4),
-    0 0 14px rgba(52, 211, 153, 0.18),
-    inset 0 1px 1.5px rgba(255, 255, 255, 0.4),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.25);
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.lg-tab-active-tint::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent);
-  pointer-events: none;
-}
-
-/* Nút / Tab chưa kích hoạt: Thủy tinh mờ tinh tế */
-/* IMPORTANT-ALLOWED-START: lg-tab-inactive-override */
-.lg-tab-inactive {
-  position: relative;
-  background: rgba(255, 255, 255, 0.04) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
-  color: rgba(255, 255, 255, 0.7) !important;
-  transition: all 0.18s ease;
-}
-
-.lg-tab-inactive:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.18) !important;
-}
-/* IMPORTANT-ALLOWED-END */
 
 /* Ô nhập liệu kính lỏng mobile: kế thừa công thức thanh điều hướng (lg-bar)
    nhưng bo góc chữ nhật và bóng nhẹ hơn cho vừa ô nhỏ. Áp trực tiếp lên

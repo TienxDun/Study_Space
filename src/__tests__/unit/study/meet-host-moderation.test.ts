@@ -69,6 +69,9 @@ class MockD1 {
         const q = query.trim().toUpperCase();
         if (q.startsWith("INSERT INTO MEET_ROOMS")) {
           const [roomName, host_uid, host_identity, initialPassHash, created_at] = boundArgs;
+          if (q.includes("ON CONFLICT") && tables.meet_rooms.has(roomName)) {
+            return { success: true };
+          }
           tables.meet_rooms.set(roomName, {
             name: roomName,
             host_uid,
@@ -78,6 +81,20 @@ class MockD1 {
             password_hash: initialPassHash ?? null,
             created_at,
           });
+          return { success: true };
+        }
+        if (q.startsWith("DELETE FROM MEET_ROOMS")) {
+          const [roomName, cutoff, sessionRoom, sessionCutoff] = boundArgs;
+          const existing = tables.meet_rooms.get(roomName);
+          const hasNewerOpenSession = tables.meet_sessions.some(
+            (s) =>
+              s.room === sessionRoom &&
+              s.left_at == null &&
+              Number(s.joined_at) > Number(sessionCutoff)
+          );
+          if (existing && Number(existing.created_at) <= Number(cutoff) && !hasNewerOpenSession) {
+            tables.meet_rooms.delete(roomName);
+          }
           return { success: true };
         }
         if (q.startsWith("UPDATE MEET_ROOMS SET LOCKED =")) {
@@ -537,6 +554,34 @@ describe("LiveKit Phase 3 — Host, Co-host, Password & Moderation Worker", () =
     expect(data1).toEqual(data2);
     expect(data1.limitMinutes).toBe(4500);
     expect(typeof data1.roomsOpen).toBe("number");
+  });
+
+  it("keeps exactly one host when two users create the same room at the same time", async () => {
+    const body = { room: "phong-race", name: "Người Tạo" };
+    const makeReq = (token: string) =>
+      new Request("https://worker.local/token", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+    const [resA, resB] = await Promise.all([
+      worker.fetch(makeReq("token-host"), env),
+      worker.fetch(makeReq("token-member"), env),
+    ]);
+
+    const dataA = await resA.json();
+    const dataB = await resB.json();
+    const hosts = [
+      { data: dataA, uid: "uid-host-1" },
+      { data: dataB, uid: "uid-member-1" },
+    ].filter((x) => x.data.isHost === true);
+
+    expect(hosts.length).toBe(1);
+    expect(db.tables.meet_rooms.get("phong-race").host_uid).toBe(hosts[0].uid);
   });
 
   it("POST /token sets room password upon creation when host supplies password in pre-join", async () => {

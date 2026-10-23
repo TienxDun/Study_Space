@@ -42,7 +42,7 @@ Phase 2 **chỉ làm phía client**. Không sửa Worker, D1, schema hay logic q
 ## Ràng buộc kỹ thuật
 
 - UI copy tiếng Việt có dấu; comment mới viết tiếng Việt khi cần giải thích logic khó.
-- Mobile theo `docs/mobile-style-guide.md`; dùng màu/kích thước hiện có của phòng học.
+- Mobile theo `docs/guides/mobile-style-guide.md`; dùng màu/kích thước hiện có của phòng học.
 - Desktop và mobile dùng chung `meet-protocol.ts` + `useMeetStudyState` + `RoomStudyBar`.
 - Không tạo state machine mobile thứ hai.
 - Mọi thao tác ghi attribute phải bọc `try/catch`, lỗi không làm sập phòng.
@@ -389,7 +389,7 @@ Nếu test render component có `RoomStudyLayer`, mock `useParticipants` trả v
 
 ### Tài liệu
 
-Cập nhật `docs/PHONG_HOC_NHOM.md`:
+Cập nhật `docs/features/PHONG_HOC_NHOM.md`:
 
 - Thêm mục “Trạng thái học tập, giơ tay, Pomodoro đồng bộ, reaction”.
 - Ghi rõ đây là tính năng client-only, không tốn thêm phút LiveKit.

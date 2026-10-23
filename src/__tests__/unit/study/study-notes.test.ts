@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import {
-  getNoteExcerpt,
   sanitizeStoredNoteContent,
   markdownToHtml,
   looksLikeMarkdown,
@@ -8,31 +7,6 @@ import {
 } from "../../../components/study/notes/utils/note-markdown";
 
 describe("Study Notes Markdown & Excerpt Utilities", () => {
-  describe("getNoteExcerpt", () => {
-    it("should return default text if content is empty", () => {
-      expect(getNoteExcerpt("")).toBe("Chưa có nội dung...");
-      expect(getNoteExcerpt("   ")).toBe("Chưa có nội dung...");
-    });
-
-    it("should strip HTML tags and decode HTML entities", () => {
-      const html = "<p>Xin chào &amp; chúc <strong>ngày mới</strong> tốt lành!</p>";
-      const excerpt = getNoteExcerpt(html, 100);
-      expect(excerpt).toBe("Xin chào & chúc ngày mới tốt lành!");
-    });
-
-    it("should truncate long text with ellipsis", () => {
-      const longText = "Đây là một đoạn văn bản rất dài được viết nhằm mục đích kiểm tra khả năng cắt ngắn chuỗi.";
-      const excerpt = getNoteExcerpt(longText, 25);
-      expect(excerpt.length).toBeLessThanOrEqual(28);
-      expect(excerpt.endsWith("...")).toBe(true);
-    });
-
-    it("should strip markdown quotes and leading symbols", () => {
-      const text = "> *Đây là trích dẫn quan trọng*";
-      const excerpt = getNoteExcerpt(text, 100);
-      expect(excerpt.startsWith(">")).toBe(false);
-    });
-  });
 
   describe("sanitizeStoredNoteContent", () => {
     it("should return empty paragraph for empty content", () => {

@@ -19,13 +19,13 @@ Next.js 16 + React 19 + Tailwind v4 single-page app with Vietnamese UI. Local-fi
 - Persistence is localStorage-first. Every key lives in `src/lib/storage-keys.ts`; never hardcode key strings. `src/lib/simple-cloud-sync.ts` mirrors the entire user workspace as a snapshot document (Save Game Document mode) to D1 via `workers/data-api` (`GET/POST /data`, ~2s debounce, offline auto-recovery, wipe on logout) and deliberately excludes machine-specific keys.
 - Scenes, sounds and tracks are JSON in `src/data/assets/`, typed in `src/components/study/study-types.ts`. Asset URLs must go through `src/lib/asset-resolver.ts` (CDN env or `/study` fallback). `public/study/` is ~465 MB and gitignored, so never assume it exists in CI.
 - `/admin` and everything under `/api/*` are dev-only tools guarded by `NODE_ENV === "development"`; they are not part of the static export. `/admin/scenes` edits `src/data/assets/scenes.json` and writes media into `public/study`.
-- `workers/` are standalone Cloudflare Workers deployed by pasting into the dashboard - not built by Next. Backend setup order is in `docs/DEPLOY.md`; D1 schema and API are in `docs/CLOUD_SYNC_GUIDE.md` and `workers/schema.sql`. The old plan is archived at `docs/archive/CLOUD_SYNC_PLAN.md`.
+- `workers/` are standalone Cloudflare Workers deployed by pasting into the dashboard - not built by Next. Backend setup order is in `docs/deployment/DEPLOY.md`; D1 schema and API are in `docs/guides/CLOUD_SYNC_GUIDE.md` and `workers/schema.sql`. The old plan is archived at `docs/archive/CLOUD_SYNC_PLAN.md`.
 - Missing `NEXT_PUBLIC_*` Firebase/CDN/worker URLs degrade the app to local-only. `src/lib/firebase-config.ts` exists so the Firebase SDK is only imported when configured.
 
 ## Conventions
 
 - UI copy and code comments are Vietnamese; write new ones in Vietnamese.
-- Tailwind v4 is CSS-first: semantic tokens live in `src/app/styles/tokens.css` (`panel`, `line`, `accent-*`). Prefer them over raw palette colors. Admin has its own spec in `src/app/admin/DESIGN.md`; mobile UI must follow `docs/mobile-style-guide.md`.
+- Tailwind v4 is CSS-first: semantic tokens live in `src/app/styles/tokens.css` (`panel`, `line`, `accent-*`). Prefer them over raw palette colors. Admin has its own spec in `src/app/admin/DESIGN.md`; mobile UI must follow `docs/guides/mobile-style-guide.md`.
 - No `!important` outside the allowed marker blocks (enforced by `npm run lint:css`).
 - ESLint intentionally disables `no-explicit-any`, `react-hooks/exhaustive-deps` and `react-hooks/set-state-in-effect`; do not "fix" that config.
 - Tests run in Node by default. Add `// @vitest-environment happy-dom` as the first line when a test needs DOM APIs.

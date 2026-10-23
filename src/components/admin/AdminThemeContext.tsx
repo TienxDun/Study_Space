@@ -15,7 +15,6 @@ const AdminThemeContext = createContext<AdminThemeContextType | undefined>(undef
 
 export function AdminThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("dark");
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     try {
@@ -28,7 +27,6 @@ export function AdminThemeProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
-    setMounted(true);
   }, []);
 
   const setTheme = (next: Theme) => {

@@ -1,6 +1,6 @@
 # Task Phase 1 — Trải nghiệm phòng học nhóm
 
-> **ĐÃ LƯU TRỮ:** Phase 1 đã đạt code/test. Trạng thái hiện tại xem [`../LIVEKIT_ROADMAP.md`](../LIVEKIT_ROADMAP.md).
+> **ĐÃ LƯU TRỮ:** Phase 1 đã đạt code/test. Trạng thái hiện tại xem [`../features/LIVEKIT_ROADMAP.md`](../features/LIVEKIT_ROADMAP.md).
 
 ## Bối cảnh
 

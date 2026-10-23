@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 // @ts-expect-error node:sqlite is built into Node 22+ runtime but may lack declarations in @types/node
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
@@ -404,5 +404,187 @@ describe("LiveKit Webhook Verification & Session Tracking", () => {
       .prepare("SELECT participant_seconds FROM meet_usage_month WHERE month = '1970-01'")
       .get();
     expect(usageRow.participant_seconds).toBe(600);
+  });
+
+  async function sendRoomFinished(
+    env: Record<string, unknown>,
+    eventId: string,
+    createdAt: number,
+    creationTime: number,
+    room = "phong-ket-thuc"
+  ) {
+    const body = JSON.stringify({
+      id: eventId,
+      event: "room_finished",
+      createdAt,
+      room: { name: room, creationTime },
+    });
+    const token = await makeWebhookToken(secret, apiKey, body);
+    return worker.fetch(
+      new Request("https://worker.test/webhook/livekit", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body,
+      }),
+      env
+    );
+  }
+
+  it("deletes room metadata on room_finished but keeps audit logs", async () => {
+    const mockDb = createRealSqliteD1();
+    const env = {
+      LIVEKIT_API_KEY: apiKey,
+      LIVEKIT_API_SECRET: secret,
+      FIREBASE_PROJECT_ID: "test-fb",
+      DB: mockDb,
+    };
+
+    mockDb._sqlite
+      .prepare(
+        "INSERT INTO meet_rooms (name, host_uid, host_identity, co_host_uids, locked, password_hash, created_at) VALUES (?, ?, ?, '[]', 1, ?, ?)"
+      )
+      .run("phong-ket-thuc", "uid-old", "user-uid-old", "hash-cu", 1000);
+    mockDb._sqlite
+      .prepare(
+        "INSERT INTO meet_audit_logs (id, room, action, actor_uid, target_identity, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+      )
+      .run("audit-1", "phong-ket-thuc", "kick", "uid-old", "user-uid-x", 1200);
+    mockDb._sqlite
+      .prepare(
+        "INSERT INTO meet_sessions (id, room, identity, display_name, joined_at, left_at, duration_seconds, billing_month) VALUES (?, ?, ?, ?, ?, NULL, NULL, ?)"
+      )
+      .run("sess-old", "phong-ket-thuc", "user-uid-old", "Chủ Cũ", 1000, "1970-01");
+
+    const res = await sendRoomFinished(env, "evt-room-fin-1", 1600, 1000);
+    expect(res.status).toBe(200);
+
+    const roomRow = mockDb._sqlite
+      .prepare("SELECT name FROM meet_rooms WHERE name = 'phong-ket-thuc'")
+      .get();
+    expect(roomRow).toBeUndefined();
+
+    const sessionRow: any = mockDb._sqlite
+      .prepare("SELECT left_at, duration_seconds FROM meet_sessions WHERE id = 'sess-old'")
+      .get();
+    expect(sessionRow.left_at).toBe(1600);
+    expect(sessionRow.duration_seconds).toBe(600);
+
+    const auditRow = mockDb._sqlite
+      .prepare("SELECT id FROM meet_audit_logs WHERE id = 'audit-1'")
+      .get();
+    expect(auditRow).toBeDefined();
+  });
+
+  it("is idempotent when room_finished is retried", async () => {
+    const mockDb = createRealSqliteD1();
+    const env = {
+      LIVEKIT_API_KEY: apiKey,
+      LIVEKIT_API_SECRET: secret,
+      FIREBASE_PROJECT_ID: "test-fb",
+      DB: mockDb,
+    };
+
+    mockDb._sqlite
+      .prepare(
+        "INSERT INTO meet_rooms (name, host_uid, host_identity, co_host_uids, locked, password_hash, created_at) VALUES (?, ?, ?, '[]', 0, NULL, ?)"
+      )
+      .run("phong-ket-thuc", "uid-old", "user-uid-old", 1000);
+
+    const first = await sendRoomFinished(env, "evt-room-fin-retry", 1600, 1000);
+    expect(first.status).toBe(200);
+
+    const second = await sendRoomFinished(env, "evt-room-fin-retry", 1600, 1000);
+    expect(second.status).toBe(200);
+    const secondData = await second.json();
+    expect(secondData.duplicate).toBe(true);
+
+    const roomRow = mockDb._sqlite
+      .prepare("SELECT name FROM meet_rooms WHERE name = 'phong-ket-thuc'")
+      .get();
+    expect(roomRow).toBeUndefined();
+  });
+
+  it("keeps metadata of a newer room when an old room_finished arrives late", async () => {
+    const mockDb = createRealSqliteD1();
+    const env = {
+      LIVEKIT_API_KEY: apiKey,
+      LIVEKIT_API_SECRET: secret,
+      FIREBASE_PROJECT_ID: "test-fb",
+      DB: mockDb,
+    };
+
+    mockDb._sqlite
+      .prepare(
+        "INSERT INTO meet_rooms (name, host_uid, host_identity, co_host_uids, locked, password_hash, created_at) VALUES (?, ?, ?, '[]', 0, NULL, ?)"
+      )
+      .run("phong-ket-thuc", "uid-new", "user-uid-new", 2000);
+
+    const res = await sendRoomFinished(env, "evt-room-fin-late", 1600, 1000);
+    expect(res.status).toBe(200);
+
+    const roomRow: any = mockDb._sqlite
+      .prepare("SELECT host_uid FROM meet_rooms WHERE name = 'phong-ket-thuc'")
+      .get();
+    expect(roomRow).toBeDefined();
+    expect(roomRow.host_uid).toBe("uid-new");
+  });
+
+  it("resets role after room_finished: next user becomes host", async () => {
+    const mockDb = createRealSqliteD1();
+    const env = {
+      LIVEKIT_URL: "wss://test.livekit.cloud",
+      LIVEKIT_API_KEY: apiKey,
+      LIVEKIT_API_SECRET: secret,
+      FIREBASE_PROJECT_ID: "test-fb",
+      DB: mockDb,
+      _verifyToken: async () => ({ uid: "uid-new-host" }),
+    };
+
+    mockDb._sqlite
+      .prepare(
+        "INSERT INTO meet_rooms (name, host_uid, host_identity, co_host_uids, locked, password_hash, created_at) VALUES (?, ?, ?, '[]', 0, ?, ?)"
+      )
+      .run("phong-ket-thuc", "uid-old", "user-uid-old", "hash-cu", 1000);
+
+    await sendRoomFinished(env, "evt-room-fin-reset", 1600, 1000);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(JSON.stringify({ participants: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+    );
+
+    try {
+      const body = JSON.stringify({ room: "phong-ket-thuc", name: "Chủ Mới" });
+      const res = await worker.fetch(
+        new Request("https://worker.test/token", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer token-new",
+            "Content-Type": "application/json",
+          },
+          body,
+        }),
+        env
+      );
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.role).toBe("host");
+      expect(data.isHost).toBe(true);
+      expect(data.hasPassword).toBe(false);
+
+      const roomRow: any = mockDb._sqlite
+        .prepare("SELECT host_uid, password_hash FROM meet_rooms WHERE name = 'phong-ket-thuc'")
+        .get();
+      expect(roomRow.host_uid).toBe("uid-new-host");
+      expect(roomRow.password_hash).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

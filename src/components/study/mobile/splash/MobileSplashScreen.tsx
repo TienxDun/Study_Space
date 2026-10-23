@@ -25,7 +25,7 @@ const STORAGE_KEY = "zenstudy_mobile_splash_completed";
 
 /**
  * MobileSplashScreen - Màn hình khởi động (Splash Screen / Launch Screen) chuyên nghiệp cho Mobile:
- * - Chuẩn Cinematic Dark Glassmorphism theo docs/mobile-style-guide.md.
+ * - Chuẩn Cinematic Dark Glassmorphism theo docs/guides/mobile-style-guide.md.
  * - Hiển thị biểu tượng Logo thương hiệu ZenStudy với hiệu ứng phát sáng Ambient Aura breathing.
  * - Tự động đồng bộ chuẩn đôi: Chờ hiệu ứng mắt chớp + logo đủ thời gian tối thiểu (duration) VÀ chờ dữ liệu nền sẵn sàng (isReady).
  * - Tự động thoát với hiệu ứng Dissolve & Zoom-out điện ảnh sau khi nạp xong.

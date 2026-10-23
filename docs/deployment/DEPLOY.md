@@ -1,7 +1,7 @@
 # DEPLOY — Chatbot ZenSpace (web tĩnh + Worker + Firebase)
 
 > Thứ tự bắt buộc: Worker trước → Firebase → web. Mỗi bước có cách kiểm tra.
-> Rules liên quan: `docs/firestore-rules.md`. File Gemini cũ đã bỏ.
+> Rules liên quan: `docs/guides/firestore-rules.md`. File Gemini cũ đã bỏ.
 
 ## Bước 0 — Xoay key đã lộ (làm 1 lần, trước khi online)
 
@@ -40,7 +40,8 @@ Các key từng dán ở khung chat coi như đã lộ:
    | `MAX_ROOM_PARTICIPANTS`   | Text được     | `6` (mặc định 6, tối đa người / phòng)                                  |
    | `LIVEKIT_MONTHLY_MINUTES` | Text được     | `4500` (ngưỡng an toàn chặn quota, gói Build 5.000)                        |
    | `QUOTA_ENFORCE`           | Text được     | `true` (đặt `false` để tắt guard khẩn cấp mà không cần sửa code)   |
-   | `ROOM_EMPTY_TIMEOUT_SEC`  | Text được     | `300` (giây phòng tự hủy khi trống)                                        |
+   | `ROOM_EMPTY_TIMEOUT_SEC`  | Text được     | `300` (giây phòng tự hủy khi chưa từng có ai vào)                    |
+   | `ROOM_DEPARTURE_TIMEOUT_SEC` | Text được  | `300` (giây phòng tự hủy sau khi người cuối rời)                       |
    | `SESSION_MAX_MINUTES`     | Text được     | `120` (thời lượng tối đa một phiên học, tự ngắt)                      |
 3. Settings → Bindings → Add → D1 database: Variable name `DB` trỏ tới database `zenspace` (dùng chung với `data-api`).
 4. Mở D1 Database `zenspace` → tab **Console** → dán nội dung file `workers/livekit-schema.sql` → bấm **Execute** (tạo các bảng `meet_events`, `meet_sessions`, `meet_usage_month`, `meet_rooms`).

@@ -1,7 +1,5 @@
 import type { User } from "firebase/auth";
 
-export type AuthUser = User;
-
 export interface UseAuthReturn {
   user: User | null;
   loading: boolean;

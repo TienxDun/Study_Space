@@ -67,9 +67,6 @@ export function cloudConfigured(): boolean {
   return Boolean(apiBaseUrl);
 }
 
-export function hasUnsyncedChanges(): boolean {
-  return pendingChanges;
-}
 
 let activeUid: string | null = null;
 let tokenProvider: (() => Promise<string | null>) | null = null;

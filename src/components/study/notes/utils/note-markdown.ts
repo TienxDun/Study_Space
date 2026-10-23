@@ -1,32 +1,3 @@
-// Helper to strip HTML tags and decode entities for clean sidebar card excerpts
-export function getNoteExcerpt(content: string, maxLength: number = 55): string {
-  if (!content) return "Chưa có nội dung...";
-
-  // 1. Remove style, script, and HTML tags
-  let text = content
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<[^>]+>/g, " ");
-
-  // 2. Decode standard HTML entities
-  text = text
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&#x2F;/g, "/");
-
-  // 3. Strip leading blockquote indicators (>), quotes, dashes, bullets, or hashes
-  text = text.replace(/^[>\s•*#\-"'“”«»]+/g, "").replace(/["'“”«»]+$/g, "");
-
-  // 4. Normalize multiple whitespaces
-  text = text.replace(/\s+/g, " ").trim();
-
-  if (!text) return "Chưa có nội dung...";
-  return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
-}
 
 /**
  * Chuyển đổi nội dung HTML của ghi chú thành văn bản sạch sẽ (giữ checklist, đề mục, ngắt dòng)

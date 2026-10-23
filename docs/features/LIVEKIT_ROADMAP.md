@@ -42,7 +42,7 @@ Các giá trị cấu hình được bằng biến môi trường của Worker, 
 - Xác nhận owner rời phòng thì timer được adopt, không mất trạng thái.
 - Xác nhận mobile 320/375/390px không tràn ngang và menu reaction không bị cắt.
 
-Chi tiết task và checklist kỹ thuật: [`superpowers/specs/2026-10-22-livekit-phase2-task.md`](./superpowers/specs/2026-10-22-livekit-phase2-task.md).
+Chi tiết task và checklist kỹ thuật: [`superpowers/specs/2026-10-22-livekit-phase2-task.md`](../superpowers/specs/2026-10-22-livekit-phase2-task.md).
 
 ## 4. Quyết định kỹ thuật
 
@@ -73,6 +73,6 @@ Chi tiết task và checklist kỹ thuật: [`superpowers/specs/2026-10-22-livek
 | Lớp tích hợp | `src/components/study/rooms/RoomStudyLayer.tsx` |
 | Desktop | `src/components/study/rooms/StudyRoomView.tsx` |
 | Mobile | `src/components/study/mobile/rooms/MobileRoomView.tsx` |
-| Deploy | `docs/DEPLOY.md` |
+| Deploy | `docs/deployment/DEPLOY.md` |
 
-Kế hoạch chi tiết cũ được giữ tại [`archive/livekit-free-meeting-plan.md`](./archive/livekit-free-meeting-plan.md). Không dùng file archive làm nguồn trạng thái hiện tại.
+Kế hoạch chi tiết cũ được giữ tại [`archive/livekit-free-meeting-plan.md`](../archive/livekit-free-meeting-plan.md). Không dùng file archive làm nguồn trạng thái hiện tại.

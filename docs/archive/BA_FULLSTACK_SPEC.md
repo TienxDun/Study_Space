@@ -1,6 +1,6 @@
 # Đặc tả Nghiệp vụ (BA Spec) — HUFLIT StudySpace Fullstack
 
-> **ĐÃ LƯU TRỮ:** Đặc tả cũ, không còn phản ánh code hiện tại. Xem [`../PHONG_HOC_NHOM.md`](../PHONG_HOC_NHOM.md) và [`../LIVEKIT_ROADMAP.md`](../LIVEKIT_ROADMAP.md).
+> **ĐÃ LƯU TRỮ:** Đặc tả cũ, không còn phản ánh code hiện tại. Xem [`../features/PHONG_HOC_NHOM.md`](../features/PHONG_HOC_NHOM.md) và [`../features/LIVEKIT_ROADMAP.md`](../features/LIVEKIT_ROADMAP.md).
 
 > Phiên bản: 1.0 — Ngày: 22/09/2026 — Tác giả BA: AI Assistant + TienxDun
 > Nguồn đối chiếu code hiện tại: `src/app/page.tsx`, `src/app/layout.tsx`, `src/components/study/*`, `next.config.ts`, `package.json`

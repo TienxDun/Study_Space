@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// ZenSpace — xem docs/firestore-rules.md (R4.1–R4.4).
+// ZenSpace — xem docs/guides/firestore-rules.md (R4.1–R4.4).
 // Dán vào Firebase console > Firestore Database > Rules rồi Publish,
 // hoặc: firebase deploy --only firestore:rules
 service cloud.firestore {

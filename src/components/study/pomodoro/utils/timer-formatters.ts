@@ -60,13 +60,3 @@ export function computeSpanDelta(
   );
 }
 
-/**
- * Lời chào theo các khung giờ trong ngày
- */
-export function getGreeting(date: Date = new Date()): string {
-  const hour = date.getHours();
-  if (hour >= 5 && hour < 12) return "🌅 Chúc bạn một buổi sáng học tập tràn đầy năng lượng";
-  if (hour >= 12 && hour < 18) return "☀️ Giữ vững tập trung để hoàn thành tốt mục tiêu";
-  if (hour >= 18 && hour < 22) return "🌆 Buổi tối yên tĩnh, tập trung học tập hiệu quả";
-  return "🌙 Không gian đêm thanh tịnh, hãy giữ gìn sức khỏe bạn nhé";
-}

@@ -6,14 +6,15 @@ Chỉ mục tài liệu đang dùng. File trong [`archive/`](./archive/README.md
 
 | Tài liệu | Vai trò |
 |---|---|
-| [`PHONG_HOC_NHOM.md`](./PHONG_HOC_NHOM.md) | Nguồn thông tin chính về phòng học nhóm LiveKit, quota, D1, cấu hình và checklist P2-6 |
-| [`LIVEKIT_ROADMAP.md`](./LIVEKIT_ROADMAP.md) | Trạng thái và lộ trình Phase 0–3 |
-| [`DEPLOY.md`](./DEPLOY.md) | Deploy Worker, D1, quy trình seed quota |
-| [`CLOUD_SYNC_GUIDE.md`](./CLOUD_SYNC_GUIDE.md) | Vận hành Cloud Save snapshot trên D1 |
-| [`chatbot-rebuild.md`](./chatbot-rebuild.md) | Kế hoạch chatbot; còn bước deploy thủ công |
-| [`mobile-style-guide.md`](./mobile-style-guide.md) | Quy chuẩn giao diện mobile |
-| [`firestore-rules.md`](./firestore-rules.md) | Firestore rules |
-| [`ANDROID_CHPLAY_OTA_GUIDE.md`](./ANDROID_CHPLAY_OTA_GUIDE.md) | Hướng dẫn Android/Play/OTA |
+| [`features/PHONG_HOC_NHOM.md`](./features/PHONG_HOC_NHOM.md) | Nguồn thông tin chính về phòng học nhóm LiveKit, quota, D1, cấu hình và checklist P2-6 |
+| [`features/LIVEKIT_ROADMAP.md`](./features/LIVEKIT_ROADMAP.md) | Trạng thái và lộ trình Phase 0–3 |
+| [`deployment/DEPLOY.md`](./deployment/DEPLOY.md) | Deploy Worker, D1, quy trình seed quota |
+| [`guides/CLOUD_SYNC_GUIDE.md`](./guides/CLOUD_SYNC_GUIDE.md) | Vận hành Cloud Save snapshot trên D1 |
+| [`archive/chatbot-rebuild.md`](./archive/chatbot-rebuild.md) | Kế hoạch chatbot cũ; đã triển khai cấu trúc components/hooks/utils |
+| [`guides/mobile-style-guide.md`](./guides/mobile-style-guide.md) | Quy chuẩn giao diện mobile |
+| [`guides/firestore-rules.md`](./guides/firestore-rules.md) | Firestore rules |
+| [`deployment/ANDROID_CHPLAY_OTA_GUIDE.md`](./deployment/ANDROID_CHPLAY_OTA_GUIDE.md) | Hướng dẫn Android/Play/OTA |
+| [`overview/SYSTEM_OVERVIEW.md`](./overview/SYSTEM_OVERVIEW.md) | Tổng quan hệ thống |
 | [`superpowers/specs/2026-10-22-livekit-phase2-task.md`](./superpowers/specs/2026-10-22-livekit-phase2-task.md) | Task Phase 2 hiện tại; P2-6 chờ kiểm thử thủ công |
 
 ## Lưu ý

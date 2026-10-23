@@ -14,6 +14,7 @@
  *   LIVEKIT_MONTHLY_MINUTES = 4500                              (Text, mặc định 4500)
  *   QUOTA_ENFORCE           = true                              (Text, mặc định true)
  *   ROOM_EMPTY_TIMEOUT_SEC  = 300                               (Text, mặc định 300)
+ *   ROOM_DEPARTURE_TIMEOUT_SEC = 300                            (Text, mặc định 300)
  *   SESSION_MAX_MINUTES     = 120                               (Text, mặc định 120)
  *
  * D1 Database Binding:
@@ -127,6 +128,7 @@ export async function mintRoomToken(env, identity, displayName, room, cfg = {}) 
     roomConfig: {
       maxParticipants: cfg.maxParticipants ?? 6,
       emptyTimeout: cfg.emptyTimeoutSec ?? 300,
+      departureTimeout: cfg.departureTimeoutSec ?? 300,
     },
   };
   if (cfg.attributes) {
@@ -363,6 +365,7 @@ function getConfig(env) {
     monthlyMinutes: clampInt(env.LIVEKIT_MONTHLY_MINUTES, 4500, 100, 5000),
     enforceQuota: String(env.QUOTA_ENFORCE ?? "true") !== "false",
     emptyTimeoutSec: clampInt(env.ROOM_EMPTY_TIMEOUT_SEC, 300, 60, 3600),
+    departureTimeoutSec: clampInt(env.ROOM_DEPARTURE_TIMEOUT_SEC, 300, 60, 3600),
     sessionMaxMinutes: clampInt(env.SESSION_MAX_MINUTES, 120, 15, 240),
   };
 }
@@ -676,6 +679,23 @@ const worker = {
               "UPDATE meet_sessions SET left_at = ?, duration_seconds = ? WHERE id = ?"
             ).bind(eventTime, durationSeconds, sess.id).run();
           }
+
+          // Phòng đã đóng hẳn: xóa metadata (host/phó phòng/mật khẩu/khóa) để
+          // lần dùng lại tên phòng là một phiên mới. Guard để webhook tới muộn
+          // không xóa nhầm metadata của phòng mới đang có người.
+          const cutoff = Math.min(
+            eventTime,
+            Number(event.room?.creationTime || eventTime)
+          );
+          await env.DB.prepare(
+            `DELETE FROM meet_rooms
+              WHERE name = ?
+                AND created_at <= ?
+                AND NOT EXISTS (
+                  SELECT 1 FROM meet_sessions
+                  WHERE room = ? AND left_at IS NULL AND joined_at > ?
+                )`
+          ).bind(room, cutoff, room, cutoff).run();
         }
 
         // CHỈ ghi nhận event là "đã xử lý" khi các bước điểm danh và đóng session thành công 100%
@@ -802,22 +822,41 @@ const worker = {
       // 2. Kiểm tra hoặc khởi tạo thông tin phòng trong D1 meet_rooms
       if (env.DB) {
         try {
-          const roomRow = await env.DB.prepare(
-            "SELECT host_uid, host_identity, co_host_uids, locked, password_hash FROM meet_rooms WHERE name = ?"
-          ).bind(room).first();
+          const selectRoom = () =>
+            env.DB.prepare(
+              "SELECT host_uid, host_identity, co_host_uids, locked, password_hash FROM meet_rooms WHERE name = ?"
+            )
+              .bind(room)
+              .first();
+
+          let roomRow = await selectRoom();
+          let isNewRoom = false;
 
           if (!roomRow) {
             // Phòng mới: người tạo đầu tiên là Trưởng phòng (Host)
             const nowSec = Math.floor(Date.now() / 1000);
             const initialPassword = body.password ? String(body.password).trim() : "";
-            const initialPassHash = initialPassword ? await hashRoomPassword(initialPassword) : null;
+            const initialPassHash = initialPassword
+              ? await hashRoomPassword(initialPassword)
+              : null;
 
+            // ON CONFLICT DO NOTHING: hai người bấm tạo cùng lúc không nổ khóa
+            // chính; người thắng race giữ quyền host, người sau thành khách.
             await env.DB.prepare(
-              "INSERT INTO meet_rooms (name, host_uid, host_identity, co_host_uids, locked, password_hash, created_at) VALUES (?, ?, ?, '[]', 0, ?, ?)"
+              "INSERT INTO meet_rooms (name, host_uid, host_identity, co_host_uids, locked, password_hash, created_at) VALUES (?, ?, ?, '[]', 0, ?, ?) ON CONFLICT(name) DO NOTHING"
             ).bind(room, checked.uid, identity, initialPassHash, nowSec).run();
+
+            roomRow = await selectRoom();
+            if (!roomRow) {
+              throw new Error("Không đọc lại được thông tin phòng sau khi tạo.");
+            }
+            isNewRoom = roomRow.host_uid === checked.uid;
+          }
+
+          if (isNewRoom) {
             role = "host";
             isHost = true;
-            roomHasPassword = Boolean(initialPassHash);
+            roomHasPassword = Boolean(roomRow.password_hash);
             roomIsLocked = false;
           } else {
             const coHosts = parseCoHosts(roomRow.co_host_uids);
@@ -854,6 +893,8 @@ const worker = {
             }
           }
         } catch (dbErr) {
+          // Lỗi D1 không được biến thành "mọi người là host": bỏ qua phân quyền
+          // nhưng cho vào phòng như khách.
           console.error("D1 meet_rooms error in /token:", dbErr);
         }
       }
@@ -914,6 +955,7 @@ const worker = {
             name: room,
             max_participants: cfg.maxParticipants,
             empty_timeout: cfg.emptyTimeoutSec,
+            departure_timeout: cfg.departureTimeoutSec,
           }),
         });
       } catch {}

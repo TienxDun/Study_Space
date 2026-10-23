@@ -1,12 +1,12 @@
 # Kế hoạch: Phòng học nhóm LiveKit trên gói Build (0đ)
 
-> **ĐÃ LƯU TRỮ:** Kế hoạch chi tiết cũ. Trạng thái hiện tại xem [`../LIVEKIT_ROADMAP.md`](../LIVEKIT_ROADMAP.md).
+> **ĐÃ LƯU TRỮ:** Kế hoạch chi tiết cũ. Trạng thái hiện tại xem [`../features/LIVEKIT_ROADMAP.md`](../features/LIVEKIT_ROADMAP.md).
 
 - **Ngày:** 2026-10-21
 - **Người thực hiện:** Gemini
 - **Người nghiệm thu:** opencode (theo checklist §9)
 - **Trạng thái:** Đã lưu trữ; không dùng file này để theo dõi tiến độ.
-- **Chạy tiếp:** Xem [`../LIVEKIT_ROADMAP.md`](../LIVEKIT_ROADMAP.md).
+- **Chạy tiếp:** Xem [`../features/LIVEKIT_ROADMAP.md`](../features/LIVEKIT_ROADMAP.md).
 
 ---
 
@@ -71,7 +71,7 @@ Phút-người **không phụ thuộc việc bật cam hay không**, chỉ phụ
 | Pill khi thu nhỏ | `src/components/study/mobile/rooms/MobileActiveRoomPill.tsx` |
 | Phát token + list phòng | `workers/livekit-rooms/worker.js` |
 | API dev | `src/app/api/livekit-token/route.ts`, `src/app/api/livekit-rooms/route.ts` |
-| Deploy | `docs/DEPLOY.md` |
+| Deploy | `docs/deployment/DEPLOY.md` |
 | Quota hiển thị admin | `src/data/admin/hit-limits.ts` |
 | Test hiện có | `src/__tests__/unit/study/study-mobile-rooms.test.ts`, `study-rooms-auth.test.ts`, `study-room-audio.test.ts` |
 
@@ -268,7 +268,7 @@ Route mới `POST /webhook/livekit`:
 
 ### P0-7. Cập nhật tài liệu + admin
 
-- `docs/DEPLOY.md`: thêm env mới, bước tạo D1 binding, bước cấu hình webhook trong LiveKit Cloud, URL webhook.
+- `docs/deployment/DEPLOY.md`: thêm env mới, bước tạo D1 binding, bước cấu hình webhook trong LiveKit Cloud, URL webhook.
 - Thêm bước **seed số phút đã dùng trong tháng hiện tại** trước khi bật guard, để không cấp thêm 4.500 phút chồng lên phần đã dùng:
 
 ```sql
@@ -378,7 +378,7 @@ export const MEET_ATTR = {
 ### P3-3. Admin dashboard
 - Trang `src/app/admin/meet/page.tsx` (dev-only) theo `src/app/admin/DESIGN.md`.
 - Hiển thị **phòng đang mở, số người, thời lượng, nút đóng phòng**; dữ liệu lấy qua dev API mới dưới `src/app/api/livekit-admin/` dùng `livekit-server-sdk`, giữ guard `NODE_ENV === "development"`.
-- Trang admin dev **không đọc được D1 production**. Số phút đã dùng/tháng xem bằng `GET /usage` của Worker (curl với `ADMIN_TOKEN`) và link tới LiveKit Cloud Dashboard; ghi rõ trong `docs/DEPLOY.md`. Không đưa `ADMIN_TOKEN` vào bundle frontend.
+- Trang admin dev **không đọc được D1 production**. Số phút đã dùng/tháng xem bằng `GET /usage` của Worker (curl với `ADMIN_TOKEN`) và link tới LiveKit Cloud Dashboard; ghi rõ trong `docs/deployment/DEPLOY.md`. Không đưa `ADMIN_TOKEN` vào bundle frontend.
 
 ### P3-4. Lịch sử giờ học (user)
 - Đọc từ `meet_sessions` qua Worker endpoint `GET /me`, trả tổng phút theo ngày/tuần.
@@ -415,7 +415,7 @@ Không gộp phase. Không bắt đầu phase sau khi phase trước chưa đư�
 - Env mới: `MAX_ROOM_PARTICIPANTS=6`, `LIVEKIT_MONTHLY_MINUTES=4500`, `QUOTA_ENFORCE=true`, `ROOM_EMPTY_TIMEOUT_SEC=300`, `SESSION_MAX_MINUTES=120`.
 - D1 binding tên `DB` trỏ tới database đang dùng (có thể dùng chung với `data-api`).
 - Chạy `workers/livekit-schema.sql` trên D1 (Dashboard → D1 → Console, hoặc `wrangler d1 execute`).
-- Deploy lại bằng cách dán `worker.js` theo quy trình hiện tại trong `docs/DEPLOY.md`.
+- Deploy lại bằng cách dán `worker.js` theo quy trình hiện tại trong `docs/deployment/DEPLOY.md`.
 
 ### LiveKit Cloud
 - Settings → Webhooks → Create: URL `https://<worker>/webhook/livekit`, signing API key = `LIVEKIT_API_KEY`.

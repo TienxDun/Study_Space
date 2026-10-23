@@ -27,7 +27,6 @@ export const MEET_REACTION_TOPIC = "zenstudy.reaction.v1";
 export const MEET_REACTIONS = ["👍", "👏", "❤️", "😂", "🎉", "🔥"] as const;
 
 export type MeetStatus = "focus" | "break" | "help" | "";
-export type MeetPhase = "focus" | "break" | "";
 export type MeetPreset = (typeof MEET_PRESETS)[number];
 export type MeetReaction = (typeof MEET_REACTIONS)[number];
 

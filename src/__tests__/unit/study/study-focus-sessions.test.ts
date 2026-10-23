@@ -9,7 +9,6 @@ import {
   getMonthSummary,
   getDailySeries,
   formatDayLabel,
-  getTaskTotalSeconds,
   formatFocusDuration,
   startOfDay,
   startOfWeek,
@@ -132,16 +131,6 @@ describe("focus summary aggregation", () => {
     expect(sum.sessions).toBe(2);
   });
 
-  it("getTaskTotalSeconds cộng mọi thời gian của 1 task", () => {
-    const sessions = [
-      sess("t1", new Date(2026, 9, 1, 9, 0), 1500),
-      sess("t2", new Date(2026, 9, 2, 9, 0), 300),
-      sess("t1", new Date(2026, 8, 1, 9, 0), 600),
-    ];
-    expect(getTaskTotalSeconds(sessions, "t1")).toBe(2100);
-    expect(getTaskTotalSeconds(sessions, "t2")).toBe(300);
-    expect(getTaskTotalSeconds(sessions, "nope")).toBe(0);
-  });
 });
 
 describe("logFocusSession", () => {

@@ -1,5 +1,3 @@
-export type AssetType = "VIDEO" | "IMAGE" | "AUDIO";
-
 export interface AssetAuthor {
   name: string;
   source?: string;

@@ -1,6 +1,6 @@
 # Kế Hoạch Triển Khai: Cloudflare D1 Snapshot Cloud Save (ZenStudy)
 
-> **ĐÃ LƯU TRỮ:** Kế hoạch triển khai đã hoàn tất. Vận hành xem [`../CLOUD_SYNC_GUIDE.md`](../CLOUD_SYNC_GUIDE.md).
+> **ĐÃ LƯU TRỮ:** Kế hoạch triển khai đã hoàn tất. Vận hành xem [`../guides/CLOUD_SYNC_GUIDE.md`](../guides/CLOUD_SYNC_GUIDE.md).
 
 > **Mục tiêu:** Xóa bỏ toàn bộ 2.700 dòng code phức tạp cũ (CAS, Tombstone, Delta Sync 22 keys, Adaptive Debounce kép). Thay thế bằng mô hình **Cloud Save Tinh Gọn (Snapshot Document)** trên Cloudflare D1 — đơn giản, dễ hiểu 100%, chịu tải hàng nghìn người dùng hoàn toàn miễn phí.
 

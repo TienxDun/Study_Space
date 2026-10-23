@@ -19,9 +19,7 @@ import {
   FileTextIcon,
   UsersIcon,
   EyeSlashIcon,
-  QuestionIcon,
   ArrowSquareOutIcon,
-  DotsSixVerticalIcon,
 } from "@phosphor-icons/react";
 import { StudySproutMascot } from "../chat/components/StudySproutMascot";
 import { ZenStudyLogo } from "../brand/ZenStudyLogo";

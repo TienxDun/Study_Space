@@ -28,6 +28,15 @@ describe("LiveKit Meet Token Claims & Permissions", () => {
     expect(payload.roomConfig).toBeDefined();
     expect(payload.roomConfig.maxParticipants).toBe(6);
     expect(payload.roomConfig.emptyTimeout).toBe(300);
+    expect(payload.roomConfig.departureTimeout).toBe(300);
+  });
+
+  it("defaults emptyTimeout and departureTimeout to 300 seconds", async () => {
+    const token = await mintRoomToken(env, "user-default", "Mặc Định", "phong-mac-dinh");
+    const payload = decodePayload(token);
+
+    expect(payload.roomConfig.emptyTimeout).toBe(300);
+    expect(payload.roomConfig.departureTimeout).toBe(300);
   });
 
   it("mints token with required Phase 2 video permissions (canPublishData, canUpdateOwnMetadata)", async () => {

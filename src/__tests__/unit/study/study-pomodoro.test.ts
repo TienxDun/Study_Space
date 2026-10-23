@@ -98,7 +98,6 @@ describe("Study Pomodoro & Stopwatch Formatter Logic", () => {
       formatTime: pomoFormatTime,
       formatStopwatch: pomoFormatStopwatch,
       getNextBreakType: pomoGetNextBreak,
-      getGreeting,
     } = await import("@/components/study/pomodoro/utils/timer-formatters");
 
     expect(pomoFormatTime(1500)).toBe("25 : 00");
@@ -106,14 +105,6 @@ describe("Study Pomodoro & Stopwatch Formatter Logic", () => {
     expect(pomoFormatStopwatch(65000, false)).toBe("01 : 05");
     expect(pomoGetNextBreak(4)).toBe("long_break");
     expect(pomoGetNextBreak(3)).toBe("short_break");
-
-    // Morning greeting at 8 AM
-    const morning = new Date(2026, 9, 7, 8, 0, 0);
-    expect(getGreeting(morning)).toContain("buổi sáng");
-
-    // Night greeting at 23 PM
-    const night = new Date(2026, 9, 7, 23, 0, 0);
-    expect(getGreeting(night)).toContain("đêm");
   });
 
   it("should compute span delta without double-counting across pause/resume", async () => {

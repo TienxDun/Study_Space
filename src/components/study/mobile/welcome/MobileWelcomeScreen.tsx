@@ -46,7 +46,7 @@ interface CuratedCard {
  *   + Bước 1: Màn hình chào mừng Cinematic Splash (Welcome to StudySpace, typography thanh lịch, nút kính lỏng Get Started).
  *   + Bước 2: Giao diện chọn không gian "Pick your space." với Native 3D Card Stack (Hỗ trợ vuốt tay Swipe mượt mà, gia tốc phần cứng GPU, không giật lag).
  * - Loại bỏ các lớp filter blur nặng nề và vòng lặp RAF 240Hz ngầm gây drop FPS trên mobile.
- * - Tuân thủ docs/mobile-style-guide.md: kính mờ backdrop-blur-md, lề an toàn pt-safe / pb-safe, haptic feedback 10ms.
+ * - Tuân thủ docs/guides/mobile-style-guide.md: kính mờ backdrop-blur-md, lề an toàn pt-safe / pb-safe, haptic feedback 10ms.
  */
 export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
   props: MobileWelcomeScreenProps
