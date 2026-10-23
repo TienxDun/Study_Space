@@ -26,7 +26,7 @@ import {
   nextPhasePreset,
   isAllowedReaction,
   parseReactionPayload,
-} from "./meet-protocol";
+} from "../utils/meet-protocol";
 
 export interface UseMeetStudyStateReturn {
   local: MeetLocalState;

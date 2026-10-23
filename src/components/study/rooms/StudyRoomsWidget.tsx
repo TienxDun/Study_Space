@@ -22,8 +22,8 @@ import { useAuth, GoogleIcon } from "@/components/study/auth";
 import { useIsMobile } from "@/components/study/mobile/hooks/useIsMobile";
 import { MobileRoomsSheet } from "@/components/study/mobile/sheets/MobileRoomsSheet";
 import type { PomodoroSoundType } from "@/components/study/study-sound";
-import { StudyRoomView } from "./StudyRoomView";
-import { RoomPreJoinView, type PreJoinChoices } from "./RoomPreJoinView";
+import { StudyRoomView } from "./components/StudyRoomView";
+import { RoomPreJoinView, type PreJoinChoices } from "./components/RoomPreJoinView";
 import { buildInviteLink, readInviteRoom } from "@/lib/meet-invite";
 
 export interface StudyRoomsWidgetProps {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import React from "react";
 import { renderToString } from "react-dom/server";
-import { RoomStudyBar, type RoomStudyBarProps } from "@/components/study/rooms/RoomStudyBar";
+import { RoomStudyBar, type RoomStudyBarProps } from "@/components/study/rooms/components/RoomStudyBar";
 
 describe("RoomStudyBar UI tests", () => {
   const defaultProps: RoomStudyBarProps = {

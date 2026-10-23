@@ -27,7 +27,7 @@ vi.mock("@livekit/components-react", () => ({
   ParticipantTile: () => React.createElement("div", null, "ParticipantTile"),
 }));
 
-import { StudyRoomView } from "@/components/study/rooms/StudyRoomView";
+import { StudyRoomView } from "@/components/study/rooms/components/StudyRoomView";
 
 describe("StudyRoomView Audio and Media Rendering", () => {
   it("renders RoomAudioRenderer to ensure remote participant audio plays", () => {

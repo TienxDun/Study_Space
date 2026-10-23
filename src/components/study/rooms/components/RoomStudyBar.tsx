@@ -12,7 +12,7 @@ import {
   type MeetPreset,
   formatMeetCountdown,
   nextPhasePreset,
-} from "./meet-protocol";
+} from "../utils/meet-protocol";
 import {
   HandWavingIcon,
   TimerIcon,

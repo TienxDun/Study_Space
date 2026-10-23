@@ -34,12 +34,12 @@ import {
 import { toast } from "sonner";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import type { PomodoroSoundType } from "@/components/study/study-sound";
-import { RoomSessionTimer } from "../../rooms/RoomSessionTimer";
+import { RoomSessionTimer } from "../../rooms/components/RoomSessionTimer";
 import { buildInviteLink, getMeetEndpoints } from "@/lib/meet-invite";
-import { RoomStudyLayer } from "../../rooms/RoomStudyLayer";
-import { MEET_ATTR } from "../../rooms/meet-protocol";
-import { RoomHostControlsModal } from "../../rooms/RoomHostControlsModal";
-import { RoomHistoryModal } from "../../rooms/RoomHistoryModal";
+import { RoomStudyLayer } from "../../rooms/components/RoomStudyLayer";
+import { MEET_ATTR } from "../../rooms/utils/meet-protocol";
+import { RoomHostControlsModal } from "../../rooms/components/RoomHostControlsModal";
+import { RoomHistoryModal } from "../../rooms/components/RoomHistoryModal";
 
 interface MobileRoomViewProps {
   roomName: string;

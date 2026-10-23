@@ -65,8 +65,8 @@ vi.mock("sonner", () => ({
   },
 }));
 
-import { useMeetStudyState } from "@/components/study/rooms/useMeetStudyState";
-import { RoomStudyLayer } from "@/components/study/rooms/RoomStudyLayer";
+import { useMeetStudyState } from "@/components/study/rooms/hooks/useMeetStudyState";
+import { RoomStudyLayer } from "@/components/study/rooms/components/RoomStudyLayer";
 
 describe("Regression & Client Mount: useMeetStudyState", () => {
   let container: HTMLDivElement;

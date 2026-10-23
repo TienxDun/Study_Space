@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useMeetStudyState } from "./useMeetStudyState";
+import { useMeetStudyState } from "../hooks/useMeetStudyState";
 import { RoomStudyBar } from "./RoomStudyBar";
 import { RoomReactionsOverlay } from "./RoomReactionsOverlay";
 import { ModalShell } from "@/components/ui/ModalShell";

@@ -19,7 +19,7 @@ import { GoogleIcon } from "@/components/study/auth";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { MobileRoomView } from "../rooms/MobileRoomView";
 import { MobileActiveRoomPill } from "../rooms/MobileActiveRoomPill";
-import { RoomPreJoinView, type PreJoinChoices } from "@/components/study/rooms/RoomPreJoinView";
+import { RoomPreJoinView, type PreJoinChoices } from "@/components/study/rooms/components/RoomPreJoinView";
 import type { PomodoroSoundType } from "@/components/study/study-sound";
 import type { User } from "firebase/auth";
 

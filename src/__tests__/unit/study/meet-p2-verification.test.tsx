@@ -81,9 +81,9 @@ vi.mock("@livekit/components-react", () => ({
   GridLayout: ({ children }: any) => children,
 }));
 
-import { useMeetStudyState } from "@/components/study/rooms/useMeetStudyState";
-import { RoomStudyBar } from "@/components/study/rooms/RoomStudyBar";
-import { MEET_ATTR, MEET_REACTION_TOPIC } from "@/components/study/rooms/meet-protocol";
+import { useMeetStudyState } from "@/components/study/rooms/hooks/useMeetStudyState";
+import { RoomStudyBar } from "@/components/study/rooms/components/RoomStudyBar";
+import { MEET_ATTR, MEET_REACTION_TOPIC } from "@/components/study/rooms/utils/meet-protocol";
 
 describe("Phase 2 Logic & Mobile Clamp Unit Tests", () => {
   let container: HTMLDivElement;

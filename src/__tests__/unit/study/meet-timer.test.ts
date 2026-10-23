@@ -5,7 +5,7 @@ import {
   pickActiveTimer,
   remainingTimerSeconds,
   formatMeetCountdown,
-} from "@/components/study/rooms/meet-protocol";
+} from "@/components/study/rooms/utils/meet-protocol";
 
 describe("meet-timer behavior and countdowns", () => {
   it("formats countdown sequence: 25:00 -> 24:59 -> 00:00", () => {

@@ -36,7 +36,7 @@ import type { PomodoroSoundType } from "@/components/study/study-sound";
 import { RoomSessionTimer } from "./RoomSessionTimer";
 import { buildInviteLink, getMeetEndpoints } from "@/lib/meet-invite";
 import { RoomStudyLayer } from "./RoomStudyLayer";
-import { MEET_ATTR } from "./meet-protocol";
+import { MEET_ATTR } from "../utils/meet-protocol";
 import { RoomHostControlsModal } from "./RoomHostControlsModal";
 import { RoomHistoryModal } from "./RoomHistoryModal";
 

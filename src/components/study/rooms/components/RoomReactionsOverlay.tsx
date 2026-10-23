@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import type { MeetReactionEvent } from "./meet-protocol";
+import type { MeetReactionEvent } from "../utils/meet-protocol";
 
 interface RoomReactionsOverlayProps {
   reactions: MeetReactionEvent[];

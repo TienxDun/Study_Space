@@ -10,7 +10,7 @@ import {
   formatMeetCountdown,
   isAllowedReaction,
   parseReactionPayload,
-} from "@/components/study/rooms/meet-protocol";
+} from "@/components/study/rooms/utils/meet-protocol";
 
 describe("meet-protocol pure functions", () => {
   describe("parseLocalAttributes", () => {
