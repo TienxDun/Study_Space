@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#080b11" />
+    <title>ZenStudy Admin</title>
+    <style>
+      :root {
+        --canvas: #080b11;
+        --surface: rgba(15, 23, 42, 0.6);
+        --nested: rgba(0, 0, 0, 0.4);
+        --line: rgba(255, 255, 255, 0.08);
+        --line-strong: rgba(255, 255, 255, 0.16);
+        --primary: #10b981;
+        --sky: #38bdf8;
+        --amber: #f59e0b;
+        --rose: #f43f5e;
+        --text: #ffffff;
+        --text-2: #cbd5e1;
+        --muted: #94a3b8;
+        --faint: #64748b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background:
+          radial-gradient(900px 500px at 15% -10%, rgba(16, 185, 129, 0.12), transparent 60%),
+          radial-gradient(700px 400px at 90% 0%, rgba(56, 189, 248, 0.08), transparent 55%),
+          var(--canvas);
+        color: var(--text-2);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-size: 13px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .shell {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 40px 20px 64px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+
+      .mark {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        background: rgba(16, 185, 129, 0.18);
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        color: var(--primary);
+        font-size: 15px;
+        box-shadow: 0 0 14px rgba(16, 185, 129, 0.25);
+      }
+
+      .brand small {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        background: rgba(16, 185, 129, 0.12);
+        color: var(--primary);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+      }
+
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      h1 {
+        margin: 28px 0 6px;
+        font-size: 24px;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+
+      .lede {
+        margin: 0 0 24px;
+        max-width: 58ch;
+        color: var(--muted);
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: var(--surface);
+        box-shadow:
+          inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
+          0 20px 40px -15px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+      }
+
+      .card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .card-head h2 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .card-head span {
+        color: var(--faint);
+        font-size: 11px;
+      }
+
+      .checks {
+        list-style: none;
+        margin: 0;
+        padding: 6px 0;
+      }
+
+      .checks li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 18px;
+        border-top: 1px solid rgba(255, 255, 255, 0.04);
+      }
+
+      .checks li:first-child {
+        border-top: 0;
+      }
+
+      .name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-2);
+      }
+
+      .state {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      .ok {
+        color: var(--primary);
+      }
+
+      .bad {
+        color: var(--rose);
+      }
+
+      .note {
+        padding: 14px 18px;
+        border-top: 1px solid var(--line);
+        background: var(--nested);
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 22px;
+        color: var(--faint);
+        font-size: 11px;
+      }
+
+      footer a {
+        color: var(--text-2);
+        text-decoration: none;
+        border-bottom: 1px solid var(--line-strong);
+        padding-bottom: 1px;
+      }
+
+      footer a:hover {
+        color: var(--text);
+        border-color: var(--primary);
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        .dot {
+          animation: pulse 2s ease-in-out infinite;
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.35;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <div class="brand">
+          <span class="mark" aria-hidden="true">◆</span>
+          <span>ZenStudy <small>Admin</small></span>
+        </div>
+        <span class="pill"><span class="dot" aria-hidden="true"></span>P0 · CHỈ ĐỌC</span>
+      </header>
+
+      <h1>Trạm điều khiển</h1>
+      <p class="lede">
+        Bản P0 chỉ kiểm tra kết nối tới ba worker. Chưa có thao tác ghi, chưa có cấu hình
+        chatbot hay kho ảnh ở đây.
+      </p>
+
+      <section class="card" aria-labelledby="api-title">
+        <div class="card-head">
+          <h2 id="api-title">Kết nối API</h2>
+          <span id="api-time">đang kiểm tra…</span>
+        </div>
+        <ul class="checks" id="checks">
+          <li>
+            <span class="name">Máy chủ admin</span>
+            <span class="state" id="state-ping">đang chờ…</span>
+          </li>
+        </ul>
+        <p class="note" id="note">
+          Trang này không lưu và không hiển thị token. Mọi lệnh gọi đi qua
+          <code>/api/admin/*</code> và được Cloudflare Access bảo vệ.
+        </p>
+      </section>
+
+      <footer>
+        <span>ZenStudy · nội bộ</span>
+        <a href="https://zenstudy.space/">Về trang học</a>
+      </footer>
+    </main>
+
+    <script>
+      (function () {
+        var labels = {
+          admin: "Máy chủ admin",
+          "chat-proxy": "Chat proxy",
+          "data-api": "Data API",
+          livekit: "LiveKit",
+        };
+        var list = document.getElementById("checks");
+        var note = document.getElementById("note");
+        var timeEl = document.getElementById("api-time");
+
+        function renderRow(name) {
+          var li = document.createElement("li");
+          var label = document.createElement("span");
+          label.className = "name";
+          label.textContent = labels[name] || name;
+          var state = document.createElement("span");
+          state.className = "state";
+          state.textContent = "đang chờ…";
+          li.appendChild(label);
+          li.appendChild(state);
+          return { row: li, state: state };
+        }
+
+        function fail(text) {
+          var rows = list.querySelectorAll(".state");
+          for (var i = 0; i < rows.length; i++) {
+            rows[i].textContent = "không kiểm tra được";
+            rows[i].className = "state bad";
+          }
+          note.textContent = text;
+          timeEl.textContent = "chưa có dữ liệu";
+        }
+
+        fetch("/api/admin/ping", {
+          headers: { Accept: "application/json" },
+          credentials: "same-origin",
+          cache: "no-store",
+        })
+          .then(function (res) {
+            if (res.status === 401 || res.status === 403) {
+              fail("Cloudflare Access chưa cấp quyền cho phiên này. Tải lại trang để đăng nhập.");
+              return null;
+            }
+            if (res.status === 404 || res.status === 501) {
+              fail("API admin chưa được triển khai trên host này.");
+              return null;
+            }
+            if (!res.ok) {
+              fail("Máy chủ admin trả lỗi (mã " + res.status + ").");
+              return null;
+            }
+            return res.json();
+          })
+          .then(function (data) {
+            if (!data || !Array.isArray(data.checks)) return;
+
+            list.textContent = "";
+            var first = renderRow("admin");
+            first.state.textContent = "ok";
+            first.state.className = "state ok";
+            list.appendChild(first.row);
+
+            for (var i = 0; i < data.checks.length && i < 8; i++) {
+              var check = data.checks[i];
+              var item = renderRow(String(check.name || "unknown"));
+              var good = check.ok === true;
+              item.state.textContent = good
+                ? (typeof check.ms === "number" ? check.ms + " ms" : "ok")
+                : "lỗi";
+              item.state.className = "state " + (good ? "ok" : "bad");
+              list.appendChild(item.row);
+            }
+
+            var allOk = data.ok === true;
+            note.textContent = allOk
+              ? "Ba worker đều phản hồi. Hệ thống đang chạy bình thường."
+              : "Có worker không phản hồi. Kiểm tra lại cấu hình hoặc trạng thái dịch vụ.";
+            timeEl.textContent = data.time ? "cập nhật " + data.time : "vừa xong";
+            if (data.email) {
+              timeEl.textContent += " · " + data.email;
+            }
+          })
+          .catch(function () {
+            fail("Không gọi được máy chủ admin. Kiểm tra mạng rồi tải lại.");
+          });
+      })();
+    </script>
+  </body>
+</html>

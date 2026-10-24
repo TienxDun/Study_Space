@@ -21,6 +21,7 @@ node_modules/
 out/
 build/
 dist/
+dist-admin/
 
 # StudySpace fixed assets (~479MB) — hosted on R2, kept locally for offline dev only
 public/study/

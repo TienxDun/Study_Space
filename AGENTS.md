@@ -9,7 +9,9 @@ Next.js 16 + React 19 + Tailwind v4 single-page app with Vietnamese UI. Local-fi
 - `npm run test:load` - run 200 concurrent users (200 CCU) load test against Worker simulation.
 - `npm run lint` - ESLint **and** `scripts/check-important.mjs`, which fails on `!important` outside `IMPORTANT-ALLOWED-START/END` blocks in `src/app/globals.css` and `src/app/styles/*.css`.
 - `npx tsc --noEmit` - typecheck; there is no npm script for it.
-- `npm run build` - local build stays in server mode. Static export to `out/` happens only when `GITHUB_ACTIONS` or `CF_PAGES` is set. CI runs build only, so run lint/typecheck/tests yourself.
+- `npm run build` - local build stays in server mode. Static export to `out/` happens only when `CF_PAGES` is set by Cloudflare Pages. There is no GitHub Actions pipeline; run lint/typecheck/tests yourself.
+- `npm run build:web` - Cloudflare Pages **web** build (`next build` + `scripts/strip-admin-export.mjs`). Cloudflare never sees the gitignored `src/app/admin`/`src/app/api`, so the export succeeds there; on a local machine those folders make Next reject the dynamic route handlers, so leave web export to Cloudflare (or move them aside temporarily). The strip step fails if `out/` is missing and removes `out/admin`, `out/api`, `out/dev`.
+- `npm run build:admin` - Cloudflare Pages **admin** build (`scripts/prepare-admin-pages.mjs`); publishes `admin-host/index.html` plus `admin-worker/` (when present) into `dist-admin/`.
 - `npm run sync:r2` - upload assets to R2 (reads `R2_*` from `.env.local`).
 
 ## Architecture
@@ -18,7 +20,7 @@ Next.js 16 + React 19 + Tailwind v4 single-page app with Vietnamese UI. Local-fi
 - Desktop/mobile split at 640px (`useIsMobile`): `StudyDesktopLayout` vs `StudyMobileLayout`. Mobile navigation is a stack (`useMobileStack`) mapped onto sheet flags by `syncScreenToStates`; do not add a second mobile state machine.
 - Persistence is localStorage-first. Every key lives in `src/lib/storage-keys.ts`; never hardcode key strings. `src/lib/simple-cloud-sync.ts` mirrors the entire user workspace as a snapshot document (Save Game Document mode) to D1 via `workers/data-api` (`GET/POST /data`, ~2s debounce, offline auto-recovery, wipe on logout) and deliberately excludes machine-specific keys.
 - Scenes, sounds and tracks are JSON in `src/data/assets/`, typed in `src/components/study/study-types.ts`. Asset URLs must go through `src/lib/asset-resolver.ts` (CDN env or `/study` fallback). `public/study/` is ~465 MB and gitignored, so never assume it exists in CI.
-- `/admin` and everything under `/api/*` are dev-only tools guarded by `NODE_ENV === "development"`; they are not part of the static export. `/admin/scenes` edits `src/data/assets/scenes.json` and writes media into `public/study`.
+- `/api/*` is dev-only, guarded by `NODE_ENV === "development"`. `src/app/admin/` and `src/app/api/` are gitignored, so they only exist on local machines; the web build still strips `out/admin` and `out/dev` as a safety net. The admin Pages project (`zenstudy-admin`) publishes `admin-host/` through `npm run build:admin` and is protected by Cloudflare Access. `/admin/scenes` edits `src/data/assets/scenes.json` and writes media into `public/study`.
 - `workers/` are standalone Cloudflare Workers deployed by pasting into the dashboard - not built by Next. Backend setup order is in `docs/deployment/DEPLOY.md`; D1 schema and API are in `docs/guides/CLOUD_SYNC_GUIDE.md` and `workers/schema.sql`. The old plan is archived at `docs/archive/CLOUD_SYNC_PLAN.md`.
 - Missing `NEXT_PUBLIC_*` Firebase/CDN/worker URLs degrade the app to local-only. `src/lib/firebase-config.ts` exists so the Firebase SDK is only imported when configured.
 
@@ -33,7 +35,7 @@ Next.js 16 + React 19 + Tailwind v4 single-page app with Vietnamese UI. Local-fi
 
 ## Deploy
 
-- Push to `main` builds the static export and deploys to GitHub Pages. Assets come from `NEXT_PUBLIC_STUDY_CDN_URL` (R2) and the subpath from `NEXT_PUBLIC_BASE_PATH`. Cloudflare Pages uses the same export path via `CF_PAGES`.
+- Push to `main` → Cloudflare Pages builds the static export (`CF_PAGES=1`) via Git integration. GitHub Actions/Pages was removed on 2026-10-25. Assets come from `NEXT_PUBLIC_STUDY_CDN_URL` (R2). Admin becomes a separate Pages project behind Cloudflare Access once P0 of the admin plan lands.
 - `NEXT_PUBLIC_*` values are baked at build time; changing them requires a rebuild. `.env.local` is gitignored - worker secrets belong in Cloudflare, never in this repo.
 
 <!-- BEGIN:nextjs-agent-rules -->

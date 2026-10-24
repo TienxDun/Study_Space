@@ -3,14 +3,13 @@ import { SceneAsset, TrackAsset, AmbientSoundAsset } from "@/types/assets";
 /**
  * Lấy Base URL của Asset CDN:
  * 1. Nếu có biến môi trường NEXT_PUBLIC_STUDY_CDN_URL (ví dụ Cloudflare R2 Custom Domain), ưu tiên dùng.
- * 2. Ngược lại fallback về đường dẫn nội bộ (mặc định /Study_Space/study để tương thích GitHub Pages).
+ * 2. Ngược lại fallback về đường dẫn nội bộ /study.
  */
 export function getAssetBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_STUDY_CDN_URL) {
     return process.env.NEXT_PUBLIC_STUDY_CDN_URL.replace(/\/$/, "");
   }
-  const isGithubPages = process.env.GITHUB_ACTIONS === "true" && !process.env.VERCEL;
-  return isGithubPages ? "/Study_Space/study" : "/study";
+  return "/study";
 }
 
 /**
