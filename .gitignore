@@ -212,3 +212,7 @@ src/data/assets/backups/
 bg-asset-studio-plan.md
 tools/
 *_frames/
+
+# Taste-skill render output
+.taste-skill/inspect/
+.taste-skill/inspect-live/
