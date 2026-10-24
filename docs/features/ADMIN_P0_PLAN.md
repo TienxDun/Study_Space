@@ -1,13 +1,13 @@
 # P0 — Nền an toàn (kế hoạch triển khai sơ bộ)
 
-Trạng thái: sơ bộ, chưa làm. Thuộc P0 của `docs/features/ADMIN_CONSOLE_PLAN.md`. Ngày 2026-10-25.
+Trạng thái: **hoàn thành 2026-10-25**. Thuộc P0 của `docs/features/ADMIN_CONSOLE_PLAN.md`.
 
 Mục tiêu của P0 không phải làm dashboard đẹp, mà là: **admin không còn public, chỉ người có quyền vào được, trình duyệt không thấy token, và có sẵn nền audit trước khi mở quyền ghi.**
 
 ## Definition of Done
 
 - [x] `https://zenstudy.space/admin/` trả 404 (kiểm tra 2026-10-25).
-- [ ] `https://tienxdun.github.io/Study_Space/admin/` trả 404 (đã kiểm tra 2026-10-25); xác nhận GitHub Pages đã tắt để không có bản cũ xuất hiện lại.
+- [x] `https://tienxdun.github.io/Study_Space/admin/` và cả root đều trả 404 (kiểm tra 2026-10-25); GitHub Pages coi như đã tắt.
 - [x] `https://admin.zenstudy.space` bị Cloudflare Access chặn; chỉ đúng email admin vào được (OTP, đã đăng nhập thử 2026-10-25).
 - [x] Preview URL bị tắt: preview builds off, route `workers.dev` disabled (trả 404).
 - [x] Trang admin gọi `/api/admin/ping` thành công (3 check xanh, 2026-10-25); DevTools không thấy `ADMIN_TOKEN`, không có `?token=`, không có `chat-admin-token`.
@@ -84,7 +84,7 @@ Kiểm tra: `npm run build:admin` sinh `dist-admin/admin/index.html`; export web
 6. **Env Production** (Worker → Settings → Variables and Secrets; **chỉ Production**, không đặt ở Preview):
    - `ACCESS_TEAM_DOMAIN` (Text) — `https://<team>.cloudflareaccess.com` lấy ở Zero Trust → Settings.
    - `ACCESS_AUD` (Text) — Application Audience Tag trong trang tổng quan của application.
-   - `ADMIN_TOKEN` (**Secret**) — phải **trùng** `ADMIN_TOKEN` của worker `livekit` (vì B4 gọi `/usage?token=...`); dùng lại giá trị đang có, không tạo chuỗi mới lệch.
+   - `ADMIN_TOKEN` (**Secret**) — phải **trùng** `ADMIN_TOKEN` của worker `livekit` (B4 gọi `/usage` bằng header `Authorization: Bearer …`); dùng lại giá trị đang có, không tạo chuỗi mới lệch.
    - `CHAT_PROXY_URL`, `DATA_API_URL`, `LIVEKIT_URL` (Text) — lần lượt lấy từ `NEXT_PUBLIC_CHAT_API_URL`, `NEXT_PUBLIC_DATA_API_URL`, `NEXT_PUBLIC_LIVEKIT_TOKEN_URL` trong `.env.local`.
 7. **D1 binding**: Settings → Bindings → Add → D1 database, variable name `DB` → database `zenspace` (dùng cho audit ở B5).
 
@@ -152,7 +152,7 @@ CREATE INDEX IF NOT EXISTS idx_admin_audit_created ON admin_audit (created_at);
 - Đã cập nhật `workers/schema.sql` (comment "3 bảng" + bảng `admin_audit` + index).
 - Đã thêm `logAudit(env, { actor, action, target, detail })` trong `admin-worker/_worker.ts`, dùng `env.DB`; thiếu binding hoặc D1 lỗi thì trả `false` để caller chặn hành động.
 - Test `src/__tests__/unit/admin/audit.test.ts` (4 case: ghi đủ cột, detail null, thiếu DB, D1 lỗi).
-- **Chưa chạy SQL** trên D1 Console `zenspace` — phải chạy trước khi có endpoint ghi đầu tiên.
+- Đã chạy SQL trên D1 Console `zenspace` và thêm binding `DB` → `zenspace` (2026-10-25).
 - P0 chưa có endpoint ghi; helper + bảng chỉ là nền, dùng thật ở P2.
 
 ### B6 — Dọn source (0.5 ngày)
@@ -172,13 +172,19 @@ CREATE INDEX IF NOT EXISTS idx_admin_audit_created ON admin_audit (created_at);
 
 ### B7 — Kiểm chứng và rollback (0.5 ngày)
 
-- `npm run lint`, `npx tsc --noEmit`, `npm test`.
-- Build web: không còn `out/admin`, `out/dev`.
-- Deploy web: `zenstudy.space/admin/` → 404; các trang học bình thường.
-- Deploy admin: Access chặn incognito; đăng nhập đúng email thì shell tải; `/api/admin/ping` trả 3 check.
-- Preview URL: bị tắt hoặc bị Access chặn.
-- Local: `npm run dev` → `/admin`, `/admin/chat`, `/dev/studio` vẫn chạy.
-- Rollback: Access cấu hình sai → dùng local admin, sửa policy trên dashboard; không đụng dữ liệu. Build web lỗi strip → bỏ bước strip, deploy lại, admin project vẫn tách riêng.
+Đã kiểm 2026-10-25:
+
+- `npm run lint`, `npx tsc --noEmit`, `npm test` (370 test) sạch.
+- Build web bằng checkout sạch (`git archive HEAD`, không có `src/app/admin`/`src/app/api`): export thành công, route `/dev/studio` có trong build và bị strip; `out/admin`, `out/api`, `out/dev` đều không tồn tại.
+- Live web: `zenstudy.space/admin/` → 404, `zenstudy.space/dev/studio/` → 404, trang chủ → 200.
+- Live admin: `admin.zenstudy.space/api/admin/ping` → 302 sang Access (team domain mới `leutiendung.cloudflareaccess.com`); `workers.dev` → 404 cả shell lẫn API.
+- Local: `/admin`, `/admin/chat`, `/dev/studio` chạy; `/admin/scenes` 404.
+- **Sự cố đã gặp:** deploy bản có `main` bật lại route `workers.dev` (shell admin public 200, API vẫn 401). Đã tắt trên dashboard và ghim `workers_dev: false`, `preview_urls: false` trong `wrangler.admin.jsonc`.
+- **Access đổi team domain** từ `delicate-king-4ada` sang `leutiendung` (AUD không đổi); phải cập nhật `ACCESS_TEAM_DOMAIN` Production, nếu không mọi JWT bị 401.
+
+Sau khi cập nhật `ACCESS_TEAM_DOMAIN`, shell đã tải lại với 3 check xanh (2026-10-25) — P0 đóng.
+
+Rollback: Access cấu hình sai → dùng local admin, sửa policy trên dashboard; không đụng dữ liệu. Build web lỗi strip → bỏ bước strip, deploy lại, admin project vẫn tách riêng.
 
 ## Thời lượng
 
@@ -186,7 +192,8 @@ Khoảng **2–3 ngày** làm việc, trong đó phần lớn là dashboard Clou
 
 ## Rủi ro
 
-- **Preview URL public**: quên tắt là Access bị đi vòng.
+- **Preview URL public**: quên tắt là Access bị đi vòng. Deploy bản có script từng bật lại `workers.dev`; luôn giữ `workers_dev: false` và `preview_urls: false` trong config.
+- **Access đổi team domain**: `iss` trong JWT đổi theo, Worker sẽ 401 dù policy đúng; cập nhật `ACCESS_TEAM_DOMAIN` cùng lúc.
 - **Access lockout**: policy sai thì không ai vào được; luôn giữ đường local và một email break-glass.
 - **DNS**: Access chỉ bảo vệ hostname đi qua Cloudflare; không CNAME trỏ thẳng ra ngoài.
 - **Hai project một repo**: env và build command phải đặt đúng project; secret chỉ ở admin.
