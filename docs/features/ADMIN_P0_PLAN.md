@@ -100,9 +100,17 @@ Kiểm tra: `npm run build:admin` sinh `dist-admin/admin/index.html`; export web
    - `ADMIN_TOKEN` **không bao giờ ghi vào repo hay chat**; B4 gọi `/usage` bằng header `Authorization: Bearer …`, dùng lại đúng giá trị của worker `livekit`, không tạo chuỗi mới lệch.
    - Ba URL worker lấy tương ứng từ `NEXT_PUBLIC_CHAT_API_URL`, `NEXT_PUBLIC_DATA_API_URL`, `NEXT_PUBLIC_LIVEKIT_TOKEN_URL` trong `.env.local`.
    - Sửa giá trị xong phải **Deploy** lại Worker thì mới có hiệu lực.
-   - `wrangler deploy` (Workers Builds chạy mỗi lần push `main`) **xóa các biến Text đặt trên dashboard** nếu config không khai báo chúng; Secret như `ADMIN_TOKEN` thì được giữ. Vì vậy `wrangler.admin.jsonc` đặt `"keep_vars": true` — đừng bỏ dòng này, nếu không biến sẽ mất sau mỗi lần deploy.
+   - `wrangler deploy` (Workers Builds chạy mỗi lần push `main`) **xóa các biến Text đặt trên dashboard** nếu config không khai báo chúng; Secret như `ADMIN_TOKEN` thì được giữ. Vì vậy `wrangler.admin.jsonc` đặt `"keep_vars": true` — đừng bỏ dòng này, nếu không biến sẽ mất sau mỗi lần deploy. `keep_vars` **không** giữ binding; binding phải khai báo trong config (bước 7).
 
-7. **D1 binding**: Settings → Bindings → Add → D1 database, variable name `DB` → database `zenspace` (dùng cho audit ở B5). Đây là binding, không phải biến.
+7. **D1 binding**: khai báo trong `wrangler.admin.jsonc` (dùng cho audit ở B5):
+
+   ```jsonc
+   "d1_databases": [
+     { "binding": "DB", "database_name": "zenspace", "database_id": "66bb2a87-05a8-4ea3-bdcb-d8e0d39eb465" }
+   ]
+   ```
+
+   `database_id` là định danh công khai (Storage & Databases → D1 SQL Database → `zenspace`), commit được. Đây là binding chứ không phải biến: thêm tay trên dashboard sẽ bị xoá ở lần deploy kế tiếp. Kiểm tra bằng `npx wrangler deploy --dry-run --config wrangler.admin.jsonc` — phải thấy `env.DB (zenspace) D1 Database`.
 
 **Smoke test B3 (chưa cần B4):**
 
@@ -168,7 +176,7 @@ CREATE INDEX IF NOT EXISTS idx_admin_audit_created ON admin_audit (created_at);
 - Đã cập nhật `workers/schema.sql` (comment "3 bảng" + bảng `admin_audit` + index).
 - Đã thêm `logAudit(env, { actor, action, target, detail })` trong `admin-worker/_worker.ts`, dùng `env.DB`; thiếu binding hoặc D1 lỗi thì trả `false` để caller chặn hành động.
 - Test `src/__tests__/unit/admin/audit.test.ts` (4 case: ghi đủ cột, detail null, thiếu DB, D1 lỗi).
-- Đã chạy SQL trên D1 Console `zenspace` và thêm binding `DB` → `zenspace` (2026-10-25).
+- Đã chạy SQL trên D1 Console `zenspace` (2026-10-25); binding `DB` → `zenspace` nay khai báo trong `wrangler.admin.jsonc` thay vì dashboard (push `0084d9f`), vì binding thêm tay bị xoá sau mỗi lần deploy.
 - P0 chưa có endpoint ghi; helper + bảng chỉ là nền, dùng thật ở P2.
 
 ### B6 — Dọn source (0.5 ngày)
@@ -214,6 +222,8 @@ Cơ chế: `verifyAccessJwt` chỉ bỏ qua Access khi **đồng thời** `ENVIR
 
 Thiếu `ADMIN_TOKEN` trong `.dev.vars` thì chỉ check livekit báo lỗi; hai worker còn lại vẫn xanh.
 
+Nếu sửa `.dev.vars` mà kết quả không đổi: kiểm tra còn tiến trình `workerd` cũ giữ cổng 8787 không (`netstat -ano | grep 8787`). Wrangler mới sẽ không bind được và thoát, còn bản cũ vẫn phục vụ với env đã nạp trước đó — tắt hết `wrangler dev`/`workerd` rồi chạy lại một lần.
+
 ## Thời lượng
 
 Khoảng **2–3 ngày** làm việc, trong đó phần lớn là dashboard Cloudflare và kiểm thử Access.
@@ -221,7 +231,7 @@ Khoảng **2–3 ngày** làm việc, trong đó phần lớn là dashboard Clou
 ## Rủi ro
 
 - **Preview URL public**: quên tắt là Access bị đi vòng. Deploy bản có script từng bật lại `workers.dev`; luôn giữ `workers_dev: false` và `preview_urls: false` trong config.
-- **Deploy xóa biến dashboard**: Workers Builds deploy mỗi lần push `main`; thiếu `keep_vars: true` thì toàn bộ biến Text biến mất, chỉ Secret còn lại. Đã ghim trong `wrangler.admin.jsonc`.
+- **Deploy xóa biến và binding trên dashboard**: Workers Builds deploy mỗi lần push `main`; thiếu `keep_vars: true` thì toàn bộ biến Text biến mất, chỉ Secret còn lại. `keep_vars` **không** áp dụng cho binding — binding `DB` thêm tay đã bị xoá ở lần push sau đó, làm `logAudit` fail-closed. Cả `keep_vars` và `d1_databases` nay đã ghim trong `wrangler.admin.jsonc`; thêm binding mới (KV, R2, D1 khác) thì sửa config, đừng chỉ thêm trên dashboard.
 - **Access đổi team domain**: `iss` trong JWT đổi theo, Worker sẽ 401 dù policy đúng; cập nhật `ACCESS_TEAM_DOMAIN` cùng lúc.
 - **Access lockout**: policy sai thì không ai vào được; luôn giữ đường local và một email break-glass.
 - **DNS**: Access chỉ bảo vệ hostname đi qua Cloudflare; không CNAME trỏ thẳng ra ngoài.
