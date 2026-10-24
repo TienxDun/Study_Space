@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "zenstudy-admin",
   "main": "./admin-worker/_worker.ts",
-  "compatibility_date": "2026-10-25",
+  "compatibility_date": "2026-10-24",
   "assets": {
     "directory": "./dist-admin",
     "binding": "ASSETS",
