@@ -6,7 +6,7 @@
     "dev": "next dev --turbo -p 3001",
     "build": "next build",
     "build:web": "next build && node scripts/strip-admin-export.mjs",
-    "build:admin": "node scripts/prepare-admin-pages.mjs",
+    "build:admin": "node scripts/prepare-admin-bundle.mjs",
     "start": "next start -p 3001",
     "lint": "eslint && npm run lint:css",
     "lint:css": "node scripts/check-important.mjs",

@@ -1,7 +1,7 @@
 # Kế Hoạch Mở Rộng Admin Console
 
-Trạng thái: đề xuất, chưa triển khai. Bản 4 — 2026-10-25.
-Đã chốt: admin chạy trên Cloudflare Pages (kèm Pages Functions) sau Cloudflare Access. GitHub Actions đã bỏ; web chính deploy bằng Cloudflare Pages.
+Trạng thái: đề xuất, chưa triển khai. Bản 5 — 2026-10-25.
+Đã chốt: admin chạy trên Cloudflare Workers + Static Assets sau Cloudflare Access. GitHub Actions đã bỏ; web chính deploy bằng Cloudflare Pages.
 
 Chi tiết từng mục viết khi bắt tay làm. Kế hoạch triển khai chi tiết P0: `docs/features/ADMIN_P0_PLAN.md`. Lịch sử thay đổi ở cuối file.
 
@@ -14,8 +14,8 @@ Biến `/admin` thành bảng điều khiển vận hành nội bộ: thấy h�
 ```
 Người vận hành
   └─ admin.zenstudy.space            ← Cloudflare Access (chỉ email trong danh sách)
-       └─ Pages project zenstudy-admin (trang /admin tĩnh)
-            └─ Pages Functions /api/admin/*   ← giữ ADMIN_TOKEN, kiểm Access JWT
+       └─ Worker zenstudy-admin (assets tĩnh trong dist-admin)
+            └─ /api/admin/*            ← giữ ADMIN_TOKEN, kiểm Access JWT
                  ├─ chat-proxy
                  ├─ data-api
                  └─ livekit
@@ -23,7 +23,7 @@ Người vận hành
 zenstudy.space ── Pages project web (tĩnh, không còn /admin)
 ```
 
-Token worker chỉ nằm ở env của Pages Functions. Trình duyệt không bao giờ thấy token. Access lo đăng nhập; không tự viết trang login/2FA.
+Token worker chỉ nằm ở env của Worker admin. Trình duyệt không bao giờ thấy token. Access lo đăng nhập; không tự viết trang login/2FA.
 
 ## Hiện trạng
 
@@ -38,8 +38,8 @@ Token worker chỉ nằm ở env của Pages Functions. Trình duyệt không ba
 
 ## Nguyên tắc
 
-1. Admin là một Cloudflare Pages project riêng, đặt sau Access. Project web chính xóa `out/admin` và `out/dev` sau build.
-2. Trình duyệt không giữ token worker. `ADMIN_TOKEN` nằm ở env của Pages Functions; phiên đăng nhập là cookie `CF_Authorization` (httpOnly) do Access đặt. Cấm `?token=` và `localStorage`.
+1. Admin là một Cloudflare Worker riêng (Static Assets), đặt sau Access. Project web chính xóa `out/admin`, `out/api` và `out/dev` sau build.
+2. Trình duyệt không giữ token worker. `ADMIN_TOKEN` nằm ở env của Worker admin; phiên đăng nhập là cookie `CF_Authorization` (httpOnly) do Access đặt. Cấm `?token=` và `localStorage`.
 3. Đọc trước, ghi sau. Audit log phải có trước hành động ghi đầu tiên.
 4. Một endpoint tổng hợp cho dashboard; endpoint riêng chỉ cho hành động ghi.
 5. UI không hardcode ngưỡng: lấy từ config hoặc từ worker báo về. Bảng tra cứu dài nằm ở `docs/`, sinh từ config.
@@ -51,31 +51,30 @@ Token worker chỉ nằm ở env của Pages Functions. Trình duyệt không ba
 
 ### P0 — Nền an toàn (làm trước mọi thứ)
 
-1. **Tạo Pages project riêng cho admin.**
-   - Project `zenstudy-admin`, build từ repo này; publish bộ tài nguyên admin (`/admin` + `_next`), không publish cả app học.
+1. **Tạo Worker riêng cho admin.**
+   - Worker `zenstudy-admin`, build từ repo này; publish `dist-admin/` (shell + assets), không publish cả app học.
    - Gắn custom domain `admin.zenstudy.space` (DNS trên Cloudflare).
-   - Project web chính ở `zenstudy.space`: sau build xóa `out/admin` và `out/dev` bằng một script Node nhỏ (không thêm dependency).
+   - Project web chính ở `zenstudy.space`: sau build xóa `out/admin`, `out/api`, `out/dev` bằng một script Node nhỏ (không thêm dependency).
    - Gỡ bản công khai cũ: GitHub repo → Settings → Pages → Unpublish. Xóa workflow không tự xóa deployment đã đăng. Đã kiểm tra 404 ngày 2026-10-25 nhưng vẫn xác nhận Pages đã tắt.
    - Kiểm tra: `https://zenstudy.space/admin/` trả 404; trang admin trên domain riêng vẫn tải đủ asset.
 2. **Bật Cloudflare Access.**
-   - Zero Trust → Access → Application (self-hosted) cho `admin.zenstudy.space` **và** `*.zenstudy-admin.pages.dev`.
+   - Zero Trust → Access → Application (self-hosted) cho `admin.zenstudy.space` **và** địa chỉ mặc định `<worker>.<account>.workers.dev`.
    - Policy: `Allow` khi email = email admin đã chốt (1 người); One-time PIN; session 24h. Không ghi email vào repo.
-   - Tắt preview deployments của project admin, hoặc bảo vệ luôn preview URL. Preview public là đường vòng phổ biến.
+   - Tắt preview builds của Worker, hoặc bảo vệ luôn preview URL. Preview public là đường vòng phổ biến.
    - Không viết trang login riêng; phiên do Access quản lý.
-3. **Pages Functions làm cổng duy nhất tới worker.**
-   - Dùng Pages Functions advanced mode (`_worker.js` + `_routes.json` chỉ route `/api/*`) thay vì thư mục `functions/`, để hai Pages project trong cùng repo không dùng chung một thư mục.
-   - Worker kiểm header `Cf-Access-Jwt-Assertion` (verify với certs của Access) trước khi xử lý.
-   - Env **Production** của project admin: `ADMIN_TOKEN`, URL 3 worker. Không đặt các biến này ở Preview.
+3. **Worker làm cổng duy nhất tới ba worker.**
+   - Cấu hình `wrangler.admin.jsonc`: `assets.directory = ./dist-admin`, thêm `main = ./admin-worker/_worker.js` khi B4 có API.
+   - Script kiểm header `Cf-Access-Jwt-Assertion` (verify với certs của Access) trước khi xử lý `/api/admin/*`; request còn lại trả qua `env.ASSETS.fetch()`.
+   - Env **Production** của Worker admin: `ADMIN_TOKEN`, URL 3 worker. Không đặt các biến này ở Preview.
    - Admin UI gọi đường dẫn tương đối `/api/admin/...`; xóa `chat-admin-url`, `chat-admin-token` khỏi localStorage; bỏ `?token=`.
-   - File nguồn ở `admin-worker/_worker.js`; build của project admin copy thành `dist-admin/_worker.js`.
    - Kiểm tra: DevTools → Network không thấy token; gọi thẳng worker không token → 401.
 4. **Dọn tab.** Xóa `/admin/toasts`. Chuyển bảng hạn mức sang `docs/guides/SYSTEM_LIMITS.md`, sinh bằng `scripts/gen-limits-docs.mjs` từ nguồn duy nhất `src/data/admin/hit-limits.ts`. Chuyển Studio cảnh sang `/dev/studio` và loại khỏi bản publish.
 5. **Audit log trước khi có ghi.** Bảng `admin_audit` (ai, hành động, tham số, thời điểm) + endpoint ghi. Chưa có bảng này thì chưa mở P2.
-6. **Test cổng.** Không phiên → Access chặn trước khi tải trang; preview URL → cũng bị chặn; JWT sai → Functions trả 401; token không xuất hiện trong bundle, URL hay localStorage.
+6. **Test cổng.** Không phiên → Access chặn trước khi tải trang; preview URL → cũng bị chặn; JWT sai → Worker trả 401; token không xuất hiện trong bundle, URL hay localStorage.
 
 ### P1 — Nhìn thấy hệ thống (chỉ đọc)
 
-7. **Endpoint tổng hợp** `GET /api/admin/overview` (Pages Function, một chỗ check Access) trả một snapshot:
+7. **Endpoint tổng hợp** `GET /api/admin/overview` (Worker, một chỗ check Access) trả một snapshot:
    - `health`: 3 worker + độ trễ.
    - `chat`: số câu hôm nay, top uid, ai đã dùng ≥ 80% hạn mức ngày.
    - `sync`: số uid đã sync, lần gần nhất, snapshot lớn nhất.
@@ -115,10 +114,10 @@ Lý do: chặn lộ trước; thấy hệ thống trước khi sửa; cờ là c
 
 ## Rủi ro
 
-- **Preview URL của Pages mặc định public**: phải tắt hoặc bảo vệ, nếu không Access bị đi vòng.
+- **Preview URL mặc định public**: `*.workers.dev` và preview build phải tắt hoặc bảo vệ, nếu không Access bị đi vòng.
 - **Access chỉ bảo vệ hostname đi qua Cloudflare**: DNS phải nằm ở Cloudflare, không CNAME trỏ thẳng ra ngoài.
-- **Build hai project từ một repo**: env `NEXT_PUBLIC_*` của admin và web phải đồng bộ; secret chỉ đặt ở env Functions của project admin.
-- **Không còn GitHub Actions**: nếu Pages project chưa nối Git integration thì push sẽ không deploy. Kiểm tra trước, đừng coi workflow cũ là đường lui.
+- **Build hai project từ một repo**: env `NEXT_PUBLIC_*` của admin và web phải đồng bộ; secret chỉ đặt ở env của Worker admin.
+- **Không còn GitHub Actions**: nếu project web chưa nối Git integration thì push sẽ không deploy. Kiểm tra trước, đừng coi workflow cũ là đường lui.
 - **Docs hạn mức sinh tự động**: quên chạy script thì docs lệch với config.
 - Log và audit làm tăng ghi D1: giữ cửa sổ ngắn, tự dọn.
 - Số quota là ước tính (Workers AI tính theo neurons), không thay dashboard nhà cung cấp.
@@ -139,3 +138,4 @@ Riêng P0, kiểm tra thêm:
 - **Bản 2**: tách hosting khỏi static export, một cổng auth + cookie httpOnly, một endpoint tổng hợp, audit trước khi ghi, nội dung chuyển R2 + manifest.
 - **Bản 3**: chốt Cloudflare Pages + Pages Functions + Cloudflare Access; bỏ GitHub Actions; thêm rủi ro preview URL và build hai project.
 - **Bản 4**: chốt Access đúng 1 email, P0 chỉ shell + ping, URL `admin.zenstudy.space/admin/`, audit ở D1 `zenspace`.
+- **Bản 5**: Cloudflare gộp Pages vào Workers; admin chuyển sang Worker + Static Assets (`wrangler.admin.jsonc`), Access phủ cả `workers.dev`, web vẫn ở Pages.

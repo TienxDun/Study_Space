@@ -37,75 +37,77 @@ Vì chỉ có 1 email: bật 2FA cho tài khoản Cloudflare và lưu mã khôi 
 File mới:
 - `admin-host/index.html`: shell tĩnh (tiếng Việt, dark/emerald), không token, gọi `/api/admin/ping` và tự báo khi API chưa có.
 - `scripts/strip-admin-export.mjs`: xóa `out/admin`, `out/api`, `out/dev` sau build web; idempotent, log rõ đã xóa gì.
-- `scripts/prepare-admin-pages.mjs`: dựng `dist-admin/` (shell + `_redirects` + `_headers`); chép `admin-worker/_worker.js` và `_routes.json` khi đã có, chưa có thì cảnh báo.
+- `scripts/prepare-admin-bundle.mjs`: dựng `dist-admin/` (shell + `_redirects` + `_headers`).
 - `package.json`: thêm `build:web` và `build:admin`.
 - `.gitignore`: thêm `dist-admin/`.
+- `wrangler.admin.jsonc`: Worker `zenstudy-admin`, assets `./dist-admin`, 404 cho path lạ.
 
 Lưu ý: `src/app/admin` và `src/app/api` đang bị gitignore nên Cloudflare không thấy; đó là lý do export trên Cloudflare không vướng route handler động. Ở máy local, hai thư mục này làm `next build` với `output: export` báo lỗi — chỉ kiểm tra export bằng checkout sạch (hoặc tạm ẩn hai thư mục), đừng deploy từ máy local.
 
-Cấu hình Cloudflare Pages:
+Cấu hình Cloudflare:
 
-| Project | Build command | Output | Ghi chú |
+| Phần | Build command | Output | Ghi chú |
 |---|---|---|---|
-| web (`zenstudy.space`) | `npm run build:web` | `out` | Env như hiện tại |
-| admin (`zenstudy-admin`) | `npm run build:admin` | `dist-admin` | P0 chưa cần Next build; P1 đổi sang build Next thật |
+| web (`zenstudy.space`, Pages) | `npm run build:web` | `out` | Project hiện có, env như cũ |
+| admin (`zenstudy-admin`, Worker) | `npm run build:admin` | `dist-admin` | Deploy `npx wrangler deploy --config wrangler.admin.jsonc` |
 
 Nội dung `dist-admin/` ở P0:
 
 ```
 dist-admin/
   admin/index.html      # shell + gọi /api/admin/ping
-  _worker.js            # copy từ admin-worker/
-  _routes.json          # { "version": 1, "include": ["/api/*"], "exclude": [] }
   _redirects            # /  /admin/  302
   _headers              # X-Robots-Tag: noindex
 ```
 
-Kiểm tra: `npm run build:admin` sinh `dist-admin/admin/index.html`; export web kiểm bằng checkout sạch (đã chạy 2026-10-25: build qua, script xóa đúng `out/admin`, `out/dev`, giữ `out/dev-preview`). P0 **không publish** `/admin/chat`, `/admin/scenes`, `/admin/toasts`.
+Kiểm tra: `npm run build:admin` sinh `dist-admin/admin/index.html`; export web kiểm bằng checkout sạch (đã chạy 2026-10-25: build qua, script xóa đúng `out/admin`, `out/api`, `out/dev`, giữ `out/dev-preview`). P0 **không publish** `/admin/chat`, `/admin/scenes`, `/admin/toasts`.
 
-### B3 — Pages project + Cloudflare Access (0.5 ngày, chủ yếu dashboard)
+### B3 — Worker admin + Cloudflare Access (0.5 ngày, chủ yếu dashboard)
 
 **Điều kiện:** B2 đã commit + push lên `main` (Cloudflare build từ Git, không thấy file chưa commit).
 
 1. **Sửa project web hiện có** (`zenstudy.space`): Settings → Builds & deployments → Build command `npm run build:web`, Output `out`. Không đổi biến môi trường.
-2. **Tạo project admin**: Workers & Pages → Create → Pages → Connect to Git → chọn repo → branch `main`.
-   - Framework preset: `None`.
+2. **Tạo Worker từ Git**: Workers & Pages → Create → Import a repository → chọn repo → branch `main`. Điền đúng form:
+   - Project name: `zenstudy-admin` (trùng `name` trong `wrangler.admin.jsonc`).
    - Build command: `npm run build:admin`.
-   - Output directory: `dist-admin`.
-   - Root directory: để trống.
-   - Chưa cần biến môi trường ở bước này; project sẽ publish shell tĩnh.
-3. **Custom domain**: project `zenstudy-admin` → Custom domains → Set up → `admin.zenstudy.space`. Zone đã ở Cloudflare nên DNS + TLS tự tạo.
-4. **Protect cả địa chỉ mặc định**: `zenstudy-admin.pages.dev` vẫn tồn tại và **không** được custom domain bảo vệ. Tạo thêm một Access application cho hostname này (hoặc wildcard `*.zenstudy-admin.pages.dev`) với cùng policy.
-5. **Cloudflare Access** (Zero Trust → Access → Applications → Add an application → Self-hosted):
+   - Deploy command: `npx wrangler deploy --config wrangler.admin.jsonc`.
+   - Preview command: để mặc định, nhưng **tắt Enable Preview builds**.
+   - Protect with Cloudflare Access: **để OFF** ở bước này (policy làm thủ công ngay sau để đúng 1 email).
+   - Path: `/`.
+   - API token: Create new token.
+   - Kết quả lần deploy đầu: Worker tĩnh phục vụ `dist-admin/`; chưa có API.
+3. **Custom domain**: Worker `zenstudy-admin` → Settings → Domains & Routes → Add → Custom domain → `admin.zenstudy.space`. Zone đã ở Cloudflare nên DNS + TLS tự tạo.
+4. **Cloudflare Access** (Zero Trust → Access → Applications → Add an application → Self-hosted):
    - Application 1: `admin.zenstudy.space`, include toàn bộ path.
-   - Policy: `Allow` khi `Emails` = đúng email admin đã chốt (1 người). Không thêm policy `Bypass`.
+   - Application 2: `<worker>.<account>.workers.dev` — địa chỉ mặc định **không** được custom domain bảo vệ.
+   - Cả hai: Policy `Allow` khi `Emails` = đúng email admin đã chốt (1 người). Không thêm policy `Bypass`.
    - Login method: One-time PIN (bật ở Settings → Authentication). Session duration: 24 giờ.
-   - Application 2: `zenstudy-admin.pages.dev` (hoặc wildcard), cùng policy.
    - Bật 2FA + lưu recovery code cho tài khoản Cloudflare **trước** bước này.
-6. **Tắt preview deployments** của project admin: Settings → Builds & deployments → Preview deployments → None/Disable.
-7. **Env Production** (Settings → Variables and Secrets; **chỉ Production**, không đặt ở Preview):
+5. **Preview**: đã tắt ở bước 2; vào Settings → Builds & deployments kiểm lại là không còn preview build.
+6. **Env Production** (Worker → Settings → Variables and Secrets; **chỉ Production**, không đặt ở Preview):
    - `ACCESS_TEAM_DOMAIN` (Text) — `https://<team>.cloudflareaccess.com` lấy ở Zero Trust → Settings.
    - `ACCESS_AUD` (Text) — Application Audience Tag trong trang tổng quan của application.
    - `ADMIN_TOKEN` (**Secret**) — phải **trùng** `ADMIN_TOKEN` của worker `livekit` (vì B4 gọi `/usage?token=...`); dùng lại giá trị đang có, không tạo chuỗi mới lệch.
    - `CHAT_PROXY_URL`, `DATA_API_URL`, `LIVEKIT_URL` (Text) — lần lượt lấy từ `NEXT_PUBLIC_CHAT_API_URL`, `NEXT_PUBLIC_DATA_API_URL`, `NEXT_PUBLIC_LIVEKIT_TOKEN_URL` trong `.env.local`.
-8. **D1 binding**: Settings → Bindings → Add → D1 database, variable name `DB` → database `zenspace` (dùng cho audit ở B5).
+7. **D1 binding**: Settings → Bindings → Add → D1 database, variable name `DB` → database `zenspace` (dùng cho audit ở B5).
 
 **Smoke test B3 (chưa cần B4):**
 
 - Incognito mở `https://admin.zenstudy.space` → hiện trang đăng nhập Access; email lạ bị từ chối; đúng email thì thấy shell.
 - `https://admin.zenstudy.space/` → 302 sang `/admin/`.
-- `https://zenstudy-admin.pages.dev` → cũng bị Access chặn.
+- `https://<worker>.<account>.workers.dev` → cũng bị Access chặn.
 - `https://zenstudy.space/admin/` → 404.
-- Shell báo "API admin chưa được triển khai" — đúng, vì `_worker.js` thuộc B4.
+- Shell báo "API admin chưa được triển khai" — đúng, vì API thuộc B4.
 
 **Rollback:** gỡ custom domain hoặc tắt application Access; project web không bị ảnh hưởng.
 
 ### B4 — Worker admin API (0.5–1 ngày)
 
-Dùng **Pages Functions advanced mode** (`_worker.js` trong output), không dùng thư mục `functions/`:
+Worker admin vừa phục vụ asset vừa làm API, không cần Pages Functions hay `_routes.json`:
 
-- Lý do: chỉ cần một file, tránh `functions/` ở repo root bị cả hai Pages project dùng, và `_routes.json` giới hạn worker chỉ chạy `/api/*` (file tĩnh do Pages phục vụ, không qua worker).
-- File nguồn: `admin-worker/_worker.js`; `prepare-admin-pages.mjs` copy thành `dist-admin/_worker.js`.
+- `wrangler.admin.jsonc`: thêm `"main": "./admin-worker/_worker.js"` và `assets.binding = "ASSETS"`.
+- `_worker.js`: path bắt đầu `/api/admin/` → verify Access JWT rồi xử lý; mọi path còn lại → `env.ASSETS.fetch(request)`.
+- Không copy `_worker.js` vào `dist-admin`; wrangler bundle trực tiếp từ `admin-worker/`.
 
 Route P0 (chỉ đọc):
 
