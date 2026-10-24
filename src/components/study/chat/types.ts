@@ -23,6 +23,10 @@ export interface Session {
   updatedAt?: number;
 }
 
+// Thao tác đang chạy trên một đoạn chat: dùng để khóa nút và hiện loading,
+// tránh người dùng bấm lặp sinh ra nhiều lệnh ghi cùng lúc.
+export type SessionPendingAction = { type: "delete" | "rename"; sid: string } | null;
+
 // Số tin tối đa tải 1 lần (giữ thấp để vừa free tier Firebase).
 export const PAGE_SIZE = 50;
 // Số đoạn tối đa hiện trong ngăn phiên.

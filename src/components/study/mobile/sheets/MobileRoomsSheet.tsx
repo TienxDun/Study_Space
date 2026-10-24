@@ -20,6 +20,8 @@ import { MobileSheetShell } from "./MobileSheetShell";
 import { MobileRoomView } from "../rooms/MobileRoomView";
 import { MobileActiveRoomPill } from "../rooms/MobileActiveRoomPill";
 import { RoomPreJoinView, type PreJoinChoices } from "@/components/study/rooms/components/RoomPreJoinView";
+import { RoomExitNotice } from "@/components/study/rooms/components/RoomExitNotice";
+import type { RoomExitNotice as RoomExitNoticeData } from "@/components/study/rooms/utils/room-exit";
 import type { PomodoroSoundType } from "@/components/study/study-sound";
 import type { User } from "firebase/auth";
 
@@ -47,7 +49,10 @@ export interface MobileRoomsSheetProps {
   token: string | null;
   serverUrl: string;
   joinedRoom: string;
-  handleLeave: () => void;
+  handleLeave: (reason?: number) => void;
+  exitNotice?: RoomExitNoticeData | null;
+  onDismissExitNotice?: () => void;
+  onRejoinExitNotice?: () => void;
   isAvailable: boolean;
   onBack?: () => void;
   backLabel?: string;
@@ -106,6 +111,9 @@ export function MobileRoomsSheet({
   serverUrl,
   joinedRoom,
   handleLeave,
+  exitNotice = null,
+  onDismissExitNotice,
+  onRejoinExitNotice,
   isAvailable,
   maxParticipants = 6,
   remainingMinutes,
@@ -298,7 +306,7 @@ export function MobileRoomsSheet({
               </div>
 
               <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
-                <div className="w-8 h-8 rounded-xl bg-teal-500/15 text-teal-300 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-300 flex items-center justify-center shrink-0">
                   <SparkleIcon className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
@@ -308,7 +316,7 @@ export function MobileRoomsSheet({
               </div>
 
               <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
-                <div className="w-8 h-8 rounded-xl bg-sky-500/15 text-sky-300 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-300 flex items-center justify-center shrink-0">
                   <ShieldCheckIcon className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
@@ -502,6 +510,15 @@ export function MobileRoomsSheet({
               <div className="p-3 rounded-2xl bg-rose-500/15 border border-rose-400/30 text-rose-300 text-xs">
                 {error}
               </div>
+            )}
+
+            {/* Vì sao lần trước người dùng bị đưa ra khỏi phòng */}
+            {exitNotice && onDismissExitNotice && (
+              <RoomExitNotice
+                notice={exitNotice}
+                onDismiss={onDismissExitNotice}
+                onRejoin={onRejoinExitNotice}
+              />
             )}
 
             {/* Nút hành động chính dưới đáy */}

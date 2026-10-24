@@ -11,19 +11,20 @@ import {
   MagnifyingGlassIcon,
   ClockCounterClockwiseIcon,
   SparkleIcon,
+  CircleNotchIcon,
 } from "@phosphor-icons/react";
 import { StudySproutMascot } from "./StudySproutMascot";
-import type { Session } from "../types";
+import type { Session, SessionPendingAction } from "../types";
 
 interface SessionDrawerProps {
   sessions: Session[];
   activeSid: string | null;
   loading: boolean;
-  confirmDelSid: string | null;
+  pendingAction: SessionPendingAction;
   onCreate: () => void;
   onSwitch: (sid: string) => void;
   onDelete: (sid: string) => void;
-  onRename?: (sid: string, newTitle: string) => void;
+  onRename?: (sid: string, newTitle: string) => Promise<boolean> | void;
   onClose: () => void;
   isMobile?: boolean;
 }
@@ -98,7 +99,7 @@ export function SessionDrawer({
   sessions,
   activeSid,
   loading,
-  confirmDelSid,
+  pendingAction,
   onCreate,
   onSwitch,
   onDelete,
@@ -115,6 +116,10 @@ export function SessionDrawer({
   const [editTitle, setEditTitle] = useState("");
   const [localConfirmSid, setLocalConfirmSid] = useState<string | null>(null);
 
+  const isBusy = pendingAction !== null;
+  const renamingSid = pendingAction?.type === "rename" ? pendingAction.sid : null;
+  const deletingSid = pendingAction?.type === "delete" ? pendingAction.sid : null;
+
   // Đóng khi click ra ngoài (ngoại trừ nút toggle trên header)
   useEffect(() => {
     const onDown = (e: PointerEvent) => {
@@ -130,6 +135,7 @@ export function SessionDrawer({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        if (isBusy) return;
         if (localConfirmSid) {
           setLocalConfirmSid(null);
         } else if (editingSid) {
@@ -143,14 +149,7 @@ export function SessionDrawer({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [localConfirmSid, editingSid, searchQuery, onClose]);
-
-  // Đồng bộ confirmDelSid từ props nếu có
-  useEffect(() => {
-    if (confirmDelSid) {
-      setLocalConfirmSid(confirmDelSid);
-    }
-  }, [confirmDelSid]);
+  }, [localConfirmSid, editingSid, searchQuery, onClose, isBusy]);
 
   // Lọc tìm kiếm
   const filteredSessions = useMemo(() => {
@@ -166,6 +165,7 @@ export function SessionDrawer({
   }, [filteredSessions, searchQuery]);
 
   const handleStartRename = (s: Session) => {
+    if (isBusy) return;
     setEditingSid(s.id);
     setEditTitle(s.title);
     setLocalConfirmSid(null);
@@ -175,16 +175,16 @@ export function SessionDrawer({
     }, 50);
   };
 
-  const handleSaveRename = (sid: string) => {
-    if (onRename && editTitle.trim()) {
-      onRename(sid, editTitle.trim());
-    }
-    setEditingSid(null);
+  const handleSaveRename = async (sid: string) => {
+    if (!onRename || !editTitle.trim() || isBusy) return;
+    const saved = await onRename(sid, editTitle.trim());
+    if (saved !== false) setEditingSid(null);
   };
 
+  // Drawer là nơi xác nhận duy nhất: bấm "Có" là xóa luôn, không cần xác nhận lần 2.
   const handleConfirmDelete = (sid: string) => {
+    if (isBusy) return;
     onDelete(sid);
-    setLocalConfirmSid(null);
   };
 
   return (
@@ -216,7 +216,8 @@ export function SessionDrawer({
           <button
             type="button"
             onClick={onCreate}
-            className="flex items-center gap-1 px-2.5 h-7 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/15 transition-all cursor-pointer active:scale-95 shadow-sm"
+            disabled={isBusy}
+            className="flex items-center gap-1 px-2.5 h-7 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/15 transition-all cursor-pointer active:scale-95 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
             title="Bắt đầu đoạn chat mới"
           >
             <PlusIcon size={13} weight="bold" aria-hidden="true" />
@@ -298,7 +299,8 @@ export function SessionDrawer({
             <button
               type="button"
               onClick={onCreate}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 text-xs font-bold transition-all shadow-[0_0_16px_rgba(52,211,153,0.3)] active:scale-95 flex items-center gap-1.5 cursor-pointer"
+              disabled={isBusy}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 text-xs font-bold transition-all shadow-[0_0_16px_rgba(52,211,153,0.3)] active:scale-95 flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
             >
               <SparkleIcon size={14} weight="fill" />
               <span>Bắt đầu đoạn chat mới</span>
@@ -357,7 +359,8 @@ export function SessionDrawer({
           <button
             type="button"
             onClick={onCreate}
-            className="text-white/80 hover:text-white font-medium transition-colors"
+            disabled={isBusy}
+            className="text-white/80 hover:text-white font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             + Tạo đoạn mới
           </button>
@@ -371,19 +374,24 @@ export function SessionDrawer({
     const isActive = s.id === activeSid;
     const isEditing = editingSid === s.id;
     const isConfirming = localConfirmSid === s.id;
+    const isDeleting = deletingSid === s.id;
+    const isRenaming = renamingSid === s.id;
     const relativeTime = formatRelativeTime(s.updatedAt || s.createdAt);
 
     return (
       <div
         key={s.id}
         onClick={() => {
-          if (!isEditing && !isConfirming) {
+          if (!isEditing && !isConfirming && !isBusy) {
             onSwitch(s.id);
           }
         }}
-        onDoubleClick={() => !isEditing && handleStartRename(s)}
+        onDoubleClick={() => !isEditing && !isBusy && handleStartRename(s)}
+        aria-busy={isDeleting || isRenaming}
         style={{ "--stagger-idx": Math.min(idx, 10) } as React.CSSProperties}
-        className={`group relative flex items-center gap-2.5 p-2.5 rounded-2xl border transition-all cursor-pointer sheet-stagger-item ${
+        className={`group relative flex items-center gap-2.5 p-2.5 rounded-2xl border transition-all sheet-stagger-item ${
+          isBusy ? "cursor-default" : "cursor-pointer"
+        } ${
           isActive
             ? "bg-white/[0.12] border-white/25 shadow-lg text-white"
             : "bg-white/[0.03] hover:bg-white/[0.07] active:bg-white/[0.08] border-white/8 hover:border-white/15 text-zinc-300 hover:text-white"
@@ -410,24 +418,31 @@ export function SessionDrawer({
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSaveRename(s.id);
-                  if (e.key === "Escape") setEditingSid(null);
+                  if (e.key === "Enter") void handleSaveRename(s.id);
+                  if (e.key === "Escape" && !isBusy) setEditingSid(null);
                 }}
-                className="flex-1 h-7 px-2 rounded-lg bg-black/60 border border-white/30 focus:border-white/60 text-xs text-white focus:outline-none"
+                disabled={isBusy}
+                className="flex-1 h-7 px-2 rounded-lg bg-black/60 border border-white/30 focus:border-white/60 text-xs text-white focus:outline-none disabled:opacity-60"
                 maxLength={48}
               />
               <button
                 type="button"
-                onClick={() => handleSaveRename(s.id)}
-                className="w-7 h-7 grid place-items-center rounded-lg bg-white/15 hover:bg-white/25 text-white border border-white/20 active:scale-95"
+                onClick={() => void handleSaveRename(s.id)}
+                disabled={isBusy}
+                className="w-7 h-7 grid place-items-center rounded-lg bg-white/15 hover:bg-white/25 text-white border border-white/20 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
                 title="Lưu tên (Enter)"
               >
-                <CheckIcon size={12} weight="bold" />
+                {isRenaming ? (
+                  <CircleNotchIcon size={12} weight="bold" className="animate-spin" />
+                ) : (
+                  <CheckIcon size={12} weight="bold" />
+                )}
               </button>
               <button
                 type="button"
                 onClick={() => setEditingSid(null)}
-                className="w-7 h-7 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10 active:scale-95"
+                disabled={isBusy}
+                className="w-7 h-7 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
                 title="Hủy (Esc)"
               >
                 <XIcon size={12} weight="bold" />
@@ -464,17 +479,27 @@ export function SessionDrawer({
         {!isEditing && (
           <div
             className={`flex items-center gap-1 shrink-0 ${
-              isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              isMobile || isBusy || isConfirming ? "opacity-100" : "opacity-0 group-hover:opacity-100"
             } transition-opacity`}
             onClick={(e) => e.stopPropagation()}
           >
-            {isConfirming ? (
+            {isDeleting ? (
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-rose-500/15 border border-rose-400/30 animate-in fade-in duration-150"
+              >
+                <CircleNotchIcon size={12} weight="bold" className="animate-spin text-rose-300" />
+                <span className="text-[10px] font-semibold text-rose-200">Đang xóa…</span>
+              </div>
+            ) : isConfirming ? (
               <div className="flex items-center gap-1 p-0.5 rounded-lg bg-rose-500/15 border border-rose-400/30 animate-in fade-in zoom-in-95 duration-150">
                 <span className="text-[10px] text-rose-300 font-medium pl-1.5 pr-0.5">Xóa?</span>
                 <button
                   type="button"
                   onClick={() => handleConfirmDelete(s.id)}
-                  className="px-1.5 py-0.5 rounded bg-rose-500 text-white text-[10px] font-bold hover:bg-rose-600 transition-colors cursor-pointer active:scale-95"
+                  disabled={isBusy}
+                  className="px-1.5 py-0.5 rounded bg-rose-500 text-white text-[10px] font-bold hover:bg-rose-600 transition-colors cursor-pointer active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
                   title="Xác nhận xóa đoạn chat này"
                 >
                   Có
@@ -482,7 +507,8 @@ export function SessionDrawer({
                 <button
                   type="button"
                   onClick={() => setLocalConfirmSid(null)}
-                  className="px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 text-[10px] hover:text-white hover:bg-white/20 transition-colors cursor-pointer active:scale-95"
+                  disabled={isBusy}
+                  className="px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 text-[10px] hover:text-white hover:bg-white/20 transition-colors cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
                   title="Hủy xóa"
                 >
                   Không
@@ -494,7 +520,8 @@ export function SessionDrawer({
                   <button
                     type="button"
                     onClick={() => handleStartRename(s)}
-                    className="w-7 h-7 grid place-items-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 active:bg-white/20 transition-colors cursor-pointer"
+                    disabled={isBusy}
+                    className="w-7 h-7 grid place-items-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 active:bg-white/20 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     title="Đổi tên đoạn chat"
                     aria-label={`Đổi tên đoạn chat ${s.title}`}
                   >
@@ -504,7 +531,8 @@ export function SessionDrawer({
                 <button
                   type="button"
                   onClick={() => setLocalConfirmSid(s.id)}
-                  className="w-7 h-7 grid place-items-center rounded-lg text-zinc-400 hover:text-rose-300 hover:bg-rose-500/15 active:bg-rose-500/25 transition-colors cursor-pointer"
+                  disabled={isBusy}
+                  className="w-7 h-7 grid place-items-center rounded-lg text-zinc-400 hover:text-rose-300 hover:bg-rose-500/15 active:bg-rose-500/25 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   title="Xóa đoạn chat này"
                   aria-label={`Xóa đoạn chat ${s.title}`}
                 >

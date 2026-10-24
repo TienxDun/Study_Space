@@ -124,6 +124,7 @@ export const StudyEmbedPlayerWidget = ({
     detectedEmbed,
     isIframeLoading,
     setIsIframeLoading,
+    isResolvingInput,
     failedImages,
     setFailedImages,
     loadedImages,
@@ -566,6 +567,7 @@ export const StudyEmbedPlayerWidget = ({
                 onSearchChange={setSearchOrUrl}
                 detectedEmbed={detectedEmbed}
                 onPlayFromInput={handlePlayFromInput}
+                isResolvingInput={isResolvingInput}
                 viewMode={viewMode}
                 onToggleViewMode={toggleViewMode}
                 activeCategory={activeCategory}

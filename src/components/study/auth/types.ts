@@ -4,6 +4,7 @@ export interface UseAuthReturn {
   user: User | null;
   loading: boolean;
   isSigningIn: boolean;
+  isSigningOut: boolean;
   authError: string;
   redirectError: string;
   clearError: () => void;

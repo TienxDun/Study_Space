@@ -16,7 +16,12 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { firebaseConfigured, getFirebaseDb } from "@/lib/firebase";
-import { SESSION_LIST_MAX, PAGE_SIZE, type Session } from "../types";
+import {
+  SESSION_LIST_MAX,
+  PAGE_SIZE,
+  type Session,
+  type SessionPendingAction,
+} from "../types";
 
 interface SessionsArgs {
   user: { uid: string } | null;
@@ -46,13 +51,28 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
   const [resolved, setResolved] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerLoading, setDrawerLoading] = useState(false);
-  const [confirmDelSid, setConfirmDelSid] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<SessionPendingAction>(null);
   const [parentMs, setParentMs] = useState(0);
   const [lastSeenParent, setLastSeenParent] = useState(0);
   const [parentLoaded, setParentLoaded] = useState(false);
   const [sessionsLoaded, setSessionsLoaded] = useState(false);
   const freshTitleRef = useRef(false);
   const switchingSidRef = useRef<{ sid: string; until: number } | null>(null);
+  // Khóa đồng bộ: state React cập nhật trễ, dùng ref để chặn cú bấm thứ hai
+  // xảy ra trước khi giao diện kịp vẽ trạng thái loading.
+  const pendingActionRef = useRef(false);
+
+  const startAction = (type: "delete" | "rename", sid: string): boolean => {
+    if (pendingActionRef.current) return false;
+    pendingActionRef.current = true;
+    setPendingAction({ type, sid });
+    return true;
+  };
+
+  const finishAction = () => {
+    pendingActionRef.current = false;
+    setPendingAction(null);
+  };
 
   // Document cha: 1 lượt đọc khi đăng nhập + khi có đổi (rẻ hơn nghe 50 tin).
   // Vừa lấy activeSid, vừa báo chấm đỏ khi có tin mới lúc đóng khung.
@@ -142,6 +162,8 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
       setLastSeenParent(0);
       setParentLoaded(false);
       setDrawerOpen(false);
+      setPendingAction(null);
+      pendingActionRef.current = false;
     }
   }, [user]);
 
@@ -183,7 +205,8 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
   // Đổi tên phiên: cập nhật Firestore và state cục bộ
   const renameSession = async (sid: string, newTitle: string): Promise<boolean> => {
     const trimmed = newTitle.trim().slice(0, 48);
-    if (!trimmed || !user) return false;
+    if (!trimmed || !user || !startAction("rename", sid)) return false;
+    const prevTitle = sessions.find((s) => s.id === sid)?.title;
     // Optimistic update
     setSessions((prev) => prev.map((s) => (s.id === sid ? { ...s, title: trimmed, updatedAt: Date.now() } : s)));
     try {
@@ -194,15 +217,19 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
       return true;
     } catch (e) {
       console.warn("Lỗi đổi tên phiên:", e);
+      if (prevTitle !== undefined) {
+        setSessions((prev) => prev.map((s) => (s.id === sid ? { ...s, title: prevTitle } : s)));
+      }
       setNotice("Không thể đổi tên đoạn chat, bạn thử lại nhé.");
       return false;
+    } finally {
+      finishAction();
     }
   };
 
   // Mở ngăn phiên: tải list 1 lần (tối đa 20 lượt đọc), lần sau dùng lại.
   const openDrawer = async () => {
     setDrawerOpen((v) => !v);
-    setConfirmDelSid(null);
     if (sessionsLoaded || !user) return;
     setDrawerLoading(true);
     try {
@@ -254,6 +281,10 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
       setNotice("Trợ lý đang trả lời câu hỏi, bạn đợi một lát nhé.");
       return;
     }
+    if (pendingActionRef.current) {
+      setNotice("Đang xử lý thao tác trước, bạn đợi một lát nhé.");
+      return;
+    }
     // Nếu người dùng ĐÃ đang ở phiên mới tinh và chưa có tin nhắn nào
     if (activeSid === null && !hasMessages) {
       setNotice("Bạn đang ở đoạn chat mới rồi, hãy gửi câu hỏi nhé!");
@@ -266,7 +297,6 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
     freshTitleRef.current = true;
     onSwitched();
     setDrawerOpen(false);
-    setConfirmDelSid(null);
 
     // Đồng bộ trạng thái activeSid: null lên Firestore ngầm để lưu lại vị trí phiên
     try {
@@ -291,13 +321,13 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
       setDrawerOpen(false);
       return;
     }
+    if (pendingActionRef.current) return;
 
     // 1. Cập nhật state cục bộ ngay lập tức để UI mở phiên mượt mà
     setActiveSid(sid);
     switchingSidRef.current = { sid, until: Date.now() + 3500 };
     onSwitched();
     setDrawerOpen(false);
-    setConfirmDelSid(null);
 
     // 2. Ghi activeSid ngầm lên Firestore để lưu lại vị trí phiên
     try {
@@ -311,14 +341,15 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
     }
   };
 
-  // Xóa phiên: bấm 2 lần để chắc. Xóa cả tin trong phiên nên tốn lượt xóa theo số tin.
+  // Xóa phiên: ngăn SessionDrawer đã xác nhận, ở đây xóa thẳng.
+  // Xóa cả tin trong phiên nên tốn lượt xóa theo số tin.
   const deleteSession = async (sid: string, busy: boolean, onDeletedActive: () => void) => {
-    if (!user || busy) return;
-    if (confirmDelSid !== sid) {
-      setConfirmDelSid(sid);
+    if (!user) return;
+    if (busy) {
+      setNotice("Trợ lý đang trả lời câu hỏi, bạn đợi một lát nhé.");
       return;
     }
-    setConfirmDelSid(null);
+    if (!startAction("delete", sid)) return;
     try {
       const db = getFirebaseDb();
       const all = await getDocs(
@@ -345,6 +376,8 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
           ? "Chưa mở quyền xóa, báo admin cập nhật Rules nhé."
           : "Mạng chập chờn, bạn thử lại nhé."
       );
+    } finally {
+      finishAction();
     }
   };
 
@@ -357,7 +390,7 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
     drawerOpen,
     setDrawerOpen,
     drawerLoading,
-    confirmDelSid,
+    pendingAction,
     ensureSession,
     noteFirstMessage,
     openDrawer,

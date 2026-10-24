@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CircleNotchIcon } from "@phosphor-icons/react";
 import { firebaseConfigured } from "@/lib/firebase-config";
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
@@ -43,6 +44,7 @@ type GisWindow = Window & {
 export function GoogleSignInButton() {
   const divRef = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState("");
+  const [isExchanging, setIsExchanging] = useState(false);
 
   useEffect(() => {
     if (!CLIENT_ID || !firebaseConfigured) return;
@@ -58,6 +60,7 @@ export function GoogleSignInButton() {
         gid.initialize({
           client_id: CLIENT_ID,
           callback: async (resp: { credential?: string }) => {
+            setIsExchanging(true);
             try {
               if (!resp?.credential) throw new Error("empty");
               // Nạp Firebase SDK động: chỉ khi người dùng thực sự đăng nhập.
@@ -72,6 +75,8 @@ export function GoogleSignInButton() {
               );
             } catch {
               setFailed("Đăng nhập lỗi, bạn thử lại nhé.");
+            } finally {
+              setIsExchanging(false);
             }
           },
         });
@@ -97,7 +102,19 @@ export function GoogleSignInButton() {
   if (!CLIENT_ID) return null;
   return (
     <div className="flex flex-col items-center gap-2">
-      <div ref={divRef} className="min-h-10" />
+      <div className="relative">
+        <div ref={divRef} className="min-h-10" aria-busy={isExchanging || undefined} />
+        {isExchanging && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="absolute inset-0 flex items-center justify-center gap-2 rounded-lg bg-slate-950/70 backdrop-blur-xs text-xs font-semibold text-white"
+          >
+            <CircleNotchIcon className="w-4 h-4 animate-spin text-emerald-300" weight="bold" />
+            Đang đăng nhập…
+          </div>
+        )}
+      </div>
       {failed && <p className="text-xs text-amber-300 leading-relaxed text-center">{failed}</p>}
     </div>
   );

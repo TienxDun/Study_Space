@@ -81,6 +81,7 @@ function RoomParticipantTile({
   onMute,
   onKick,
   onToggleCoHost,
+  pendingAction,
   ...rest
 }: any) {
   const attrs = trackRef?.participant?.attributes;
@@ -88,6 +89,9 @@ function RoomParticipantTile({
   const isHandRaised = attrs?.[MEET_ATTR.hand] === "1";
   const goal = (attrs?.[MEET_ATTR.goal] || "").trim();
   const isLocal = trackRef?.participant?.isLocal;
+  const pendingType =
+    pendingAction?.identity === trackRef?.participant?.identity ? pendingAction.type : null;
+  const isActionPending = pendingType !== null;
 
   const roleAttr = attrs?.["zen.role"];
   const isTargetHost = (isLocal && localRole === "host") || roleAttr === "host";
@@ -159,10 +163,10 @@ function RoomParticipantTile({
         {/* Mục tiêu học tập cá nhân hiển thị thực sự cho cả phòng cùng thấy */}
         {goal && (
           <div
-            className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-black/70 backdrop-blur-md border border-teal-400/40 text-teal-200 shadow-sm flex items-center gap-1 max-w-[140px] truncate pointer-events-auto"
+            className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-black/70 backdrop-blur-md border border-emerald-400/40 text-emerald-200 shadow-sm flex items-center gap-1 max-w-[140px] truncate pointer-events-auto"
             title={`Mục tiêu: ${goal}`}
           >
-            <TargetIcon className="w-3 h-3 text-teal-400 shrink-0" weight="bold" />
+            <TargetIcon className="w-3 h-3 text-emerald-400 shrink-0" weight="bold" />
             <span className="truncate">{goal}</span>
           </div>
         )}
@@ -174,11 +178,17 @@ function RoomParticipantTile({
           <button
             type="button"
             onClick={() => onMute?.(trackRef?.participant?.identity)}
-            className="p-1 rounded-md bg-black/70 hover:bg-rose-500/80 text-white border border-white/20 hover:border-rose-400 transition-colors shadow-sm cursor-pointer"
+            disabled={isActionPending}
+            aria-busy={pendingType === "mute" || undefined}
+            className="p-1 rounded-md bg-black/70 hover:bg-rose-500/80 text-white border border-white/20 hover:border-rose-400 transition-colors shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-wait"
             title="Tắt micro người này"
             aria-label="Tắt micro"
           >
-            <MicrophoneSlashIcon className="w-3 h-3" />
+            {pendingType === "mute" ? (
+              <CircleNotchIcon className="w-3 h-3 animate-spin" weight="bold" />
+            ) : (
+              <MicrophoneSlashIcon className="w-3 h-3" />
+            )}
           </button>
           <button
             type="button"
@@ -188,17 +198,25 @@ function RoomParticipantTile({
                 trackRef?.participant?.name || "Học viên"
               )
             }
-            className="p-1 rounded-md bg-black/70 hover:bg-rose-500/80 text-white border border-white/20 hover:border-rose-400 transition-colors shadow-sm cursor-pointer"
+            disabled={isActionPending}
+            aria-busy={pendingType === "kick" || undefined}
+            className="p-1 rounded-md bg-black/70 hover:bg-rose-500/80 text-white border border-white/20 hover:border-rose-400 transition-colors shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-wait"
             title="Mời rời phòng"
             aria-label="Mời rời phòng"
           >
-            <UserMinusIcon className="w-3 h-3" />
+            {pendingType === "kick" ? (
+              <CircleNotchIcon className="w-3 h-3 animate-spin" weight="bold" />
+            ) : (
+              <UserMinusIcon className="w-3 h-3" />
+            )}
           </button>
           {isLocalHost && (
             <button
               type="button"
               onClick={() => onToggleCoHost?.(trackRef?.participant?.identity)}
-              className={`p-1 rounded-md bg-black/70 text-white border border-white/20 transition-colors shadow-sm cursor-pointer ${
+              disabled={isActionPending}
+              aria-busy={pendingType === "co-host" || undefined}
+              className={`p-1 rounded-md bg-black/70 text-white border border-white/20 transition-colors shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-wait ${
                 isTargetCoHost
                   ? "hover:bg-amber-500/80 text-amber-300"
                   : "hover:bg-sky-500/80 text-sky-300"
@@ -206,7 +224,11 @@ function RoomParticipantTile({
               title={isTargetCoHost ? "Hủy quyền Phó phòng" : "Bổ nhiệm làm Phó phòng"}
               aria-label="Chỉ định hoặc hủy Phó phòng"
             >
-              <StarIcon className="w-3 h-3" weight={isTargetCoHost ? "fill" : "regular"} />
+              {pendingType === "co-host" ? (
+                <CircleNotchIcon className="w-3 h-3 animate-spin" weight="bold" />
+              ) : (
+                <StarIcon className="w-3 h-3" weight={isTargetCoHost ? "fill" : "regular"} />
+              )}
             </button>
           )}
         </div>
@@ -224,13 +246,21 @@ function RoomChatComposer({
   onSend: (text: string) => Promise<void>;
 }) {
   const [draft, setDraft] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const sendingRef = useRef(false);
   const handleSend = async () => {
     const text = draft.trim();
-    if (!text) return;
+    if (!text || sendingRef.current) return;
+    sendingRef.current = true;
+    setIsSending(true);
     try {
       await onSend(text);
       setDraft("");
-    } catch {}
+    } catch {
+    } finally {
+      sendingRef.current = false;
+      setIsSending(false);
+    }
   };
   return (
     <div className="flex items-center gap-1.5 p-2.5 border-t border-white/10 shrink-0">
@@ -246,12 +276,17 @@ function RoomChatComposer({
       />
       <button
         onClick={handleSend}
-        disabled={!draft.trim()}
-        className="px-3 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-40 flex items-center gap-1"
-        title="Gửi"
+        disabled={!draft.trim() || isSending}
+        aria-busy={isSending || undefined}
+        className="px-3 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-wait flex items-center gap-1"
+        title={isSending ? "Đang gửi…" : "Gửi"}
       >
-        <PaperPlaneTiltIcon className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">Gửi</span>
+        {isSending ? (
+          <CircleNotchIcon className="w-3.5 h-3.5 animate-spin" weight="bold" />
+        ) : (
+          <PaperPlaneTiltIcon className="w-3.5 h-3.5" />
+        )}
+        <span className="hidden sm:inline">{isSending ? "Đang gửi…" : "Gửi"}</span>
       </button>
     </div>
   );
@@ -286,10 +321,26 @@ export const StudyRoomView = ({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isLockedState, setIsLockedState] = useState(initialIsLocked);
   const [hasPasswordState, setHasPasswordState] = useState(initialHasPassword);
+  const [pendingAction, setPendingAction] = useState<
+    { type: "mute" | "kick" | "co-host"; identity: string } | null
+  >(null);
+  const pendingActionRef = useRef(false);
+
+  const beginMemberAction = (type: "mute" | "kick" | "co-host", identity?: string) => {
+    if (!identity || pendingActionRef.current) return false;
+    pendingActionRef.current = true;
+    setPendingAction({ type, identity });
+    return true;
+  };
+
+  const endMemberAction = () => {
+    pendingActionRef.current = false;
+    setPendingAction(null);
+  };
 
   const handleMuteParticipant = async (identity: string) => {
     const { baseUrl } = getMeetEndpoints();
-    if (!baseUrl || !identity || !getIdToken) return;
+    if (!baseUrl || !getIdToken || !beginMemberAction("mute", identity)) return;
     try {
       const token = await getIdToken();
       if (!token) throw new Error("Chưa đăng nhập.");
@@ -306,12 +357,14 @@ export const StudyRoomView = ({
       toast.success("Đã gửi yêu cầu tắt micro");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
+    } finally {
+      endMemberAction();
     }
   };
 
   const handleKickParticipant = async (identity: string) => {
     const { baseUrl } = getMeetEndpoints();
-    if (!baseUrl || !identity || !getIdToken) return;
+    if (!baseUrl || !getIdToken || !beginMemberAction("kick", identity)) return;
     try {
       const token = await getIdToken();
       if (!token) throw new Error("Chưa đăng nhập.");
@@ -326,15 +379,17 @@ export const StudyRoomView = ({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Không thể mời rời phòng.");
       toast.success("Đã mời học viên rời khỏi phòng");
-      setKickTarget(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
+    } finally {
+      setKickTarget(null);
+      endMemberAction();
     }
   };
 
   const handleToggleCoHost = async (targetIdentity: string) => {
     const { baseUrl } = getMeetEndpoints();
-    if (!baseUrl || !targetIdentity || !getIdToken) return;
+    if (!baseUrl || !getIdToken || !beginMemberAction("co-host", targetIdentity)) return;
     const targetUid = targetIdentity.replace(/^user-/, "");
     const targetPart = room.getParticipantByIdentity(targetIdentity);
     const isCurrentlyCoHost = targetPart?.attributes?.["zen.role"] === "co-host";
@@ -356,6 +411,8 @@ export const StudyRoomView = ({
       toast.success(isCurrentlyCoHost ? "Đã hủy quyền Phó phòng" : "Đã bổ nhiệm làm Phó phòng ⭐");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
+    } finally {
+      endMemberAction();
     }
   };
 
@@ -603,6 +660,7 @@ export const StudyRoomView = ({
                   onMute={handleMuteParticipant}
                   onKick={(id: string, name: string) => setKickTarget({ identity: id, name })}
                   onToggleCoHost={handleToggleCoHost}
+                  pendingAction={pendingAction}
                 />
               ))}
             </div>
@@ -723,7 +781,11 @@ export const StudyRoomView = ({
       {/* Hộp thoại xác nhận mời học viên ra khỏi phòng */}
       <ConfirmDeleteModal
         isOpen={Boolean(kickTarget)}
-        onClose={() => setKickTarget(null)}
+        pending={pendingAction?.type === "kick"}
+        onClose={() => {
+          if (pendingActionRef.current) return;
+          setKickTarget(null);
+        }}
         onConfirm={() => kickTarget && handleKickParticipant(kickTarget.identity)}
         title="Mời ra khỏi phòng học"
         description={`Bạn có chắc muốn mời "${kickTarget?.name}" rời khỏi phòng học này không?`}

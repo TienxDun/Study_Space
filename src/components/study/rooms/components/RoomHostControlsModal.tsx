@@ -143,14 +143,14 @@ export function RoomHostControlsModal({
       onClose={onClose}
       ariaLabel="Bảng quản lý phòng học"
       backdropClassName="z-[190] bg-black/50 backdrop-blur-md"
-      panelClassName="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-md rounded-3xl bg-neutral-950/96 backdrop-blur-2xl border border-white/20 p-0 text-white shadow-[0_24px_60px_rgba(0,0,0,0.85)] z-[200] overflow-hidden"
+      panelClassName="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-md glass-panel p-0 text-white z-[200] overflow-hidden"
     >
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-400/50 to-transparent pointer-events-none z-10" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent pointer-events-none z-10" />
 
       <div className="relative px-5 pt-5 pb-4 border-b border-white/10 bg-white/[0.02]">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-300 border border-amber-500/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
               <ShieldCheckIcon className="w-5 h-5" weight="fill" />
             </span>
             <div className="min-w-0">
@@ -322,7 +322,7 @@ export function RoomHostControlsModal({
           <div className="text-sm font-semibold text-white">Phân quyền</div>
           <div className="space-y-2">
             <div className="flex items-start gap-2.5">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/20">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">
                 <CrownIcon className="w-3.5 h-3.5" weight="fill" />
               </span>
               <div className="min-w-0">

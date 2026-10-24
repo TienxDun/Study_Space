@@ -90,14 +90,14 @@ export function RoomStudyLayer({
         onClose={() => setIsGoalModalOpen(false)}
         ariaLabel="Thiết lập mục tiêu học tập cá nhân"
         backdropClassName="z-[95] bg-black/40 backdrop-blur-sm"
-        panelClassName="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-md p-0 rounded-3xl bg-neutral-950/96 border border-white/20 shadow-[0_24px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl text-white z-[100] select-none overflow-hidden"
+        panelClassName="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-md p-0 glass-panel text-white z-[100] select-none overflow-hidden"
       >
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-400/50 to-transparent pointer-events-none z-10" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent pointer-events-none z-10" />
 
         <div className="relative px-5 pt-5 pb-4 border-b border-white/10 bg-white/[0.02]">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-500/15 text-teal-300 border border-teal-500/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
                 <TargetIcon className="w-5 h-5" weight="fill" />
               </span>
               <div className="min-w-0">
@@ -129,7 +129,7 @@ export function RoomStudyLayer({
               placeholder="VD: Làm 5 bài tập Giải tích chương 2, không mở mạng xã hội..."
               rows={3}
               maxLength={120}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/15 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-teal-400/60 focus:ring-2 focus:ring-teal-400/20 resize-none transition-colors"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/15 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-400/60 focus:ring-2 focus:ring-emerald-400/20 resize-none transition-colors"
             />
             <div className="text-right text-[10px] text-slate-400 pr-1 tabular-nums mt-1">
               {goalDraft.length}/120
@@ -161,7 +161,7 @@ export function RoomStudyLayer({
             <button
               type="button"
               onClick={handleSaveGoal}
-              className="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+              className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
             >
               <CheckIcon className="w-3.5 h-3.5" weight="bold" />
               <span>Lưu mục tiêu</span>

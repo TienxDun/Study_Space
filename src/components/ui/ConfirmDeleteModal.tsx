@@ -1,12 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { CircleNotchIcon } from "@phosphor-icons/react";
 import { ModalShell } from "@/components/ui/ModalShell";
 
 export interface ConfirmDeleteModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  /** Khi truyền vào, modal chờ thao tác xong mới đóng: khoá nút và hiện spinner. */
+  pending?: boolean;
   title?: string;
   description?: string;
   itemName?: string;
@@ -18,6 +21,7 @@ export const ConfirmDeleteModal = ({
   isOpen,
   onClose,
   onConfirm,
+  pending,
   title = "Xác nhận xóa",
   description = "Thao tác này không thể hoàn tác.",
   itemName,
@@ -28,7 +32,9 @@ export const ConfirmDeleteModal = ({
   return (
     <ModalShell
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => {
+        if (!pending) onClose();
+      }}
       panelKey="confirm-delete-modal"
       role="alertdialog"
       ariaLabel={title}
@@ -72,19 +78,26 @@ export const ConfirmDeleteModal = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
+            disabled={pending}
+            className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {cancelText}
           </button>
           <button
             type="button"
             onClick={() => {
+              if (pending) return;
               onConfirm();
-              onClose();
+              if (pending === undefined) onClose();
             }}
-            className="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white shadow-sm shadow-rose-600/30 active:scale-95 transition-all cursor-pointer"
+            disabled={pending}
+            aria-busy={pending || undefined}
+            className="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white shadow-sm shadow-rose-600/30 active:scale-95 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait flex items-center gap-1.5"
           >
-            {confirmText}
+            {pending && (
+              <CircleNotchIcon className="w-3.5 h-3.5 animate-spin" weight="bold" />
+            )}
+            {pending ? "Đang xử lý…" : confirmText}
           </button>
         </div>
       </motion.div>

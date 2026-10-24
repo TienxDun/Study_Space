@@ -7,6 +7,7 @@ import {
   BookmarkIcon,
   SquaresFourIcon,
   FunnelIcon,
+  CircleNotchIcon,
 } from "@phosphor-icons/react";
 import { StudyEmbedItem, ViewMode } from "../types";
 import { CATEGORY_DEFINITIONS } from "../constants";
@@ -20,6 +21,7 @@ interface DiscoveryHubProps {
   onSearchChange: (value: string) => void;
   detectedEmbed: ReturnType<typeof import("@/components/study/study-types").parseEmbedUrl>;
   onPlayFromInput: (save: boolean) => void;
+  isResolvingInput?: boolean;
   viewMode: ViewMode;
   onToggleViewMode: (mode: ViewMode) => void;
   activeCategory: string;
@@ -43,6 +45,7 @@ export function DiscoveryHub({
   onSearchChange,
   detectedEmbed,
   onPlayFromInput,
+  isResolvingInput = false,
   viewMode,
   onToggleViewMode,
   activeCategory,
@@ -129,17 +132,29 @@ export function DiscoveryHub({
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 onClick={() => onPlayFromInput(false)}
-                className="px-3.5 py-2.5 rounded-xl bg-accent-music hover:bg-accent-music-glow text-xs font-bold text-panel flex items-center gap-1.5 shadow-md shadow-accent-music/20 transition-all cursor-pointer"
+                disabled={isResolvingInput}
+                aria-busy={isResolvingInput || undefined}
+                className="px-3.5 py-2.5 rounded-xl bg-accent-music hover:bg-accent-music-glow text-xs font-bold text-panel flex items-center gap-1.5 shadow-md shadow-accent-music/20 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait"
               >
-                <PlayIcon weight="fill" className="w-3.5 h-3.5" />
-                <span>Phát ngay</span>
+                {isResolvingInput ? (
+                  <CircleNotchIcon weight="bold" className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <PlayIcon weight="fill" className="w-3.5 h-3.5" />
+                )}
+                <span>{isResolvingInput ? "Đang mở…" : "Phát ngay"}</span>
               </button>
               <button
                 onClick={() => onPlayFromInput(true)}
-                className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-medium text-white transition-all border border-line/15 cursor-pointer"
+                disabled={isResolvingInput}
+                aria-busy={isResolvingInput || undefined}
+                className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-medium text-white transition-all border border-line/15 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
                 title="Lưu vào danh sách & Phát"
               >
-                <BookmarkIcon className="w-4 h-4" />
+                {isResolvingInput ? (
+                  <CircleNotchIcon weight="bold" className="w-4 h-4 animate-spin" />
+                ) : (
+                  <BookmarkIcon className="w-4 h-4" />
+                )}
               </button>
             </div>
           ) : (

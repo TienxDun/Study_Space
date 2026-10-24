@@ -21,6 +21,27 @@
   }
 }
 
+/* Menu nổi nhỏ (dropdown): cùng chất liệu kính nhưng bo 1rem và đậm hơn
+   một nấc để chữ vẫn đọc rõ khi đè lên video. */
+@utility glass-popover {
+  border-radius: 1rem;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+@media (pointer: coarse) {
+  .glass-popover {
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+}
+
 /* Liquid Glass hover: kính mờ quang học + viền sáng trên, không ánh xạ màu neon chói */
 @utility glass-hover {
   &:hover {

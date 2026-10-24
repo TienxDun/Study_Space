@@ -85,7 +85,7 @@ export function RoomHistoryModal({
       onClose={onClose}
       ariaLabel="Lịch sử phiên học của phòng"
       backdropClassName="z-[190] bg-black/50 backdrop-blur-md"
-      panelClassName="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-lg rounded-3xl bg-neutral-950/96 backdrop-blur-2xl border border-white/20 p-0 text-white shadow-[0_24px_60px_rgba(0,0,0,0.85)] z-[200] overflow-hidden max-h-[85vh] flex flex-col"
+      panelClassName="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-lg glass-panel p-0 text-white z-[200] overflow-hidden max-h-[85vh] flex flex-col"
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent pointer-events-none z-10" />
 
@@ -132,13 +132,13 @@ export function RoomHistoryModal({
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-center space-y-1">
               <span className="block text-[10px] text-slate-400 font-medium">Số lượt học</span>
-              <span className="text-base font-bold text-sky-300 font-mono block">
+              <span className="text-base font-bold text-slate-200 font-mono block">
                 {data.totalSessions} <span className="text-[11px] font-normal">lượt</span>
               </span>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-center space-y-1">
               <span className="block text-[10px] text-slate-400 font-medium">Thành viên khác</span>
-              <span className="text-base font-bold text-amber-300 font-mono block">
+              <span className="text-base font-bold text-slate-200 font-mono block">
                 {data.uniqueParticipants} <span className="text-[11px] font-normal">người</span>
               </span>
             </div>

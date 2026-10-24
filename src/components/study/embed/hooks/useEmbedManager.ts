@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { StudyEmbedItem, ViewMode } from "../types";
 import {
@@ -32,6 +32,8 @@ export function useEmbedManager({
   const [savedEmbeds, setSavedEmbeds] = useState<StudyEmbedItem[]>([]);
   const [searchOrUrl, setSearchOrUrl] = useState("");
   const [isIframeLoading, setIsIframeLoading] = useState(false);
+  const [isResolvingInput, setIsResolvingInput] = useState(false);
+  const resolvingInputRef = useRef(false);
 
   // Lưới an toàn cuối: kẹt loading quá 15s thì ép tắt để không che video
   // đang phát (onLoad iframe + sự kiện PLAYING đều có thể miss).
@@ -192,51 +194,58 @@ export function useEmbedManager({
 
   const handlePlayFromInput = useCallback(
     async (save: boolean) => {
-      if (!detectedEmbed) return;
+      if (!detectedEmbed || resolvingInputRef.current) return;
+      resolvingInputRef.current = true;
+      setIsResolvingInput(true);
 
-      let resolvedTitle = fetchedMetadata?.title;
-      let resolvedAuthor = fetchedMetadata?.author;
-      let resolvedThumb = fetchedMetadata?.thumbnail || detectedEmbed.thumbnail;
+      try {
+        let resolvedTitle = fetchedMetadata?.title;
+        let resolvedAuthor = fetchedMetadata?.author;
+        let resolvedThumb = fetchedMetadata?.thumbnail || detectedEmbed.thumbnail;
 
-      if (!resolvedTitle && detectedEmbed.platform === "youtube") {
-        try {
-          const meta = await fetchYoutubeMetadata(searchOrUrl.trim());
-          if (meta?.title) {
-            resolvedTitle = meta.title;
-            resolvedAuthor = meta.author;
-            resolvedThumb = meta.thumbnail || resolvedThumb;
-          }
-        } catch {}
+        if (!resolvedTitle && detectedEmbed.platform === "youtube") {
+          try {
+            const meta = await fetchYoutubeMetadata(searchOrUrl.trim());
+            if (meta?.title) {
+              resolvedTitle = meta.title;
+              resolvedAuthor = meta.author;
+              resolvedThumb = meta.thumbnail || resolvedThumb;
+            }
+          } catch {}
+        }
+
+        const title =
+          resolvedTitle ||
+          detectedEmbed.title ||
+          (detectedEmbed.platform === "spotify" ? "Spotify Stream" : "YouTube Video");
+
+        const newItem: StudyEmbedItem = {
+          id: "custom-" + Date.now(),
+          title,
+          url: searchOrUrl.trim(),
+          embedUrl: detectedEmbed.embedUrl,
+          platform: detectedEmbed.platform,
+          category: resolvedAuthor || "Tùy chỉnh",
+          thumbnail: resolvedThumb,
+          isLive: detectedEmbed.isLive || false,
+          addedAt: Date.now(),
+        };
+
+        if (save) {
+          const updated = [newItem, ...savedEmbeds.filter((s) => s.url !== newItem.url)];
+          setSavedEmbeds(updated);
+          try {
+            localStorage.setItem(STORAGE_CUSTOM_EMBEDS_KEY, JSON.stringify(updated));
+          } catch {}
+          toast.success("Đã lưu vào danh sách");
+        }
+
+        handlePlayItem(newItem);
+        setSearchOrUrl("");
+      } finally {
+        resolvingInputRef.current = false;
+        setIsResolvingInput(false);
       }
-
-      const title =
-        resolvedTitle ||
-        detectedEmbed.title ||
-        (detectedEmbed.platform === "spotify" ? "Spotify Stream" : "YouTube Video");
-
-      const newItem: StudyEmbedItem = {
-        id: "custom-" + Date.now(),
-        title,
-        url: searchOrUrl.trim(),
-        embedUrl: detectedEmbed.embedUrl,
-        platform: detectedEmbed.platform,
-        category: resolvedAuthor || "Tùy chỉnh",
-        thumbnail: resolvedThumb,
-        isLive: detectedEmbed.isLive || false,
-        addedAt: Date.now(),
-      };
-
-      if (save) {
-        const updated = [newItem, ...savedEmbeds.filter((s) => s.url !== newItem.url)];
-        setSavedEmbeds(updated);
-        try {
-          localStorage.setItem(STORAGE_CUSTOM_EMBEDS_KEY, JSON.stringify(updated));
-        } catch {}
-        toast.success("Đã lưu vào danh sách");
-      }
-
-      handlePlayItem(newItem);
-      setSearchOrUrl("");
     },
     [detectedEmbed, fetchedMetadata, handlePlayItem, savedEmbeds, searchOrUrl]
   );
@@ -307,6 +316,7 @@ export function useEmbedManager({
     fetchedMetadata,
     isIframeLoading,
     setIsIframeLoading,
+    isResolvingInput,
     failedImages,
     setFailedImages,
     loadedImages,

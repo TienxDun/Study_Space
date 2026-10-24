@@ -10,7 +10,7 @@ import { APP_VERSION_LABEL } from "@/lib/version";
 // Thẻ tài khoản RIÊNG cho bảng Thêm trên mobile.
 // Xếp dọc khoa học: avatar + tên + mail đầy đủ, nút đăng xuất full hàng dưới.
 export function MobileAccountCard() {
-  const { user, loading, isSigningIn, signIn, signOut } = useAuth();
+  const { user, loading, isSigningIn, isSigningOut, signIn, signOut } = useAuth();
   const [avatarError, setAvatarError] = useState(false);
 
   useEffect(() => {
@@ -84,12 +84,18 @@ export function MobileAccountCard() {
       </div>
       {/* Nút đăng xuất gọn dạng icon tròn, không chen chữ */}
       <button
-        onClick={() => signOut()}
-        title="Đăng xuất"
-        aria-label="Đăng xuất"
-        className="w-10 h-10 shrink-0 grid place-items-center rounded-full border border-white/10 text-slate-300 hover:text-rose-200 hover:border-rose-400/30 active:scale-95"
+        onClick={() => void signOut()}
+        disabled={isSigningOut}
+        aria-busy={isSigningOut || undefined}
+        title={isSigningOut ? "Đang đăng xuất…" : "Đăng xuất"}
+        aria-label={isSigningOut ? "Đang đăng xuất" : "Đăng xuất"}
+        className="w-10 h-10 shrink-0 grid place-items-center rounded-full border border-white/10 text-slate-300 hover:text-rose-200 hover:border-rose-400/30 active:scale-95 disabled:opacity-60 disabled:cursor-wait"
       >
-        <SignOutIcon className="w-[18px] h-[18px]" />
+        {isSigningOut ? (
+          <CircleNotchIcon className="w-[18px] h-[18px] animate-spin" weight="bold" />
+        ) : (
+          <SignOutIcon className="w-[18px] h-[18px]" />
+        )}
       </button>
     </div>
   );

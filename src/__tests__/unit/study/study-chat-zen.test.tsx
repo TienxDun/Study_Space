@@ -30,6 +30,8 @@ vi.mock("@/components/study/chat/hooks/useChatSessions", () => ({
     sessions: [],
     activeSid: null,
     drawerOpen: false,
+    drawerLoading: false,
+    pendingAction: null,
     setDrawerOpen: vi.fn(),
     createSession: vi.fn(),
     switchSession: vi.fn(),

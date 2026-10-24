@@ -93,7 +93,7 @@ export function StudyChatWidget({
     hasNew,
     drawerOpen,
     drawerLoading,
-    confirmDelSid,
+    pendingAction,
     createSession,
     switchSession,
     deleteSession,
@@ -237,14 +237,14 @@ export function StudyChatWidget({
               sessions={sessions}
               activeSid={activeSid}
               loading={drawerLoading}
-              confirmDelSid={confirmDelSid}
+              pendingAction={pendingAction}
               onCreate={() => {
                 createSession(messagesApi.msgs.length > 0, busy, () => messagesApi.resetView());
                 setTimeout(() => inputRef.current?.focus(), 120);
               }}
               onSwitch={(sid) => void switchSession(sid, busy, () => messagesApi.resetView())}
               onDelete={(sid) => void deleteSession(sid, busy, () => messagesApi.resetView())}
-              onRename={(sid, title) => void renameSession(sid, title)}
+              onRename={(sid, title) => renameSession(sid, title)}
               onClose={closeDrawer}
             />
           )}

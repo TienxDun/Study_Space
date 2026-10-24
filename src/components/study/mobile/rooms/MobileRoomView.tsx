@@ -73,6 +73,7 @@ function MobileParticipantTile({
   onMute,
   onKick,
   onToggleCoHost,
+  pendingAction,
   ...rest
 }: any) {
   const contextTrackRef = useMaybeTrackRefContext();
@@ -82,6 +83,11 @@ function MobileParticipantTile({
   const isHandRaised = attrs?.[MEET_ATTR.hand] === "1";
   const goal = (attrs?.[MEET_ATTR.goal] || "").trim();
   const isLocal = resolvedTrackRef?.participant?.isLocal;
+  const pendingType =
+    pendingAction?.identity === resolvedTrackRef?.participant?.identity
+      ? pendingAction.type
+      : null;
+  const isActionPending = pendingType !== null;
 
   const roleAttr = attrs?.["zen.role"];
   const isTargetHost = (isLocal && localRole === "host") || roleAttr === "host";
@@ -149,10 +155,10 @@ function MobileParticipantTile({
         {/* Mục tiêu học tập cá nhân hiển thị thực sự trên mobile */}
         {goal && (
           <div
-            className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-black/70 backdrop-blur-md border border-teal-400/40 text-teal-200 shadow-sm flex items-center gap-1 max-w-[100px] truncate pointer-events-auto"
+            className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-black/70 backdrop-blur-md border border-emerald-400/40 text-emerald-200 shadow-sm flex items-center gap-1 max-w-[100px] truncate pointer-events-auto"
             title={`Mục tiêu: ${goal}`}
           >
-            <TargetIcon className="w-2.5 h-2.5 text-teal-400 shrink-0" weight="bold" />
+            <TargetIcon className="w-2.5 h-2.5 text-emerald-400 shrink-0" weight="bold" />
             <span className="truncate">{goal}</span>
           </div>
         )}
@@ -164,11 +170,17 @@ function MobileParticipantTile({
           <button
             type="button"
             onClick={() => onMute?.(resolvedTrackRef?.participant?.identity)}
-            className="p-1 rounded bg-black/70 active:bg-rose-500/80 text-white border border-white/20 transition-colors shadow-sm"
+            disabled={isActionPending}
+            aria-busy={pendingType === "mute" || undefined}
+            className="p-1 rounded bg-black/70 active:bg-rose-500/80 text-white border border-white/20 transition-colors shadow-sm disabled:opacity-60"
             title="Tắt micro"
             aria-label="Tắt micro"
           >
-            <MicrophoneSlashIcon className="w-2.5 h-2.5" />
+            {pendingType === "mute" ? (
+              <CircleNotchIcon className="w-2.5 h-2.5 animate-spin" weight="bold" />
+            ) : (
+              <MicrophoneSlashIcon className="w-2.5 h-2.5" />
+            )}
           </button>
           <button
             type="button"
@@ -178,23 +190,35 @@ function MobileParticipantTile({
                 resolvedTrackRef?.participant?.name || "Học viên"
               )
             }
-            className="p-1 rounded bg-black/70 active:bg-rose-500/80 text-white border border-white/20 transition-colors shadow-sm"
+            disabled={isActionPending}
+            aria-busy={pendingType === "kick" || undefined}
+            className="p-1 rounded bg-black/70 active:bg-rose-500/80 text-white border border-white/20 transition-colors shadow-sm disabled:opacity-60"
             title="Mời rời phòng"
             aria-label="Mời rời phòng"
           >
-            <UserMinusIcon className="w-2.5 h-2.5" />
+            {pendingType === "kick" ? (
+              <CircleNotchIcon className="w-2.5 h-2.5 animate-spin" weight="bold" />
+            ) : (
+              <UserMinusIcon className="w-2.5 h-2.5" />
+            )}
           </button>
           {isLocalHost && (
             <button
               type="button"
               onClick={() => onToggleCoHost?.(resolvedTrackRef?.participant?.identity)}
-              className={`p-1 rounded bg-black/70 text-white border border-white/20 transition-colors shadow-sm ${
+              disabled={isActionPending}
+              aria-busy={pendingType === "co-host" || undefined}
+              className={`p-1 rounded bg-black/70 text-white border border-white/20 transition-colors shadow-sm disabled:opacity-60 ${
                 isTargetCoHost ? "text-amber-300" : "text-sky-300"
               }`}
               title={isTargetCoHost ? "Hủy quyền Phó phòng" : "Bổ nhiệm Phó phòng"}
               aria-label="Chỉ định hoặc hủy Phó phòng"
             >
-              <StarIcon className="w-2.5 h-2.5" weight={isTargetCoHost ? "fill" : "regular"} />
+              {pendingType === "co-host" ? (
+                <CircleNotchIcon className="w-2.5 h-2.5 animate-spin" weight="bold" />
+              ) : (
+                <StarIcon className="w-2.5 h-2.5" weight={isTargetCoHost ? "fill" : "regular"} />
+              )}
             </button>
           )}
         </div>
@@ -228,10 +252,26 @@ export function MobileRoomView({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isLockedState, setIsLockedState] = useState(initialIsLocked);
   const [hasPasswordState, setHasPasswordState] = useState(initialHasPassword);
+  const [pendingAction, setPendingAction] = useState<
+    { type: "mute" | "kick" | "co-host"; identity: string } | null
+  >(null);
+  const pendingActionRef = useRef(false);
+
+  const beginMemberAction = (type: "mute" | "kick" | "co-host", identity?: string) => {
+    if (!identity || pendingActionRef.current) return false;
+    pendingActionRef.current = true;
+    setPendingAction({ type, identity });
+    return true;
+  };
+
+  const endMemberAction = () => {
+    pendingActionRef.current = false;
+    setPendingAction(null);
+  };
 
   const handleMuteParticipant = async (identity: string) => {
     const { baseUrl } = getMeetEndpoints();
-    if (!baseUrl || !identity || !getIdToken) return;
+    if (!baseUrl || !getIdToken || !beginMemberAction("mute", identity)) return;
     try {
       const token = await getIdToken();
       if (!token) throw new Error("Chưa đăng nhập.");
@@ -248,12 +288,14 @@ export function MobileRoomView({
       toast.success("Đã gửi yêu cầu tắt micro");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
+    } finally {
+      endMemberAction();
     }
   };
 
   const handleKickParticipant = async (identity: string) => {
     const { baseUrl } = getMeetEndpoints();
-    if (!baseUrl || !identity || !getIdToken) return;
+    if (!baseUrl || !getIdToken || !beginMemberAction("kick", identity)) return;
     try {
       const token = await getIdToken();
       if (!token) throw new Error("Chưa đăng nhập.");
@@ -268,15 +310,17 @@ export function MobileRoomView({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Không thể mời rời phòng.");
       toast.success("Đã mời học viên rời khỏi phòng");
-      setKickTarget(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
+    } finally {
+      setKickTarget(null);
+      endMemberAction();
     }
   };
 
   const handleToggleCoHost = async (targetIdentity: string) => {
     const { baseUrl } = getMeetEndpoints();
-    if (!baseUrl || !targetIdentity || !getIdToken) return;
+    if (!baseUrl || !getIdToken || !beginMemberAction("co-host", targetIdentity)) return;
     const targetUid = targetIdentity.replace(/^user-/, "");
     const targetPart = room.getParticipantByIdentity(targetIdentity);
     const isCurrentlyCoHost = targetPart?.attributes?.["zen.role"] === "co-host";
@@ -298,6 +342,8 @@ export function MobileRoomView({
       toast.success(isCurrentlyCoHost ? "Đã hủy quyền Phó phòng" : "Đã bổ nhiệm làm Phó phòng ⭐");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
+    } finally {
+      endMemberAction();
     }
   };
 
@@ -351,6 +397,8 @@ export function MobileRoomView({
   const { chatMessages, send } = useChat();
   const [chatOpen, setChatOpen] = useState(false);
   const [draft, setDraft] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const sendingRef = useRef(false);
   const [seenCount, setSeenCount] = useState(0);
   const [copied, setCopied] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -388,11 +436,17 @@ export function MobileRoomView({
 
   const handleSend = async () => {
     const text = draft.trim();
-    if (!text) return;
+    if (!text || sendingRef.current) return;
+    sendingRef.current = true;
+    setIsSending(true);
     try {
       await send(text);
       setDraft("");
-    } catch {}
+    } catch {
+    } finally {
+      sendingRef.current = false;
+      setIsSending(false);
+    }
   };
 
   const handleCopyInviteLink = async () => {
@@ -517,6 +571,7 @@ export function MobileRoomView({
                   onMute={handleMuteParticipant}
                   onKick={(id: string, name: string) => setKickTarget({ identity: id, name })}
                   onToggleCoHost={handleToggleCoHost}
+                  pendingAction={pendingAction}
                 />
               </div>
             ))}
@@ -725,11 +780,16 @@ export function MobileRoomView({
             <button
               type="button"
               onClick={handleSend}
-              disabled={!draft.trim()}
+              disabled={!draft.trim() || isSending}
+              aria-busy={isSending || undefined}
               className="w-8.5 h-8.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-              title="Gửi tin nhắn"
+              title={isSending ? "Đang gửi…" : "Gửi tin nhắn"}
             >
-              <PaperPlaneTiltIcon className="w-3.5 h-3.5" weight="fill" />
+              {isSending ? (
+                <CircleNotchIcon className="w-3.5 h-3.5 animate-spin" weight="bold" />
+              ) : (
+                <PaperPlaneTiltIcon className="w-3.5 h-3.5" weight="fill" />
+              )}
             </button>
           </div>
         </div>
@@ -755,7 +815,11 @@ export function MobileRoomView({
       {/* Hộp thoại xác nhận mời học viên ra khỏi phòng */}
       <ConfirmDeleteModal
         isOpen={Boolean(kickTarget)}
-        onClose={() => setKickTarget(null)}
+        pending={pendingAction?.type === "kick"}
+        onClose={() => {
+          if (pendingActionRef.current) return;
+          setKickTarget(null);
+        }}
         onConfirm={() => kickTarget && handleKickParticipant(kickTarget.identity)}
         title="Mời ra khỏi phòng học"
         description={`Bạn có chắc muốn mời "${kickTarget?.name}" rời khỏi phòng học này không?`}

@@ -69,7 +69,7 @@ export function MobileChatSheet({
     activeSid,
     drawerOpen,
     drawerLoading,
-    confirmDelSid,
+    pendingAction,
     createSession,
     switchSession,
     deleteSession,
@@ -250,7 +250,7 @@ export function MobileChatSheet({
             sessions={sessions}
             activeSid={activeSid}
             loading={drawerLoading}
-            confirmDelSid={confirmDelSid}
+            pendingAction={pendingAction}
             isMobile={true}
             onCreate={() => {
               createSession(
@@ -268,7 +268,7 @@ export function MobileChatSheet({
             onDelete={(sid) =>
               void deleteSession(sid, busy, () => messagesApi.resetView())
             }
-            onRename={(sid, title) => void renameSession(sid, title)}
+            onRename={(sid, title) => renameSession(sid, title)}
             onClose={closeDrawer}
           />
         )}

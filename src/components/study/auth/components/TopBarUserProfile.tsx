@@ -21,9 +21,11 @@ interface TopBarUserProfileProps {
 }
 
 export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {}) => {
-  const { user, loading, isSigningIn, signIn, signOut } = useAuth();
+  const { user, loading, isSigningIn, isSigningOut, signIn, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const syncingRef = useRef(false);
   const [avatarError, setAvatarError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -151,17 +153,31 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
               <SyncStatusBadge variant="text" interactive={false} />
               <button
                 type="button"
+                disabled={isSyncing}
+                aria-busy={isSyncing || undefined}
                 onClick={async () => {
-                  const ok = await syncNow();
-                  if (ok) {
-                    toast.success("Đã đồng bộ lên đám mây thành công!");
-                  } else {
-                    toast.error("Không thể kết nối máy chủ.");
+                  if (syncingRef.current) return;
+                  syncingRef.current = true;
+                  setIsSyncing(true);
+                  const toastId = toast.loading("Đang đồng bộ dữ liệu lên đám mây...");
+                  try {
+                    const ok = await syncNow();
+                    if (ok) {
+                      toast.success("Đã đồng bộ lên đám mây thành công!", { id: toastId });
+                    } else {
+                      toast.error("Không thể kết nối máy chủ.", { id: toastId });
+                    }
+                  } catch {
+                    toast.error("Đồng bộ thất bại. Vui lòng thử lại sau.", { id: toastId });
+                  } finally {
+                    syncingRef.current = false;
+                    setIsSyncing(false);
                   }
                 }}
-                className="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-300 hover:text-sky-200 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                className="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-300 hover:text-sky-200 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-60 disabled:cursor-wait"
               >
-                Đồng bộ ngay
+                {isSyncing && <CircleNotchIcon className="w-3.5 h-3.5 animate-spin" weight="bold" />}
+                {isSyncing ? "Đang đồng bộ…" : "Đồng bộ ngay"}
               </button>
             </div>
 
@@ -196,11 +212,16 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
 
       <ConfirmDeleteModal
         isOpen={isLogoutConfirmOpen}
+        pending={isSigningOut}
         onClose={() => {
+          if (isSigningOut) return;
           setIsLogoutConfirmOpen(false);
           triggerRef.current?.focus();
         }}
-        onConfirm={() => void signOut()}
+        onConfirm={async () => {
+          await signOut();
+          setIsLogoutConfirmOpen(false);
+        }}
         title="Đăng xuất khỏi ZenStudy?"
         description="Dữ liệu đã đồng bộ vẫn còn trên đám mây, nhưng dữ liệu trên thiết bị này sẽ bị xoá. Nếu đang offline, thay đổi chưa đồng bộ có thể mất."
         confirmText="Đăng xuất"

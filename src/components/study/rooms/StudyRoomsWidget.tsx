@@ -24,6 +24,12 @@ import { MobileRoomsSheet } from "@/components/study/mobile/sheets/MobileRoomsSh
 import type { PomodoroSoundType } from "@/components/study/study-sound";
 import { StudyRoomView } from "./components/StudyRoomView";
 import { RoomPreJoinView, type PreJoinChoices } from "./components/RoomPreJoinView";
+import { RoomExitNotice } from "./components/RoomExitNotice";
+import {
+  DISCONNECT_REASON_CLIENT_INITIATED,
+  getRoomExitNotice,
+  type RoomExitNotice as RoomExitNoticeData,
+} from "./utils/room-exit";
 import { buildInviteLink, readInviteRoom } from "@/lib/meet-invite";
 
 export interface StudyRoomsWidgetProps {
@@ -97,6 +103,9 @@ export const StudyRoomsWidget = ({
   const [joinedRoom, setJoinedRoom] = useState("");
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Giữ lại thông báo rời phòng để sảnh vẫn hiện sau khi panel đã đóng
+  const [exitNotice, setExitNotice] = useState<RoomExitNoticeData | null>(null);
+  const [exitRoomName, setExitRoomName] = useState("");
   const [openRooms, setOpenRooms] = useState<
     { name: string; count: number; isLocked?: boolean; hasPassword?: boolean }[]
   >([]);
@@ -354,6 +363,8 @@ const getLiveKitEndpoints = () => {
       setToken(data.token);
       setServerUrl(data.url);
       setJoinedRoom(data.room);
+      // Vào phòng thành công thì thông báo rời phòng cũ không còn cần thiết
+      setExitNotice(null);
       setUserRole(data.role || "member");
       setIsHost(Boolean(data.isHost));
       setIsCoHost(Boolean(data.isCoHost));
@@ -508,36 +519,66 @@ const getLiveKitEndpoints = () => {
 
   const leavingRef = useRef(false);
 
-  const handleLeave = useCallback(() => {
-    if (leavingRef.current) return;
-    leavingRef.current = true;
-    if (typeof document !== "undefined" && document.fullscreenElement) {
-      const doc = document as Document & {
-        exitFullscreen?: () => Promise<void>;
-        webkitExitFullscreen?: () => void;
-      };
-      const exit = doc.exitFullscreen || doc.webkitExitFullscreen;
-      if (typeof exit === "function") {
-        try {
-          const result = exit.call(doc);
-          if (result && typeof (result as Promise<void>).catch === "function") {
-            (result as Promise<void>).catch(() => {});
-          }
-        } catch {}
+  const handleRejoinFromNotice = useCallback(() => {
+    if (!exitRoomName || joining) return;
+    onOpen?.();
+    handleStartJoin(exitRoomName, resolvedDisplayName);
+  }, [exitRoomName, joining, onOpen, resolvedDisplayName, handleStartJoin]);
+
+  const handleLeave = useCallback(
+    function handleLeave(reason?: number) {
+      if (leavingRef.current) return;
+      leavingRef.current = true;
+
+      // Gọi không tham số (tự bấm rời, hết phiên, pill "Rời") là tự nguyện.
+      // onDisconnected luôn truyền tham số, kể cả undefined khi rớt mạng.
+      const voluntary =
+        arguments.length === 0 || reason === DISCONNECT_REASON_CLIENT_INITIATED;
+      // Đọc tên phòng trước khi setJoinedRoom("") bên dưới
+      const exitedRoom = joinedRoom;
+
+      if (!voluntary) {
+        const notice = getRoomExitNotice(reason, exitedRoom);
+        if (notice.showNotice) {
+          setExitNotice(notice);
+          setExitRoomName(exitedRoom);
+          toast.warning(notice.title, {
+            id: "room-exit-notice", // kick liên tiếp thì thay thế, không xếp chồng
+            description: notice.description,
+            duration: 10000,
+          });
+        }
       }
-    }
-    setIsFullscreen(false);
-    setToken(null);
-    setServerUrl("");
-    setJoinedRoom("");
-    setError(null);
-    setPreJoinConfig(null);
-    setInitialMedia({ audio: false, video: false });
-    onClose();
-    setTimeout(() => {
-      leavingRef.current = false;
-    }, 300);
-  }, [onClose]);
+
+      if (typeof document !== "undefined" && document.fullscreenElement) {
+        const doc = document as Document & {
+          exitFullscreen?: () => Promise<void>;
+          webkitExitFullscreen?: () => void;
+        };
+        const exit = doc.exitFullscreen || doc.webkitExitFullscreen;
+        if (typeof exit === "function") {
+          try {
+            const result = exit.call(doc);
+            if (result && typeof (result as Promise<void>).catch === "function") {
+              (result as Promise<void>).catch(() => {});
+            }
+          } catch {}
+        }
+      }
+      setIsFullscreen(false);
+      setToken(null);
+      setServerUrl("");
+      setJoinedRoom("");
+      setError(null);
+      setPreJoinConfig(null);
+      setInitialMedia({ audio: false, video: false });
+      onClose();
+      setTimeout(() => {
+        leavingRef.current = false;
+      }, 300);
+    },
+    [onClose, joinedRoom]
+  );
 
   // Kéo to/nhỏ ở góc dưới phải (logic gom trong hook chung, đây chỉ kẹp lại chỗ đứng)
   const handleResizePointerDown = useCallback(
@@ -588,6 +629,9 @@ const getLiveKitEndpoints = () => {
         serverUrl={serverUrl}
         joinedRoom={joinedRoom}
         handleLeave={handleLeave}
+        exitNotice={exitNotice}
+        onDismissExitNotice={() => setExitNotice(null)}
+        onRejoinExitNotice={handleRejoinFromNotice}
         isAvailable={getLiveKitEndpoints().isAvailable}
         maxParticipants={maxParticipants}
         remainingMinutes={remainingMinutes}
@@ -773,11 +817,11 @@ const getLiveKitEndpoints = () => {
                           <span>Bật camera & micro cùng bạn bè tập trung</span>
                         </div>
                         <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-200">
-                          <span className="w-2 h-2 rounded-full bg-teal-400 shrink-0" />
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
                           <span>Trò chuyện và học cùng nhau</span>
                         </div>
                         <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-200">
-                          <span className="w-2 h-2 rounded-full bg-sky-400 shrink-0" />
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
                           <span>Tự động định danh thành viên, chống người lạ</span>
                         </div>
                       </div>
@@ -935,6 +979,14 @@ const getLiveKitEndpoints = () => {
                         <p className="text-xs text-rose-300 bg-rose-500/10 border border-rose-400/30 rounded-xl px-3 py-2">
                           {error}
                         </p>
+                      )}
+
+                      {exitNotice && (
+                        <RoomExitNotice
+                          notice={exitNotice}
+                          onDismiss={() => setExitNotice(null)}
+                          onRejoin={handleRejoinFromNotice}
+                        />
                       )}
 
                       <button

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { firebaseConfigured } from "@/lib/firebase-config";
 import { cloudConfigured, syncNow, clearLocalUserData } from "@/lib/simple-cloud-sync";
 import { broadcastWipe, hasStoredUserData } from "@/lib/local-data";
@@ -29,6 +29,8 @@ export function useAuth(): UseAuthReturn {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const signingOutRef = useRef(false);
   const [authError, setAuthError] = useState("");
 
   useEffect(() => {
@@ -122,35 +124,44 @@ export function useAuth(): UseAuthReturn {
   // Đăng xuất = kết thúc phiên + xóa sạch dữ liệu của tài khoản khỏi máy này,
   // để người dùng tiếp theo không đọc được ghi chú/task/chat của người trước.
   const signOutNow = useCallback(async () => {
-    const { signOut, getFirebaseAuth } = await loadAuthSdk();
-    const auth = getFirebaseAuth();
-
-    // Cố đẩy nốt thay đổi đang chờ lên mây nếu có mạng
-    if (auth.currentUser && cloudConfigured() && typeof navigator !== "undefined" && navigator.onLine) {
-      try {
-        await syncNow();
-      } catch {}
-    }
-
-    // Với tài khoản khách (chưa đăng nhập): hỏi xác nhận trước khi xóa dữ liệu cục bộ
-    if (!auth.currentUser && hasStoredUserData()) {
-      const ok =
-        typeof window !== "undefined" &&
-        window.confirm(
-          "Bạn đang dùng tài khoản khách (chưa đăng nhập). Đăng xuất sẽ xóa toàn bộ dữ liệu trên thiết bị này. Bạn có chắc chắn muốn tiếp tục?"
-        );
-      if (!ok) return;
-    }
+    if (signingOutRef.current) return;
+    signingOutRef.current = true;
+    setIsSigningOut(true);
 
     try {
-      await signOut(auth);
-    } catch {
-      /* vẫn xóa dữ liệu cục bộ */
+      const { signOut, getFirebaseAuth } = await loadAuthSdk();
+      const auth = getFirebaseAuth();
+
+      // Cố đẩy nốt thay đổi đang chờ lên mây nếu có mạng
+      if (auth.currentUser && cloudConfigured() && typeof navigator !== "undefined" && navigator.onLine) {
+        try {
+          await syncNow();
+        } catch {}
+      }
+
+      // Với tài khoản khách (chưa đăng nhập): hỏi xác nhận trước khi xóa dữ liệu cục bộ
+      if (!auth.currentUser && hasStoredUserData()) {
+        const ok =
+          typeof window !== "undefined" &&
+          window.confirm(
+            "Bạn đang dùng tài khoản khách (chưa đăng nhập). Đăng xuất sẽ xóa toàn bộ dữ liệu trên thiết bị này. Bạn có chắc chắn muốn tiếp tục?"
+          );
+        if (!ok) return;
+      }
+
+      try {
+        await signOut(auth);
+      } catch {
+        /* vẫn xóa dữ liệu cục bộ */
+      }
+      broadcastWipe();
+      clearLocalUserData();
+      setUser(null);
+      if (typeof window !== "undefined") window.location.reload();
+    } finally {
+      signingOutRef.current = false;
+      setIsSigningOut(false);
     }
-    broadcastWipe();
-    clearLocalUserData();
-    setUser(null);
-    if (typeof window !== "undefined") window.location.reload();
   }, []);
 
   // Vé gửi kèm mỗi câu hỏi sang Worker (Worker tự kiểm vé thật/giả).
@@ -169,6 +180,7 @@ export function useAuth(): UseAuthReturn {
     user,
     loading,
     isSigningIn,
+    isSigningOut,
     authError,
     redirectError: authError,
     clearError: () => setAuthError(""),
