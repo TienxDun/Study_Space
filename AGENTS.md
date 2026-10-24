@@ -38,6 +38,7 @@ Next.js 16 + React 19 + Tailwind v4 single-page app with Vietnamese UI. Local-fi
 
 - Push to `main` → Cloudflare Pages builds the web static export (`CF_PAGES=1`) via Git integration, and Workers Builds deploys `zenstudy-admin`. GitHub Actions/Pages was removed on 2026-10-25. Assets come from `NEXT_PUBLIC_STUDY_CDN_URL` (R2). The admin Worker sits behind Cloudflare Access for a single email.
 - `NEXT_PUBLIC_*` values are baked at build time; changing them requires a rebuild. `.env.local` is gitignored - worker secrets belong in Cloudflare, never in this repo.
+- `wrangler.admin.jsonc` is the only source for the admin Worker's bindings (`DB` → D1 `zenspace`, `ASSETS`). `keep_vars` preserves dashboard Text vars only; any binding added just in the dashboard is dropped on the next push, so declare it in the config.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

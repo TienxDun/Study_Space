@@ -6,6 +6,14 @@
   "workers_dev": false,
   "preview_urls": false,
   "keep_vars": true,
+  // keep_vars chỉ giữ biến Text; binding phải khai báo ở đây, nếu không mỗi deploy sẽ xoá DB.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "zenspace",
+      "database_id": "66bb2a87-05a8-4ea3-bdcb-d8e0d39eb465"
+    }
+  ],
   "assets": {
     "directory": "./dist-admin",
     "binding": "ASSETS",
