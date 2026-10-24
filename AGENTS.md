@@ -12,6 +12,7 @@ Next.js 16 + React 19 + Tailwind v4 single-page app with Vietnamese UI. Local-fi
 - `npm run build` - local build stays in server mode. Static export to `out/` happens only when `CF_PAGES` is set by Cloudflare Pages. There is no GitHub Actions pipeline; run lint/typecheck/tests yourself.
 - `npm run build:web` - Cloudflare Pages **web** build (`next build` + `scripts/strip-admin-export.mjs`). Cloudflare never sees the gitignored `src/app/admin`/`src/app/api`, so the export succeeds there; on a local machine those folders make Next reject the dynamic route handlers, so leave web export to Cloudflare (or move them aside temporarily). The strip step fails if `out/` is missing and removes `out/admin`, `out/api`, `out/dev`.
 - `npm run build:admin` - Cloudflare **Worker** admin build (`scripts/prepare-admin-bundle.mjs`); writes `admin-host/index.html` plus `_headers`, `_redirects` into `dist-admin/`. Deploy with `npx wrangler deploy --config wrangler.admin.jsonc`.
+- `npx wrangler dev --config wrangler.admin.jsonc --port 8787` - chạy shell admin ở `http://localhost:8787/admin/`. `.dev.vars` (gitignored) đặt `ENVIRONMENT=development` để bỏ qua Access **chỉ khi** hostname là localhost; không bao giờ đặt biến này trong Production.
 - `npm run sync:r2` - upload assets to R2 (reads `R2_*` from `.env.local`).
 
 ## Architecture

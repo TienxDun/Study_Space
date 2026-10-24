@@ -82,6 +82,10 @@ export function accessRequest(token?: string): Request {
   });
 }
 
+export function localRequest(): Request {
+  return new Request("http://localhost:8787/api/admin/ping");
+}
+
 export function baseEnv(overrides: Partial<AdminEnv> = {}): AdminEnv {
   return {
     ACCESS_TEAM_DOMAIN: TEAM,

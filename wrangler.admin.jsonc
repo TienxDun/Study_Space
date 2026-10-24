@@ -5,6 +5,7 @@
   "compatibility_date": "2026-10-24",
   "workers_dev": false,
   "preview_urls": false,
+  "keep_vars": true,
   "assets": {
     "directory": "./dist-admin",
     "binding": "ASSETS",

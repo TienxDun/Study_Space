@@ -11,12 +11,17 @@
  *   CHAT_PROXY_URL      Text   https://chat-proxy...workers.dev
  *   DATA_API_URL        Text   https://data-api...workers.dev
  *   LIVEKIT_URL         Text   https://livekit...workers.dev
+ *
+ * Chỉ riêng `.dev.vars` (local, gitignored):
+ *   ENVIRONMENT         Text   "development" — bỏ qua Access khi chạy localhost.
+ *                              Không bao giờ đặt biến này trong Production.
  */
 
 const API_PREFIX = "/api/admin";
 const CERT_TTL_MS = 60 * 60 * 1000;
 const CLOCK_SKEW_SEC = 60;
 const PROBE_TIMEOUT_MS = 3000;
+const LOCAL_DEV_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 interface D1Statement {
   bind(...values: unknown[]): D1Statement;
@@ -34,6 +39,7 @@ export interface AdminEnv {
   CHAT_PROXY_URL?: string;
   DATA_API_URL?: string;
   LIVEKIT_URL?: string;
+  ENVIRONMENT?: string;
   ASSETS?: { fetch(request: Request): Promise<Response> };
   DB?: D1DatabaseLike;
 }
@@ -125,6 +131,19 @@ export async function verifyAccessJwt(
   request: Request,
   env: AdminEnv,
 ): Promise<VerifyResult> {
+  // Bỏ qua Access chỉ khi chạy wrangler dev (ENVIRONMENT=development trong .dev.vars)
+  // và request đến từ localhost. Production không đặt ENVIRONMENT nên vẫn fail closed,
+  // và hostname thật cũng không bao giờ khớp danh sách local.
+  if (env.ENVIRONMENT === "development") {
+    try {
+      if (LOCAL_DEV_HOSTS.has(new URL(request.url).hostname)) {
+        return { ok: true, email: "local-dev@localhost" };
+      }
+    } catch {
+      // URL hỏng thì rơi xuống nhánh xác thực bình thường.
+    }
+  }
+
   const token = String(request.headers.get("Cf-Access-Jwt-Assertion") || "").trim();
   if (!token) return { ok: false, reason: "missing_token" };
 

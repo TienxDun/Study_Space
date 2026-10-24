@@ -82,11 +82,27 @@ Kiểm tra: `npm run build:admin` sinh `dist-admin/admin/index.html`; export web
    - Bật 2FA + lưu recovery code cho tài khoản Cloudflare.
 5. **Preview**: đã tắt ở bước 2; vào Settings → Builds & deployments kiểm lại là không còn preview build.
 6. **Env Production** (Worker → Settings → Variables and Secrets; **chỉ Production**, không đặt ở Preview):
-   - `ACCESS_TEAM_DOMAIN` (Text) — `https://<team>.cloudflareaccess.com` lấy ở Zero Trust → Settings.
-   - `ACCESS_AUD` (Text) — Application Audience Tag trong trang tổng quan của application.
-   - `ADMIN_TOKEN` (**Secret**) — phải **trùng** `ADMIN_TOKEN` của worker `livekit` (B4 gọi `/usage` bằng header `Authorization: Bearer …`); dùng lại giá trị đang có, không tạo chuỗi mới lệch.
-   - `CHAT_PROXY_URL`, `DATA_API_URL`, `LIVEKIT_URL` (Text) — lần lượt lấy từ `NEXT_PUBLIC_CHAT_API_URL`, `NEXT_PUBLIC_DATA_API_URL`, `NEXT_PUBLIC_LIVEKIT_TOKEN_URL` trong `.env.local`.
-7. **D1 binding**: Settings → Bindings → Add → D1 database, variable name `DB` → database `zenspace` (dùng cho audit ở B5).
+
+   Giá trị đang dùng (chốt 2026-10-25; đúng tên, **không** thêm tiền tố `NEXT_PUBLIC_`):
+
+   | Tên | Loại | Giá trị |
+   |---|---|---|
+   | `ACCESS_TEAM_DOMAIN` | Text | `https://leutiendung.cloudflareaccess.com` |
+   | `ACCESS_AUD` | Text | `e6f929aee1cb9cd8387c8b716f614db5d99579c9fdcdb2bef6a7080b6d371e32` |
+   | `ADMIN_TOKEN` | **Secret** | trùng đúng token của worker `livekit` |
+   | `CHAT_PROXY_URL` | Text | `https://chat-proxy.leutiendung-hht.workers.dev` |
+   | `DATA_API_URL` | Text | `https://data-api.leutiendung-hht.workers.dev` |
+   | `LIVEKIT_URL` | Text | `https://livekit.leutiendung-hht.workers.dev` |
+
+   Ghi chú:
+   - `ACCESS_TEAM_DOMAIN` lấy ở Zero Trust → Settings; đổi team domain thì phải cập nhật ngay, vì `iss` trong JWT đổi theo.
+   - `ACCESS_AUD` là Application Audience Tag ở Zero Trust → Access → application `admin.zenstudy.space` → Overview; đối chiếu lại nếu nghi ngờ.
+   - `ADMIN_TOKEN` **không bao giờ ghi vào repo hay chat**; B4 gọi `/usage` bằng header `Authorization: Bearer …`, dùng lại đúng giá trị của worker `livekit`, không tạo chuỗi mới lệch.
+   - Ba URL worker lấy tương ứng từ `NEXT_PUBLIC_CHAT_API_URL`, `NEXT_PUBLIC_DATA_API_URL`, `NEXT_PUBLIC_LIVEKIT_TOKEN_URL` trong `.env.local`.
+   - Sửa giá trị xong phải **Deploy** lại Worker thì mới có hiệu lực.
+   - `wrangler deploy` (Workers Builds chạy mỗi lần push `main`) **xóa các biến Text đặt trên dashboard** nếu config không khai báo chúng; Secret như `ADMIN_TOKEN` thì được giữ. Vì vậy `wrangler.admin.jsonc` đặt `"keep_vars": true` — đừng bỏ dòng này, nếu không biến sẽ mất sau mỗi lần deploy.
+
+7. **D1 binding**: Settings → Bindings → Add → D1 database, variable name `DB` → database `zenspace` (dùng cho audit ở B5). Đây là binding, không phải biến.
 
 **Smoke test B3 (chưa cần B4):**
 
@@ -186,6 +202,18 @@ Sau khi cập nhật `ACCESS_TEAM_DOMAIN`, shell đã tải lại với 3 check 
 
 Rollback: Access cấu hình sai → dùng local admin, sửa policy trên dashboard; không đụng dữ liệu. Build web lỗi strip → bỏ bước strip, deploy lại, admin project vẫn tách riêng.
 
+## Chạy admin Worker ở local (không có Access)
+
+1. Tạo `.dev.vars` ở gốc repo (đã gitignore) với các biến Production, thêm một dòng:
+   `ENVIRONMENT=development`.
+2. `npm run build:admin`
+3. `npx wrangler dev --config wrangler.admin.jsonc --port 8787`
+4. Mở `http://localhost:8787/admin/` — ping chạy được, email hiển thị là `local-dev@localhost`.
+
+Cơ chế: `verifyAccessJwt` chỉ bỏ qua Access khi **đồng thời** `ENVIRONMENT === "development"` và hostname là `localhost` / `127.0.0.1` / `[::1]`. Production không có biến này nên vẫn fail closed, và hostname thật không bao giờ khớp danh sách local. Test cho cả 4 tổ hợp nằm trong `src/__tests__/unit/admin/access-jwt.test.ts`.
+
+Thiếu `ADMIN_TOKEN` trong `.dev.vars` thì chỉ check livekit báo lỗi; hai worker còn lại vẫn xanh.
+
 ## Thời lượng
 
 Khoảng **2–3 ngày** làm việc, trong đó phần lớn là dashboard Cloudflare và kiểm thử Access.
@@ -193,6 +221,7 @@ Khoảng **2–3 ngày** làm việc, trong đó phần lớn là dashboard Clou
 ## Rủi ro
 
 - **Preview URL public**: quên tắt là Access bị đi vòng. Deploy bản có script từng bật lại `workers.dev`; luôn giữ `workers_dev: false` và `preview_urls: false` trong config.
+- **Deploy xóa biến dashboard**: Workers Builds deploy mỗi lần push `main`; thiếu `keep_vars: true` thì toàn bộ biến Text biến mất, chỉ Secret còn lại. Đã ghim trong `wrangler.admin.jsonc`.
 - **Access đổi team domain**: `iss` trong JWT đổi theo, Worker sẽ 401 dù policy đúng; cập nhật `ACCESS_TEAM_DOMAIN` cùng lúc.
 - **Access lockout**: policy sai thì không ai vào được; luôn giữ đường local và một email break-glass.
 - **DNS**: Access chỉ bảo vệ hostname đi qua Cloudflare; không CNAME trỏ thẳng ra ngoài.

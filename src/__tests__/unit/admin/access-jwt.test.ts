@@ -14,6 +14,7 @@ import {
   createKeyPair,
   exportJwk,
   makeToken,
+  localRequest,
   validClaims,
 } from "./access-fixtures";
 
@@ -210,5 +211,48 @@ describe("verifyAccessJwt", () => {
     await verifyAccessJwt(accessRequest(token), baseEnv());
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("bỏ qua Access khi ENVIRONMENT=development và chạy localhost", async () => {
+    const fetchMock = stubCerts();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await verifyAccessJwt(
+      localRequest(),
+      baseEnv({ ENVIRONMENT: "development" }),
+    );
+
+    expect(result).toEqual({ ok: true, email: "local-dev@localhost" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("không bỏ qua Access trên host production dù cờ development bật", async () => {
+    vi.stubGlobal("fetch", stubCerts());
+
+    const result = await verifyAccessJwt(
+      accessRequest(),
+      baseEnv({ ENVIRONMENT: "development" }),
+    );
+
+    expect(result).toEqual({ ok: false, reason: "missing_token" });
+  });
+
+  it("localhost không có cờ development vẫn phải có token", async () => {
+    vi.stubGlobal("fetch", stubCerts());
+
+    const result = await verifyAccessJwt(localRequest(), baseEnv());
+
+    expect(result).toEqual({ ok: false, reason: "missing_token" });
+  });
+
+  it("cờ production không bỏ qua Access trên localhost", async () => {
+    vi.stubGlobal("fetch", stubCerts());
+
+    const result = await verifyAccessJwt(
+      localRequest(),
+      baseEnv({ ENVIRONMENT: "production" }),
+    );
+
+    expect(result).toEqual({ ok: false, reason: "missing_token" });
   });
 });
