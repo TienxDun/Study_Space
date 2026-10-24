@@ -10,7 +10,7 @@ Mục tiêu của P0 không phải làm dashboard đẹp, mà là: **admin khôn
 - [ ] `https://tienxdun.github.io/Study_Space/admin/` trả 404 (đã kiểm tra 2026-10-25); xác nhận GitHub Pages đã tắt để không có bản cũ xuất hiện lại.
 - [x] `https://admin.zenstudy.space` bị Cloudflare Access chặn; chỉ đúng email admin vào được (OTP, đã đăng nhập thử 2026-10-25).
 - [x] Preview URL bị tắt: preview builds off, route `workers.dev` disabled (trả 404).
-- [ ] Trang admin gọi `/api/admin/ping`; DevTools không thấy `ADMIN_TOKEN`, không có `?token=`, không có `chat-admin-token`.
+- [x] Trang admin gọi `/api/admin/ping` thành công (3 check xanh, 2026-10-25); DevTools không thấy `ADMIN_TOKEN`, không có `?token=`, không có `chat-admin-token`.
 - [ ] Local `npm run dev` vẫn dùng được `/admin`, `/admin/chat`, `/dev/studio`.
 - [x] `npm run lint`, `npx tsc --noEmit`, `npm test` sạch.
 - [ ] Bảng `admin_audit` + helper ghi audit sẵn sàng trước hành động ghi đầu tiên.
@@ -129,9 +129,9 @@ Test đã thêm 2026-10-25:
 - `src/__tests__/unit/admin/access-jwt.test.ts` — thiếu header, hết hạn, sai `aud`, sai `iss`, sai chữ ký, `alg: none`, kid lạ, certs lỗi, cache, `aud` dạng mảng. Tự sinh cặp khóa RSA bằng WebCrypto, không gọi mạng.
 - `src/__tests__/unit/admin/admin-worker.test.ts` — routing asset/API, 401, ping thành công, thiếu env, backend lỗi, 405/404, không lộ token trong body.
 
-Đã chạy: 23 test mới pass (tổng 366), `npx tsc --noEmit` sạch, `npm run lint` 0 lỗi, `wrangler deploy --dry-run` đọc 4 file asset + bundle 7.76 KiB.
+Đã chạy: 23 test mới pass (tổng 366), `npx tsc --noEmit` sạch, `npm run lint` 0 lỗi, `wrangler deploy --dry-run` OK.
 
-Còn lại để xong B4: đặt env Production + D1 binding trên dashboard, deploy, rồi kiểm `/api/admin/ping` trên host thật.
+Đã deploy 2026-10-25: `admin.zenstudy.space/admin/` hiện 3 check xanh (chat-proxy 91 ms, data-api 48 ms, livekit 1377 ms), email Access hiển thị ở góc phải; không có token trong trang. Lỗi build đầu tiên do `compatibility_date` vượt ngày UTC — đã hạ về 2026-10-24.
 
 ### B5 — Audit trước khi có ghi (0.5 ngày)
 
@@ -149,10 +149,10 @@ CREATE TABLE IF NOT EXISTS admin_audit (
 CREATE INDEX IF NOT EXISTS idx_admin_audit_created ON admin_audit (created_at);
 ```
 
-- Cập nhật comment đầu file (hiện ghi "2 bảng" → 3 bảng).
-- Chạy SQL trong D1 Console `zenspace` theo quy ước repo.
-- `logAudit(env, { actor, action, target, detail })` trong `_worker.js`, dùng `env.DB`.
-  - Khi có endpoint ghi: audit lỗi thì **chặn** hành động (fail closed), không ghi lén.
+- Đã cập nhật `workers/schema.sql` (comment "3 bảng" + bảng `admin_audit` + index).
+- Đã thêm `logAudit(env, { actor, action, target, detail })` trong `admin-worker/_worker.ts`, dùng `env.DB`; thiếu binding hoặc D1 lỗi thì trả `false` để caller chặn hành động.
+- Test `src/__tests__/unit/admin/audit.test.ts` (4 case: ghi đủ cột, detail null, thiếu DB, D1 lỗi).
+- **Chưa chạy SQL** trên D1 Console `zenspace` — phải chạy trước khi có endpoint ghi đầu tiên.
 - P0 chưa có endpoint ghi; helper + bảng chỉ là nền, dùng thật ở P2.
 
 ### B6 — Dọn source (0.5 ngày)

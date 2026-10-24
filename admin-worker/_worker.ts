@@ -18,6 +18,15 @@ const CERT_TTL_MS = 60 * 60 * 1000;
 const CLOCK_SKEW_SEC = 60;
 const PROBE_TIMEOUT_MS = 3000;
 
+interface D1Statement {
+  bind(...values: unknown[]): D1Statement;
+  run(): Promise<unknown>;
+}
+
+interface D1DatabaseLike {
+  prepare(query: string): D1Statement;
+}
+
 export interface AdminEnv {
   ACCESS_TEAM_DOMAIN?: string;
   ACCESS_AUD?: string;
@@ -26,6 +35,7 @@ export interface AdminEnv {
   DATA_API_URL?: string;
   LIVEKIT_URL?: string;
   ASSETS?: { fetch(request: Request): Promise<Response> };
+  DB?: D1DatabaseLike;
 }
 
 export type VerifyResult =
@@ -182,6 +192,44 @@ export async function verifyAccessJwt(
   if (!email) return { ok: false, reason: "missing_email" };
 
   return { ok: true, email };
+}
+
+export type AuditEntry = {
+  actor: string;
+  action: string;
+  target?: string;
+  detail?: unknown;
+};
+
+/**
+ * Endpoint ghi phải dừng hành động khi hàm này trả `false` (fail closed).
+ */
+export async function logAudit(
+  env: AdminEnv,
+  entry: AuditEntry,
+): Promise<boolean> {
+  if (!env.DB) {
+    console.error("admin audit: thiếu binding DB");
+    return false;
+  }
+
+  try {
+    await env.DB.prepare(
+      "INSERT INTO admin_audit (actor_email, action, target, detail_json, created_at) VALUES (?, ?, ?, ?, ?)",
+    )
+      .bind(
+        entry.actor,
+        entry.action,
+        entry.target ?? null,
+        entry.detail === undefined ? null : JSON.stringify(entry.detail),
+        Date.now(),
+      )
+      .run();
+    return true;
+  } catch {
+    console.error("admin audit: ghi thất bại");
+    return false;
+  }
 }
 
 function json(data: unknown, status = 200): Response {
