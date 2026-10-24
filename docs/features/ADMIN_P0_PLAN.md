@@ -6,13 +6,13 @@ Mục tiêu của P0 không phải làm dashboard đẹp, mà là: **admin khôn
 
 ## Definition of Done
 
-- [ ] `https://zenstudy.space/admin/` trả 404 (hiện đã 404 — phải giữ 404 sau mọi lần deploy).
+- [x] `https://zenstudy.space/admin/` trả 404 (kiểm tra 2026-10-25).
 - [ ] `https://tienxdun.github.io/Study_Space/admin/` trả 404 (đã kiểm tra 2026-10-25); xác nhận GitHub Pages đã tắt để không có bản cũ xuất hiện lại.
-- [ ] `https://admin.zenstudy.space` bị Cloudflare Access chặn; chỉ đúng email admin đã cấu hình vào được.
-- [ ] Preview URL của project admin bị tắt hoặc cũng bị Access chặn.
+- [x] `https://admin.zenstudy.space` bị Cloudflare Access chặn; chỉ đúng email admin vào được (OTP, đã đăng nhập thử 2026-10-25).
+- [x] Preview URL bị tắt: preview builds off, route `workers.dev` disabled (trả 404).
 - [ ] Trang admin gọi `/api/admin/ping`; DevTools không thấy `ADMIN_TOKEN`, không có `?token=`, không có `chat-admin-token`.
 - [ ] Local `npm run dev` vẫn dùng được `/admin`, `/admin/chat`, `/dev/studio`.
-- [ ] `npm run lint`, `npx tsc --noEmit`, `npm test` sạch.
+- [x] `npm run lint`, `npx tsc --noEmit`, `npm test` sạch.
 - [ ] Bảng `admin_audit` + helper ghi audit sẵn sàng trước hành động ghi đầu tiên.
 
 ## Đã chốt (2026-10-25)
@@ -77,12 +77,9 @@ Kiểm tra: `npm run build:admin` sinh `dist-admin/admin/index.html`; export web
    - API token: Create new token.
    - Kết quả lần deploy đầu: Worker tĩnh phục vụ `dist-admin/`; chưa có API.
 3. **Custom domain**: Worker `zenstudy-admin` → Settings → Domains & Routes → Add → Custom domain → `admin.zenstudy.space`. Zone đã ở Cloudflare nên DNS + TLS tự tạo.
-4. **Cloudflare Access** (Zero Trust → Access → Applications → Add an application → Self-hosted):
-   - Application 1: `admin.zenstudy.space`, include toàn bộ path.
-   - Application 2: `<worker>.<account>.workers.dev` — địa chỉ mặc định **không** được custom domain bảo vệ.
-   - Cả hai: Policy `Allow` khi `Emails` = đúng email admin đã chốt (1 người). Không thêm policy `Bypass`.
-   - Login method: One-time PIN (bật ở Settings → Authentication). Session duration: 24 giờ.
-   - Bật 2FA + lưu recovery code cho tài khoản Cloudflare **trước** bước này.
+4. **Cloudflare Access** (đã làm 2026-10-25): **một** application self-hosted cho `admin.zenstudy.space`, include toàn bộ path; policy `Allow` khi `Emails` = đúng email admin (1 người), không thêm `Bypass`. One-time PIN bật ở Zero Trust → Integrations → Identity providers; session 24 giờ.
+   - Không tạo application thứ hai cho `workers.dev`: route đó đã **tắt hẳn** (trả 404), nên không còn đường vòng.
+   - Bật 2FA + lưu recovery code cho tài khoản Cloudflare.
 5. **Preview**: đã tắt ở bước 2; vào Settings → Builds & deployments kiểm lại là không còn preview build.
 6. **Env Production** (Worker → Settings → Variables and Secrets; **chỉ Production**, không đặt ở Preview):
    - `ACCESS_TEAM_DOMAIN` (Text) — `https://<team>.cloudflareaccess.com` lấy ở Zero Trust → Settings.
@@ -93,9 +90,9 @@ Kiểm tra: `npm run build:admin` sinh `dist-admin/admin/index.html`; export web
 
 **Smoke test B3 (chưa cần B4):**
 
-- Incognito mở `https://admin.zenstudy.space` → hiện trang đăng nhập Access; email lạ bị từ chối; đúng email thì thấy shell.
+- Incognito mở `https://admin.zenstudy.space` → hiện trang đăng nhập Access; email lạ bị từ chối; đúng email thì thấy shell (đã đăng nhập thử bằng OTP 2026-10-25).
 - `https://admin.zenstudy.space/` → 302 sang `/admin/`.
-- `https://<worker>.<account>.workers.dev` → cũng bị Access chặn.
+- `https://zenstudy-admin.<account>.workers.dev` → 404 (route workers.dev đã tắt, kiểm tra 2026-10-25).
 - `https://zenstudy.space/admin/` → 404.
 - Shell báo "API admin chưa được triển khai" — đúng, vì API thuộc B4.
 
@@ -105,28 +102,36 @@ Kiểm tra: `npm run build:admin` sinh `dist-admin/admin/index.html`; export web
 
 Worker admin vừa phục vụ asset vừa làm API, không cần Pages Functions hay `_routes.json`:
 
-- `wrangler.admin.jsonc`: thêm `"main": "./admin-worker/_worker.js"` và `assets.binding = "ASSETS"`.
-- `_worker.js`: path bắt đầu `/api/admin/` → verify Access JWT rồi xử lý; mọi path còn lại → `env.ASSETS.fetch(request)`.
-- Không copy `_worker.js` vào `dist-admin`; wrangler bundle trực tiếp từ `admin-worker/`.
+- `wrangler.admin.jsonc`: `"main": "./admin-worker/_worker.ts"`, `assets.binding = "ASSETS"`.
+- Asset được trả trước theo mặc định của Static Assets; Worker chỉ chạy với path không khớp file nào (như `/api/admin/*`). Các path còn lại vẫn đi qua `env.ASSETS.fetch(request)` để có fallback 404 của asset.
+- Không copy code Worker vào `dist-admin`; wrangler bundle trực tiếp từ `admin-worker/`.
 
 Route P0 (chỉ đọc):
 
 - `GET /api/admin/ping`:
-  - Verify Access JWT trước.
-  - Gọi `chat-proxy /health`, `data-api /health`, `livekit /usage?token=...` với timeout 3 giây.
-  - Trả `{ ok, email, checks: [{name, ok, ms}], time }`.
-  - Không trả token, không trả lỗi thô chứa URL/secret.
+  - Verify Access JWT trước; mọi path `/api/admin/*` đều đi qua bước này.
+  - Gọi `chat-proxy /health`, `data-api /health`, `livekit /usage` với timeout 3 giây.
+  - LiveKit nhận `ADMIN_TOKEN` qua header `Authorization: Bearer …`, **không** đặt token trong URL.
+  - Trả `{ ok, email, checks: [{name, ok, ms}], time }`; lỗi từng worker chỉ làm `checks[].ok = false`, API vẫn 200.
+  - Không trả token, không trả lỗi thô chứa URL/secret; response có `Cache-Control: no-store`.
 
 `verifyAccessJwt(request, env)`:
 
 - Đọc header `Cf-Access-Jwt-Assertion`; thiếu → 401.
-- Tải certs từ `https://${ACCESS_TEAM_DOMAIN}/cdn-cgi/access/certs`; cache theo `kid` 1 giờ.
-- Verify RS256 bằng WebCrypto (`crypto.subtle`), không thêm dependency.
-- Kiểm `aud` chứa `ACCESS_AUD`, `iss === https://${ACCESS_TEAM_DOMAIN}`, `exp`/`nbf`.
+- Tải certs từ `https://${ACCESS_TEAM_DOMAIN}/cdn-cgi/access/certs`; cache 1 giờ, kid lạ thì tải lại một lần (khóa xoay vòng).
+- Verify RS256 bằng WebCrypto (`crypto.subtle`), không thêm dependency; từ chối `alg` khác RS256.
+- Kiểm chữ ký, `exp`/`nbf` (lệch 60 giây), `aud` chứa `ACCESS_AUD`, `iss === https://${ACCESS_TEAM_DOMAIN}`.
 - Trả `email` claim để dùng cho audit.
-- Lỗi mạng khi tải certs → fail closed (401), ghi log ngắn.
+- Lỗi mạng khi tải certs → fail closed (401), ghi log ngắn; không log token.
 
-Test: `src/__tests__/unit/admin/access-jwt.test.ts` — thiếu header, hết hạn, sai `aud`, sai `iss`, token hợp lệ. Tự sinh cặp khóa RSA bằng WebCrypto, không gọi mạng.
+Test đã thêm 2026-10-25:
+
+- `src/__tests__/unit/admin/access-jwt.test.ts` — thiếu header, hết hạn, sai `aud`, sai `iss`, sai chữ ký, `alg: none`, kid lạ, certs lỗi, cache, `aud` dạng mảng. Tự sinh cặp khóa RSA bằng WebCrypto, không gọi mạng.
+- `src/__tests__/unit/admin/admin-worker.test.ts` — routing asset/API, 401, ping thành công, thiếu env, backend lỗi, 405/404, không lộ token trong body.
+
+Đã chạy: 23 test mới pass (tổng 366), `npx tsc --noEmit` sạch, `npm run lint` 0 lỗi, `wrangler deploy --dry-run` đọc 4 file asset + bundle 7.76 KiB.
+
+Còn lại để xong B4: đặt env Production + D1 binding trên dashboard, deploy, rồi kiểm `/api/admin/ping` trên host thật.
 
 ### B5 — Audit trước khi có ghi (0.5 ngày)
 
@@ -180,7 +185,7 @@ Khoảng **2–3 ngày** làm việc, trong đó phần lớn là dashboard Clou
 - **Access lockout**: policy sai thì không ai vào được; luôn giữ đường local và một email break-glass.
 - **DNS**: Access chỉ bảo vệ hostname đi qua Cloudflare; không CNAME trỏ thẳng ra ngoài.
 - **Hai project một repo**: env và build command phải đặt đúng project; secret chỉ ở admin.
-- **`_worker.js` advanced mode**: khi dùng nó, `functions/` bị bỏ qua; đừng trộn hai kiểu.
+- **Asset được trả trước Worker**: mặc định `run_worker_first = false`, nên API phải dùng path không trùng file tĩnh. Đừng đặt file tên `api/admin/ping` trong `dist-admin/`.
 - **Certs Access tải lỗi**: fail closed, nhưng cần log để biết vì sao 401.
 - **GitHub Pages cũ**: xóa workflow không xóa bản đã deploy; phải unpublish thủ công.
 - **CF build phút**: hiện P0 chỉ build web; từ P1 admin build thêm một lần Next.

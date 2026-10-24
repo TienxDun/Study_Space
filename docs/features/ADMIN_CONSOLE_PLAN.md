@@ -58,12 +58,12 @@ Token worker chỉ nằm ở env của Worker admin. Trình duyệt không bao g
    - Gỡ bản công khai cũ: GitHub repo → Settings → Pages → Unpublish. Xóa workflow không tự xóa deployment đã đăng. Đã kiểm tra 404 ngày 2026-10-25 nhưng vẫn xác nhận Pages đã tắt.
    - Kiểm tra: `https://zenstudy.space/admin/` trả 404; trang admin trên domain riêng vẫn tải đủ asset.
 2. **Bật Cloudflare Access.**
-   - Zero Trust → Access → Application (self-hosted) cho `admin.zenstudy.space` **và** địa chỉ mặc định `<worker>.<account>.workers.dev`.
+   - Zero Trust → Access → Application (self-hosted) cho `admin.zenstudy.space`; tắt hẳn route `<worker>.<account>.workers.dev` (trả 404) thay vì tạo application thứ hai.
    - Policy: `Allow` khi email = email admin đã chốt (1 người); One-time PIN; session 24h. Không ghi email vào repo.
    - Tắt preview builds của Worker, hoặc bảo vệ luôn preview URL. Preview public là đường vòng phổ biến.
    - Không viết trang login riêng; phiên do Access quản lý.
 3. **Worker làm cổng duy nhất tới ba worker.**
-   - Cấu hình `wrangler.admin.jsonc`: `assets.directory = ./dist-admin`, thêm `main = ./admin-worker/_worker.js` khi B4 có API.
+   - Cấu hình `wrangler.admin.jsonc`: `assets.directory = ./dist-admin`, `assets.binding = ASSETS`, `main = ./admin-worker/_worker.ts`.
    - Script kiểm header `Cf-Access-Jwt-Assertion` (verify với certs của Access) trước khi xử lý `/api/admin/*`; request còn lại trả qua `env.ASSETS.fetch()`.
    - Env **Production** của Worker admin: `ADMIN_TOKEN`, URL 3 worker. Không đặt các biến này ở Preview.
    - Admin UI gọi đường dẫn tương đối `/api/admin/...`; xóa `chat-admin-url`, `chat-admin-token` khỏi localStorage; bỏ `?token=`.
@@ -138,4 +138,4 @@ Riêng P0, kiểm tra thêm:
 - **Bản 2**: tách hosting khỏi static export, một cổng auth + cookie httpOnly, một endpoint tổng hợp, audit trước khi ghi, nội dung chuyển R2 + manifest.
 - **Bản 3**: chốt Cloudflare Pages + Pages Functions + Cloudflare Access; bỏ GitHub Actions; thêm rủi ro preview URL và build hai project.
 - **Bản 4**: chốt Access đúng 1 email, P0 chỉ shell + ping, URL `admin.zenstudy.space/admin/`, audit ở D1 `zenspace`.
-- **Bản 5**: Cloudflare gộp Pages vào Workers; admin chuyển sang Worker + Static Assets (`wrangler.admin.jsonc`), Access phủ cả `workers.dev`, web vẫn ở Pages.
+- **Bản 5**: Cloudflare gộp Pages vào Workers; admin chuyển sang Worker + Static Assets (`wrangler.admin.jsonc`); `workers.dev` tắt hẳn, chỉ còn hostname Access; web vẫn ở Pages.
