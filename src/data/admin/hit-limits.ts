@@ -261,12 +261,12 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     fallbackMechanism:
       "Client ZenStudy tích hợp cơ chế dự phòng ảnh tĩnh cục bộ nếu file video từ R2 gặp sự cố kết nối mạng.",
     remedyAction:
-      "Khuyến nghị video tối đa 35-50MB (chuẩn H.264/WebM 1080p 24fps), ảnh nền tối đa 3MB. Dùng Studio /admin/scenes để xóa bỏ cảnh thừa.",
+      "Khuyến nghị video tối đa 35-50MB (chuẩn H.264/WebM 1080p 24fps), ảnh nền tối đa 3MB. Dùng Studio /dev/studio để xóa bỏ cảnh thừa.",
     severity: "warning",
     resetCycle: "Lũy kế theo chu kỳ tháng",
     docUrl: "https://developers.cloudflare.com/r2/pricing/",
     troubleshootingSteps: [
-      "Vào /admin/scenes kiểm tra danh sách cảnh hiện có.",
+      "Vào /dev/studio kiểm tra danh sách cảnh hiện có.",
       "Xóa các cảnh chất lượng kém hoặc không dùng để giải phóng dung lượng R2.",
       "Nén video bằng Handbrake hoặc ffmpeg trước khi tải lên.",
     ],
@@ -289,7 +289,7 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     fallbackMechanism:
       "Script scripts/sync-r2.mjs sử dụng HeadObjectCommand để so sánh kích thước file và chỉ tải lên (PutObject) file mới, tiết kiệm 95% thao tác Class A.",
     remedyAction:
-      "Chỉ bấm nút 'Đẩy ảnh mới lên kho mạng' trong /admin/scenes khi thực sự có cảnh mới được thêm vào.",
+      "Chỉ bấm nút 'Đẩy ảnh mới lên kho mạng' trong /dev/studio khi thực sự có cảnh mới được thêm vào.",
     severity: "info",
     resetCycle: "Reset ngày đầu tiên hàng tháng",
     docUrl: "https://developers.cloudflare.com/r2/pricing/",

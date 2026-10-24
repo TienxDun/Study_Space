@@ -442,7 +442,7 @@ export const SceneSelectorWidget = ({
           {/* Nút Mở Studio Quản lý Background (Chỉ hiện ở môi trường Local Development) */}
           {process.env.NODE_ENV === "development" && (
             <Link
-              href="/admin/scenes/"
+              href="/dev/studio/"
               target="_blank"
               className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex flex-1 items-center justify-center gap-1.5 text-xs active:scale-95"
               title="Mở Studio quản lý bối cảnh"

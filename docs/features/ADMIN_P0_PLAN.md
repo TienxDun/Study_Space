@@ -11,9 +11,9 @@ Mục tiêu của P0 không phải làm dashboard đẹp, mà là: **admin khôn
 - [x] `https://admin.zenstudy.space` bị Cloudflare Access chặn; chỉ đúng email admin vào được (OTP, đã đăng nhập thử 2026-10-25).
 - [x] Preview URL bị tắt: preview builds off, route `workers.dev` disabled (trả 404).
 - [x] Trang admin gọi `/api/admin/ping` thành công (3 check xanh, 2026-10-25); DevTools không thấy `ADMIN_TOKEN`, không có `?token=`, không có `chat-admin-token`.
-- [ ] Local `npm run dev` vẫn dùng được `/admin`, `/admin/chat`, `/dev/studio`.
+- [x] Local `npm run dev` vẫn dùng được `/admin`, `/admin/chat`, `/dev/studio` (kiểm 2026-10-25); `/admin/scenes` đã 404.
 - [x] `npm run lint`, `npx tsc --noEmit`, `npm test` sạch.
-- [ ] Bảng `admin_audit` + helper ghi audit sẵn sàng trước hành động ghi đầu tiên.
+- [x] Bảng `admin_audit` + helper ghi audit sẵn sàng trước hành động ghi đầu tiên (đã chạy SQL trong D1 `zenspace`, 2026-10-25).
 
 ## Đã chốt (2026-10-25)
 
@@ -157,13 +157,18 @@ CREATE INDEX IF NOT EXISTS idx_admin_audit_created ON admin_audit (created_at);
 
 ### B6 — Dọn source (0.5 ngày)
 
-- Xóa `src/app/admin/toasts/page.tsx`; bỏ tab `toasts` khỏi `AdminHeader`; bỏ link tới trang này trong `src/app/admin/chat/page.tsx`.
-- Move `src/app/admin/scenes/page.tsx` → `src/app/dev/studio/page.tsx`.
-  - Giữ nguyên API `/api/admin/scenes`: độ sâu route tương đương nên fetch tương đối không phải sửa.
-  - Cập nhật link: `AdminHeader`, runbook trong `src/app/admin/page.tsx`, `src/components/study/SceneSelectorWidget.tsx`, text trong `src/data/admin/hit-limits.ts`.
-- Tab Studio trỏ `/dev/studio`, ghi rõ "chỉ chạy local".
-- `/admin/chat` giữ nguyên cho local, thêm ghi chú "chưa publish lên host admin".
+Đã làm 2026-10-25:
+
+- Xóa `src/app/admin/toasts/page.tsx`; bỏ tab `toasts` và icon chuông khỏi `AdminHeader`.
+- Move `src/app/admin/scenes/page.tsx` → `src/app/dev/studio/page.tsx`; thêm `src/app/dev/layout.tsx` bọc `AdminThemeProvider` (không import `admin.css` để checkout Cloudflare không cần thư mục admin).
+  - Giữ nguyên API `/api/admin/scenes`: độ sâu route tương đương nên fetch tương đối `../../api/...` vẫn đúng.
+  - Đã cập nhật link: `AdminHeader` (`/dev/studio`), runbook `src/app/admin/page.tsx`, `SceneSelectorWidget`, 3 câu trong `hit-limits.ts`, link nhanh trong `admin/chat`.
+- Tab đổi thành "Studio Bối Cảnh (local)"; trang studio ghi rõ "chỉ chạy trên máy local".
+- `/admin/chat` thêm badge "chưa publish"; bỏ link "Thông báo".
+- `/dev/studio` là route tracked (không bị gitignore), sẽ được build vào `out/dev` rồi bị `strip-admin-export.mjs` xóa — cần kiểm lại ở B7.
+- `/admin` và `/admin/chat` vẫn là file local-only (gitignored); sửa link trong hai file này chỉ có tác dụng trên máy.
 - Trang `/admin` (bảng hạn mức) giữ tạm đến P1; chưa publish ở P0.
+- Kiểm bằng mắt 2026-10-25: `/dev/studio` tải 40 cảnh, tab active đúng; `/admin/chat` có badge; `/admin` tải bình thường; `/admin/scenes` trả 404.
 
 ### B7 — Kiểm chứng và rollback (0.5 ngày)
 
