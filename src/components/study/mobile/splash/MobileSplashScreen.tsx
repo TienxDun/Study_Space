@@ -362,19 +362,19 @@ export const MobileSplashScreen: React.FC<MobileSplashScreenProps> = ({
           </div>
 
           {/* 2. KHU VỰC TRUNG TÂM: Biểu tượng Logo & Dòng chữ thương hiệu trượt mở */}
-          <div className="relative z-10 flex items-center justify-center px-6">
+          <div className="relative z-10 flex items-center justify-center w-full px-4 sm:px-6 pointer-events-none">
             <motion.div
               animate={{
-                x: stage === "C" ? -100 : 0,
+                x: stage === "C" ? 0 : 106,
               }}
               transition={{
                 duration: stageCDuration / 1000,
                 ease: [0.16, 1, 0.3, 1],
               }}
-              className="relative flex items-center"
+              className="relative flex items-center gap-2.5 sm:gap-3 max-w-full"
             >
               {/* Khu vực Logo / Mắt linh vật */}
-              <div className="relative shrink-0 flex items-center justify-center w-14 h-14">
+              <div className="relative shrink-0 flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14">
                 {/* Chặng A: Hai mắt linh vật chớp mắt 2 lần -> mờ dần, tắt hẳn (0 - 0.7s) */}
                 {stage === "A" && (
                   <motion.div
@@ -388,7 +388,7 @@ export const MobileSplashScreen: React.FC<MobileSplashScreenProps> = ({
                       times: [0, 0.72, 1],
                       ease: "easeOut",
                     }}
-                    className="absolute inset-0 flex items-center justify-center gap-2.5 pointer-events-none select-none"
+                    className="absolute inset-0 flex items-center justify-center gap-2 pointer-events-none select-none"
                   >
                     {/* Mắt trái */}
                     <motion.div
@@ -452,8 +452,8 @@ export const MobileSplashScreen: React.FC<MobileSplashScreenProps> = ({
                   <Image
                     src="/brand/zenstudy-logo-icon.svg"
                     alt="ZenStudy Logo Icon"
-                    width={52}
-                    height={52}
+                    width={48}
+                    height={48}
                     priority
                     className="object-contain drop-shadow-[0_0_20px_rgba(56,189,248,0.45)] select-none pointer-events-none"
                   />
@@ -465,22 +465,22 @@ export const MobileSplashScreen: React.FC<MobileSplashScreenProps> = ({
                 initial={false}
                 animate={{
                   opacity: stage === "C" ? 1 : 0,
-                  x: stage === "C" ? 14 : -10,
+                  x: stage === "C" ? 0 : -8,
                 }}
                 transition={{
                   duration: stageCDuration / 1000,
                   ease: [0.16, 1, 0.3, 1],
                 }}
                 className={cn(
-                  "absolute left-full ml-1 whitespace-nowrap text-left flex flex-col justify-center pointer-events-none select-none",
+                  "whitespace-nowrap text-left flex flex-col justify-center pointer-events-none select-none",
                   stage !== "C" && "pointer-events-none"
                 )}
               >
-                <h1 className="text-xl sm:text-2xl font-bold tracking-[0.18em] uppercase flex items-center gap-1.5">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-[0.14em] uppercase flex items-center gap-1.5 leading-none">
                   <span className="text-white drop-shadow-sm">ZEN</span>
                   <span className="text-sky-400 drop-shadow-[0_0_14px_rgba(56,189,248,0.5)]">STUDY</span>
                 </h1>
-                <p className="text-[10px] sm:text-[11px] font-medium tracking-[0.16em] uppercase text-slate-400 mt-1">
+                <p className="text-[10px] sm:text-[11px] font-medium tracking-[0.05em] sm:tracking-[0.08em] uppercase text-slate-400 mt-1 leading-none">
                   Không gian học tập & làm việc sâu
                 </p>
               </motion.div>
