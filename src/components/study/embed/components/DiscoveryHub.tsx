@@ -107,10 +107,10 @@ export function DiscoveryHub({
     <div
       onTouchStart={handleContentTouchStart}
       onTouchEnd={handleContentTouchEnd}
-      className="@container flex-1 min-h-0 min-w-0 flex flex-col p-3.5 sm:p-4 md:p-5 bg-black/20 overflow-hidden"
+      className="@container flex-1 md:min-h-0 min-w-0 flex flex-col p-3.5 sm:p-4 md:p-5 bg-black/20 md:overflow-hidden"
     >
       {/* Search Bar & Quick URL Input */}
-      <div className="space-y-3 shrink-0">
+      <div className="space-y-3 shrink-0 sticky top-0 z-20 bg-[#070A13]/95 backdrop-blur-md pt-1 pb-2.5 -mx-3.5 px-3.5 sm:-mx-4 sm:px-4 md:mx-0 md:px-0 md:bg-transparent md:backdrop-blur-none md:static md:py-0 border-b border-white/10 md:border-b-0 transition-colors shadow-sm md:shadow-none">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <MagnifyingGlassIcon aria-hidden="true" className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -219,7 +219,7 @@ export function DiscoveryHub({
       </div>
 
       {/* Independent Scrollable Discovery Presets Area */}
-      <div className="flex-1 min-h-0 overflow-y-auto custom-study-scroll pr-1 mt-3">
+      <div className="flex-1 md:min-h-0 md:overflow-y-auto md:custom-study-scroll pr-1 mt-3">
         {displayedItems.length === 0 ? (
           <EmptyState
             className="py-14"

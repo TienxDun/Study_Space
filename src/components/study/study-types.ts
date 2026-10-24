@@ -88,14 +88,14 @@ export const CURATED_EMBED_PRESETS: StudyEmbedItem[] = [
     isLive: true
   },
   {
-    id: "preset-synthwave-chill",
-    title: "Synthwave Radio — Chill Beats to Code/Chill",
-    url: "https://www.youtube.com/watch?v=4xDzrJKXOOY",
-    embedUrl: "https://www.youtube-nocookie.com/embed/4xDzrJKXOOY?autoplay=1&rel=0&enablejsapi=1",
+    id: "preset-1am-study-session",
+    title: "1 A.M Study Session 📚 [lofi hip hop]",
+    url: "https://www.youtube.com/watch?v=lTRiuFIWV54",
+    embedUrl: "https://www.youtube-nocookie.com/embed/lTRiuFIWV54?autoplay=1&rel=0&enablejsapi=1",
     platform: "youtube",
-    category: "Synthwave",
-    thumbnail: "https://img.youtube.com/vi/4xDzrJKXOOY/mqdefault.jpg",
-    isLive: true
+    category: "Lofi Hip Hop",
+    thumbnail: "https://img.youtube.com/vi/lTRiuFIWV54/mqdefault.jpg",
+    isLive: false
   },
   {
     id: "preset-coffee-shop-jazz",

@@ -96,7 +96,7 @@ export function StagePlayer({
   return (
     <div
       style={isMobile ? undefined : { flexBasis: `${splitRatio}%` }}
-      className={`w-full md:w-auto md:shrink-0 flex flex-col border-b border-white/10 md:border-b-0 bg-transparent p-3 sm:p-5 overflow-y-auto custom-study-scroll ${
+      className={`w-full md:w-auto md:shrink-0 flex flex-col border-b border-white/10 md:border-b-0 bg-transparent p-3 sm:p-5 md:overflow-y-auto md:custom-study-scroll ${
         isMobile && !activeItem ? "hidden md:flex" : ""
       }`}
     >

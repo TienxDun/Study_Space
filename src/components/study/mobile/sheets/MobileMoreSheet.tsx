@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
   FileTextIcon,
   RadioIcon,
@@ -10,14 +10,9 @@ import {
   SlidersIcon,
   EyeSlashIcon,
   ImageIcon,
-  ArrowsClockwiseIcon,
-  CircleNotchIcon,
 } from "@phosphor-icons/react";
-import { toast } from "sonner";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { MobileAccountCard } from "./MobileAccountCard";
-import { useAuth } from "@/lib/use-auth";
-import { cloudConfigured, syncNow } from "@/lib/simple-cloud-sync";
 import type { MobilePanelId } from "../types";
 import { APP_VERSION_LABEL } from "@/lib/version";
 
@@ -60,54 +55,6 @@ function MoreButton({
   );
 }
 
-// Bấm để kéo bản mới nhất từ máy chủ về (áp dụng luôn nếu có thay đổi).
-function SyncRow() {
-  const { user, loading, isConfigured } = useAuth();
-  const [busy, setBusy] = useState(false);
-
-  const run = async () => {
-    if (busy || loading) return;
-    if (!isConfigured || !cloudConfigured()) {
-      toast.error("Bản này chưa cấu hình đồng bộ máy chủ.");
-      return;
-    }
-    if (!user) {
-      toast("Đăng nhập rồi mới đồng bộ được nhé");
-      return;
-    }
-    setBusy(true);
-    const t = toast.loading("Đang đồng bộ dữ liệu...");
-    try {
-      const ok = await syncNow();
-      if (!ok) {
-        toast.error("Chưa thể kết nối máy chủ, dữ liệu đã lưu an toàn trên máy.", { id: t });
-        return;
-      }
-      toast.success("Đã đồng bộ dữ liệu lên đám mây thành công!", { id: t });
-    } catch {
-      toast.error("Đồng bộ thất bại, bạn thử lại nhé", { id: t });
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <MoreButton
-      label="Đồng bộ"
-      sub="Đồng bộ dữ liệu mới nhất"
-      onClick={() => void run()}
-      disabled={busy}
-      icon={
-        busy ? (
-          <CircleNotchIcon className="w-5 h-5 text-sky-300 animate-spin" />
-        ) : (
-          <ArrowsClockwiseIcon className="w-5 h-5 text-sky-300" />
-        )
-      }
-    />
-  );
-}
-
 // Bảng Thêm: gom các nút còn lại thành các cụm rõ ràng theo chuẩn Liquid Glass
 export const MobileMoreSheet = React.memo(function MobileMoreSheet({
   isOpen,
@@ -124,9 +71,6 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
         <section>
           <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/50">Tài khoản</p>
           <MobileAccountCard />
-          <div className="space-y-1.5 pt-1.5">
-            <SyncRow />
-          </div>
         </section>
         <section>
           <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/50">Học và ghi</p>
@@ -159,7 +103,7 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
         {/* Bóng mờ đáy: báo còn nội dung bên dưới, vuốt lên để xem */}
         <div
           aria-hidden="true"
-          className="sticky bottom-0 -mb-1 h-6 -mx-3 bg-gradient-to-t from-black/40 via-black/20 to-transparent pointer-events-none"
+          className="pointer-events-none sticky -bottom-1 -mx-3 h-8 bg-gradient-to-t from-black/60 to-transparent"
         />
       </div>
     </MobileSheetShell>

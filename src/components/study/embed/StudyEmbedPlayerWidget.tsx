@@ -528,7 +528,7 @@ export const StudyEmbedPlayerWidget = ({
             /* Split-Pane 2 Columns Studio Layout with Resizable Divider */
             <div
               ref={splitContainerRef}
-              className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden relative"
+              className="flex-1 min-h-0 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden relative custom-study-scroll"
             >
               {/* LEFT COLUMN: Stage & Media Controls */}
               <StagePlayer

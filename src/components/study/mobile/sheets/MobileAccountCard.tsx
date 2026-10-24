@@ -2,20 +2,48 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { CircleNotchIcon, SignOutIcon } from "@phosphor-icons/react";
+import { ArrowsClockwiseIcon, CircleNotchIcon, SignOutIcon } from "@phosphor-icons/react";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/use-auth";
+import { cloudConfigured, syncNow } from "@/lib/simple-cloud-sync";
 import { GoogleIcon } from "@/components/study/auth/components/GoogleIcon";
-import { APP_VERSION_LABEL } from "@/lib/version";
 
 // Thẻ tài khoản RIÊNG cho bảng Thêm trên mobile.
-// Xếp dọc khoa học: avatar + tên + mail đầy đủ, nút đăng xuất full hàng dưới.
+// Tinh gọn hiện đại: Avatar + Thông tin bên trái; Cụm nút tròn Đồng bộ & Đăng xuất bên phải.
 export function MobileAccountCard() {
-  const { user, loading, isSigningIn, isSigningOut, signIn, signOut } = useAuth();
+  const { user, loading, isSigningIn, isSigningOut, signIn, signOut, isConfigured } = useAuth();
   const [avatarError, setAvatarError] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     setAvatarError(false);
   }, [user?.photoURL]);
+
+  const handleSync = async () => {
+    if (isSyncing || loading) return;
+    if (!isConfigured || !cloudConfigured()) {
+      toast.error("Bản này chưa cấu hình đồng bộ máy chủ.");
+      return;
+    }
+    if (!user) {
+      toast("Đăng nhập rồi mới đồng bộ được nhé");
+      return;
+    }
+    setIsSyncing(true);
+    const t = toast.loading("Đang đồng bộ dữ liệu...");
+    try {
+      const ok = await syncNow();
+      if (!ok) {
+        toast.error("Chưa thể kết nối máy chủ, dữ liệu đã lưu an toàn trên máy.", { id: t });
+        return;
+      }
+      toast.success("Đã đồng bộ dữ liệu lên đám mây thành công!", { id: t });
+    } catch {
+      toast.error("Đồng bộ thất bại, bạn thử lại nhé", { id: t });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -38,7 +66,7 @@ export function MobileAccountCard() {
       <button
         onClick={signIn}
         disabled={isSigningIn}
-        className="min-h-[48px] w-full flex items-center justify-center gap-2 px-4 rounded-2xl bg-white text-slate-950 text-sm font-bold active:scale-[0.98] disabled:opacity-60"
+        className="min-h-[48px] w-full flex items-center justify-center gap-2 px-4 rounded-2xl bg-white text-slate-950 text-sm font-bold active:scale-[0.98] disabled:opacity-60 cursor-pointer"
       >
         {isSigningIn ? (
           <CircleNotchIcon className="w-4 h-4 animate-spin" />
@@ -74,29 +102,40 @@ export function MobileAccountCard() {
         <p className="text-xs text-slate-400 truncate" title={user.email || undefined}>
           {user.email}
         </p>
-        <div className="mt-0.5 flex items-center gap-2">
-          <p className="text-[11px] font-medium text-emerald-300/90 flex items-center gap-1.5 whitespace-nowrap">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-            Đã kết nối Google
-          </p>
-          <span className="text-[10px] font-mono text-white/50">· {APP_VERSION_LABEL}</span>
-        </div>
       </div>
-      {/* Nút đăng xuất gọn dạng icon tròn, không chen chữ */}
-      <button
-        onClick={() => void signOut()}
-        disabled={isSigningOut}
-        aria-busy={isSigningOut || undefined}
-        title={isSigningOut ? "Đang đăng xuất…" : "Đăng xuất"}
-        aria-label={isSigningOut ? "Đang đăng xuất" : "Đăng xuất"}
-        className="w-10 h-10 shrink-0 grid place-items-center rounded-full border border-white/10 text-slate-300 hover:text-rose-200 hover:border-rose-400/30 active:scale-95 disabled:opacity-60 disabled:cursor-wait"
-      >
-        {isSigningOut ? (
-          <CircleNotchIcon className="w-[18px] h-[18px] animate-spin" weight="bold" />
-        ) : (
-          <SignOutIcon className="w-[18px] h-[18px]" />
-        )}
-      </button>
+      {/* Cụm thao tác tài khoản: Nút đồng bộ và Nút đăng xuất tròn gọn gàng */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button
+          type="button"
+          onClick={() => void handleSync()}
+          disabled={isSyncing}
+          aria-busy={isSyncing || undefined}
+          title={isSyncing ? "Đang đồng bộ…" : "Đồng bộ dữ liệu"}
+          aria-label={isSyncing ? "Đang đồng bộ dữ liệu" : "Đồng bộ dữ liệu"}
+          className="w-10 h-10 grid place-items-center rounded-full border border-white/10 text-slate-300 hover:text-sky-300 hover:border-sky-400/30 active:scale-95 disabled:opacity-60 disabled:cursor-wait transition-colors cursor-pointer"
+        >
+          {isSyncing ? (
+            <CircleNotchIcon className="w-[18px] h-[18px] text-sky-400 animate-spin" weight="bold" />
+          ) : (
+            <ArrowsClockwiseIcon className="w-[18px] h-[18px]" />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          disabled={isSigningOut}
+          aria-busy={isSigningOut || undefined}
+          title={isSigningOut ? "Đang đăng xuất…" : "Đăng xuất"}
+          aria-label={isSigningOut ? "Đang đăng xuất" : "Đăng xuất"}
+          className="w-10 h-10 grid place-items-center rounded-full border border-white/10 text-slate-300 hover:text-rose-200 hover:border-rose-400/30 active:scale-95 disabled:opacity-60 disabled:cursor-wait transition-colors cursor-pointer"
+        >
+          {isSigningOut ? (
+            <CircleNotchIcon className="w-[18px] h-[18px] animate-spin" weight="bold" />
+          ) : (
+            <SignOutIcon className="w-[18px] h-[18px]" />
+          )}
+        </button>
+      </div>
     </div>
   );
 }
