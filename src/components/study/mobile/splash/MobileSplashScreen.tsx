@@ -7,7 +7,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export interface MobileSplashScreenProps {
-  /** Thời lượng tối thiểu hiển thị hiệu ứng thị giác (ms), mặc định 1600ms */
+  /** Thời lượng tối thiểu hiển thị hiệu ứng thị giác (ms), mặc định 2050ms */
   duration?: number;
   /** Tín hiệu báo dữ liệu/bối cảnh ngầm đã nạp xong (mặc định: true) */
   isReady?: boolean;
@@ -21,18 +21,31 @@ export interface MobileSplashScreenProps {
   preview?: boolean;
 }
 
+type SplashStage = "A" | "B" | "C";
+
 const STORAGE_KEY = "zenstudy_mobile_splash_completed";
+
+const checkPrefersReducedMotion = (): boolean => {
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return false;
+  }
+};
 
 /**
  * MobileSplashScreen - Màn hình khởi động (Splash Screen / Launch Screen) chuyên nghiệp cho Mobile:
- * - Chuẩn Cinematic Dark Glassmorphism theo docs/guides/mobile-style-guide.md.
- * - Hiển thị biểu tượng Logo thương hiệu ZenStudy với hiệu ứng phát sáng Ambient Aura breathing.
- * - Tự động đồng bộ chuẩn đôi: Chờ hiệu ứng mắt chớp + logo đủ thời gian tối thiểu (duration) VÀ chờ dữ liệu nền sẵn sàng (isReady).
- * - Tự động thoát với hiệu ứng Dissolve & Zoom-out điện ảnh sau khi nạp xong.
- * - Hỗ trợ chế độ xem thử tiện lợi (Preview Mode) khi truy cập ?splash=preview trên trình duyệt.
+ * - Kiến trúc 3 chặng tuần tự độc lập (Stage A -> Stage B -> Stage C), không phụ thuộc vào chu kỳ % đo đếm:
+ *   + Chặng A (0 - 0.7s): Mắt linh vật chớp 2 lần -> mờ dần, tắt hẳn.
+ *   + Chặng B (0.7 - 1.25s): Logo hiện ra (phóng to từ 0.6 -> 1).
+ *   + Chặng C (1.25 - 1.8s): Chữ "ZEN STUDY" trượt mở mượt mà bằng GPU transform/opacity.
+ *   + Giữ nguyên C (1.8 - 2.05s) và chờ bối cảnh ngầm nạp xong (isReady).
+ * - Nếu nền chưa tải xong: Đứng yên ở C (kèm nhịp sáng nhẹ), tuyệt đối không quay lại A/B.
+ * - Hỗ trợ prefers-reduced-motion (vào thẳng C) và xem thử qua ?splash=preview.
  */
 export const MobileSplashScreen: React.FC<MobileSplashScreenProps> = ({
-  duration = 1600,
+  duration = 2050,
   isReady = true,
   maxDuration = 5000,
   onFinish,
@@ -55,11 +68,18 @@ export const MobileSplashScreen: React.FC<MobileSplashScreenProps> = ({
       return true;
     }
   });
-  const [progress, setProgress] = useState(0);
+
+  const [stage, setStage] = useState<SplashStage>(() => {
+    return checkPrefersReducedMotion() ? "C" : "A";
+  });
+  const [timelineDone, setTimelineDone] = useState(false);
+  const [replayKey, setReplayKey] = useState(0);
   const [isUrlPreview, setIsUrlPreview] = useState(false);
-  const [replayCount, setReplayCount] = useState(0);
+
   const onFinishRef = useRef(onFinish);
   const isReadyRef = useRef(isReady);
+  const hasExitedRef = useRef(false);
+  const timelineDoneRef = useRef(false);
 
   useEffect(() => {
     onFinishRef.current = onFinish;
@@ -100,76 +120,125 @@ export const MobileSplashScreen: React.FC<MobileSplashScreenProps> = ({
     }
   }, [forceShow, isPreviewMode]);
 
-  // Điều khiển thanh tiến trình và đồng bộ kép (Thời gian hiệu ứng tối thiểu VÀ Dữ liệu đã sẵn sàng)
+  // Tính toán thời gian các chặng theo duration thực tế (scale tỉ lệ chính xác)
+  const totalDuration = duration ?? 2050;
+  const timeScale = totalDuration / 2050;
+  const stageADuration = Math.round(700 * timeScale);
+  const stageBDuration = Math.round(550 * timeScale);
+  const stageCDuration = Math.round(550 * timeScale);
+  const holdCDuration = Math.round(250 * timeScale);
+
+  // Xử lý đóng màn hình khi đủ điều kiện
+  const performExit = useCallback(() => {
+    if (hasExitedRef.current) return;
+    hasExitedRef.current = true;
+
+    if (!isPreviewMode) {
+      try {
+        sessionStorage.setItem(STORAGE_KEY, "true");
+      } catch {}
+    }
+
+    // Ở chế độ xem thử (preview mode), dừng lại ở C để soi giao diện, không tự đóng
+    if (isPreviewMode) return;
+
+    setIsVisible(false);
+    setTimeout(() => {
+      onFinishRef.current?.();
+    }, 450); // Khớp với transition duration của exit animation
+  }, [isPreviewMode]);
+
+  // Điều khiển 3 chặng nối tiếp cố định bằng timer độc lập
   useEffect(() => {
     if (!isVisible) return;
 
-    const startTime = Date.now();
-    let isTerminating = false;
-
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const readyNow = isReadyRef.current;
-      const reachedMinDuration = elapsed >= duration;
-      const reachedMaxTimeout = elapsed >= maxDuration;
-
-      // 1. Giai đoạn chưa đủ thời gian tối thiểu (elapsed < duration):
-      //    Tiến trình chạy mượt mà từ 0% tới 100% nếu đã ready, hoặc tới 90% nếu đang chờ dữ liệu
-      if (!reachedMinDuration) {
-        const visualProgress = readyNow
-          ? Math.min(100, Math.round((elapsed / duration) * 100))
-          : Math.min(90, Math.round((elapsed / duration) * 90));
-        setProgress(visualProgress);
-        return;
-      }
-
-      // 2. Giai đoạn đã đủ thời gian tối thiểu nhưng dữ liệu ngầm chưa sẵn sàng (và chưa chạm trần timeout):
-      //    Tiến trình giữ nhích nhẹ từ 90% đến 96% để hiệu ứng tiếp tục sống động
-      if (!readyNow && !reachedMaxTimeout) {
-        const extraElapsed = elapsed - duration;
-        const extraRange = Math.max(1, maxDuration - duration);
-        const extraProgress = 90 + Math.min(6, Math.round((extraElapsed / extraRange) * 6));
-        setProgress(extraProgress);
-        return;
-      }
-
-      // 3. Hoàn tất khi ĐÃ ĐỦ thời gian tối thiểu VÀ (Dữ liệu đã sẵn sàng HOẶC quá thời gian chờ tối đa):
-      if (!isTerminating) {
-        isTerminating = true;
-        setProgress(100);
-        clearInterval(interval);
-
-        // Ở chế độ xem thử (preview mode), dừng lại ở 100% để người lập trình soi giao diện, không tự đóng
-        if (isPreviewMode) {
-          return;
+    const isReducedMotion = checkPrefersReducedMotion();
+    if (isReducedMotion) {
+      setStage("C");
+      const timer = setTimeout(() => {
+        timelineDoneRef.current = true;
+        setTimelineDone(true);
+        if (isReadyRef.current) {
+          performExit();
         }
+      }, totalDuration);
+      return () => clearTimeout(timer);
+    }
 
-        try {
-          sessionStorage.setItem(STORAGE_KEY, "true");
-        } catch {}
+    // Reset về chặng A khi bắt đầu
+    setStage("A");
+    timelineDoneRef.current = false;
+    setTimelineDone(false);
 
-        // Đợi 250ms ở trạng thái 100% trước khi fade out
-        setTimeout(() => {
-          setIsVisible(false);
-          setTimeout(() => {
-            onFinishRef.current?.();
-          }, 450); // Khớp với thời gian exit animation
-        }, 250);
+    // Chặng A kết thúc lúc tA -> bắt đầu chặng B
+    const timerB = setTimeout(() => {
+      setStage("B");
+    }, stageADuration);
+
+    // Chặng B kết thúc lúc (tA + tB) -> bắt đầu chặng C
+    const timerC = setTimeout(() => {
+      setStage("C");
+    }, stageADuration + stageBDuration);
+
+    // Toàn bộ timeline hoàn tất (sau khi giữ C đủ thời gian)
+    const timerDone = setTimeout(() => {
+      timelineDoneRef.current = true;
+      setTimelineDone(true);
+      // Nếu dữ liệu ngầm đã sẵn sàng, thoát ngay
+      if (isReadyRef.current) {
+        performExit();
       }
-    }, 25);
+    }, stageADuration + stageBDuration + stageCDuration + holdCDuration);
 
-    return () => clearInterval(interval);
-  }, [isVisible, duration, maxDuration, isPreviewMode, replayCount]);
+    return () => {
+      clearTimeout(timerB);
+      clearTimeout(timerC);
+      clearTimeout(timerDone);
+    };
+  }, [
+    isVisible,
+    totalDuration,
+    stageADuration,
+    stageBDuration,
+    stageCDuration,
+    holdCDuration,
+    replayKey,
+    performExit,
+  ]);
+
+  // Đồng bộ khi dữ liệu nạp xong trễ hơn timeline hiệu ứng
+  useEffect(() => {
+    if (!isVisible) return;
+
+    if (isReady && timelineDoneRef.current) {
+      performExit();
+    }
+  }, [isVisible, isReady, performExit]);
+
+  // Bộ định thời an toàn: cưỡng chế đóng nếu vượt quá maxDuration tránh kẹt người dùng
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const maxTimer = setTimeout(() => {
+      performExit();
+    }, maxDuration);
+
+    return () => clearTimeout(maxTimer);
+  }, [isVisible, maxDuration, performExit]);
 
   // Nút chạy lại hiệu ứng trong chế độ xem thử
   const handleReplay = useCallback(() => {
-    setProgress(0);
+    hasExitedRef.current = false;
+    timelineDoneRef.current = false;
+    setTimelineDone(false);
+    setStage(checkPrefersReducedMotion() ? "C" : "A");
+    setReplayKey((k) => k + 1);
     setIsVisible(true);
-    setReplayCount((c) => c + 1);
   }, []);
 
   // Nút đóng màn hình trong chế độ xem thử
   const handleClose = useCallback(() => {
+    hasExitedRef.current = true;
     setIsVisible(false);
     onFinishRef.current?.();
   }, []);
@@ -222,13 +291,13 @@ export const MobileSplashScreen: React.FC<MobileSplashScreenProps> = ({
             </div>
           )}
 
-          {/* 1. LỚP NỀN: Hào quang băng tuyết tối giản (Frost Minimalist Glow) & Bụi sao */}
+          {/* 1. LỚP NỀN: Hào quang băng tuyết tối giản & Bụi sao chạy lặp độc lập bằng GPU */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center">
             {/* Vầng sáng cực quang xanh tuyết dịu mắt */}
             <motion.div
               animate={{
-                scale: [1, 1.12, 1],
-                opacity: [0.2, 0.4, 0.2],
+                scale: [1, 1.1, 1],
+                opacity: [0.2, 0.35, 0.2],
               }}
               transition={{
                 duration: 3.2,
@@ -238,48 +307,45 @@ export const MobileSplashScreen: React.FC<MobileSplashScreenProps> = ({
               className="w-[420px] h-[420px] rounded-full bg-[radial-gradient(circle,rgba(56,189,248,0.18)_0%,rgba(148,163,184,0.06)_45%,transparent_70%)] blur-3xl pointer-events-none"
             />
 
-            {/* Các vòng sóng đồng tâm hữu cơ tỏa nhẹ theo nhịp thở (Organic Frost Ripples) */}
-            {[1, 2, 3].map((ringIdx) => (
+            {/* Các vòng sóng đồng tâm hữu cơ tỏa nhẹ theo nhịp thở độc lập */}
+            {[1, 2].map((ringIdx) => (
               <motion.div
                 key={`ripple-ring-${ringIdx}`}
                 animate={{
-                  scale: progress < 65 ? [0.65 + ringIdx * 0.22, 1.05 + ringIdx * 0.25, 0.65 + ringIdx * 0.22] : 0.85,
-                  opacity: progress < 60 ? [0.12, 0.38, 0.12] : 0.05,
-                  rotate: [0, ringIdx % 2 === 0 ? 10 : -10, 0],
+                  scale: [0.95, 1.05, 0.95],
+                  opacity: [0.12, 0.24, 0.12],
+                  rotate: [0, ringIdx % 2 === 0 ? 8 : -8, 0],
                 }}
                 transition={{
-                  duration: 3 + ringIdx * 0.45,
+                  duration: 3.5 + ringIdx * 0.8,
                   repeat: Infinity,
                   ease: "easeInOut",
                 }}
                 style={{
-                  width: 140 + ringIdx * 80,
-                  height: 140 + ringIdx * 80,
+                  width: 160 + ringIdx * 80,
+                  height: 160 + ringIdx * 80,
                   borderRadius: "44% 56% 62% 38% / 42% 48% 52% 58%",
                 }}
-                className="absolute border border-sky-400/20 shadow-[0_0_25px_rgba(56,189,248,0.12)] pointer-events-none"
+                className="absolute border border-sky-400/20 shadow-[0_0_25px_rgba(56,189,248,0.1)] pointer-events-none"
               />
             ))}
 
-            {/* Đốm hạt bụi sao băng tuyết trôi nhẹ lơ lửng */}
+            {/* Đốm hạt bụi sao băng tuyết trôi nhẹ lơ lửng độc lập */}
             {[
-              { x: -100, y: -75, size: 2.5, delay: 0 },
-              { x: 120, y: -55, size: 3, delay: 0.35 },
-              { x: -110, y: 70, size: 2, delay: 0.7 },
-              { x: 85, y: 85, size: 2.5, delay: 0.2 },
-              { x: -35, y: 125, size: 3, delay: 0.85 },
-              { x: 45, y: -135, size: 2, delay: 0.5 },
+              { x: -90, y: -70, size: 2.5, delay: 0 },
+              { x: 110, y: -50, size: 3, delay: 0.4 },
+              { x: -95, y: 65, size: 2, delay: 0.8 },
+              { x: 80, y: 80, size: 2.5, delay: 0.2 },
             ].map((p, i) => (
               <motion.div
                 key={`particle-${i}`}
-                initial={{ opacity: 0, scale: 0 }}
                 animate={{
-                  opacity: progress < 70 ? [0.25, 0.85, 0.3] : [0.1, 0.35, 0.1],
-                  scale: [0.8, 1.25, 0.8],
-                  y: [p.y, p.y - 12, p.y],
+                  opacity: [0.2, 0.75, 0.2],
+                  scale: [0.85, 1.2, 0.85],
+                  y: [p.y, p.y - 10, p.y],
                 }}
                 transition={{
-                  duration: 2.5,
+                  duration: 2.8,
                   repeat: Infinity,
                   delay: p.delay,
                   ease: "easeInOut",
@@ -295,91 +361,129 @@ export const MobileSplashScreen: React.FC<MobileSplashScreenProps> = ({
             ))}
           </div>
 
-          {/* 2. KHU VỰC TRUNG TÂM: Hạt nhân, Mắt linh vật thức giấc & Trượt mở thương hiệu */}
+          {/* 2. KHU VỰC TRUNG TÂM: Biểu tượng Logo & Dòng chữ thương hiệu trượt mở */}
           <div className="relative z-10 flex items-center justify-center px-6">
-            {/* Khu vực Biểu tượng Icon đứng một mình (không đựng trong khối vuông) */}
             <motion.div
               animate={{
-                x: progress >= 65 ? -12 : 0,
-                scale: progress >= 60 ? 1 : [0.94, 1.04, 0.94],
+                x: stage === "C" ? -100 : 0,
               }}
-              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="relative shrink-0 flex items-center justify-center w-14 h-14"
+              transition={{
+                duration: stageCDuration / 1000,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+              className="relative flex items-center"
             >
-              {/* Gợi ý A: Hai mắt linh vật chớp mắt thức giấc (xuất hiện khi progress < 60) */}
-              <motion.div
-                animate={{
-                  opacity: progress < 60 ? 1 : 0,
-                  scale: progress < 60 ? 1 : 0.3,
-                }}
-                transition={{ duration: 0.35 }}
-                className="absolute inset-0 flex items-center justify-center gap-2.5 pointer-events-none"
-              >
-                {/* Mắt trái */}
+              {/* Khu vực Logo / Mắt linh vật */}
+              <div className="relative shrink-0 flex items-center justify-center w-14 h-14">
+                {/* Chặng A: Hai mắt linh vật chớp mắt 2 lần -> mờ dần, tắt hẳn (0 - 0.7s) */}
+                {stage === "A" && (
+                  <motion.div
+                    initial={{ opacity: 1, scale: 1 }}
+                    animate={{
+                      opacity: [1, 1, 0],
+                      scale: [1, 1, 0.4],
+                    }}
+                    transition={{
+                      duration: stageADuration / 1000,
+                      times: [0, 0.72, 1],
+                      ease: "easeOut",
+                    }}
+                    className="absolute inset-0 flex items-center justify-center gap-2.5 pointer-events-none select-none"
+                  >
+                    {/* Mắt trái */}
+                    <motion.div
+                      animate={{
+                        scaleY: [1, 1, 0.12, 1, 1, 0.12, 1],
+                        scaleX: [1, 1, 1.25, 1, 1, 1.25, 1],
+                      }}
+                      transition={{
+                        duration: (stageADuration * 0.72) / 1000,
+                        times: [0, 0.2, 0.35, 0.5, 0.7, 0.85, 1],
+                        ease: "easeInOut",
+                      }}
+                      className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_12px_#ffffff]"
+                    />
+                    {/* Mắt phải */}
+                    <motion.div
+                      animate={{
+                        scaleY: [1, 1, 0.12, 1, 1, 0.12, 1],
+                        scaleX: [1, 1, 1.25, 1, 1, 1.25, 1],
+                      }}
+                      transition={{
+                        duration: (stageADuration * 0.72) / 1000,
+                        times: [0, 0.2, 0.35, 0.5, 0.7, 0.85, 1],
+                        ease: "easeInOut",
+                      }}
+                      className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_12px_#ffffff]"
+                    />
+                  </motion.div>
+                )}
+
+                {/* Chặng B & C: Biểu tượng ZenStudy Logo Icon (Phóng to từ 0.6 -> 1 ở chặng B) */}
                 <motion.div
+                  initial={stage === "A" ? { opacity: 0, scale: 0.6 } : false}
                   animate={{
-                    scaleY: [1, 1, 0.12, 1, 1, 0.12, 1],
-                    scaleX: [1, 1, 1.25, 1, 1, 1.25, 1],
+                    opacity: stage === "A" ? 0 : 1,
+                    scale:
+                      stage === "A"
+                        ? 0.6
+                        : stage === "C" && timelineDone && !isReady
+                        ? [1, 1.04, 1]
+                        : 1,
                   }}
                   transition={{
-                    duration: 1.6,
-                    repeat: Infinity,
-                    ease: "easeInOut",
+                    opacity: {
+                      duration: stageBDuration / 1000,
+                      ease: [0.16, 1, 0.3, 1],
+                    },
+                    scale:
+                      stage === "C" && timelineDone && !isReady
+                        ? { duration: 2.2, repeat: Infinity, ease: "easeInOut" }
+                        : {
+                            duration: stageBDuration / 1000,
+                            ease: [0.16, 1, 0.3, 1],
+                          },
                   }}
-                  className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_12px_#ffffff]"
-                />
-                {/* Mắt phải */}
-                <motion.div
-                  animate={{
-                    scaleY: [1, 1, 0.12, 1, 1, 0.12, 1],
-                    scaleX: [1, 1, 1.25, 1, 1, 1.25, 1],
-                  }}
-                  transition={{
-                    duration: 1.6,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                  className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_12px_#ffffff]"
-                />
-              </motion.div>
+                  className={cn(
+                    "relative flex items-center justify-center",
+                    stage === "A" && "pointer-events-none"
+                  )}
+                >
+                  <Image
+                    src="/brand/zenstudy-logo-icon.svg"
+                    alt="ZenStudy Logo Icon"
+                    width={52}
+                    height={52}
+                    priority
+                    className="object-contain drop-shadow-[0_0_20px_rgba(56,189,248,0.45)] select-none pointer-events-none"
+                  />
+                </motion.div>
+              </div>
 
-              {/* Biểu tượng ZenStudy Logo Icon đứng độc lập (Biến hình bừng sáng khi progress >= 60) */}
+              {/* Chặng C: Dòng chữ thương hiệu trượt mở sang bên phải (Slide reveal qua transform + opacity) */}
               <motion.div
+                initial={false}
                 animate={{
-                  opacity: progress >= 60 ? 1 : 0,
-                  scale: progress >= 60 ? 1 : 0.45,
+                  opacity: stage === "C" ? 1 : 0,
+                  x: stage === "C" ? 14 : -10,
                 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="relative flex items-center justify-center"
+                transition={{
+                  duration: stageCDuration / 1000,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                className={cn(
+                  "absolute left-full ml-1 whitespace-nowrap text-left flex flex-col justify-center pointer-events-none select-none",
+                  stage !== "C" && "pointer-events-none"
+                )}
               >
-                <Image
-                  src="/brand/zenstudy-logo-icon.svg"
-                  alt="ZenStudy Logo Icon"
-                  width={52}
-                  height={52}
-                  priority
-                  className="object-contain drop-shadow-[0_0_20px_rgba(56,189,248,0.45)] select-none pointer-events-none"
-                />
+                <h1 className="text-xl sm:text-2xl font-bold tracking-[0.18em] uppercase flex items-center gap-1.5">
+                  <span className="text-white drop-shadow-sm">ZEN</span>
+                  <span className="text-sky-400 drop-shadow-[0_0_14px_rgba(56,189,248,0.5)]">STUDY</span>
+                </h1>
+                <p className="text-[10px] sm:text-[11px] font-medium tracking-[0.16em] uppercase text-slate-400 mt-1">
+                  Không gian học tập & làm việc sâu
+                </p>
               </motion.div>
-            </motion.div>
-
-            {/* Dòng chữ thương hiệu trượt mở sang bên phải (Slide & Brand Reveal) */}
-            <motion.div
-              animate={{
-                opacity: progress >= 65 ? 1 : 0,
-                x: progress >= 65 ? 14 : -10,
-                maxWidth: progress >= 65 ? "360px" : "0px",
-              }}
-              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="overflow-hidden whitespace-nowrap text-left flex flex-col justify-center"
-            >
-              <h1 className="text-xl sm:text-2xl font-bold tracking-[0.18em] uppercase flex items-center gap-1.5">
-                <span className="text-white drop-shadow-sm">ZEN</span>
-                <span className="text-sky-400 drop-shadow-[0_0_14px_rgba(56,189,248,0.5)]">STUDY</span>
-              </h1>
-              <p className="text-[10px] sm:text-[11px] font-medium tracking-[0.16em] uppercase text-slate-400 mt-1">
-                Không gian học tập & làm việc sâu
-              </p>
             </motion.div>
           </div>
         </motion.div>
@@ -389,3 +493,4 @@ export const MobileSplashScreen: React.FC<MobileSplashScreenProps> = ({
 
   return typeof document !== "undefined" ? createPortal(content, document.body) : null;
 };
+

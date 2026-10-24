@@ -96,7 +96,7 @@ export function getRoomExitNotice(
       return buildNotice(
         "kicked",
         "Bạn được mời ra khỏi phòng",
-        `Trưởng phòng hoặc phó phòng đã mời bạn rời khỏi “${room}”. Bạn vẫn có thể vào lại nếu phòng còn mở.`,
+        `Trưởng phòng hoặc phó phòng đã mời bạn rời khỏi “${room}”.`,
         "amber"
       );
 
