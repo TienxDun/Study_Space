@@ -33,7 +33,7 @@ Các giá trị cấu hình được bằng biến môi trường của Worker, 
 | Phase 0 | Quota, giới hạn phòng, webhook đếm phút, fail-open | Đạt code/test |
 | Phase 1 | Link mời, pre-join, reconnect, screen share mobile | Đạt code/test |
 | Phase 2 | Trạng thái học tập, giơ tay, Pomodoro đồng bộ, reaction | Hoàn thành |
-| Phase 3 | Host, moderation, admin, lịch sử giờ học | Chưa bắt đầu |
+| Phase 3 | Host, moderation, admin, lịch sử giờ học | Đã triển khai |
 
 ### Phase 2 — phần còn lại
 
@@ -42,7 +42,7 @@ Các giá trị cấu hình được bằng biến môi trường của Worker, 
 - Xác nhận owner rời phòng thì timer được adopt, không mất trạng thái.
 - Xác nhận mobile 320/375/390px không tràn ngang và menu reaction không bị cắt.
 
-Chi tiết task và checklist kỹ thuật: [`superpowers/specs/2026-10-22-livekit-phase2-task.md`](../superpowers/specs/2026-10-22-livekit-phase2-task.md).
+Chi tiết task và checklist kỹ thuật: [`archive/livekit-phase2-task.md`](../archive/livekit-phase2-task.md).
 
 ## 4. Quyết định kỹ thuật
 
