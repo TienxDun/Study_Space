@@ -17,6 +17,13 @@
     overscroll-behavior: none;
     overscroll-behavior-y: none;
   }
+  /* Gốc trang chặn bôi đen để kéo widget; riêng ô nhập và vùng soạn thảo
+     vẫn phải chọn được chữ để sửa/copy. */
+  input,
+  textarea,
+  [contenteditable="true"] {
+    user-select: text;
+  }
 }
 
 

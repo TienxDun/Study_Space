@@ -99,7 +99,7 @@ export function StudyJsonLd({
           name: "Sử dụng ZenStudy Space có mất phí không?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "ZenStudy Space hoàn toàn miễn phí 100%, không yêu cầu đăng nhập và không chứa quảng cáo gây phiền toái.",
+            text: "ZenStudy Space hoàn toàn miễn phí 100%, không bắt buộc đăng nhập (đăng nhập Google chỉ để đồng bộ đa thiết bị) và không chứa quảng cáo gây phiền toái.",
           },
         },
         {
@@ -123,7 +123,7 @@ export function StudyJsonLd({
           name: "Dữ liệu công việc và ghi chú của tôi có được bảo mật không?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Toàn bộ danh sách công việc và ghi chú của bạn được lưu an toàn trực tiếp trên trình duyệt cá nhân của bạn (LocalStorage), hoàn toàn bảo mật và không bị gửi đi bất kỳ đâu.",
+            text: "Công việc và ghi chú được lưu trên trình duyệt của bạn (LocalStorage). Khi đăng nhập Google, dữ liệu được sao lưu và đồng bộ đa thiết bị qua Cloudflare D1; khi không đăng nhập, dữ liệu không rời khỏi thiết bị.",
           },
         },
       ],

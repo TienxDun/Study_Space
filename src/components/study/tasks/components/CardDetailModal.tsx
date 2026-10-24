@@ -212,40 +212,19 @@ export const CardDetailModal = React.memo(function CardDetailModal({
     }
   }, [selectedDueDate]);
 
-  // Intercept Escape key to close popover or detail modal without closing parent tasks widget
-  useEffect(() => {
-    if (!selectedCard) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-
-        if (
-          isPriorityPopoverOpen ||
-          isDueDatePopoverOpen ||
-          isStatusDropdownOpen
-        ) {
-          closeAllPopovers();
-        } else {
-          setSelectedCard(null);
-          closeAllPopovers();
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown, true);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown, true);
-    };
+  // Esc và bấm nền: đóng popover trước, chưa đóng cả hộp chi tiết
+  const handleRequestClose = useCallback(() => {
+    if (isPriorityPopoverOpen || isDueDatePopoverOpen || isStatusDropdownOpen) {
+      closeAllPopovers();
+      return;
+    }
+    handleCloseDetail();
   }, [
-    selectedCard,
     isPriorityPopoverOpen,
     isDueDatePopoverOpen,
     isStatusDropdownOpen,
     closeAllPopovers,
-    setSelectedCard,
+    handleCloseDetail,
   ]);
 
   if (!selectedCard) return null;
@@ -259,7 +238,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
   return (
     <ModalShell
       isOpen={Boolean(selectedCard)}
-      onClose={handleCloseDetail}
+      onClose={handleRequestClose}
       panelKey={`card-details-modal-${selectedCard.id}`}
       ariaLabel={selectedCard.title || "Chi tiết nhiệm vụ"}
       backdropClassName="z-[90] bg-black/75 backdrop-blur-sm"

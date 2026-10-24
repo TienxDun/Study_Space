@@ -82,7 +82,6 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
     handleOpenTasksDetail,
     handleCloseDetail,
     handleOpenNotesDetail,
-    setIsTourOpen,
     showClockSeconds,
     handleToggleClockSeconds,
     isClock12Hour,
@@ -237,7 +236,6 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
             onClose={handleMobileCloseAllSheets}
             onBack={mobileCanGoBack ? handleMobileBack : undefined}
             backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
-            onOpenTour={() => setIsTourOpen(true)}
             showClockSeconds={showClockSeconds}
             onToggleClockSeconds={handleToggleClockSeconds}
             isClock12Hour={isClock12Hour}

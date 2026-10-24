@@ -77,7 +77,7 @@ export function StudySeoSemanticContent() {
 
           <dt>ZenStudy Space có miễn phí không?</dt>
           <dd>
-            Website hoàn toàn miễn phí 100%, không yêu cầu đăng ký tài khoản và không có quảng cáo gây phiền toái.
+            Website hoàn toàn miễn phí 100%, không bắt buộc đăng ký tài khoản (đăng nhập Google chỉ để đồng bộ đa thiết bị) và không có quảng cáo gây phiền toái.
           </dd>
 
           <dt>Phương pháp Pomodoro trên web hoạt động như thế nào?</dt>
@@ -93,8 +93,8 @@ export function StudySeoSemanticContent() {
 
           <dt>Dữ liệu công việc và ghi chú của tôi được bảo mật ra sao?</dt>
           <dd>
-            Toàn bộ danh sách công việc và ghi chú của bạn được lưu an toàn trực tiếp trên trình duyệt cá nhân của bạn (LocalStorage),
-            hoàn toàn bảo mật và không bị gửi đi bất kỳ máy chủ bên ngoài nào.
+            Công việc và ghi chú được lưu ngay trên trình duyệt của bạn (LocalStorage) để dùng offline. Nếu đăng nhập Google,
+            dữ liệu được sao lưu và đồng bộ đa thiết bị qua Cloudflare D1; nếu không đăng nhập, dữ liệu không rời khỏi thiết bị.
           </dd>
         </dl>
       </section>

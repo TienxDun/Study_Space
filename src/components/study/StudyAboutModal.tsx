@@ -55,7 +55,7 @@ const FEATURES: { name: string; desc: string; shortcut?: string }[] = [
   { name: "Bộ trộn âm thanh", desc: "Trộn tiếng mưa, thiên nhiên, nhạc chill", shortcut: "P" },
   { name: "Đồng hồ Pomodoro", desc: "Học 25 phút, nghỉ 5 phút, lặp lại", shortcut: "T" },
   { name: "Kế hoạch học tập", desc: "Ghi việc cần làm, bấm theo dõi từng việc", shortcut: "K" },
-  { name: "Ghi chép nhanh", desc: "Ghi chú lẹ, tự lưu trên máy của bạn", shortcut: "N" },
+  { name: "Ghi chép nhanh", desc: "Ghi chú lẹ, lưu trên máy và tự đồng bộ khi đăng nhập", shortcut: "N" },
   { name: "Phòng học nhóm", desc: "Học chung với bạn bè qua gọi video", shortcut: "G" },
   { name: "Trợ lý học tập AI", desc: "Hỏi đáp bài tập, gợi ý ôn thi và tóm tắt", shortcut: "C" },
   { name: "Chế độ Zen", desc: "Ẩn hết nút để chỉ còn bạn và bài học", shortcut: "Z" },
@@ -63,7 +63,7 @@ const FEATURES: { name: string; desc: string; shortcut?: string }[] = [
 ];
 
 const NOTES: string[] = [
-  "Mọi cài đặt, ghi chú, việc cần làm đều lưu trên máy của bạn. Đổi sang máy khác thì không mang theo được.",
+  "Mặc định mọi thứ được lưu ngay trên máy để dùng offline. Đăng nhập Google để tự động sao lưu và đồng bộ cài đặt, ghi chú, việc cần làm, thống kê tập trung sang các thiết bị khác.",
   "Trợ lý AI trả lời độc lập từng câu để phản hồi siêu nhanh (khác với ChatGPT/Gemini nhớ đoạn chat dài). Hãy bật nút [🧠 Nhớ hội thoại] trên góc chat khi cần AI kết nối câu trước để giải tiếp.",
   "Thông tin do AI cung cấp có thể có sai sót hoặc nhầm lẫn, bạn hãy luôn đối chiếu lại với sách giáo khoa và tài liệu học tập chính thống.",
   "Trợ lý học tập AI cần đăng nhập Google để hỏi bài và lưu lịch sử hội thoại an toàn.",

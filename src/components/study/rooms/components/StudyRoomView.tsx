@@ -631,7 +631,7 @@ export const StudyRoomView = ({
                 <XIcon className="w-3.5 h-3.5" />
               </button>
             </div>
-            <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2.5 custom-study-scroll">
+            <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2.5 custom-study-scroll select-text">
               {chatMessages.length === 0 && (
                 <p className="text-[11px] text-slate-500 text-center pt-6">
                   Chưa có tin nhắn nào. Chào mọi người đi!

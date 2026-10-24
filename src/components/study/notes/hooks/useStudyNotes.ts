@@ -10,7 +10,7 @@ import { saveStorageJSON } from "@/lib/safe-storage";
 
 const STORAGE_MULTI_KEY = STORAGE_KEYS.multiNotes;
 const STORAGE_OLD_KEY = STORAGE_KEYS.oldNotes;
-const TEMPLATE_UPGRADE_KEY = "study_space_notes_v6_clean_streamlined";
+const TEMPLATE_UPGRADE_KEY = "study_space_notes_v7_cloud_sync";
 // Id của ghi chú mẫu kèm app — chỉ đúng mẫu gốc mới có id này
 const TEMPLATE_NOTE_IDS = new Set([
   "note-1",

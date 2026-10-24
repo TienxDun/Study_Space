@@ -37,9 +37,13 @@ function setRef(ref: Ref<HTMLDivElement> | undefined, el: HTMLDivElement | null)
   else (ref as React.MutableRefObject<HTMLDivElement | null>).current = el;
 }
 
+// Các modal đang mở, xếp theo thứ tự mở. Chỉ modal cuối (trên cùng) được
+// xử lý Esc/Tab, nếu không mỗi lớp sẽ tự đóng khi có modal con đè lên.
+const modalLayerStack: symbol[] = [];
+
 /** Khung modal/popout dung chung: backdrop + panel + AnimatePresence.
  *  Portal truc tiep vao document.body de thoat khoi containing block cua cac the cha co transform.
- *  Quy uoc: backdrop click = dong. Esc do page.tsx quan ly tap trung. */
+ *  Quy uoc: backdrop click = dong. Esc/Tab do lop tren cung (modalLayerStack) xu ly. */
 export const ModalShell = ({
   isOpen,
   onClose,
@@ -56,8 +60,11 @@ export const ModalShell = ({
   role = "dialog",
 }: ModalShellProps) => {
   const [mounted, setMounted] = useState(false);
+  // Lớp thứ 2 trở lên tự nâng z-index để nền mờ luôn phủ lên panel của hộp dưới
+  const [layerZ, setLayerZ] = useState<number | null>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const prevFocusRef = useRef<HTMLElement | null>(null);
+  const layerIdRef = useRef<symbol>(Symbol("modal-layer"));
   const onCloseRef = useRef(onClose);
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -70,10 +77,16 @@ export const ModalShell = ({
   // Mở lên tự vào bảng, Tab xoay vòng bên trong, tắt đi trả về chỗ cũ
   useEffect(() => {
     if (!isOpen || !mounted) return;
+    const layerId = layerIdRef.current;
+    modalLayerStack.push(layerId);
+    const depth = modalLayerStack.length;
+    setLayerZ(depth > 1 ? 1000 + depth * 20 : null);
     prevFocusRef.current = document.activeElement as HTMLElement | null;
     const t = window.setTimeout(() => innerRef.current?.focus(), 60);
 
     const onKey = (e: KeyboardEvent) => {
+      // Modal bên dưới không phản hồi phím khi đã có modal con đè lên
+      if (modalLayerStack[modalLayerStack.length - 1] !== layerId) return;
       if (e.key === "Escape") {
         e.stopPropagation();
         onCloseRef.current();
@@ -112,6 +125,8 @@ export const ModalShell = ({
     return () => {
       window.clearTimeout(t);
       document.removeEventListener("keydown", onKey, true);
+      const layerIndex = modalLayerStack.lastIndexOf(layerId);
+      if (layerIndex !== -1) modalLayerStack.splice(layerIndex, 1);
       prevFocusRef.current?.focus?.();
     };
     }, [isOpen, mounted]);
@@ -126,6 +141,7 @@ export const ModalShell = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
+            style={layerZ !== null ? { zIndex: layerZ } : undefined}
             className={cn(
               "fixed inset-0 z-40 bg-black/10 cursor-default",
               backdropClassName
@@ -147,6 +163,7 @@ export const ModalShell = ({
             animate={animate}
             exit={exit}
             transition={transition}
+            style={layerZ !== null ? { zIndex: layerZ + 10 } : undefined}
             className={cn(panelClassName, "will-change-transform focus:outline-none")}
           >
             {children}

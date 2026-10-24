@@ -168,7 +168,7 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
             <div className="pt-2 flex items-center justify-between">
               <span className="text-[11px] font-medium text-emerald-300/90 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                Google Connected
+                Đã kết nối Google
               </span>
               <button
                 type="button"

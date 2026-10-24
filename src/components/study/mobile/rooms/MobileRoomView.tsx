@@ -670,7 +670,7 @@ export function MobileRoomView({
           </div>
 
           {/* Danh sách tin nhắn */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-3.5 space-y-2.5 custom-study-scroll">
+          <div className="flex-1 min-h-0 overflow-y-auto p-3.5 space-y-2.5 custom-study-scroll select-text">
             {chatMessages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-4">
                 <p className="text-xs text-slate-400">Chưa có tin nhắn nào.</p>

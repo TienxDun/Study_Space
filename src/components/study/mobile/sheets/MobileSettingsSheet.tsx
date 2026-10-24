@@ -7,7 +7,6 @@ import {
   SpeakerHighIcon,
   MinusIcon,
   PlusIcon,
-  CompassIcon,
   DeviceMobileIcon,
 } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
@@ -141,7 +140,6 @@ const DURATION_LABELS: Record<DurationKey, string> = {
 export function MobileSettingsSheet({
   isOpen,
   onClose,
-  onOpenTour,
   showClockSeconds,
   onToggleClockSeconds,
   isClock12Hour,
@@ -403,34 +401,6 @@ export function MobileSettingsSheet({
           </div>
         </div>
 
-        {/* Tour hướng dẫn sử dụng */}
-        {onOpenTour && (
-          <div
-            style={{ "--stagger-idx": 4 } as React.CSSProperties}
-            className="pt-1 sheet-stagger-item sheet-lazy-card"
-          >
-            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] transition-colors">
-              <div className="space-y-0.5 min-w-0 flex-1 pr-2">
-                <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
-                  <CompassIcon className="w-4 h-4 text-amber-300 shrink-0" weight="bold" />
-                  <span>Tour hướng dẫn sử dụng</span>
-                </div>
-                <p className="text-[11px] text-white/50">Xem lại cách sử dụng các tính năng</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onOpenTour();
-                }}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 active:scale-95 text-white border border-white/15 transition-all cursor-pointer flex items-center gap-1 shadow-sm shrink-0"
-                title="Mở lại Tour hướng dẫn"
-              >
-                <span>Xem lại</span>
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </MobileSheetShell>
   );

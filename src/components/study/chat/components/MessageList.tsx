@@ -210,7 +210,7 @@ export function MessageList({
         role="log"
         aria-live="polite"
         aria-label="Lịch sử trò chuyện"
-        className="h-full overflow-y-auto overscroll-contain custom-study-scroll px-3.5 pt-3 pb-8 text-sm"
+        className="h-full overflow-y-auto overscroll-contain custom-study-scroll px-3.5 pt-3 pb-8 text-sm select-text"
       >
         {loading && msgs.length === 0 && (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center animate-in fade-in duration-200">

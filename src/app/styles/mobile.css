@@ -151,4 +151,46 @@
   animation-delay: calc(var(--stagger-idx, 0) * 32ms);
 }
 
+/* =========================================================================
+   CHẶN GIAO DIỆN KHI ĐIỆN THOẠI XOAY NGANG
+   Dùng đúng điều kiện với useIsMobile: màn hình thấp, nằm ngang, cảm ứng.
+   Hiện/ẩn thuần CSS để có ngay từ khung hình đầu, không chờ JS.
+   Không dùng sm:hidden ở đây vì điện thoại nằm ngang thường rộng hơn 640px.
+   ========================================================================= */
+
+.mobile-landscape-guard {
+  display: none;
+}
+
+@media (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
+  .mobile-landscape-guard {
+    display: flex;
+  }
+}
+
+@keyframes mobileRotateHint {
+  0%,
+  15% {
+    transform: rotate(90deg);
+  }
+  45%,
+  60% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(90deg);
+  }
+}
+
+.mobile-rotate-hint {
+  animation: mobileRotateHint 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-rotate-hint {
+    animation: none;
+    transform: none;
+  }
+}
+
 

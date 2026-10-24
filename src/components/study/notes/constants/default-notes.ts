@@ -28,13 +28,13 @@ export const DEFAULT_NOTES: StudyNote[] = [
 ## Công nghệ cốt lõi
 - **Frontend:** Next.js 16 (App Router), Tailwind CSS v4, Framer Motion
 - **Âm thanh & Video:** Web Audio API, YouTube Iframe API
-- **Lưu trữ dữ liệu:** LocalStorage an toàn, hoạt động offline 100%
+- **Lưu trữ dữ liệu:** Local-first (LocalStorage) + tự đồng bộ đám mây khi đăng nhập
 
 ## Tiến độ hoàn thiện tính năng
 - [x] Không gian video 4K sống động (Anime, Lofi, Thiên nhiên)
 - [x] Bộ trộn âm thanh môi trường 20 kênh
 - [x] Bảng ghi chú tối giản phong cách Notion
-- [ ] Đồng bộ hóa đám mây đa thiết bị`),
+- [x] Đồng bộ hóa đám mây đa thiết bị`),
     updatedAt: Date.now() - 7200000,
   },
   {

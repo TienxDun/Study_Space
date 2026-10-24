@@ -276,7 +276,7 @@ export function MobileSheetShell({
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      panelKey={`mobile-sheet-${typeof title === "string" ? title : sheetId || "sheet"}`}
+      panelKey={`mobile-sheet-${effectiveSheetId}`}
       panelRef={setCombinedRef}
       ariaLabel={typeof title === "string" ? title : sheetId || "Bảng điều khiển"}
       initial={{ opacity: 0, y: 72, scale: 0.96 }}

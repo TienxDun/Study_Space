@@ -247,7 +247,7 @@ export function FocusStatsModal({ isOpen, onClose }: FocusStatsModalProps) {
         )}
 
         <p className="text-[10px] leading-relaxed text-slate-400 pt-2 border-t border-white/5">
-          Số liệu ghi theo từng giây chạy thực tế, lưu trên máy này.
+          Số liệu ghi theo từng giây chạy thực tế; tự đồng bộ khi bạn đăng nhập Google.
         </p>
       </div>
     </ModalShell>

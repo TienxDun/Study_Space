@@ -15,6 +15,7 @@ import { StudyDesktopLayout } from "@/components/study/layout/StudyDesktopLayout
 import { StudyMobileLayout } from "@/components/study/layout/StudyMobileLayout";
 import { MobileWelcomeScreen } from "@/components/study/mobile/welcome/MobileWelcomeScreen";
 import { MobileSplashScreen } from "@/components/study/mobile/splash/MobileSplashScreen";
+import { MobileLandscapeGuard } from "@/components/study/mobile/MobileLandscapeGuard";
 import { useStudySpaceState } from "@/components/study/hooks/useStudySpaceState";
 import { useAuth } from "@/lib/use-auth";
 import { useCloudSync } from "@/lib/use-cloud-sync";
@@ -238,6 +239,9 @@ export default function StudySpacePage() {
         onOpenNotes={() => state.setIsNotesOpen(true)}
         onOpenShortcuts={() => state.setIsShortcutsHelpOpen(true)}
       />
+
+      {/* Chặn thao tác khi điện thoại đang xoay ngang (UI mobile chỉ tối ưu cho màn hình dọc) */}
+      <MobileLandscapeGuard />
     </div>
   );
 }

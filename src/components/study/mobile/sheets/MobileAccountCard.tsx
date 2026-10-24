@@ -77,7 +77,7 @@ export function MobileAccountCard() {
         <div className="mt-0.5 flex items-center gap-2">
           <p className="text-[11px] font-medium text-emerald-300/90 flex items-center gap-1.5 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-            Google Connected
+            Đã kết nối Google
           </p>
           <span className="text-[10px] font-mono text-white/50">· {APP_VERSION_LABEL}</span>
         </div>
