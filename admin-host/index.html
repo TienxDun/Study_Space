@@ -5,1254 +5,1176 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="color-scheme" content="dark" />
-    <meta name="theme-color" content="#080b11" />
-    <title>ZenStudy Admin · Trạm điều khiển</title>
-    <script>
-      document.documentElement.classList.add("js");
-    </script>
+    <meta name="theme-color" content="#090a0f" />
+    <title>ZenStudy Admin · Bảng điều khiển hệ thống</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" href="/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <style>
       :root {
-        --ground: #080b11;
-        --field: #0b1019;
-        --panel: #0e1522;
-        --panel-2: #121b2b;
-        --ink: #f2f5f9;
-        --ink-2: #c9d3e0;
-        --muted: #93a1b5;
-        --faint: #7f8ea3;
-        --line: rgba(255, 255, 255, 0.07);
-        --accent: #10b981;
-        --accent-strong: #0ea472;
-        --accent-ink: #04130d;
-        --danger: #fb7185;
-        --radius: 14px;
-        --max: 1280px;
-        --pad-x: clamp(20px, 4vw, 40px);
-        --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-        --step-figure: clamp(112px, 15vw, 210px);
-        --step-display: clamp(52px, 7.4vw, 106px);
-        --step-h2: clamp(30px, 3.3vw, 44px);
-        --step-lead: clamp(18px, 1.5vw, 21px);
-        --step-body: 17px;
-        --step-small: 14px;
+        --canvas: #090a0f;
+        --surface-glass: rgba(18, 22, 33, 0.75);
+        --surface-card: rgba(23, 28, 42, 0.65);
+        --surface-card-hover: rgba(29, 36, 54, 0.85);
+        --surface-nested: rgba(11, 14, 22, 0.85);
+        
+        --border-subtle: rgba(255, 255, 255, 0.08);
+        --border-hover: rgba(255, 255, 255, 0.16);
+        --border-active: rgba(16, 185, 129, 0.4);
+        
+        --emerald-500: #10b981;
+        --emerald-400: #34d399;
+        --emerald-glow: rgba(16, 185, 129, 0.22);
+        --emerald-soft: rgba(16, 185, 129, 0.12);
+        
+        --sky-400: #38bdf8;
+        --sky-soft: rgba(56, 189, 248, 0.12);
+        
+        --rose-400: #fb7185;
+        --rose-soft: rgba(251, 113, 133, 0.12);
+        
+        --amber-400: #fbbf24;
+        --amber-soft: rgba(251, 191, 36, 0.12);
+
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --text-muted: #94a3b8;
+        --text-faint: #64748b;
+
+        --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+        --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-xl: 20px;
+        --radius-full: 9999px;
+
+        --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
       }
 
       * {
         box-sizing: border-box;
-      }
-
-      html {
-        background: var(--ground);
+        margin: 0;
+        padding: 0;
       }
 
       body {
-        margin: 0;
-        min-height: 100svh;
-        background: var(--ground);
-        color: var(--ink-2);
-        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-        font-size: var(--step-body);
-        line-height: 1.6;
+        min-height: 100vh;
+        background-color: var(--canvas);
+        background-image: 
+          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16, 185, 129, 0.12), transparent 70%),
+          radial-gradient(circle at 100% 100%, rgba(56, 189, 248, 0.05), transparent 40%),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+        background-position: 0 0, 0 0, -1px -1px, -1px -1px;
+        color: var(--text-secondary);
+        font-family: var(--font-sans);
+        font-size: 14px;
+        line-height: 1.5;
         -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
       }
 
       ::selection {
-        background: rgba(16, 185, 129, 0.32);
-        color: var(--ink);
-      }
-
-      :focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: 3px;
+        background: rgba(16, 185, 129, 0.3);
+        color: #ffffff;
       }
 
       a {
         color: inherit;
+        text-decoration: none;
       }
 
-      .wrap {
+      .container {
         width: 100%;
-        max-width: var(--max);
+        max-width: 1220px;
         margin-inline: auto;
-        padding-inline: var(--pad-x);
+        padding-inline: clamp(20px, 3.5vw, 40px);
       }
 
-      .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
+      /* ================= TOPBAR ================= */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        height: 64px;
+        border-bottom: 1px solid var(--border-subtle);
+        background: rgba(9, 10, 15, 0.82);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
       }
 
-      /* Thanh trên: chữ, không viền, không nền. */
-      .topbar-inner {
+      .topbar-content {
+        height: 100%;
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 20px;
-        height: 72px;
       }
 
-      .wordmark {
-        font-size: var(--step-small);
-        font-weight: 700;
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-sm);
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(56, 189, 248, 0.1));
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--emerald-400);
+        box-shadow: 0 0 16px var(--emerald-glow);
+      }
+
+      .brand-text {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 15px;
+        color: var(--text-primary);
         letter-spacing: -0.01em;
-        color: var(--ink);
       }
 
-      .wordmark span {
-        margin-left: 8px;
-        color: var(--muted);
+      .brand-badge {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: var(--radius-full);
+        background: var(--surface-nested);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-muted);
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 12px;
+        border-radius: var(--radius-full);
+        background: var(--emerald-soft);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        color: var(--emerald-400);
+        font-size: 12px;
         font-weight: 500;
       }
 
-      .textlink {
-        font-size: var(--step-small);
-        color: var(--ink-2);
-        text-decoration: underline;
-        text-decoration-color: rgba(255, 255, 255, 0.26);
-        text-underline-offset: 5px;
-        text-decoration-thickness: 0.07em;
-        transition: color 180ms ease, text-decoration-color 180ms ease;
+      .status-pill.is-error {
+        background: var(--rose-soft);
+        border-color: rgba(251, 113, 133, 0.3);
+        color: var(--rose-400);
       }
 
-      @media (hover: hover) and (pointer: fine) {
-        .textlink:hover {
-          color: var(--ink);
-          text-decoration-color: currentColor;
-        }
-      }
-
-      /* Hero: chữ lớn bên trái, console thật bên phải. */
-      .hero {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: clamp(32px, 4vw, 58px);
-        align-content: center;
-        align-items: center;
-        min-height: calc(100svh - 72px);
-        padding-block: 36px 72px;
-      }
-
-      .lines {
-        margin: 0 0 24px;
-        color: var(--ink);
-        font-size: var(--step-display);
-        font-weight: 700;
-        line-height: 0.98;
-        letter-spacing: -0.035em;
-      }
-
-      .lines .line {
-        display: block;
-        overflow: hidden;
-        padding-top: 0.06em;
-        padding-bottom: 0.12em;
-        margin-top: -0.06em;
-        margin-bottom: -0.12em;
-      }
-
-      .lines [data-line] {
-        display: block;
-      }
-
-      .lede {
-        max-width: 42ch;
-        margin: 0 0 32px;
-        color: var(--ink-2);
-        font-size: var(--step-lead);
-        line-height: 1.55;
-      }
-
-      .hero-actions {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 14px 18px;
-      }
-
-      .button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        height: 52px;
-        padding: 0 24px;
-        border: 0;
-        border-radius: var(--radius);
-        background: var(--accent);
-        color: var(--accent-ink);
-        font: inherit;
-        font-size: var(--step-body);
-        font-weight: 600;
-        cursor: pointer;
-        transition: background-color 180ms ease, transform 140ms var(--ease-out);
-      }
-
-      @media (hover: hover) and (pointer: fine) {
-        .button:hover {
-          background: var(--accent-strong);
-        }
-      }
-
-      .button:active {
-        transform: scale(0.98);
-      }
-
-      .button:disabled {
-        cursor: progress;
-        opacity: 0.72;
-      }
-
-      .action-note {
-        min-height: 20px;
-        color: var(--muted);
-        font-size: var(--step-small);
-      }
-
-      .noscript {
-        margin: 14px 0 0;
-        color: var(--danger);
-        font-size: var(--step-small);
-      }
-
-      /* Console: fragment giao diện thật, đánh dấu data-ui. */
-      .console {
-        display: flex;
-        flex-direction: column;
-        min-height: clamp(360px, 30vw, 400px);
-        padding: clamp(22px, 2.4vw, 32px);
-        border-radius: var(--radius);
-        background: var(--panel);
-      }
-
-      .console-top {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 16px;
-        color: var(--muted);
-        font-size: 13px;
-      }
-
-      .console-time {
-        color: var(--ink-2);
-        font-variant-numeric: tabular-nums;
-        text-align: right;
-      }
-
-      .console-body {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
-        align-items: end;
-        gap: 28px;
-        margin-top: auto;
-      }
-
-      .figure-number {
-        display: flex;
-        align-items: baseline;
-        gap: 4px;
-        color: var(--ink);
-      }
-
-      .figure-count {
-        margin: 0;
-        font-size: var(--step-figure);
-        font-weight: 700;
-        line-height: 0.8;
-        letter-spacing: -0.06em;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .figure-count.is-pending {
-        color: var(--faint);
-        font-size: calc(var(--step-figure) * 0.44);
-        letter-spacing: -0.02em;
-      }
-
-      .figure-total {
-        color: var(--muted);
-        font-size: clamp(34px, 4.4vw, 62px);
-        font-weight: 600;
-        letter-spacing: -0.04em;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .figure-label {
-        margin: 12px 0 0;
-        color: var(--ink-2);
-        font-size: 16px;
-      }
-
-      .console-state {
-        display: flex;
-        align-items: flex-start;
-        gap: 9px;
-        margin-top: 20px;
-        color: var(--muted);
-        font-size: 14px;
-        line-height: 1.5;
-      }
-
-      .console-state p {
-        max-width: 48ch;
-        margin: 0;
-        color: var(--muted);
-      }
-
-      .console-state .dot {
-        margin-top: 0.45em;
-      }
-
-      .live {
-        display: grid;
-        align-self: end;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-      }
-
-      .live li {
-        display: grid;
-        grid-template-columns: 120px auto minmax(48px, 1fr);
-        align-items: baseline;
-        gap: 10px;
-        padding: 10px 0;
-      }
-
-      .live .w-name {
-        overflow-wrap: anywhere;
-        font-size: 15px;
-      }
-
-      .live .state {
-        font-size: 14px;
-      }
-
-      .live .lat {
-        min-width: 58px;
-        color: var(--muted);
-        font-size: 14px;
-        font-variant-numeric: tabular-nums;
-        text-align: right;
-        white-space: nowrap;
-      }
-
-      .dot {
-        flex: 0 0 auto;
+      .pulse-indicator {
         width: 7px;
         height: 7px;
         border-radius: 50%;
-        background: var(--muted);
+        background: currentColor;
+        box-shadow: 0 0 8px currentColor;
+        animation: pulse 2s infinite ease-in-out;
       }
 
-      .dot-ok,
-      .state.is-ok .dot {
-        background: var(--accent);
+      @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.4; transform: scale(0.85); }
       }
 
-      .dot-bad,
-      .state.is-bad .dot {
-        background: var(--danger);
-      }
-
-      .dot-wait,
-      .state.is-wait .dot {
-        background: var(--faint);
-      }
-
-      /* Section 2: heading trái, bảng thật bên phải. */
-      .section {
-        display: grid;
-        grid-template-columns: 5fr 7fr;
-        gap: clamp(32px, 5vw, 72px);
-        align-items: center;
-        padding-block: clamp(80px, 11vh, 120px);
-      }
-
-      h2 {
-        margin: 0 0 20px;
-        color: var(--ink);
-        font-size: var(--step-h2);
-        font-weight: 700;
-        line-height: 1.06;
-        letter-spacing: -0.02em;
-      }
-
-      .section-copy p {
-        max-width: 46ch;
-        margin: 0;
-        color: var(--ink-2);
-        line-height: 1.6;
-      }
-
-      .section-meta {
-        margin-top: 18px;
-        color: var(--muted);
-        font-size: var(--step-small);
-      }
-
-      .workers {
-        overflow: hidden;
-        border-radius: var(--radius);
-        background: var(--panel);
-      }
-
-      .workers table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
-      }
-
-      .workers th {
-        padding: 16px 20px;
-        color: var(--muted);
-        font-size: 13px;
-        font-weight: 500;
-        text-align: left;
-      }
-
-      .workers th.num,
-      .workers td.num {
-        text-align: right;
-      }
-
-      .workers td {
-        padding: 16px 20px;
-        border-top: 1px solid var(--line);
-        vertical-align: middle;
-      }
-
-      .workers tbody tr {
-        transition: background-color 180ms ease;
-      }
-
-      @media (hover: hover) and (pointer: fine) {
-        .workers tbody tr:hover {
-          background: rgba(255, 255, 255, 0.028);
-        }
-      }
-
-      .w-name {
-        display: block;
-        color: var(--ink);
-        font-size: 15px;
-        font-weight: 600;
-        letter-spacing: -0.01em;
-      }
-
-      .w-role {
-        display: block;
-        margin-top: 3px;
-        color: var(--muted);
-        font-size: 13px;
-      }
-
-      .state {
+      .btn-ghost {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        color: var(--muted);
-        font-size: 15px;
-      }
-
-      .state.is-ok {
-        color: var(--accent);
-      }
-
-      .state.is-bad {
-        color: var(--danger);
-      }
-
-      .state.is-wait {
-        color: var(--faint);
-      }
-
-      .workers td.num {
-        color: var(--ink-2);
-        font-size: 15px;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .workers code {
-        color: var(--ink-2);
-        font-size: 14px;
-      }
-
-      .table-note {
-        margin: 0;
-        padding: 8px 20px 16px;
-        color: var(--faint);
+        gap: 6px;
+        height: 36px;
+        padding: 0 14px;
+        border-radius: var(--radius-sm);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-secondary);
         font-size: 13px;
+        font-weight: 500;
+        transition: all 180ms ease;
       }
 
-      /* Section 3: đường đi của lệnh trên một dải nền khác. */
-      .chain-section {
-        padding-block: clamp(80px, 11vh, 120px);
-        background: var(--field);
+      .btn-ghost:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--border-hover);
+        color: var(--text-primary);
+        transform: translateY(-1px);
       }
 
-      .chain-head {
-        display: grid;
-        grid-template-columns: 5fr 7fr;
-        gap: clamp(32px, 5vw, 72px);
-        align-items: end;
-        margin-bottom: 40px;
-      }
-
-      .chain-head h2 {
-        margin: 0;
-      }
-
-      .chain-head p {
-        max-width: 52ch;
-        margin: 0;
-        color: var(--ink-2);
-        line-height: 1.6;
-      }
-
-      .chain-grid {
-        display: grid;
-        grid-template-columns: 8fr 4fr;
-        gap: 8px;
-        align-items: stretch;
-      }
-
-      .chain-panel {
-        display: grid;
-        grid-template-columns: 1fr 24px 1fr 24px 1fr 24px 1fr;
-        align-content: center;
-        align-items: start;
-        min-height: 240px;
-        padding: 28px;
-        border-radius: var(--radius);
-        background: var(--panel);
-      }
-
-      .step-label {
-        margin: 0;
-        color: var(--ink);
-        font-size: 16px;
-        font-weight: 600;
-        line-height: 1.25;
-        letter-spacing: -0.01em;
-      }
-
-      .step-detail {
-        margin: 7px 0 0;
-        color: var(--muted);
-        font-size: 13px;
-        line-height: 1.45;
-      }
-
-      .connector {
-        position: relative;
-        height: 24px;
-      }
-
-      .connector::before {
-        content: "";
-        position: absolute;
-        top: 10px;
-        left: 0;
-        right: 5px;
-        height: 2px;
-        background: rgba(255, 255, 255, 0.16);
-        transform-origin: left center;
-      }
-
-      .connector::after {
-        content: "";
-        position: absolute;
-        top: 8px;
-        right: 0;
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: var(--accent);
-        opacity: 0.6;
-      }
-
-      .session {
+      /* ================= HERO HEADER ================= */
+      .page-header {
+        padding-top: clamp(28px, 4vw, 44px);
+        padding-bottom: clamp(24px, 3.5vw, 36px);
         display: flex;
         flex-direction: column;
-        min-height: 240px;
-        padding: 28px;
-        border-radius: var(--radius);
-        background: var(--panel-2);
+        gap: 8px;
       }
 
-      .session h3 {
-        margin: 0;
-        color: var(--ink);
-        font-size: 16px;
-        font-weight: 600;
-      }
-
-      .session-email {
-        margin: 8px 0 22px;
-        color: var(--ink-2);
-        font-size: 18px;
-        overflow-wrap: anywhere;
-      }
-
-      .session-list {
-        display: grid;
-        gap: 10px;
-        margin: auto 0 0;
-        padding: 0;
-        list-style: none;
-        font-size: 14px;
-        color: var(--muted);
-      }
-
-      .session-list li {
+      .header-meta {
         display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--emerald-400);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .header-title-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
         justify-content: space-between;
         gap: 16px;
       }
 
-      .session-list strong {
-        color: var(--ink-2);
+      .page-title {
+        font-size: clamp(24px, 3.2vw, 34px);
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.025em;
+        line-height: 1.2;
+      }
+
+      .page-subtitle {
+        color: var(--text-muted);
+        font-size: 14px;
+        max-width: 580px;
+        line-height: 1.6;
+        margin-top: 4px;
+      }
+
+      .action-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .auto-refresh-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: var(--surface-nested);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        color: var(--text-muted);
+        cursor: pointer;
+        user-select: none;
+        transition: border-color 160ms ease;
+      }
+
+      .auto-refresh-toggle:hover {
+        border-color: var(--border-hover);
+      }
+
+      .auto-refresh-toggle input {
+        accent-color: var(--emerald-500);
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 38px;
+        padding: 0 18px;
+        border-radius: var(--radius-sm);
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        color: #ffffff;
+        font-family: inherit;
+        font-size: 13px;
         font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 16px rgba(16, 185, 129, 0.25);
+        transition: all 160ms ease;
+      }
+
+      .btn-primary:hover {
+        background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 24px rgba(16, 185, 129, 0.4);
+        transform: translateY(-1px);
+      }
+
+      .btn-primary:active {
+        transform: scale(0.98);
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .btn-primary svg {
+        width: 14px;
+        height: 14px;
+        transition: transform 300ms ease;
+      }
+
+      .btn-primary.is-loading svg {
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        100% { transform: rotate(360deg); }
+      }
+
+      /* ================= STATS OVERVIEW ================= */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+
+      .stat-card {
+        padding: 20px 22px;
+        border-radius: var(--radius-md);
+        background: var(--surface-card);
+        border: 1px solid var(--border-subtle);
+        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+        transition: border-color 200ms ease, transform 200ms ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .stat-card:hover {
+        border-color: var(--border-hover);
+        transform: translateY(-2px);
+      }
+
+      .stat-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .stat-label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-muted);
+      }
+
+      .stat-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text-muted);
+      }
+
+      .stat-value {
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+      }
+
+      .stat-value.emerald {
+        color: var(--emerald-400);
+      }
+
+      .stat-sub {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .stat-sub code {
+        font-family: var(--font-mono);
+        color: var(--text-secondary);
+        font-size: 11px;
+      }
+
+      /* ================= SECTION LAYOUT ================= */
+      .section-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 28px;
+        margin-bottom: 40px;
+      }
+
+      .panel-card {
+        border-radius: var(--radius-lg);
+        background: var(--surface-card);
+        border: 1px solid var(--border-subtle);
+        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 16px 36px -12px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+      }
+
+      .panel-header {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border-subtle);
+        background: var(--surface-nested);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .panel-title-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .panel-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+      }
+
+      .panel-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      /* ================= WORKER SERVICES TABLE ================= */
+      .services-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .services-table th {
+        padding: 12px 24px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        text-align: left;
+        border-bottom: 1px solid var(--border-subtle);
+        background: rgba(0, 0, 0, 0.15);
+      }
+
+      .services-table th.text-right {
         text-align: right;
       }
 
-      .session-list strong.ok {
-        color: var(--accent);
+      .services-table td {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border-subtle);
+        vertical-align: middle;
       }
 
-      .security-note {
-        max-width: 70ch;
-        margin: 30px 0 0;
-        color: var(--ink-2);
-        line-height: 1.6;
+      .services-table tr:last-child td {
+        border-bottom: 0;
       }
 
-      .security-note code {
-        color: var(--ink);
+      .services-table tr {
+        transition: background-color 140ms ease;
       }
 
-      /* Footer: hai ô kín, ô accent là lối về trang học. */
-      .footer {
-        padding-block: clamp(64px, 9vh, 96px) 40px;
+      .services-table tr:hover {
+        background-color: rgba(255, 255, 255, 0.025);
       }
 
-      .footer-grid {
+      .service-identity {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .service-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--radius-sm);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+      }
+
+      .service-name {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .service-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+
+      .endpoint-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: var(--radius-sm);
+        background: var(--surface-nested);
+        border: 1px solid var(--border-subtle);
+        font-family: var(--font-mono);
+        font-size: 12px;
+      }
+
+      .method-tag {
+        font-weight: 700;
+        color: var(--emerald-400);
+        font-size: 11px;
+      }
+
+      .auth-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: var(--radius-full);
+        font-size: 11px;
+        font-weight: 500;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-muted);
+      }
+
+      .auth-badge.token {
+        background: var(--sky-soft);
+        border-color: rgba(56, 189, 248, 0.25);
+        color: var(--sky-400);
+      }
+
+      .latency-cell {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .badge-ok {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        background: var(--emerald-soft);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        color: var(--emerald-400);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .badge-bad {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        background: var(--rose-soft);
+        border: 1px solid rgba(251, 113, 133, 0.25);
+        color: var(--rose-400);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .badge-wait {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-muted);
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      /* ================= PIPELINE STEPPER ================= */
+      .pipeline-grid {
         display: grid;
-        grid-template-columns: 2fr 1fr;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        padding: 24px;
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      .pipeline-step {
+        position: relative;
+        padding: 18px 20px;
+        border-radius: var(--radius-md);
+        background: var(--surface-nested);
+        border: 1px solid var(--border-subtle);
+        display: flex;
+        flex-direction: column;
         gap: 8px;
       }
 
-      .footer-main {
+      .pipeline-step-head {
         display: flex;
-        flex-direction: column;
+        align-items: center;
         justify-content: space-between;
-        min-height: 240px;
-        padding: clamp(24px, 3vw, 40px);
-        border-radius: var(--radius);
-        background: var(--panel);
       }
 
-      .footer-word {
-        margin: 0;
-        color: var(--ink);
-        font-size: var(--step-display);
+      .step-order {
+        font-family: var(--font-mono);
+        font-size: 11px;
         font-weight: 700;
-        line-height: 1;
-        letter-spacing: -0.04em;
+        color: var(--emerald-400);
       }
 
-      .footer-meta {
-        margin: 28px 0 0;
-        color: var(--muted);
-        font-size: var(--step-small);
+      .step-icon {
+        color: var(--text-muted);
       }
 
-      .footer-action {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        min-height: 240px;
-        padding: clamp(24px, 3vw, 40px);
-        border-radius: var(--radius);
-        background: var(--accent);
-        color: var(--accent-ink);
-        font-size: var(--step-lead);
+      .step-name {
+        font-size: 14px;
         font-weight: 600;
-        text-decoration: none;
-        transition: background-color 180ms ease;
+        color: var(--text-primary);
       }
 
-      @media (hover: hover) and (pointer: fine) {
-        .footer-action:hover {
-          background: var(--accent-strong);
-        }
+      .step-info {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.5;
       }
 
-      .footer-action:focus-visible {
-        outline: 2px solid var(--accent-ink);
-        outline-offset: -8px;
+      /* ================= FOOTER ================= */
+      .footer {
+        padding-block: 32px 48px;
+        border-top: 1px solid var(--border-subtle);
+        color: var(--text-muted);
+        font-size: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
       }
 
-      .footer-arrow {
-        align-self: flex-end;
-        width: 28px;
-        height: 28px;
+      .footer-links {
+        display: flex;
+        align-items: center;
+        gap: 18px;
       }
 
-      /* Motion: masked headline là dấu nhấn, phần còn lại là entrance nhỏ. */
-      @media (prefers-reduced-motion: no-preference) {
-        .js [data-rise] {
-          opacity: 0;
-          transform: translateY(18px);
-          animation: rise 800ms var(--ease-out) forwards;
-          animation-delay: calc(var(--i, 0) * 90ms + 120ms);
-        }
-
-        .js .lines [data-line] {
-          transform: translateY(105%);
-          animation: line-up 900ms var(--ease-out) forwards;
-          animation-delay: calc(var(--i, 0) * 110ms + 150ms);
-        }
-
-        .js [data-reveal] {
-          opacity: 0;
-          transform: translateY(24px);
-          transition:
-            opacity 700ms var(--ease-out),
-            transform 900ms var(--ease-out);
-          transition-delay: var(--d, 0ms);
-        }
-
-        .js [data-reveal].is-in {
-          opacity: 1;
-          transform: none;
-        }
-
-        .workers.is-in tbody tr {
-          animation: row-in 600ms var(--ease-out) both;
-        }
-
-        .workers.is-in tbody tr:nth-child(2) {
-          animation-delay: 70ms;
-        }
-
-        .workers.is-in tbody tr:nth-child(3) {
-          animation-delay: 140ms;
-        }
-
-        .live.is-fresh li {
-          animation: row-in 420ms var(--ease-out) both;
-        }
-
-        .live.is-fresh li:nth-child(2) {
-          animation-delay: 60ms;
-        }
-
-        .live.is-fresh li:nth-child(3) {
-          animation-delay: 120ms;
-        }
-
-        .chain-panel.is-in .connector::before {
-          animation: draw 700ms var(--ease-out) both;
-          animation-delay: calc(var(--ci, 0) * 90ms + 120ms);
-        }
-
-        .session.is-in .session-list li {
-          animation: row-in 600ms var(--ease-out) both;
-        }
-
-        .session.is-in .session-list li:nth-child(2) {
-          animation-delay: 70ms;
-        }
-
-        .session.is-in .session-list li:nth-child(3) {
-          animation-delay: 140ms;
-        }
+      .footer-links a:hover {
+        color: var(--text-primary);
       }
 
-      @keyframes rise {
-        to {
-          opacity: 1;
-          transform: none;
-        }
-      }
-
-      @keyframes line-up {
-        to {
-          transform: none;
-        }
-      }
-
-      @keyframes row-in {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: none;
-        }
-      }
-
-      @keyframes draw {
-        from {
-          transform: scaleX(0);
-        }
-        to {
-          transform: scaleX(1);
-        }
-      }
-
-      @media (max-width: 1023px) {
-        .hero {
+      @media (max-width: 900px) {
+        .pipeline-grid {
           grid-template-columns: 1fr;
-          align-content: start;
-          min-height: 0;
-          gap: 32px;
-          padding-block: 24px 64px;
         }
+      }
 
-        .section {
-          grid-template-columns: 1fr;
-          align-items: start;
-          gap: 32px;
-        }
-
-        .chain-head {
-          grid-template-columns: 1fr;
-          gap: 18px;
-          align-items: start;
-        }
-
-        .chain-grid {
-          grid-template-columns: 1fr;
-          gap: 8px;
-        }
-
-        .chain-panel {
-          grid-template-columns: 1fr;
-          gap: 0;
-          padding: 22px 24px;
-        }
-
-        .connector {
+      @media (max-width: 640px) {
+        .services-table th:nth-child(2),
+        .services-table td:nth-child(2),
+        .services-table th:nth-child(3),
+        .services-table td:nth-child(3) {
           display: none;
         }
-
-        .step {
-          position: relative;
-          padding: 12px 0 12px 22px;
-        }
-
-        .step:not(:last-child)::before {
-          content: "";
-          position: absolute;
-          top: 30px;
-          bottom: -2px;
-          left: 3px;
-          width: 1px;
-          background: rgba(255, 255, 255, 0.12);
-        }
-
-        .step::after {
-          content: "";
-          position: absolute;
-          top: 19px;
-          left: 0;
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: var(--accent);
-          opacity: 0.6;
-        }
-
-        .footer-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .footer-main,
-        .footer-action {
-          min-height: 180px;
-        }
-      }
-
-      @media (max-width: 520px) {
-        .topbar-inner {
-          height: 64px;
-        }
-
-        .hero {
-          padding-block: 16px 56px;
-        }
-
-        .console-body {
-          grid-template-columns: 1fr;
-          gap: 18px;
-        }
-
-        .workers th,
-        .workers td {
-          padding-inline: 12px;
-        }
-
-        .workers th {
-          padding-block: 14px;
-        }
-
-        .workers td {
-          padding-block: 15px;
-        }
-
-        .table-note {
-          padding-inline: 12px;
-        }
-
-        .chain-panel,
-        .session {
-          padding: 20px;
-        }
-
-        .footer-main,
-        .footer-action {
-          min-height: 160px;
+        .header-title-row {
+          flex-direction: column;
+          align-items: flex-start;
         }
       }
     </style>
   </head>
   <body>
+    <!-- Top Navigation Bar -->
     <header class="topbar">
-      <div class="topbar-inner wrap">
-        <div class="wordmark" data-rise style="--i: 0">ZenStudy <span>Admin</span></div>
-        <a class="textlink" href="https://zenstudy.space/" data-rise style="--i: 1">Về trang học</a>
+      <div class="container topbar-content">
+        <div class="brand">
+          <div class="brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <span>ZenStudy</span>
+            <span class="brand-badge">Trạm điều khiển</span>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <div class="status-pill" id="global-status">
+            <span class="pulse-indicator"></span>
+            <span id="global-status-text">Đang kiểm tra kết nối…</span>
+          </div>
+
+          <a class="btn-ghost" href="https://zenstudy.space/" target="_blank" rel="noopener noreferrer">
+            <span>Về ứng dụng</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+              <path d="M7 17l10-10M7 7h10v10"/>
+            </svg>
+          </a>
+        </div>
       </div>
     </header>
 
-    <main>
-      <section class="hero wrap" aria-labelledby="page-title">
-        <div class="hero-copy">
-          <h1 class="lines" id="page-title">
-            <span class="line"><span data-line style="--i: 0">Trạm</span></span>
-            <span class="line"><span data-line style="--i: 1">điều khiển</span></span>
-          </h1>
-          <p class="lede" data-rise style="--i: 2">
-            Bản P0 chỉ đọc: kiểm tra ba worker sau Cloudflare Access. Không có lệnh ghi, không lưu
-            token trên trang.
-          </p>
-          <div class="hero-actions" data-rise style="--i: 3">
-            <button class="button" id="refresh" type="button">Kiểm tra lại</button>
-            <span class="action-note" id="action-note" role="status" aria-live="polite"></span>
-          </div>
-          <noscript>
-            <p class="noscript">Trang cần JavaScript để gọi /api/admin/ping.</p>
-          </noscript>
+    <main class="container">
+      <!-- Page Header -->
+      <section class="page-header">
+        <div class="header-meta">
+          <span>● Cụm dịch vụ Cloudflare Edge</span>
+          <span style="opacity: 0.4">•</span>
+          <span>Bảo mật Zero-Trust</span>
         </div>
 
-        <div class="console" id="console" data-ui data-rise style="--i: 4" aria-busy="true">
-          <div class="console-top">
-            <span>Kiểm tra gần nhất</span>
-            <span class="console-time" id="api-time">đang kiểm tra…</span>
-          </div>
-          <div class="console-body">
-            <div class="figure">
-              <div class="figure-number">
-                <p class="figure-count is-pending" id="ok-count">…</p>
-                <span class="figure-total" id="total-count">/3</span>
-              </div>
-              <p class="figure-label" id="figure-label">worker phản hồi</p>
-            </div>
-            <ul class="live" id="checks" aria-label="Trạng thái từng worker">
-              <li>
-                <span class="w-name">chat-proxy</span>
-                <span class="state is-wait"><span class="dot"></span>chờ</span>
-                <span class="lat">–</span>
-              </li>
-              <li>
-                <span class="w-name">data-api</span>
-                <span class="state is-wait"><span class="dot"></span>chờ</span>
-                <span class="lat">–</span>
-              </li>
-              <li>
-                <span class="w-name">livekit</span>
-                <span class="state is-wait"><span class="dot"></span>chờ</span>
-                <span class="lat">–</span>
-              </li>
-            </ul>
-          </div>
-          <div class="console-state">
-            <span class="dot dot-wait" id="status-dot" aria-hidden="true"></span>
-            <p id="status-note" role="status" aria-live="polite">Đang gọi /api/admin/ping…</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="section wrap" aria-labelledby="workers-title">
-        <div class="section-copy">
-          <h2 id="workers-title" data-reveal>Ba worker,<br />ba phép thử</h2>
-          <p data-reveal style="--d: 70ms">
-            Mỗi chặng có 3 giây trước khi bị coi là không phản hồi. Độ trễ đo từ admin Worker.
-          </p>
-          <p class="section-meta" data-reveal style="--d: 140ms">
-            Kết quả từng chặng hiện ở console phía trên.
-          </p>
-        </div>
-
-        <div class="workers" id="workers" data-ui data-reveal style="--d: 100ms">
-          <table>
-            <caption class="sr-only">
-              Ba phép thử mà admin Worker gửi tới từng worker
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Worker</th>
-                <th scope="col">Đích</th>
-                <th scope="col" class="num">Xác thực</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <span class="w-name">chat-proxy</span>
-                  <span class="w-role">chat và trợ lý</span>
-                </td>
-                <td><code>GET /health</code></td>
-                <td class="num">không token</td>
-              </tr>
-              <tr>
-                <td>
-                  <span class="w-name">data-api</span>
-                  <span class="w-role">đồng bộ dữ liệu</span>
-                </td>
-                <td><code>GET /health</code></td>
-                <td class="num">không token</td>
-              </tr>
-              <tr>
-                <td>
-                  <span class="w-name">livekit</span>
-                  <span class="w-role">phòng học trực tuyến</span>
-                </td>
-                <td><code>GET /usage</code></td>
-                <td class="num">Bearer token</td>
-              </tr>
-            </tbody>
-          </table>
-          <p class="table-note">Đo từ admin Worker · timeout 3 giây mỗi chặng</p>
-        </div>
-      </section>
-
-      <section class="chain-section" aria-labelledby="chain-title">
-        <div class="wrap">
-          <div class="chain-head">
-            <h2 id="chain-title" data-reveal>Một lệnh đi qua<br />bốn chặng</h2>
-            <p data-reveal style="--d: 70ms">
-              Từ trình duyệt tới worker, mỗi chặng đều có thể từ chối. Trang không giữ token.
+        <div class="header-title-row">
+          <div>
+            <h1 class="page-title">Trạm Điều Khiển Hệ Thống</h1>
+            <p class="page-subtitle">
+              Bảng theo dõi thời gian thực dành cho cụm Worker. Xác thực phân tán RS256 và giám sát độ trễ các dịch vụ lõi.
             </p>
           </div>
 
-          <div class="chain-grid">
-            <div class="chain-panel" data-ui data-reveal style="--d: 100ms">
-              <div class="step">
-                <p class="step-label">Trình duyệt</p>
-                <p class="step-detail">gửi GET /api/admin/ping, không kèm token</p>
-              </div>
-              <div class="connector" style="--ci: 0" aria-hidden="true"></div>
-              <div class="step">
-                <p class="step-label">Cloudflare Access</p>
-                <p class="step-detail">xác thực email; chặn trước Worker</p>
-              </div>
-              <div class="connector" style="--ci: 1" aria-hidden="true"></div>
-              <div class="step">
-                <p class="step-label">admin Worker</p>
-                <p class="step-detail">kiểm tra chữ ký RS256; thiếu token trả 401</p>
-              </div>
-              <div class="connector" style="--ci: 2" aria-hidden="true"></div>
-              <div class="step">
-                <p class="step-label">Ba worker</p>
-                <p class="step-detail">chat-proxy · data-api · livekit, mỗi chặng 3 giây</p>
-              </div>
-            </div>
+          <div class="action-controls">
+            <label class="auto-refresh-toggle">
+              <input type="checkbox" id="auto-refresh-check" checked />
+              <span>Tự động cập nhật (30s)</span>
+            </label>
 
-            <aside class="session" data-ui data-reveal style="--d: 170ms" aria-label="Phiên Access hiện tại">
-              <h3>Phiên hiện tại</h3>
-              <p class="session-email" id="session-email">đang xác thực…</p>
-              <ul class="session-list">
-                <li><span>Quyền</span><strong class="ok">Chỉ đọc</strong></li>
-                <li><span>Token</span><strong>Không lưu trên trang</strong></li>
-                <li><span>Phiên</span><strong>Do Cloudflare Access quản lý</strong></li>
-              </ul>
-            </aside>
+            <button class="btn-primary" id="refresh" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+              </svg>
+              <span>Kiểm tra ngay</span>
+            </button>
           </div>
-
-          <p class="security-note" data-reveal style="--d: 220ms">
-            Trang này không lưu và không hiển thị token. Mọi lệnh gọi đi qua
-            <code>/api/admin/*</code> và được Cloudflare Access bảo vệ.
-          </p>
         </div>
       </section>
+
+      <!-- Stats Metric Grid -->
+      <section class="stats-grid" id="console">
+        <!-- Card 1: Trạng thái Worker -->
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-label">Sức Khỏe Worker</span>
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value emerald">
+            <span id="ok-count">…</span>
+            <span id="total-count" style="font-size: 16px; color: var(--text-muted); font-weight: 500;">/3</span>
+          </div>
+          <div class="stat-sub">
+            <span id="figure-label">Dịch vụ phản hồi tốt</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Độ trễ trung bình -->
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-label">Độ Trễ Trung Bình</span>
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value">
+            <span id="avg-latency">--</span>
+            <span style="font-size: 14px; color: var(--text-muted); font-weight: 500;">ms</span>
+          </div>
+          <div class="stat-sub">
+            <span>Đo trực tiếp từ Edge</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Phiên xác thực -->
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-label">Tài Khoản Phiên</span>
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value" style="font-size: 16px; font-weight: 600; font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <span id="session-email">Đang xác thực…</span>
+          </div>
+          <div class="stat-sub">
+            <span>Cấp quyền: <strong style="color: var(--emerald-400)">Chỉ đọc (P0)</strong></span>
+          </div>
+        </div>
+
+        <!-- Card 4: Lần kiểm tra cuối -->
+        <div class="stat-card">
+          <div class="stat-head">
+            <span class="stat-label">Cập Nhật Lần Cuối</span>
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value" style="font-size: 16px; font-weight: 600; font-family: var(--font-mono);">
+            <span id="api-time">vừa xong</span>
+          </div>
+          <div class="stat-sub">
+            <span id="action-note">Sẵn sàng phản hồi</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Main Panel: Dịch vụ thành phần -->
+      <div class="section-layout">
+        <section class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <h2 class="panel-title">Dịch Vụ Worker Hoạt Động</h2>
+              <span class="panel-desc">Kiểm tra kết nối và thời gian phản hồi (timeout 3.000 ms)</span>
+            </div>
+          </div>
+
+          <table class="services-table">
+            <thead>
+              <tr>
+                <th>Dịch vụ worker</th>
+                <th>Endpoint kiểm tra</th>
+                <th>Phương thức xác thực</th>
+                <th class="text-right">Độ trễ phản hồi</th>
+                <th class="text-right">Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody id="checks">
+              <tr>
+                <td>
+                  <div class="service-identity">
+                    <div class="service-avatar">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <div>
+                      <div class="service-name">chat-proxy</div>
+                      <div class="service-desc">Chat & Trợ lý học tập thông minh</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="endpoint-pill">
+                    <span class="method-tag">GET</span>
+                    <span>/health</span>
+                  </div>
+                </td>
+                <td><span class="auth-badge">Public (Không token)</span></td>
+                <td class="latency-cell">--</td>
+                <td class="text-right"><span class="badge-wait">Đang chờ</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="service-identity">
+                    <div class="service-avatar">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                    </div>
+                    <div>
+                      <div class="service-name">data-api</div>
+                      <div class="service-desc">Đồng bộ đám mây Cloudflare D1</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="endpoint-pill">
+                    <span class="method-tag">GET</span>
+                    <span>/health</span>
+                  </div>
+                </td>
+                <td><span class="auth-badge">Public (Không token)</span></td>
+                <td class="latency-cell">--</td>
+                <td class="text-right"><span class="badge-wait">Đang chờ</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="service-identity">
+                    <div class="service-avatar">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                    </div>
+                    <div>
+                      <div class="service-name">livekit</div>
+                      <div class="service-desc">Phòng học video & WebRTC nhóm</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="endpoint-pill">
+                    <span class="method-tag">GET</span>
+                    <span>/usage</span>
+                  </div>
+                </td>
+                <td><span class="auth-badge token">Bearer Token</span></td>
+                <td class="latency-cell">--</td>
+                <td class="text-right"><span class="badge-wait">Đang chờ</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Pipeline Architecture Card -->
+        <section class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <h2 class="panel-title">Quy Trình Kiểm Tra Bảo Mật 4 Chặng</h2>
+              <span class="panel-desc">Nguyên tắc Zero-Trust: xác thực phía server, không lưu token tại client</span>
+            </div>
+          </div>
+
+          <div class="pipeline-grid">
+            <div class="pipeline-step">
+              <div class="pipeline-step-head">
+                <span class="step-order">01 / REQUEST</span>
+                <span class="step-icon">💻</span>
+              </div>
+              <span class="step-name">Trình duyệt Client</span>
+              <p class="step-info">Gửi yêu cầu <code>GET /api/admin/ping</code> hoàn toàn không đính kèm secret token.</p>
+            </div>
+
+            <div class="pipeline-step">
+              <div class="pipeline-step-head">
+                <span class="step-order">02 / EDGE GATE</span>
+                <span class="step-icon">🛡️</span>
+              </div>
+              <span class="step-name">Cloudflare Access</span>
+              <p class="step-info">Kiểm tra thông tin đăng nhập email và cấp JWT trước khi request tới Worker.</p>
+            </div>
+
+            <div class="pipeline-step">
+              <div class="pipeline-step-head">
+                <span class="step-order">03 / SIGNATURE</span>
+                <span class="step-icon">🔑</span>
+              </div>
+              <span class="step-name">Admin Worker</span>
+              <p class="step-info">Giải mã chữ ký RS256 JWT độc lập, từ chối 401 ngay lập tức nếu thiếu quyền.</p>
+            </div>
+
+            <div class="pipeline-step">
+              <div class="pipeline-step-head">
+                <span class="step-order">04 / HEALTH PROBE</span>
+                <span class="step-icon">⚡</span>
+              </div>
+              <span class="step-name">Cụm Worker</span>
+              <p class="step-info">Đo lường thời gian phản hồi song song 3 dịch vụ và trả kết quả tổng hợp.</p>
+            </div>
+          </div>
+        </section>
+      </div>
     </main>
 
-    <footer class="footer wrap">
-      <div class="footer-grid">
-        <div class="footer-main" data-reveal>
-          <p class="footer-word">ZenStudy</p>
-          <p class="footer-meta">Trạm điều khiển nội bộ · 2026</p>
-        </div>
-        <a class="footer-action" href="https://zenstudy.space/" data-reveal style="--d: 80ms">
-          <span>Về trang học</span>
-          <svg class="footer-arrow" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-            <path d="M5 14h18M15.5 5.5 23 14l-7.5 8.5" stroke="currentColor" stroke-width="2.4" />
-          </svg>
-        </a>
+    <!-- Footer -->
+    <footer class="container footer">
+      <div>
+        <span>ZenStudy Control Center · Kiến trúc phân tán Cloudflare Workers Edge</span>
+      </div>
+      <div class="footer-links">
+        <span>Phiên bản <strong>P0 Read-only</strong></span>
+        <span>•</span>
+        <span>Mã hóa <strong>RS256</strong></span>
       </div>
     </footer>
 
+    <!-- Logic Script -->
     <script>
       (function () {
         "use strict";
 
-        var DEFAULT_CHECKS = ["chat-proxy", "data-api", "livekit"];
-
-        var refresh = document.getElementById("refresh");
+        var refreshBtn = document.getElementById("refresh");
         var actionNote = document.getElementById("action-note");
-        var consoleEl = document.getElementById("console");
-        var countEl = document.getElementById("ok-count");
-        var totalEl = document.getElementById("total-count");
-        var labelEl = document.getElementById("figure-label");
-        var timeEl = document.getElementById("api-time");
-        var noteEl = document.getElementById("status-note");
-        var dotEl = document.getElementById("status-dot");
-        var emailEl = document.getElementById("session-email");
+        var okCountEl = document.getElementById("ok-count");
+        var totalCountEl = document.getElementById("total-count");
+        var avgLatencyEl = document.getElementById("avg-latency");
+        var figureLabelEl = document.getElementById("figure-label");
+        var apiTimeEl = document.getElementById("api-time");
+        var sessionEmailEl = document.getElementById("session-email");
         var checksEl = document.getElementById("checks");
+        var globalStatusPill = document.getElementById("global-status");
+        var globalStatusText = document.getElementById("global-status-text");
+        var autoRefreshCheck = document.getElementById("auto-refresh-check");
+
         var loading = false;
-        var noteTimer = 0;
+        var autoTimer = null;
 
-        function makeDot() {
-          var dot = document.createElement("span");
-          dot.className = "dot";
-          dot.setAttribute("aria-hidden", "true");
-          return dot;
-        }
+        var SERVICE_META = {
+          "chat-proxy": {
+            desc: "Chat & Trợ lý học tập thông minh",
+            path: "/health",
+            auth: "Public (Không token)",
+            isToken: false,
+            svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+          },
+          "data-api": {
+            desc: "Đồng bộ đám mây Cloudflare D1",
+            path: "/health",
+            auth: "Public (Không token)",
+            isToken: false,
+            svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>'
+          },
+          "livekit": {
+            desc: "Phòng học video & WebRTC nhóm",
+            path: "/usage",
+            auth: "Bearer Token",
+            isToken: true,
+            svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>'
+          }
+        };
 
-        function addRow(name, status, cls, ms) {
-          var li = document.createElement("li");
-          var nameEl = document.createElement("span");
-          nameEl.className = "w-name";
-          nameEl.textContent = name;
-
-          var stateEl = document.createElement("span");
-          stateEl.className = "state " + cls;
-          stateEl.appendChild(makeDot());
-          stateEl.appendChild(document.createTextNode(status));
-
-          var msEl = document.createElement("span");
-          msEl.className = "lat";
-          msEl.textContent = ms;
-
-          li.appendChild(nameEl);
-          li.appendChild(stateEl);
-          li.appendChild(msEl);
-          checksEl.appendChild(li);
-        }
-
-        function renderWaiting() {
-          checksEl.textContent = "";
-          for (var i = 0; i < DEFAULT_CHECKS.length; i += 1) {
-            addRow(DEFAULT_CHECKS[i], "chờ", "is-wait", "–");
+        function setBusy(state) {
+          loading = state;
+          refreshBtn.disabled = state;
+          if (state) {
+            refreshBtn.classList.add("is-loading");
+            refreshBtn.querySelector("span").textContent = "Đang kiểm tra…";
+            actionNote.textContent = "Đang gửi ping…";
+          } else {
+            refreshBtn.classList.remove("is-loading");
+            refreshBtn.querySelector("span").textContent = "Kiểm tra ngay";
           }
         }
 
-        function setBusy(on) {
-          loading = on;
-          refresh.disabled = on;
-          refresh.textContent = on ? "Đang kiểm tra…" : "Kiểm tra lại";
-          consoleEl.setAttribute("aria-busy", on ? "true" : "false");
-          if (on) {
-            clearTimeout(noteTimer);
-            actionNote.textContent = "Đang gọi /api/admin/ping…";
-          }
-        }
-
-        function formatTime(value) {
-          var d = new Date(value);
-          if (isNaN(d.getTime())) return "vừa xong";
-          var date = d.toLocaleDateString("vi-VN", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          });
-          var time = d.toLocaleTimeString("vi-VN", {
+        function formatClock(val) {
+          var d = new Date(val);
+          if (isNaN(d.getTime())) return "Vừa xong";
+          return d.toLocaleTimeString("vi-VN", {
             hour: "2-digit",
             minute: "2-digit",
-            hour12: false,
+            second: "2-digit",
+            hour12: false
           });
-          return date + " · " + time;
         }
 
-        function applyResult(data) {
-          var checks = data.checks.slice(0, 8);
-          var good = 0;
-          var i;
+        function renderRows(checks) {
+          checksEl.innerHTML = "";
+          checks.forEach(function (c) {
+            var meta = SERVICE_META[c.name] || {
+              desc: "Dịch vụ phụ trợ",
+              path: "/health",
+              auth: "Mặc định",
+              isToken: false,
+              svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/></svg>'
+            };
 
-          for (i = 0; i < checks.length; i += 1) {
-            if (checks[i] && checks[i].ok === true) good += 1;
-          }
+            var tr = document.createElement("tr");
 
-          countEl.classList.remove("is-pending");
-          countEl.textContent = String(good);
-          totalEl.textContent = "/" + checks.length;
-          checksEl.textContent = "";
+            var statusBadge = c.ok
+              ? '<span class="badge-ok">✓ Hoạt động</span>'
+              : '<span class="badge-bad">✕ Lỗi / Timeout</span>';
 
-          for (i = 0; i < checks.length; i += 1) {
-            var check = checks[i] || {};
-            var name = String(check.name || "không rõ");
-            var ok = check.ok === true;
-            var ms = typeof check.ms === "number" ? check.ms + " ms" : "–";
-            addRow(name, ok ? "ok" : "lỗi", ok ? "is-ok" : "is-bad", ms);
-          }
+            var authBadge = meta.isToken
+              ? '<span class="auth-badge token">' + meta.auth + '</span>'
+              : '<span class="auth-badge">' + meta.auth + '</span>';
 
-          var allOk = data.ok === true && checks.length > 0;
-          labelEl.textContent = "worker phản hồi";
-          dotEl.className = "dot " + (allOk ? "dot-ok" : "dot-bad");
-          noteEl.textContent = allOk
-            ? "Ba worker đều phản hồi. Hệ thống đang chạy bình thường."
-            : "Có worker không phản hồi. Kiểm tra lại cấu hình hoặc trạng thái dịch vụ.";
-          timeEl.textContent = data.time ? formatTime(data.time) : "vừa xong";
-          emailEl.textContent = data.email ? String(data.email) : "phiên chưa xác thực";
-          actionNote.textContent = "Đã cập nhật.";
-          checksEl.classList.remove("is-fresh");
-          void checksEl.offsetWidth;
-          checksEl.classList.add("is-fresh");
-          clearTimeout(noteTimer);
-          noteTimer = setTimeout(function () {
-            actionNote.textContent = "";
-          }, 3200);
+            var msDisplay = typeof c.ms === "number" ? c.ms + " ms" : "--";
+
+            tr.innerHTML = 
+              '<td>' +
+                '<div class="service-identity">' +
+                  '<div class="service-avatar">' + meta.svg + '</div>' +
+                  '<div>' +
+                    '<div class="service-name">' + c.name + '</div>' +
+                    '<div class="service-desc">' + meta.desc + '</div>' +
+                  '</div>' +
+                '</div>' +
+              '</td>' +
+              '<td>' +
+                '<div class="endpoint-pill">' +
+                  '<span class="method-tag">GET</span>' +
+                  '<span>' + meta.path + '</span>' +
+                '</div>' +
+              '</td>' +
+              '<td>' + authBadge + '</td>' +
+              '<td class="latency-cell">' + msDisplay + '</td>' +
+              '<td class="text-right">' + statusBadge + '</td>';
+
+            checksEl.appendChild(tr);
+          });
         }
 
-        function applyFailure(text) {
-          countEl.classList.add("is-pending");
-          countEl.textContent = "…";
-          totalEl.textContent = "/3";
-          labelEl.textContent = "chưa kiểm tra được";
-          dotEl.className = "dot dot-bad";
-          noteEl.textContent = text;
-          timeEl.textContent = "chưa có dữ liệu";
-          emailEl.textContent = "phiên chưa xác thực";
-          actionNote.textContent = "";
-          renderWaiting();
-          var states = checksEl.querySelectorAll(".state");
-          for (var i = 0; i < states.length; i += 1) {
-            states[i].className = "state is-wait";
-            states[i].lastChild.nodeValue = "chưa đo";
+        function handleSuccess(data) {
+          var checks = Array.isArray(data.checks) ? data.checks : [];
+          var goodCount = 0;
+          var totalMs = 0;
+          var validMsCount = 0;
+
+          checks.forEach(function (c) {
+            if (c.ok) goodCount++;
+            if (typeof c.ms === "number") {
+              totalMs += c.ms;
+              validMsCount++;
+            }
+          });
+
+          okCountEl.textContent = String(goodCount);
+          totalCountEl.textContent = "/" + checks.length;
+
+          if (validMsCount > 0) {
+            avgLatencyEl.textContent = Math.round(totalMs / validMsCount);
+          } else {
+            avgLatencyEl.textContent = "--";
           }
+
+          apiTimeEl.textContent = data.time ? formatClock(data.time) : "Vừa xong";
+          sessionEmailEl.textContent = data.email ? String(data.email) : "Phiên ẩn danh";
+          sessionEmailEl.title = data.email || "";
+
+          var allGood = goodCount === checks.length && checks.length > 0;
+          if (allGood) {
+            globalStatusPill.className = "status-pill";
+            globalStatusText.textContent = "Hệ thống hoạt động bình thường";
+            figureLabelEl.textContent = "Tất cả dịch vụ phản hồi tốt";
+          } else {
+            globalStatusPill.className = "status-pill is-error";
+            globalStatusText.textContent = "Có worker phản hồi lỗi";
+            figureLabelEl.textContent = "Phát hiện dịch vụ gián đoạn";
+          }
+
+          actionNote.textContent = "Đã cập nhật mới";
+          renderRows(checks);
         }
 
-        function run() {
+        function handleFailure(errText) {
+          okCountEl.textContent = "!";
+          avgLatencyEl.textContent = "--";
+          globalStatusPill.className = "status-pill is-error";
+          globalStatusText.textContent = "Mất kết nối API Admin";
+          actionNote.textContent = errText || "Lỗi kết nối";
+          figureLabelEl.textContent = "Không thể kiểm tra";
+        }
+
+        function runCheck() {
           if (loading) return;
           setBusy(true);
 
@@ -1264,65 +1186,44 @@
             .then(function (res) {
               if (res.status === 401 || res.status === 403) {
                 setBusy(false);
-                applyFailure("Cloudflare Access chưa cấp quyền cho phiên này. Tải lại trang để đăng nhập.");
-                return null;
-              }
-              if (res.status === 404 || res.status === 501) {
-                setBusy(false);
-                applyFailure("API admin chưa được triển khai trên host này.");
+                handleFailure("Phiên chưa cấp quyền (Cloudflare Access)");
                 return null;
               }
               if (!res.ok) {
                 setBusy(false);
-                applyFailure("Máy chủ admin trả lỗi (mã " + res.status + ").");
+                handleFailure("Máy chủ trả mã lỗi " + res.status);
                 return null;
               }
               return res.json();
             })
             .then(function (data) {
               if (!data) return;
-              if (!Array.isArray(data.checks)) {
-                setBusy(false);
-                applyFailure("Máy chủ admin trả dữ liệu không hợp lệ.");
-                return;
-              }
               setBusy(false);
-              applyResult(data);
+              handleSuccess(data);
             })
             .catch(function () {
               setBusy(false);
-              applyFailure("Không gọi được máy chủ admin. Kiểm tra mạng rồi tải lại.");
+              handleFailure("Không thể kết nối đến máy chủ");
             });
         }
 
-        refresh.addEventListener("click", run);
+        refreshBtn.addEventListener("click", runCheck);
 
-        var revealTargets = document.querySelectorAll("[data-reveal]");
-        if ("IntersectionObserver" in window) {
-          var io = new IntersectionObserver(
-            function (entries) {
-              for (var i = 0; i < entries.length; i += 1) {
-                if (entries[i].isIntersecting) {
-                  entries[i].target.classList.add("is-in");
-                  io.unobserve(entries[i].target);
-                }
-              }
-            },
-            { rootMargin: "0px 0px -12% 0px", threshold: 0.12 }
-          );
-          for (var r = 0; r < revealTargets.length; r += 1) io.observe(revealTargets[r]);
-          setTimeout(function () {
-            for (var j = 0; j < revealTargets.length; j += 1) {
-              revealTargets[j].classList.add("is-in");
-            }
-          }, 6000);
-        } else {
-          for (var k = 0; k < revealTargets.length; k += 1) {
-            revealTargets[k].classList.add("is-in");
+        // Auto Refresh
+        function setupAutoRefresh() {
+          if (autoTimer) clearInterval(autoTimer);
+          if (autoRefreshCheck.checked) {
+            autoTimer = setInterval(function () {
+              runCheck();
+            }, 30000);
           }
         }
 
-        run();
+        autoRefreshCheck.addEventListener("change", setupAutoRefresh);
+
+        // Run initial check
+        runCheck();
+        setupAutoRefresh();
       })();
     </script>
   </body>

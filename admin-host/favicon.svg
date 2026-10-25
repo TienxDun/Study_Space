@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <defs>
+    <!-- Background Gradient (Deep Charcoal Space) -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="60%" stop-color="#080b11"/>
+      <stop offset="100%" stop-color="#04060a"/>
+    </linearGradient>
+
+    <!-- Border Glow (Emerald to subtle edge) -->
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.85"/>
+      <stop offset="50%" stop-color="#10b981" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.06"/>
+    </linearGradient>
+
+    <!-- Emerald Brand Gradient -->
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="50%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+
+    <!-- Beacon Pulse Aura -->
+    <radialGradient id="beaconGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Container Squircle (Guarantees contrast on all tab themes) -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#bgGrad)" stroke="url(#borderGrad)" stroke-width="2.5"/>
+
+  <!-- High-Tech Geometric "Z" Monogram -->
+  <path d="M 18 21 H 41 L 23 43 H 46" stroke="url(#emeraldGrad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Live Status Beacon (Mission Control indicator) -->
+  <circle cx="47" cy="17" r="7" fill="url(#beaconGlow)"/>
+  <circle cx="47" cy="17" r="3.5" fill="#34d399"/>
+  <circle cx="47" cy="17" r="6" stroke="#10b981" stroke-width="1" stroke-opacity="0.7"/>
+</svg>

@@ -16,9 +16,21 @@ rmSync(dist, { recursive: true, force: true });
 mkdirSync(path.join(dist, "admin"), { recursive: true });
 cpSync(shell, path.join(dist, "admin", "index.html"));
 
+const favicon = path.join(root, "admin-host", "favicon.svg");
+if (existsSync(favicon)) {
+  cpSync(favicon, path.join(dist, "favicon.svg"));
+  cpSync(favicon, path.join(dist, "admin", "favicon.svg"));
+}
+
 writeFileSync(
   path.join(dist, "_redirects"),
-  ["/ /admin/ 302", "/admin /admin/ 301", ""].join("\n"),
+  [
+    "/ /admin/ 302",
+    "/admin /admin/ 301",
+    "/favicon.ico /favicon.svg 302",
+    "/admin/favicon.ico /admin/favicon.svg 302",
+    "",
+  ].join("\n"),
   "utf-8"
 );
 
