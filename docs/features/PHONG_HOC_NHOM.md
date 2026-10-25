@@ -269,9 +269,40 @@ Các mục sau thuộc giai đoạn sau, chưa triển khai:
 | "Không kiểm tra được hạn mức" | Thiếu binding `DB` hoặc D1 lỗi                     | Kiểm tra binding và log Worker                          |
 | Số phút không tăng               | Thiếu trigger, webhook chưa bật, sai chữ ký        | Chạy lại schema; xem log webhook; kiểm tra signing key |
 | Webhook trả 401                     | Sai `LIVEKIT_API_SECRET` hoặc signing API key        | Đối chiếu key trong LiveKit Console và Worker         |
+| Số phút admin thấp hơn LiveKit Cloud | Webhook chưa bật ở giai đoạn trước hoặc chưa seed đúng | Đối soát `meet_usage_month` theo mục 13.1             |
 | Danh sách phòng lỗi 502           | Sai `LIVEKIT_URL` hoặc API key                       | Kiểm tra secret của Worker                              |
 | Lỗi CORS                            | Thiếu domain trong `ALLOWED_ORIGINS`                 | Thêm đúng domain, không có dấu `/` cuối          |
 | Không phát được token           | Thiếu `FIREBASE_PROJECT_ID` hoặc chưa đăng nhập | Kiểm tra biến và token Firebase                        |
+
+### 13.1. Đối soát số phút với LiveKit Cloud
+
+Admin đếm phút bằng webhook (`participant_left` / `room_finished`) và chỉ cộng khi phiên đóng, nên số có thể thấp hơn LiveKit nếu webhook từng chưa bật. Muốn khớp lại:
+
+1. Mở admin, bảo đảm **Phòng đang mở = 0** và **Người tham gia = 0** (tránh cộng trùng phiên đang chạy).
+2. Lấy tổng phút của chu kỳ hiện tại trên LiveKit Cloud → Billing.
+3. Chạy trong D1 `zenspace` → Console (thay `2026-10` bằng tháng admin đang hiện và `438` bằng số phút thật):
+
+```sql
+INSERT INTO meet_usage_month (month, participant_seconds, updated_at)
+VALUES ('2026-10', 438 * 60, CAST(strftime('%s','now') AS INTEGER))
+ON CONFLICT(month) DO UPDATE SET
+  participant_seconds = excluded.participant_seconds,
+  updated_at = excluded.updated_at;
+```
+
+Sau đó `/usage` và thẻ LiveKit hiện đúng số phút; các phiên mới vẫn cộng tiếp bình thường. Nếu muốn biết vì sao lệch, so tổng thời lượng phiên đã đóng với bộ đếm:
+
+```sql
+SELECT COUNT(*) AS total_sessions,
+       COUNT(*) FILTER (WHERE left_at IS NULL) AS open_sessions,
+       CAST(COALESCE(SUM(duration_seconds), 0) / 60 AS INTEGER) AS minutes_from_sessions
+FROM meet_sessions WHERE billing_month = '2026-10';
+```
+
+- Bằng số admin đang hiện → D1 chưa từng nhận các phiên bị thiếu (webhook chưa bật).
+- Bằng 0 trong khi admin > 0 → số đang hiện là seed tay; webhook chưa ghi được phiên nào.
+- Có `open_sessions > 0` → phút của các phiên đó chưa được cộng; đợi phiên đóng rồi hãy đối soát.
+- Lớn hơn số admin → trigger đếm thiếu; chạy lại `workers/livekit-schema.sql` và kiểm tra log webhook.
 
 ## 14. File liên quan
 

@@ -3,13 +3,15 @@
 -- 1. user_data   : Kho dữ liệu học tập cá nhân (Snapshot Save Game cho data-api)
 -- 2. chat_usage  : Sổ đếm câu chat theo ngày của từng học sinh (30 câu/ngày cho chat-proxy)
 -- 3. admin_audit : Nhật ký hành động admin (ai, làm gì, lúc nào) cho Worker zenstudy-admin
+-- Lượt gọi/neurons Workers AI không lưu ở đây; xem số thật trên Cloudflare Dashboard.
 
--- 1. XÓA SẠCH CÁC BẢNG DƯ THỪA (bao gồm cả cf_usage)
+-- 1. XÓA SẠCH CÁC BẢNG DƯ THỪA
 DROP TABLE IF EXISTS user_settings;
 DROP TABLE IF EXISTS focus_sessions;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS chat_sessions;
 DROP TABLE IF EXISTS chat_messages;
+-- Bộ đếm neurons cũ: đã bỏ để tránh số liệu sai.
 DROP TABLE IF EXISTS cf_usage;
 
 -- 2. BẢNG DỮ LIỆU HỌC TẬP (SNAPSHOT CLOUD SAVE)

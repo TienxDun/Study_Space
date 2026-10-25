@@ -12,703 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-    <style>
-      :root {
-        --canvas: #090a0f;
-        --surface-glass: rgba(18, 22, 33, 0.75);
-        --surface-card: rgba(23, 28, 42, 0.65);
-        --surface-card-hover: rgba(29, 36, 54, 0.85);
-        --surface-nested: rgba(11, 14, 22, 0.85);
-        
-        --border-subtle: rgba(255, 255, 255, 0.08);
-        --border-hover: rgba(255, 255, 255, 0.16);
-        --border-active: rgba(16, 185, 129, 0.4);
-        
-        --emerald-500: #10b981;
-        --emerald-400: #34d399;
-        --emerald-glow: rgba(16, 185, 129, 0.22);
-        --emerald-soft: rgba(16, 185, 129, 0.12);
-        
-        --sky-400: #38bdf8;
-        --sky-soft: rgba(56, 189, 248, 0.12);
-        
-        --rose-400: #fb7185;
-        --rose-soft: rgba(251, 113, 133, 0.12);
-        
-        --amber-400: #fbbf24;
-        --amber-soft: rgba(251, 191, 36, 0.12);
-
-        --text-primary: #f8fafc;
-        --text-secondary: #cbd5e1;
-        --text-muted: #94a3b8;
-        --text-faint: #64748b;
-
-        --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
-        --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
-
-        --radius-sm: 8px;
-        --radius-md: 12px;
-        --radius-lg: 16px;
-        --radius-xl: 20px;
-        --radius-full: 9999px;
-
-        --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
-      }
-
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      body {
-        min-height: 100vh;
-        background-color: var(--canvas);
-        background-image: 
-          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16, 185, 129, 0.12), transparent 70%),
-          radial-gradient(circle at 100% 100%, rgba(56, 189, 248, 0.05), transparent 40%),
-          linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-          linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-        background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
-        background-position: 0 0, 0 0, -1px -1px, -1px -1px;
-        color: var(--text-secondary);
-        font-family: var(--font-sans);
-        font-size: 14px;
-        line-height: 1.5;
-        -webkit-font-smoothing: antialiased;
-        overflow-x: hidden;
-      }
-
-      ::selection {
-        background: rgba(16, 185, 129, 0.3);
-        color: #ffffff;
-      }
-
-      a {
-        color: inherit;
-        text-decoration: none;
-      }
-
-      .container {
-        width: 100%;
-        max-width: 1220px;
-        margin-inline: auto;
-        padding-inline: clamp(20px, 3.5vw, 40px);
-      }
-
-      /* ================= TOPBAR ================= */
-      .topbar {
-        position: sticky;
-        top: 0;
-        z-index: 50;
-        height: 64px;
-        border-bottom: 1px solid var(--border-subtle);
-        background: rgba(9, 10, 15, 0.82);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-      }
-
-      .topbar-content {
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-      }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .brand-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: var(--radius-sm);
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(56, 189, 248, 0.1));
-        border: 1px solid rgba(16, 185, 129, 0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--emerald-400);
-        box-shadow: 0 0 16px var(--emerald-glow);
-      }
-
-      .brand-text {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 600;
-        font-size: 15px;
-        color: var(--text-primary);
-        letter-spacing: -0.01em;
-      }
-
-      .brand-badge {
-        font-size: 11px;
-        font-weight: 600;
-        padding: 2px 7px;
-        border-radius: var(--radius-full);
-        background: var(--surface-nested);
-        border: 1px solid var(--border-subtle);
-        color: var(--text-muted);
-        letter-spacing: 0.02em;
-        text-transform: uppercase;
-      }
-
-      .topbar-actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .status-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        padding: 5px 12px;
-        border-radius: var(--radius-full);
-        background: var(--emerald-soft);
-        border: 1px solid rgba(16, 185, 129, 0.25);
-        color: var(--emerald-400);
-        font-size: 12px;
-        font-weight: 500;
-      }
-
-      .status-pill.is-error {
-        background: var(--rose-soft);
-        border-color: rgba(251, 113, 133, 0.3);
-        color: var(--rose-400);
-      }
-
-      .pulse-indicator {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: currentColor;
-        box-shadow: 0 0 8px currentColor;
-        animation: pulse 2s infinite ease-in-out;
-      }
-
-      @keyframes pulse {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.4; transform: scale(0.85); }
-      }
-
-      .btn-ghost {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        height: 36px;
-        padding: 0 14px;
-        border-radius: var(--radius-sm);
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid var(--border-subtle);
-        color: var(--text-secondary);
-        font-size: 13px;
-        font-weight: 500;
-        transition: all 180ms ease;
-      }
-
-      .btn-ghost:hover {
-        background: rgba(255, 255, 255, 0.08);
-        border-color: var(--border-hover);
-        color: var(--text-primary);
-        transform: translateY(-1px);
-      }
-
-      /* ================= HERO HEADER ================= */
-      .page-header {
-        padding-top: clamp(28px, 4vw, 44px);
-        padding-bottom: clamp(24px, 3.5vw, 36px);
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .header-meta {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 12px;
-        color: var(--emerald-400);
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-      }
-
-      .header-title-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: flex-end;
-        justify-content: space-between;
-        gap: 16px;
-      }
-
-      .page-title {
-        font-size: clamp(24px, 3.2vw, 34px);
-        font-weight: 700;
-        color: var(--text-primary);
-        letter-spacing: -0.025em;
-        line-height: 1.2;
-      }
-
-      .page-subtitle {
-        color: var(--text-muted);
-        font-size: 14px;
-        max-width: 580px;
-        line-height: 1.6;
-        margin-top: 4px;
-      }
-
-      .action-controls {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .auto-refresh-toggle {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 12px;
-        background: var(--surface-nested);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-sm);
-        font-size: 12px;
-        color: var(--text-muted);
-        cursor: pointer;
-        user-select: none;
-        transition: border-color 160ms ease;
-      }
-
-      .auto-refresh-toggle:hover {
-        border-color: var(--border-hover);
-      }
-
-      .auto-refresh-toggle input {
-        accent-color: var(--emerald-500);
-        cursor: pointer;
-      }
-
-      .btn-primary {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        height: 38px;
-        padding: 0 18px;
-        border-radius: var(--radius-sm);
-        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
-        border: 1px solid rgba(16, 185, 129, 0.4);
-        color: #ffffff;
-        font-family: inherit;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 16px rgba(16, 185, 129, 0.25);
-        transition: all 160ms ease;
-      }
-
-      .btn-primary:hover {
-        background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 24px rgba(16, 185, 129, 0.4);
-        transform: translateY(-1px);
-      }
-
-      .btn-primary:active {
-        transform: scale(0.98);
-      }
-
-      .btn-primary:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
-      }
-
-      .btn-primary svg {
-        width: 14px;
-        height: 14px;
-        transition: transform 300ms ease;
-      }
-
-      .btn-primary.is-loading svg {
-        animation: spin 1s linear infinite;
-      }
-
-      @keyframes spin {
-        100% { transform: rotate(360deg); }
-      }
-
-      /* ================= STATS OVERVIEW ================= */
-      .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 16px;
-        margin-bottom: 28px;
-      }
-
-      .stat-card {
-        padding: 20px 22px;
-        border-radius: var(--radius-md);
-        background: var(--surface-card);
-        border: 1px solid var(--border-subtle);
-        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
-        transition: border-color 200ms ease, transform 200ms ease;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      }
-
-      .stat-card:hover {
-        border-color: var(--border-hover);
-        transform: translateY(-2px);
-      }
-
-      .stat-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 12px;
-      }
-
-      .stat-label {
-        font-size: 13px;
-        font-weight: 500;
-        color: var(--text-muted);
-      }
-
-      .stat-icon {
-        width: 28px;
-        height: 28px;
-        border-radius: var(--radius-sm);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(255, 255, 255, 0.04);
-        color: var(--text-muted);
-      }
-
-      .stat-value {
-        font-size: 26px;
-        font-weight: 700;
-        color: var(--text-primary);
-        letter-spacing: -0.02em;
-        font-variant-numeric: tabular-nums;
-        display: flex;
-        align-items: baseline;
-        gap: 4px;
-      }
-
-      .stat-value.emerald {
-        color: var(--emerald-400);
-      }
-
-      .stat-sub {
-        font-size: 12px;
-        color: var(--text-muted);
-        margin-top: 6px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .stat-sub code {
-        font-family: var(--font-mono);
-        color: var(--text-secondary);
-        font-size: 11px;
-      }
-
-      /* ================= SECTION LAYOUT ================= */
-      .section-layout {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 28px;
-        margin-bottom: 40px;
-      }
-
-      .panel-card {
-        border-radius: var(--radius-lg);
-        background: var(--surface-card);
-        border: 1px solid var(--border-subtle);
-        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 16px 36px -12px rgba(0, 0, 0, 0.5);
-        overflow: hidden;
-      }
-
-      .panel-header {
-        padding: 18px 24px;
-        border-bottom: 1px solid var(--border-subtle);
-        background: var(--surface-nested);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .panel-title-group {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .panel-title {
-        font-size: 15px;
-        font-weight: 600;
-        color: var(--text-primary);
-        letter-spacing: -0.01em;
-      }
-
-      .panel-desc {
-        font-size: 12px;
-        color: var(--text-muted);
-      }
-
-      /* ================= WORKER SERVICES TABLE ================= */
-      .services-table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      .services-table th {
-        padding: 12px 24px;
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        text-align: left;
-        border-bottom: 1px solid var(--border-subtle);
-        background: rgba(0, 0, 0, 0.15);
-      }
-
-      .services-table th.text-right {
-        text-align: right;
-      }
-
-      .services-table td {
-        padding: 18px 24px;
-        border-bottom: 1px solid var(--border-subtle);
-        vertical-align: middle;
-      }
-
-      .services-table tr:last-child td {
-        border-bottom: 0;
-      }
-
-      .services-table tr {
-        transition: background-color 140ms ease;
-      }
-
-      .services-table tr:hover {
-        background-color: rgba(255, 255, 255, 0.025);
-      }
-
-      .service-identity {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-      }
-
-      .service-avatar {
-        width: 36px;
-        height: 36px;
-        border-radius: var(--radius-sm);
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid var(--border-subtle);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--text-secondary);
-      }
-
-      .service-name {
-        font-family: var(--font-mono);
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--text-primary);
-      }
-
-      .service-desc {
-        font-size: 12px;
-        color: var(--text-muted);
-        margin-top: 2px;
-      }
-
-      .endpoint-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
-        border-radius: var(--radius-sm);
-        background: var(--surface-nested);
-        border: 1px solid var(--border-subtle);
-        font-family: var(--font-mono);
-        font-size: 12px;
-      }
-
-      .method-tag {
-        font-weight: 700;
-        color: var(--emerald-400);
-        font-size: 11px;
-      }
-
-      .auth-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 3px 8px;
-        border-radius: var(--radius-full);
-        font-size: 11px;
-        font-weight: 500;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid var(--border-subtle);
-        color: var(--text-muted);
-      }
-
-      .auth-badge.token {
-        background: var(--sky-soft);
-        border-color: rgba(56, 189, 248, 0.25);
-        color: var(--sky-400);
-      }
-
-      .latency-cell {
-        font-family: var(--font-mono);
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--text-primary);
-        text-align: right;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .badge-ok {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
-        border-radius: var(--radius-full);
-        background: var(--emerald-soft);
-        border: 1px solid rgba(16, 185, 129, 0.25);
-        color: var(--emerald-400);
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      .badge-bad {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
-        border-radius: var(--radius-full);
-        background: var(--rose-soft);
-        border: 1px solid rgba(251, 113, 133, 0.25);
-        color: var(--rose-400);
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      .badge-wait {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
-        border-radius: var(--radius-full);
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid var(--border-subtle);
-        color: var(--text-muted);
-        font-size: 12px;
-        font-weight: 500;
-      }
-
-      /* ================= PIPELINE STEPPER ================= */
-      .pipeline-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-        padding: 24px;
-        background: rgba(0, 0, 0, 0.1);
-      }
-
-      .pipeline-step {
-        position: relative;
-        padding: 18px 20px;
-        border-radius: var(--radius-md);
-        background: var(--surface-nested);
-        border: 1px solid var(--border-subtle);
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .pipeline-step-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .step-order {
-        font-family: var(--font-mono);
-        font-size: 11px;
-        font-weight: 700;
-        color: var(--emerald-400);
-      }
-
-      .step-icon {
-        color: var(--text-muted);
-      }
-
-      .step-name {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--text-primary);
-      }
-
-      .step-info {
-        font-size: 12px;
-        color: var(--text-muted);
-        line-height: 1.5;
-      }
-
-      /* ================= FOOTER ================= */
-      .footer {
-        padding-block: 32px 48px;
-        border-top: 1px solid var(--border-subtle);
-        color: var(--text-muted);
-        font-size: 12px;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-      }
-
-      .footer-links {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-      }
-
-      .footer-links a:hover {
-        color: var(--text-primary);
-      }
-
-      @media (max-width: 900px) {
-        .pipeline-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      @media (max-width: 640px) {
-        .services-table th:nth-child(2),
-        .services-table td:nth-child(2),
-        .services-table th:nth-child(3),
-        .services-table td:nth-child(3) {
-          display: none;
-        }
-        .header-title-row {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="admin.css" />
   </head>
   <body>
     <!-- Top Navigation Bar -->
@@ -755,7 +59,7 @@
           <div>
             <h1 class="page-title">Trạm Điều Khiển Hệ Thống</h1>
             <p class="page-subtitle">
-              Bảng theo dõi thời gian thực dành cho cụm Worker. Xác thực phân tán RS256 và giám sát độ trễ các dịch vụ lõi.
+              Bảng theo dõi thời gian thực cho cụm Worker: sức khỏe, độ trễ, lượt chat, đồng bộ D1 và hạn mức LiveKit trong một lần tải.
             </p>
           </div>
 
@@ -831,7 +135,7 @@
             <span id="session-email">Đang xác thực…</span>
           </div>
           <div class="stat-sub">
-            <span>Cấp quyền: <strong style="color: var(--emerald-400)">Chỉ đọc (P0)</strong></span>
+            <span>Cấp quyền: <strong style="color: var(--emerald-400)">Chỉ đọc (P1a)</strong></span>
           </div>
         </div>
 
@@ -850,6 +154,79 @@
           </div>
           <div class="stat-sub">
             <span id="action-note">Sẵn sàng phản hồi</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sử dụng & hạn mức -->
+      <section class="usage-section" aria-labelledby="usage-title">
+        <div class="usage-heading">
+          <div>
+            <h2 class="usage-title" id="usage-title">Sử dụng &amp; hạn mức</h2>
+            <p class="usage-desc">Số thật lấy từ worker và D1 mỗi 30 giây; không có số chép tay.</p>
+          </div>
+          <span class="usage-source">Nguồn: /api/admin/overview</span>
+        </div>
+
+        <div class="usage-grid">
+          <article class="usage-card" id="chat-card">
+            <div class="usage-card-head">
+              <span class="usage-label">Chat hôm nay</span>
+              <span class="usage-tag" id="chat-day">--</span>
+            </div>
+            <div class="usage-main">
+              <span id="chat-total">--</span>
+              <span class="usage-unit">câu</span>
+            </div>
+            <div class="usage-meter" aria-hidden="true"><span id="chat-meter" style="width: 0%"></span></div>
+            <dl class="usage-facts">
+              <div><dt>Số uid</dt><dd id="chat-users">--</dd></div>
+              <div><dt>Hạn mức/ngày</dt><dd id="chat-limit">--</dd></div>
+            </dl>
+            <p class="usage-note" id="chat-note">Ngày tính theo giờ Thái Bình Dương. Neurons xem trên Cloudflare Dashboard.</p>
+          </article>
+
+          <article class="usage-card" id="sync-card">
+            <div class="usage-card-head">
+              <span class="usage-label">Đồng bộ D1</span>
+              <span class="usage-tag">Tất cả thời gian</span>
+            </div>
+            <div class="usage-main">
+              <span id="sync-users">--</span>
+              <span class="usage-unit">uid đã sync</span>
+            </div>
+            <div class="usage-meter is-muted" aria-hidden="true"><span style="width: 100%"></span></div>
+            <dl class="usage-facts">
+              <div><dt>Lần gần nhất</dt><dd id="sync-last">--</dd></div>
+              <div><dt>Snapshot lớn nhất</dt><dd id="sync-max">--</dd></div>
+            </dl>
+            <p class="usage-note" id="sync-note">Nguồn: bảng user_data.</p>
+          </article>
+
+          <article class="usage-card" id="livekit-card">
+            <div class="usage-card-head">
+              <span class="usage-label">LiveKit tháng này</span>
+              <span class="usage-tag" id="livekit-month">--</span>
+            </div>
+            <div class="usage-main">
+              <span id="livekit-used">--</span>
+              <span class="usage-unit">/ <span id="livekit-limit">--</span> phút</span>
+            </div>
+            <div class="usage-meter" aria-hidden="true"><span id="livekit-meter" style="width: 0%"></span></div>
+            <dl class="usage-facts">
+              <div><dt>Phòng đang mở</dt><dd id="livekit-rooms">--</dd></div>
+              <div><dt>Người tham gia</dt><dd id="livekit-people">--</dd></div>
+            </dl>
+            <p class="usage-note" id="livekit-note">Tháng tính theo UTC.</p>
+          </article>
+        </div>
+
+        <div class="limits-strip">
+          <span class="limits-title">Hạn mức tham chiếu</span>
+          <div class="limits-items">
+            <span>Chat/ngày <strong id="limits-chat">--</strong></span>
+            <span>Snapshot tối đa <strong id="limits-snapshot">--</strong></span>
+            <span>R2 <strong id="limits-r2">--</strong></span>
           </div>
         </div>
       </section>
@@ -961,7 +338,7 @@
                 <span class="step-icon">💻</span>
               </div>
               <span class="step-name">Trình duyệt Client</span>
-              <p class="step-info">Gửi yêu cầu <code>GET /api/admin/ping</code> hoàn toàn không đính kèm secret token.</p>
+              <p class="step-info">Gửi yêu cầu <code>GET /api/admin/overview</code> hoàn toàn không đính kèm secret token.</p>
             </div>
 
             <div class="pipeline-step">
@@ -984,11 +361,11 @@
 
             <div class="pipeline-step">
               <div class="pipeline-step-head">
-                <span class="step-order">04 / HEALTH PROBE</span>
+                <span class="step-order">04 / SNAPSHOT</span>
                 <span class="step-icon">⚡</span>
               </div>
               <span class="step-name">Cụm Worker</span>
-              <p class="step-info">Đo lường thời gian phản hồi song song 3 dịch vụ và trả kết quả tổng hợp.</p>
+              <p class="step-info">Gộp sức khỏe, chat, đồng bộ và LiveKit vào một snapshot; nguồn nào lỗi thì khối đó báo đỏ.</p>
             </div>
           </div>
         </section>
@@ -1001,230 +378,13 @@
         <span>ZenStudy Control Center · Kiến trúc phân tán Cloudflare Workers Edge</span>
       </div>
       <div class="footer-links">
-        <span>Phiên bản <strong>P0 Read-only</strong></span>
+        <span>Phiên bản <strong>P1a Read-only</strong></span>
         <span>•</span>
         <span>Mã hóa <strong>RS256</strong></span>
       </div>
     </footer>
 
     <!-- Logic Script -->
-    <script>
-      (function () {
-        "use strict";
-
-        var refreshBtn = document.getElementById("refresh");
-        var actionNote = document.getElementById("action-note");
-        var okCountEl = document.getElementById("ok-count");
-        var totalCountEl = document.getElementById("total-count");
-        var avgLatencyEl = document.getElementById("avg-latency");
-        var figureLabelEl = document.getElementById("figure-label");
-        var apiTimeEl = document.getElementById("api-time");
-        var sessionEmailEl = document.getElementById("session-email");
-        var checksEl = document.getElementById("checks");
-        var globalStatusPill = document.getElementById("global-status");
-        var globalStatusText = document.getElementById("global-status-text");
-        var autoRefreshCheck = document.getElementById("auto-refresh-check");
-
-        var loading = false;
-        var autoTimer = null;
-
-        var SERVICE_META = {
-          "chat-proxy": {
-            desc: "Chat & Trợ lý học tập thông minh",
-            path: "/health",
-            auth: "Public (Không token)",
-            isToken: false,
-            svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
-          },
-          "data-api": {
-            desc: "Đồng bộ đám mây Cloudflare D1",
-            path: "/health",
-            auth: "Public (Không token)",
-            isToken: false,
-            svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>'
-          },
-          "livekit": {
-            desc: "Phòng học video & WebRTC nhóm",
-            path: "/usage",
-            auth: "Bearer Token",
-            isToken: true,
-            svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>'
-          }
-        };
-
-        function setBusy(state) {
-          loading = state;
-          refreshBtn.disabled = state;
-          if (state) {
-            refreshBtn.classList.add("is-loading");
-            refreshBtn.querySelector("span").textContent = "Đang kiểm tra…";
-            actionNote.textContent = "Đang gửi ping…";
-          } else {
-            refreshBtn.classList.remove("is-loading");
-            refreshBtn.querySelector("span").textContent = "Kiểm tra ngay";
-          }
-        }
-
-        function formatClock(val) {
-          var d = new Date(val);
-          if (isNaN(d.getTime())) return "Vừa xong";
-          return d.toLocaleTimeString("vi-VN", {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: false
-          });
-        }
-
-        function renderRows(checks) {
-          checksEl.innerHTML = "";
-          checks.forEach(function (c) {
-            var meta = SERVICE_META[c.name] || {
-              desc: "Dịch vụ phụ trợ",
-              path: "/health",
-              auth: "Mặc định",
-              isToken: false,
-              svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/></svg>'
-            };
-
-            var tr = document.createElement("tr");
-
-            var statusBadge = c.ok
-              ? '<span class="badge-ok">✓ Hoạt động</span>'
-              : '<span class="badge-bad">✕ Lỗi / Timeout</span>';
-
-            var authBadge = meta.isToken
-              ? '<span class="auth-badge token">' + meta.auth + '</span>'
-              : '<span class="auth-badge">' + meta.auth + '</span>';
-
-            var msDisplay = typeof c.ms === "number" ? c.ms + " ms" : "--";
-
-            tr.innerHTML = 
-              '<td>' +
-                '<div class="service-identity">' +
-                  '<div class="service-avatar">' + meta.svg + '</div>' +
-                  '<div>' +
-                    '<div class="service-name">' + c.name + '</div>' +
-                    '<div class="service-desc">' + meta.desc + '</div>' +
-                  '</div>' +
-                '</div>' +
-              '</td>' +
-              '<td>' +
-                '<div class="endpoint-pill">' +
-                  '<span class="method-tag">GET</span>' +
-                  '<span>' + meta.path + '</span>' +
-                '</div>' +
-              '</td>' +
-              '<td>' + authBadge + '</td>' +
-              '<td class="latency-cell">' + msDisplay + '</td>' +
-              '<td class="text-right">' + statusBadge + '</td>';
-
-            checksEl.appendChild(tr);
-          });
-        }
-
-        function handleSuccess(data) {
-          var checks = Array.isArray(data.checks) ? data.checks : [];
-          var goodCount = 0;
-          var totalMs = 0;
-          var validMsCount = 0;
-
-          checks.forEach(function (c) {
-            if (c.ok) goodCount++;
-            if (typeof c.ms === "number") {
-              totalMs += c.ms;
-              validMsCount++;
-            }
-          });
-
-          okCountEl.textContent = String(goodCount);
-          totalCountEl.textContent = "/" + checks.length;
-
-          if (validMsCount > 0) {
-            avgLatencyEl.textContent = Math.round(totalMs / validMsCount);
-          } else {
-            avgLatencyEl.textContent = "--";
-          }
-
-          apiTimeEl.textContent = data.time ? formatClock(data.time) : "Vừa xong";
-          sessionEmailEl.textContent = data.email ? String(data.email) : "Phiên ẩn danh";
-          sessionEmailEl.title = data.email || "";
-
-          var allGood = goodCount === checks.length && checks.length > 0;
-          if (allGood) {
-            globalStatusPill.className = "status-pill";
-            globalStatusText.textContent = "Hệ thống hoạt động bình thường";
-            figureLabelEl.textContent = "Tất cả dịch vụ phản hồi tốt";
-          } else {
-            globalStatusPill.className = "status-pill is-error";
-            globalStatusText.textContent = "Có worker phản hồi lỗi";
-            figureLabelEl.textContent = "Phát hiện dịch vụ gián đoạn";
-          }
-
-          actionNote.textContent = "Đã cập nhật mới";
-          renderRows(checks);
-        }
-
-        function handleFailure(errText) {
-          okCountEl.textContent = "!";
-          avgLatencyEl.textContent = "--";
-          globalStatusPill.className = "status-pill is-error";
-          globalStatusText.textContent = "Mất kết nối API Admin";
-          actionNote.textContent = errText || "Lỗi kết nối";
-          figureLabelEl.textContent = "Không thể kiểm tra";
-        }
-
-        function runCheck() {
-          if (loading) return;
-          setBusy(true);
-
-          fetch("/api/admin/ping", {
-            headers: { Accept: "application/json" },
-            credentials: "same-origin",
-            cache: "no-store",
-          })
-            .then(function (res) {
-              if (res.status === 401 || res.status === 403) {
-                setBusy(false);
-                handleFailure("Phiên chưa cấp quyền (Cloudflare Access)");
-                return null;
-              }
-              if (!res.ok) {
-                setBusy(false);
-                handleFailure("Máy chủ trả mã lỗi " + res.status);
-                return null;
-              }
-              return res.json();
-            })
-            .then(function (data) {
-              if (!data) return;
-              setBusy(false);
-              handleSuccess(data);
-            })
-            .catch(function () {
-              setBusy(false);
-              handleFailure("Không thể kết nối đến máy chủ");
-            });
-        }
-
-        refreshBtn.addEventListener("click", runCheck);
-
-        // Auto Refresh
-        function setupAutoRefresh() {
-          if (autoTimer) clearInterval(autoTimer);
-          if (autoRefreshCheck.checked) {
-            autoTimer = setInterval(function () {
-              runCheck();
-            }, 30000);
-          }
-        }
-
-        autoRefreshCheck.addEventListener("change", setupAutoRefresh);
-
-        // Run initial check
-        runCheck();
-        setupAutoRefresh();
-      })();
-    </script>
+    <script src="admin.js" defer></script>
   </body>
 </html>

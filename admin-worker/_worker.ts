@@ -1,7 +1,9 @@
 /**
- * ZenStudy Admin Worker (P0)
+ * ZenStudy Admin Worker (P0/P1a)
  *
  * - `/api/admin/*`: xác thực Cloudflare Access JWT rồi mới xử lý.
+ * - `GET /api/admin/ping`: sức khỏe 3 worker.
+ * - `GET /api/admin/overview`: snapshot sức khỏe + sử dụng (P1a).
  * - Mọi path khác: trả static asset trong `dist-admin/` qua binding `ASSETS`.
  *
  * Biến môi trường (chỉ Production, không đặt ở Preview):
@@ -22,10 +24,15 @@ const CERT_TTL_MS = 60 * 60 * 1000;
 const CLOCK_SKEW_SEC = 60;
 const PROBE_TIMEOUT_MS = 3000;
 const LOCAL_DEV_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+const DEFAULT_CHAT_DAILY = 30;
+const SNAPSHOT_MAX_BYTES = 2_000_000;
+const R2_LIMIT_LABEL = "10 GiB";
 
 interface D1Statement {
   bind(...values: unknown[]): D1Statement;
   run(): Promise<unknown>;
+  first<T = Record<string, unknown>>(): Promise<T | null>;
+  all<T = Record<string, unknown>>(): Promise<{ results?: T[] }>;
 }
 
 interface D1DatabaseLike {
@@ -314,6 +321,175 @@ function pingProbes(env: AdminEnv): Probe[] {
   ];
 }
 
+type SourceResult<T> = { ok: true; data: T } | { ok: false; error: string };
+
+interface ChatStatusBody {
+  dayPacific?: string;
+  auth?: { userDailyLimit?: number };
+}
+
+interface LivekitUsageBody {
+  month?: string;
+  usedMinutes?: number;
+  limitMinutes?: number;
+  roomsOpen?: number;
+  participants?: number;
+}
+
+async function fetchJson<T>(
+  url: string,
+  headers?: Record<string, string>,
+): Promise<SourceResult<T>> {
+  if (!url) return { ok: false, error: "missing_url" };
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/json", ...headers },
+      signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+    });
+    if (!res.ok) return { ok: false, error: `http_${res.status}` };
+    return { ok: true, data: (await res.json()) as T };
+  } catch {
+    return { ok: false, error: "unreachable" };
+  }
+}
+
+function pacificDay(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+async function readChatUsage(
+  env: AdminEnv,
+  day: string,
+): Promise<{ ok: true; total: number; users: number } | { ok: false; error: string }> {
+  if (!env.DB) return { ok: false, error: "d1_unavailable" };
+  try {
+    const row = await env.DB.prepare(
+      "SELECT COALESCE(SUM(count), 0) AS total, COUNT(*) AS users FROM chat_usage WHERE day = ?",
+    )
+      .bind(day)
+      .first<{ total: number; users: number }>();
+    return { ok: true, total: Number(row?.total) || 0, users: Number(row?.users) || 0 };
+  } catch {
+    return { ok: false, error: "d1_error" };
+  }
+}
+
+async function readSyncUsage(
+  env: AdminEnv,
+): Promise<
+  | { ok: true; users: number; lastAt: number | null; maxBytes: number }
+  | { ok: false; error: string }
+> {
+  if (!env.DB) return { ok: false, error: "d1_unavailable" };
+  try {
+    const row = await env.DB.prepare(
+      "SELECT COUNT(*) AS users, MAX(updated_at) AS lastAt, MAX(LENGTH(data_json)) AS maxBytes FROM user_data",
+    ).first<{ users: number; lastAt: number | null; maxBytes: number | null }>();
+    return {
+      ok: true,
+      users: Number(row?.users) || 0,
+      lastAt: row?.lastAt == null ? null : Number(row.lastAt),
+      maxBytes: Number(row?.maxBytes) || 0,
+    };
+  } catch {
+    return { ok: false, error: "d1_error" };
+  }
+}
+
+async function buildOverview(env: AdminEnv, email: string) {
+  const day = pacificDay();
+  const token = String(env.ADMIN_TOKEN || "").trim();
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : undefined;
+  const chatUrl = trimUrl(env.CHAT_PROXY_URL);
+  const livekitUrl = trimUrl(env.LIVEKIT_URL);
+  const probes = pingProbes(env);
+
+  const [probeResults, chatStatus, livekitUsage, chatUsage, syncUsage] = await Promise.all([
+    Promise.allSettled(probes.map((probe) => probeCheck(probe))),
+    chatUrl
+      ? fetchJson<ChatStatusBody>(`${chatUrl}/status`, authHeaders)
+      : Promise.resolve<SourceResult<ChatStatusBody>>({ ok: false, error: "missing_url" }),
+    livekitUrl && token
+      ? fetchJson<LivekitUsageBody>(`${livekitUrl}/usage`, authHeaders)
+      : Promise.resolve<SourceResult<LivekitUsageBody>>({
+          ok: false,
+          error: livekitUrl ? "missing_token" : "missing_url",
+        }),
+    readChatUsage(env, day),
+    readSyncUsage(env),
+  ]);
+
+  const checks: CheckResult[] = probeResults.map((result, index) =>
+    result.status === "fulfilled"
+      ? result.value
+      : { name: probes[index].name, ok: false, ms: 0 },
+  );
+  const healthOk = checks.length > 0 && checks.every((check) => check.ok);
+
+  const dailyLimit =
+    Number(chatStatus.ok ? chatStatus.data.auth?.userDailyLimit : NaN) || DEFAULT_CHAT_DAILY;
+
+  let chat: Record<string, unknown>;
+  if (!chatUsage.ok) {
+    chat = { ok: false, error: chatUsage.error };
+  } else if (!chatStatus.ok) {
+    chat = { ok: false, error: chatStatus.error };
+  } else {
+    chat = {
+      ok: true,
+      day: chatStatus.data.dayPacific || day,
+      total: chatUsage.total,
+      users: chatUsage.users,
+      dailyLimit,
+    };
+  }
+
+  const sync = syncUsage.ok
+    ? {
+        ok: true,
+        users: syncUsage.users,
+        lastAt: syncUsage.lastAt,
+        maxBytes: syncUsage.maxBytes,
+      }
+    : { ok: false, error: syncUsage.error };
+
+  const livekit = livekitUsage.ok
+    ? {
+        ok: true,
+        month: livekitUsage.data.month || "",
+        usedMinutes: Number(livekitUsage.data.usedMinutes) || 0,
+        limitMinutes: Number(livekitUsage.data.limitMinutes) || 0,
+        roomsOpen: Number(livekitUsage.data.roomsOpen) || 0,
+        participants: Number(livekitUsage.data.participants) || 0,
+      }
+    : { ok: false, error: livekitUsage.error };
+
+  const limits = {
+    chatDaily: dailyLimit,
+    snapshotMaxBytes: SNAPSHOT_MAX_BYTES,
+    r2: R2_LIMIT_LABEL,
+  };
+
+  const degraded = !healthOk || chat.ok !== true || sync.ok !== true || livekit.ok !== true;
+
+  return {
+    generatedAt: new Date().toISOString(),
+    email,
+    degraded,
+    health: { ok: healthOk, checks },
+    chat,
+    sync,
+    livekit,
+    limits,
+  };
+}
+
 async function handleApi(
   request: Request,
   env: AdminEnv,
@@ -323,6 +499,13 @@ async function handleApi(
   if (!identity.ok) {
     console.warn("admin api: từ chối", { reason: identity.reason, path: pathname });
     return json({ error: "Cần đăng nhập Cloudflare Access." }, 401);
+  }
+
+  if (pathname === `${API_PREFIX}/overview`) {
+    if (request.method !== "GET") {
+      return json({ error: "Chỉ hỗ trợ GET." }, 405);
+    }
+    return json(await buildOverview(env, identity.email));
   }
 
   if (pathname === `${API_PREFIX}/ping`) {

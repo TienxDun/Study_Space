@@ -5,7 +5,8 @@ import path from "node:path";
 // Script chỉ tạo file tĩnh; wrangler lo phần deploy.
 const root = process.cwd();
 const dist = path.join(root, "dist-admin");
-const shell = path.join(root, "admin-host", "index.html");
+const shellDir = path.join(root, "admin-host");
+const shell = path.join(shellDir, "index.html");
 
 if (!existsSync(shell)) {
   console.error("Thiếu admin-host/index.html — không có gì để publish.");
@@ -14,12 +15,12 @@ if (!existsSync(shell)) {
 
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(path.join(dist, "admin"), { recursive: true });
-cpSync(shell, path.join(dist, "admin", "index.html"));
+// Copy cả thư mục: shell tách thành index.html + admin.css + admin.js.
+cpSync(shellDir, path.join(dist, "admin"), { recursive: true });
 
-const favicon = path.join(root, "admin-host", "favicon.svg");
+const favicon = path.join(shellDir, "favicon.svg");
 if (existsSync(favicon)) {
   cpSync(favicon, path.join(dist, "favicon.svg"));
-  cpSync(favicon, path.join(dist, "admin", "favicon.svg"));
 }
 
 writeFileSync(
@@ -48,4 +49,4 @@ writeFileSync(
   "utf-8"
 );
 
-console.log("Đã dựng dist-admin/: admin/index.html, _redirects, _headers");
+console.log("Đã dựng dist-admin/: admin/ (index.html, admin.css, admin.js, favicon), _redirects, _headers");

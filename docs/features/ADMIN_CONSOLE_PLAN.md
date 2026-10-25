@@ -1,9 +1,9 @@
 # Kế Hoạch Mở Rộng Admin Console
 
-Trạng thái: đề xuất, chưa triển khai. Bản 5 — 2026-10-25.
+Trạng thái: P0 đã xong 2026-10-25; P1 chưa triển khai. Bản 8 — 2026-10-26.
 Đã chốt: admin chạy trên Cloudflare Workers + Static Assets sau Cloudflare Access. GitHub Actions đã bỏ; web chính deploy bằng Cloudflare Pages.
 
-Chi tiết từng mục viết khi bắt tay làm. Kế hoạch triển khai chi tiết P0: `docs/features/ADMIN_P0_PLAN.md`. Lịch sử thay đổi ở cuối file.
+Chi tiết từng mục viết khi bắt tay làm. P0 đã đóng, runbook ở `docs/archive/ADMIN_P0_PLAN.md`. P1 có kế hoạch riêng ở `docs/features/ADMIN_P1_PLAN.md`. Lịch sử thay đổi ở cuối file.
 
 ## Mục tiêu
 
@@ -27,13 +27,13 @@ Token worker chỉ nằm ở env của Worker admin. Trình duyệt không bao g
 
 ## Hiện trạng
 
-- 4 tab: Hạn mức (`/admin`), Chatbot (`/admin/chat`), Bối cảnh (`/admin/scenes`), Toasts (`/admin/toasts`).
-- Dữ liệu live duy nhất: LiveKit `/admin/usage`, LocalStorage/IndexedDB của chính máy đang mở. Còn lại là số hardcode.
-- 4 trang admin là client component và nằm trong static export. Bản đang chạy hiện trả 404 khi kiểm tra ngày 2026-10-25, nhưng lần deploy tới sẽ lộ nếu không xóa `out/admin`. Chỉ `/api/*` mới chặn dev; không có cổng đăng nhập.
-- `ADMIN_TOKEN` đang dán tay, lưu `localStorage` và gửi qua `?token=`.
-- ~4.700 dòng cho 4 trang; riêng trang chat ~2.000 dòng tự dựng header/theme riêng. Ngưỡng hạn mức lặp ở nhiều chỗ (thẻ KPI, bảng, worker) nên dễ lệch.
+- Admin đang chạy: shell tĩnh `admin-host/index.html` tại `admin.zenstudy.space/admin/`, gọi `/api/admin/ping`; có sức khỏe và độ trễ 3 worker, chưa có số liệu sử dụng.
+- Các trang admin Next (`/admin`, `/admin/chat`, `/dev/studio`) chỉ tồn tại trên máy local; source bị gitignore và bản web đã strip. P0 không publish các trang này.
+- Dữ liệu live hiện có: ping 3 worker. LiveKit `/usage` cần `ADMIN_TOKEN`; trang limits local gọi không token nên nhận 401. Phần còn lại là số hardcode hoặc localStorage.
+- `ADMIN_TOKEN` từng được dán tay và lưu `localStorage` ở trang chat local; trang chat không được publish.
+- ~4.700 dòng cho các trang admin cũ; riêng trang chat ~2.000 dòng tự dựng header/theme riêng. P1 không kế thừa phần này.
 - Studio bối cảnh ghi thẳng `src/data/assets` và `public/study` → chỉ chạy trên máy dev.
-- D1 đã có `chat_usage` và `user_data` nhưng chưa có endpoint admin để đọc.
+- D1 đã có `chat_usage`, `user_data` và `admin_audit`; code chat-proxy đã ghi D1 và tự lùi về KV khi chưa gắn `DB`, nhưng bản deploy cần gắn binding D1 rồi deploy lại thì `chat_usage` mới có dữ liệu. Lượt gọi/neurons Workers AI không đếm trong hệ thống, xem trên Cloudflare Dashboard.
 - GitHub Actions cũ (`.github/workflows/deploy-pages.yml`) upload nguyên `out/` lên GitHub Pages và đã được xóa ngày 2026-10-25. Web chính hiện deploy bằng Cloudflare Pages theo `docs/deployment/DEPLOY.md`.
 
 ## Nguyên tắc
@@ -49,48 +49,32 @@ Token worker chỉ nằm ở env của Worker admin. Trình duyệt không bao g
 
 ## Giai đoạn
 
-### P0 — Nền an toàn (làm trước mọi thứ)
+### P0 — Nền an toàn (đã xong 2026-10-25)
 
-1. **Tạo Worker riêng cho admin.**
-   - Worker `zenstudy-admin`, build từ repo này; publish `dist-admin/` (shell + assets), không publish cả app học.
-   - Gắn custom domain `admin.zenstudy.space` (DNS trên Cloudflare).
-   - Project web chính ở `zenstudy.space`: sau build xóa `out/admin`, `out/api`, `out/dev` bằng một script Node nhỏ (không thêm dependency).
-   - Gỡ bản công khai cũ: GitHub repo → Settings → Pages → Unpublish. Xóa workflow không tự xóa deployment đã đăng. Đã kiểm tra 404 ngày 2026-10-25 nhưng vẫn xác nhận Pages đã tắt.
-   - Kiểm tra: `https://zenstudy.space/admin/` trả 404; trang admin trên domain riêng vẫn tải đủ asset.
-2. **Bật Cloudflare Access.**
-   - Zero Trust → Access → Application (self-hosted) cho `admin.zenstudy.space`; tắt hẳn route `<worker>.<account>.workers.dev` (trả 404) thay vì tạo application thứ hai.
-   - Policy: `Allow` khi email = email admin đã chốt (1 người); One-time PIN; session 24h. Không ghi email vào repo.
-   - Tắt preview builds của Worker, hoặc bảo vệ luôn preview URL. Preview public là đường vòng phổ biến.
-   - Không viết trang login riêng; phiên do Access quản lý.
-3. **Worker làm cổng duy nhất tới ba worker.**
-   - Cấu hình `wrangler.admin.jsonc`: `assets.directory = ./dist-admin`, `assets.binding = ASSETS`, `main = ./admin-worker/_worker.ts`.
-   - Script kiểm header `Cf-Access-Jwt-Assertion` (verify với certs của Access) trước khi xử lý `/api/admin/*`; request còn lại trả qua `env.ASSETS.fetch()`.
-   - Env **Production** của Worker admin: `ADMIN_TOKEN`, URL 3 worker. Không đặt các biến này ở Preview.
-   - Admin UI gọi đường dẫn tương đối `/api/admin/...`; xóa `chat-admin-url`, `chat-admin-token` khỏi localStorage; bỏ `?token=`.
-   - Kiểm tra: DevTools → Network không thấy token; gọi thẳng worker không token → 401.
-4. **Dọn tab.** Xóa `/admin/toasts`. Chuyển bảng hạn mức sang `docs/guides/SYSTEM_LIMITS.md`, sinh bằng `scripts/gen-limits-docs.mjs` từ nguồn duy nhất `src/data/admin/hit-limits.ts`. Chuyển Studio cảnh sang `/dev/studio` và loại khỏi bản publish.
-5. **Audit log trước khi có ghi.** Bảng `admin_audit` (ai, hành động, tham số, thời điểm) + endpoint ghi. Chưa có bảng này thì chưa mở P2.
-6. **Test cổng.** Không phiên → Access chặn trước khi tải trang; preview URL → cũng bị chặn; JWT sai → Worker trả 401; token không xuất hiện trong bundle, URL hay localStorage.
+Biên bản triển khai và kiểm tra đầy đủ ở `docs/archive/ADMIN_P0_PLAN.md`. Dưới đây là trạng thái thật sau khi đóng P0.
+
+1. **Worker riêng cho admin — xong.** `zenstudy-admin` phục vụ `dist-admin/` (shell `admin-host/index.html` + favicon + `_headers`/`_redirects`), không publish app học; custom domain `admin.zenstudy.space`, `/` redirect 302 về `/admin/`. Web chính chạy `scripts/strip-admin-export.mjs` để xóa `out/admin`, `out/api`, `out/dev` sau build Pages. GitHub Pages đã unpublish; `zenstudy.space/admin/` và `tienxdun.github.io/Study_Space/admin/` đều 404.
+2. **Cloudflare Access — xong.** Một application self-hosted cho `admin.zenstudy.space`, policy Allow đúng 1 email admin, One-time PIN, session 24h; email không ghi vào repo. `workers_dev: false` và `preview_urls: false` ghim trong `wrangler.admin.jsonc`; route `*.workers.dev` trả 404. Team domain hiện là `leutiendung.cloudflareaccess.com` — đổi team domain thì phải cập nhật `ACCESS_TEAM_DOMAIN` cùng lúc, nếu không mọi JWT bị 401.
+3. **Worker làm cổng duy nhất — xong.** `wrangler.admin.jsonc` khai `main` → `admin-worker/_worker.ts`, `assets` → `./dist-admin`, `keep_vars: true`, binding `DB` → D1 `zenspace`. `verifyAccessJwt` kiểm `Cf-Access-Jwt-Assertion` (RS256; `aud`/`iss`/`exp`; cache certs 1 giờ) cho mọi `/api/admin/*`, fail closed; path khác đi qua `env.ASSETS.fetch()`. Env Production: `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`, `ADMIN_TOKEN` (Secret), `CHAT_PROXY_URL`, `DATA_API_URL`, `LIVEKIT_URL`. `GET /api/admin/ping` gọi 3 worker song song, timeout 3 giây, trả 200 kèm `checks[].ok` và `Cache-Control: no-store`; không trả token hay URL nội bộ. Local dùng `wrangler dev` + `ENVIRONMENT=development`, chỉ bỏ Access khi host là localhost; Production không đặt biến này.
+   - **Còn nợ:** trang chat local `/admin/chat` vẫn lưu `chat-admin-token` trong localStorage và gọi `/usage` bằng `?token=`. Trang này không publish nên không lộ ra ngoài; dọn khi làm lại chat admin ở P2.
+4. **Dọn tab — xong.** Đã xóa `/admin/toasts`; Studio cảnh chuyển sang `/dev/studio` (tracked nhưng bị strip khỏi bản web); `/admin/scenes` trả 404. Sinh `docs/guides/SYSTEM_LIMITS.md` cùng `scripts/gen-limits-docs.mjs` chuyển sang P1.
+5. **Audit — xong phần nền.** Bảng `admin_audit` + index trong `workers/schema.sql`, đã chạy trên D1 `zenspace`; helper `logAudit()` dùng `env.DB`, thiếu binding hoặc D1 lỗi thì trả `false` để caller chặn hành động. Chưa có endpoint ghi vì P0 chưa có hành động ghi; endpoint đầu tiên làm cùng hành động ghi đầu tiên ở P2.
+6. **Test cổng — xong.** `src/__tests__/unit/admin/` gồm `access-jwt.test.ts` (thiếu header, hết hạn, sai `aud`/`iss`/chữ ký, `alg: none`, kid lạ, certs lỗi, cache, `aud` dạng mảng), `admin-worker.test.ts` (routing, 401, ping, thiếu env, backend lỗi, 405/404, không lộ token) và `audit.test.ts`. `npm run lint`, `npx tsc --noEmit`, `npm test` sạch; `wrangler deploy --dry-run` thấy `env.DB (zenspace)`.
+
+Bài học đã ghim vào config: một lần push `main` bật lại route `workers.dev` và xóa binding `DB` thêm tay trên dashboard. Vì vậy `workers_dev`/`preview_urls` phải nằm trong config, và mọi binding phải khai trong `wrangler.admin.jsonc` — `keep_vars` chỉ giữ biến Text.
 
 ### P1 — Nhìn thấy hệ thống (chỉ đọc)
 
-7. **Endpoint tổng hợp** `GET /api/admin/overview` (Worker, một chỗ check Access) trả một snapshot:
-   - `health`: 3 worker + độ trễ.
-   - `chat`: số câu hôm nay, top uid, ai đã dùng ≥ 80% hạn mức ngày.
-   - `sync`: số uid đã sync, lần gần nhất, snapshot lớn nhất.
-   - `livekit`: phút trong tháng, phòng đang mở, người tham gia.
-   - `r2`: dung lượng / 10GB, file mồ côi so với manifest, file thiếu.
-   - `limits`: giá trị thật worker đang dùng (không chép lại vào UI).
-8. **Trang Admin Overview** thay trang chủ hiện tại: 4 khối Sức khỏe / Sử dụng & hạn mức / Lỗi & fallback / Nội dung. Mọi số đến từ `overview`; dùng lại `AdminHeader` và token CSS.
-9. **Nhật ký lỗi & fallback bền**: D1 hoặc KV, giữ 7–30 ngày, tự dọn. Thay `lastError` trong RAM.
-10. **Hợp nhất UI chat admin** vào shell chung: dùng `AdminHeader`/`AdminThemeContext`, tách client gọi API ra file riêng. Không đổi logic chain/prompt.
+Kế hoạch chi tiết ở [`docs/features/ADMIN_P1_PLAN.md`](./ADMIN_P1_PLAN.md).
+
+Tóm tắt: UI mới bằng shell tĩnh, không dùng admin cũ; một endpoint `GET /api/admin/overview`. Chia 3 bước: P1a sức khỏe + sử dụng/hạn mức, P1b log lỗi D1, P1c dung lượng/số object R2. Chat admin tiếp tục local, không publish.
 
 ### P2 — Quản lý được (mở dần từng hành động ghi)
 
 11. **Cờ hệ thống** KV `cfg:flags`: tắt chat, tắt LiveKit, bảo trì, banner toàn hệ thống. Ưu tiên đầu tiên của P2 vì chặn sự cố không cần deploy.
-12. **Chat**: chain, provider, prompt — bê nguyên UI/logic đang chạy sang shell mới; mọi thay đổi ghi audit.
+12. **Chat**: chain, provider, prompt — xây UI mới trên shell hoặc giữ local; dùng lại API hiện có, không bê nguyên trang Next cũ; mọi thay đổi ghi audit.
 13. **Nội dung runtime**: manifest cảnh/âm thanh trong D1 (hoặc KV), media trên R2, có version + rollback. Studio dev chỉ để thử trước khi đẩy; không ghi file trên máy chủ production.
-14. **Kho R2**: dung lượng, file mồ côi, file thiếu (đọc ở P1); xóa có xác nhận ở P2.
+14. **Kho R2**: manifest cảnh/âm thanh, file mồ côi/thiếu, xóa có xác nhận. P1 chỉ hiển thị dung lượng và số object.
 
 ### P3 — Vận hành lâu dài
 
@@ -100,7 +84,7 @@ Token worker chỉ nằm ở env của Worker admin. Trình duyệt không bao g
 
 ## Thứ tự đề nghị
 
-P0.1 → P0.2 → P0.3 → P0.4/5/6 → P1.7 → P1.8 → P2.11 → P1.9/10 → phần còn lại theo nhu cầu thật.
+P0 (xong 2026-10-25) → P1a → P1b → P1c → P2.11 → P2.12 → phần còn lại theo nhu cầu thật.
 
 Lý do: chặn lộ trước; thấy hệ thống trước khi sửa; cờ là cách chặn sự cố rẻ nhất.
 
@@ -114,23 +98,27 @@ Lý do: chặn lộ trước; thấy hệ thống trước khi sửa; cờ là c
 
 ## Rủi ro
 
-- **Preview URL mặc định public**: `*.workers.dev` và preview build phải tắt hoặc bảo vệ, nếu không Access bị đi vòng.
+- **Preview URL mặc định public**: `*.workers.dev` và preview build phải tắt hoặc bảo vệ, nếu không Access bị đi vòng. Đã từng bật lại sau một lần deploy; giữ `workers_dev: false` và `preview_urls: false` trong config.
+- **Deploy xóa biến/binding trên dashboard**: `keep_vars: true` chỉ giữ biến Text; binding (D1, R2, KV) phải khai trong `wrangler.admin.jsonc`, thêm tay sẽ bị xóa ở lần push sau.
+- **Access đổi team domain**: `iss` trong JWT đổi theo, Worker 401 dù policy đúng; cập nhật `ACCESS_TEAM_DOMAIN` cùng lúc.
 - **Access chỉ bảo vệ hostname đi qua Cloudflare**: DNS phải nằm ở Cloudflare, không CNAME trỏ thẳng ra ngoài.
-- **Build hai project từ một repo**: env `NEXT_PUBLIC_*` của admin và web phải đồng bộ; secret chỉ đặt ở env của Worker admin.
+- **Build hai project từ một repo**: admin là shell tĩnh, web là Next; `NEXT_PUBLIC_*` chỉ cấu hình cho web, secret chỉ đặt ở env của Worker admin.
 - **Không còn GitHub Actions**: nếu project web chưa nối Git integration thì push sẽ không deploy. Kiểm tra trước, đừng coi workflow cũ là đường lui.
 - **Docs hạn mức sinh tự động**: quên chạy script thì docs lệch với config.
 - Log và audit làm tăng ghi D1: giữ cửa sổ ngắn, tự dọn.
-- Số quota là ước tính (Workers AI tính theo neurons), không thay dashboard nhà cung cấp.
+- Không hiển thị neurons/ước tính Workers AI; số thật xem trên Cloudflare Dashboard.
 
 ## Kiểm chứng
 
 Mỗi mục xong: test nhỏ cho phần tính toán/auth; `npm run lint`, `npx tsc --noEmit`, `npm test`; mở trang admin kiểm tra bằng mắt.
 
-Riêng P0, kiểm tra thêm:
-- Mở `https://zenstudy.space/admin/` → 404.
-- Mở admin từ máy khác/incognito → bị Access chặn, đăng nhập đúng email mới vào.
-- Mở preview URL → cũng bị chặn.
+P0 đã kiểm 2026-10-25 (biên bản trong runbook):
+- `https://zenstudy.space/admin/` và `https://tienxdun.github.io/Study_Space/admin/` → 404.
+- Admin từ incognito → Access chặn; đăng nhập đúng email mới vào; email lạ bị từ chối.
+- `*.workers.dev` và preview URL → 404, không còn đường vòng.
 - DevTools → Network/Application → không thấy `ADMIN_TOKEN`, không có `?token=` trong URL.
+
+P1 có mục kiểm chứng riêng trong `docs/features/ADMIN_P1_PLAN.md`.
 
 ## Lịch sử bản
 
@@ -139,3 +127,6 @@ Riêng P0, kiểm tra thêm:
 - **Bản 3**: chốt Cloudflare Pages + Pages Functions + Cloudflare Access; bỏ GitHub Actions; thêm rủi ro preview URL và build hai project.
 - **Bản 4**: chốt Access đúng 1 email, P0 chỉ shell + ping, URL `admin.zenstudy.space/admin/`, audit ở D1 `zenspace`.
 - **Bản 5**: Cloudflare gộp Pages vào Workers; admin chuyển sang Worker + Static Assets (`wrangler.admin.jsonc`); `workers.dev` tắt hẳn, chỉ còn hostname Access; web vẫn ở Pages.
+- **Bản 6**: chốt UI P1 bằng shell tĩnh mới, P1a/P1b/P1c, bỏ top uid/≥80%, log lỗi D1, R2 mức cơ bản; chat admin ở local.
+- **Bản 7**: tách toàn bộ P1 sang `docs/features/ADMIN_P1_PLAN.md`; plan tổng chỉ giữ kiến trúc, lộ trình và quyết định chung.
+- **Bản 8**: cập nhật P0 theo trạng thái thực tế sau khi đóng (Access, `workers.dev`/preview, binding, audit, test); ghi rõ phần còn nợ chuyển sang P1/P2 và bổ sung rủi ro đã gặp.

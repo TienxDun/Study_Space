@@ -8,7 +8,7 @@
  *
  * Secrets (Settings -> Variables, loại Secret):
  *   ALLOWED_ORIGINS  = domain web, vd "https://zenstudy.space,http://localhost:3001"
- *   ADMIN_TOKEN      = xem /status, quản lý /models + /providers
+ *   ADMIN_TOKEN      = /status (Authorization: Bearer), quản lý /models + /providers
  *   FIREBASE_PROJECT_ID = "zenspace-d10m13y26" (để kiểm vé đăng nhập, loại Text là được)
  *
  * Luồng /chat: bắt buộc vé Firebase (header Authorization: Bearer <idToken>)
@@ -19,7 +19,7 @@
  *   KV: namespace "CHAT_QUOTA" -> tên biến đúng "CHAT_QUOTA"
  *
  *  POST /chat   { text, history?, images?[{name,data}], files?[{name,text}] } -> { text, provider, model }
- *  GET  /status?token=... -> lượt dùng + chain
+ *  GET  /status -> lượt dùng + chain (Bearer ADMIN_TOKEN; ?token= chỉ nhận trên localhost)
  *  GET  /models?token=... -> list CF + hãng ngoài + chain + câu hướng dẫn
  *  POST /models?token=... -> lưu chain, câu hướng dẫn, nhiệt độ, hãng
  *  POST /providers/check?token=... { type, baseUrl, apiKey } -> thử key, trả list model
@@ -41,7 +41,6 @@ const DEFAULT_CF = "qwen3-30b";
 const CFG_TTL_MS = 60 * 1000; // nhớ cấu hình admin trong 60s để đỡ đọc KV
 const MAX_CHAIN = 5; // thứ tự tối đa 5 đường gọi
 const MAX_PROVIDERS = 10; // tối đa 10 hãng ngoài
-const CF_NEURON_LIMIT = 10000; // free Cloudflare/ngày
 const CF_COOLDOWN_MS = 10 * 60 * 1000; // Workers AI kẹt thì nghỉ 10 phút
 
 // Hãng ngoài: OpenAI (Groq/OpenRouter/OpenAI) chung 1 cách gọi,
@@ -55,48 +54,15 @@ const PROVIDER_PRESETS = {
   custom: { label: "Tự nhập địa chỉ", baseUrl: "" },
 };
 const isGeminiBase = (baseUrl) => String(baseUrl || "").includes("generativelanguage.googleapis.com");
-// Giá neurons chính thức của Cloudflare (tính trên 1M tokens, bảng giá 10/2026).
-// Dùng để ước tính lượt dùng thật (Cloudflare tính theo neurons, không theo số câu).
-const NEURON_RATES = {
-  "qwen3-30b": { in: 4625, out: 30475 },
-  "sea-lion": { in: 31876, out: 50488 },
-  "gpt-oss-20b": { in: 18182, out: 27273 },
-  "llama-70b": { in: 26668, out: 204805 },
-};
-// ---------- Sổ đếm quota: ưu tiên D1, tự lùi về KV nếu chưa gắn D1 ----------
-// Quy ước key:
+// ---------- Sổ đếm quota chat: ưu tiên D1, tự lùi về KV nếu chưa gắn D1 ----------
+// Quy ước key KV (chỉ dùng khi D1 lỗi hoặc chưa có bảng):
 //   user:{uid}:{yyyy-mm-dd}  -> số câu của 1 người trong ngày
-//   cf:rpd:{yyyy-mm-dd}      -> số lượt Workers AI trong ngày (toàn hệ thống)
-//   cfn:rpd:{yyyy-mm-dd}     -> số neurons Workers AI trong ngày (toàn hệ thống)
-// Lý do chuyển: KV free chỉ 1.000 ghi/ngày (~330 câu) và ghi không nguyên tử;
-// D1 free cho 100.000 dòng ghi/ngày và mỗi câu chỉ tốn 2 dòng ghi.
+// D1 ghi chat_usage bằng UPSERT nguyên tử, nên nhiều máy chat cùng lúc không ghi đè nhau như KV.
+// Workers AI (requests/neurons) không đếm ở đây; xem số thật trên Cloudflare Dashboard.
 function d1(env) {
   return env && env.DB && typeof env.DB.prepare === "function" ? env.DB : null;
 }
 const RE_USER_COUNT = /^user:(.+):(\d{4}-\d{2}-\d{2})$/;
-
-async function addFloat(env, key, val, ttlSeconds) {
-  const store = kv(env);
-  if (!store) return 0;
-  const cur = (Number(await store.get(key).catch(() => 0)) || 0) + val;
-  const rounded = Math.round(cur * 100) / 100;
-  await store.put(key, String(rounded), { expirationTtl: Math.max(ttlSeconds, 60) }).catch(() => {});
-  return rounded;
-}
-// 1 câu tốn bao nhiêu neurons ≈ số ký tự vào/ra ÷ 4 ra tokens rồi nhân giá.
-// Chỉ là ước tính (không thay được số của dashboard Cloudflare), nhưng đúng
-// đơn vị hơn nhiều so với đếm số câu (câu dài tốn gấp chục lần câu ngắn).
-async function noteNeurons(env, day, cfKey, messages, outText) {
-  const rate = NEURON_RATES[cfKey];
-  if (!rate) return 0;
-  let inChars = 0;
-  for (const m of Array.isArray(messages) ? messages : []) {
-    const c = m && typeof m.content === "string" ? m.content : "";
-    inChars += c.length;
-  }
-  const neurons = (inChars / 4 / 1e6) * rate.in + (String(outText || "").length / 4 / 1e6) * rate.out;
-  return addFloat(env, `cfn:rpd:${day}`, neurons, 86400 + 3600);
-}
 
 const MAX_TEXT = 8000;
 const MAX_HISTORY = 10;
@@ -652,10 +618,6 @@ const PROVIDERS = {
     send(env, ctx, modelId, messages) {
       return callWorkersAI(env, modelId, messages);
     },
-    async countLate(env, ctx, extra) {
-      await incrCount(env, `cf:rpd:${ctx.day}`, 86400 + 3600);
-      if (extra) await noteNeurons(env, ctx.day, extra.modelId, extra.messages, extra.text);
-    },
     noteFail(r) {
       mem.lastError = { time: new Date().toISOString(), error: r.error };
       mem.cfCooldownUntil = Date.now() + CF_COOLDOWN_MS; // kẹt quota/lỗi -> nghỉ 10 phút
@@ -703,7 +665,6 @@ async function runChainEntry(a, env, ctx, messages, images) {
     }
     const r = await p.send(env, ctx, a.modelId, messages);
     if (r.ok) {
-      if (p.countLate) await p.countLate(env, ctx, { modelId: a.modelId, messages, text: r.text });
       return { text: r.text, provider: p.id, model: a.modelId };
     }
     if (p.noteFail) p.noteFail(r);
@@ -735,6 +696,19 @@ function corsHeaders(req, env) {
   };
 }
 
+function isLocalHostname(hostname) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+}
+// /status dùng Bearer; ?token= chỉ giữ cho localhost để trang chat cũ chạy local.
+function hasAdminAccess(req, env, url) {
+  const secret = String(env.ADMIN_TOKEN || "").trim();
+  if (!secret) return false;
+  const auth = req.headers.get("Authorization") || "";
+  const bearer = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
+  if (bearer === secret) return true;
+  return isLocalHostname(url.hostname) && url.searchParams.get("token") === secret;
+}
+
 const worker = {
   async fetch(req, env) {
     const cors = corsHeaders(req, env);
@@ -761,12 +735,12 @@ const worker = {
     }
 
     if (url.pathname === "/status" && req.method === "GET") {
-      if (env.ADMIN_TOKEN && url.searchParams.get("token") !== env.ADMIN_TOKEN) {
-        return json({ error: "Sai token xem bảng." }, 401);
+      const secret = String(env.ADMIN_TOKEN || "").trim();
+      if (!secret) return json({ error: "Worker chưa cấu hình ADMIN_TOKEN." }, 503);
+      if (!hasAdminAccess(req, env, url)) {
+        return json({ error: "Cần quyền quản trị (Bearer ADMIN_TOKEN)." }, 401);
       }
-      const [cfRpd, cfNeurons, lastAuthRaw, chain, providers] = await Promise.all([
-        getCount(env, `cf:rpd:${day}`),
-        getCount(env, `cfn:rpd:${day}`),
+      const [lastAuthRaw, chain, providers] = await Promise.all([
         kv(env) ? kv(env).get("auth:lastErr").catch(() => null) : null,
         getChain(env),
         getProviders(env),
@@ -776,7 +750,7 @@ const worker = {
       return json({
         dayPacific: day,
         auth: { required: true, userDailyLimit: Number(env.USER_DAILY_LIMIT) || 30, projectIdSet: !!env.FIREBASE_PROJECT_ID, lastAuthError },
-        workersAI: { requestsToday: cfRpd, neuronsToday: cfNeurons, neuronLimit: CF_NEURON_LIMIT, coolingDownUntil: mem.cfCooldownUntil, lastError: mem.lastError, currentModel: await getCfModel(env) },
+        workersAI: { coolingDownUntil: mem.cfCooldownUntil, lastError: mem.lastError, currentModel: await getCfModel(env) },
         providers: maskProviders(providers),
         chain: chain.map((e) => `${e.provider}:${e.modelId}`),
       });

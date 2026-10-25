@@ -12,7 +12,7 @@
 3. Bấm tab **Console** $\to$ dán nội dung từ [`workers/schema.sql`](file:///c:/Users/leuti/Desktop/GitHub/Study_Space/workers/schema.sql) $\to$ bấm **Execute**:
 
 ```sql
--- 1. XÓA SẠCH CÁC BẢNG DƯ THỪA (kể cả cf_usage)
+-- 1. XÓA SẠCH CÁC BẢNG DƯ THỪA (không xóa 4 bảng đang dùng bên dưới)
 DROP TABLE IF EXISTS user_settings;
 DROP TABLE IF EXISTS focus_sessions;
 DROP TABLE IF EXISTS users;
@@ -35,7 +35,20 @@ CREATE TABLE IF NOT EXISTS chat_usage (
   count INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (uid, day)
 );
+
+-- 4. NHẬT KÝ HÀNH ĐỘNG ADMIN (Worker zenstudy-admin)
+CREATE TABLE IF NOT EXISTS admin_audit (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  actor_email  TEXT NOT NULL,
+  action       TEXT NOT NULL,
+  target       TEXT,
+  detail_json  TEXT,
+  created_at   INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_created ON admin_audit (created_at);
 ```
+
+> File mới **xóa** bảng `cf_usage` cũ nếu có: ZenStudy không còn tự đếm lượt gọi/neurons Workers AI; xem số thật trên Cloudflare Dashboard.
 
 ### Bước 2: Deploy Worker `data-api`
 1. Vào **Workers & Pages** $\to$ chọn Worker `data-api` (hoặc tạo mới nếu chưa có).

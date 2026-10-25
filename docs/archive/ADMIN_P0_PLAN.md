@@ -6,14 +6,14 @@ Mục tiêu của P0 không phải làm dashboard đẹp, mà là: **admin khôn
 
 ## Definition of Done
 
-- [x] `https://zenstudy.space/admin/` trả 404 (kiểm tra 2026-10-25).
-- [x] `https://tienxdun.github.io/Study_Space/admin/` và cả root đều trả 404 (kiểm tra 2026-10-25); GitHub Pages coi như đã tắt.
-- [x] `https://admin.zenstudy.space` bị Cloudflare Access chặn; chỉ đúng email admin vào được (OTP, đã đăng nhập thử 2026-10-25).
-- [x] Preview URL bị tắt: preview builds off, route `workers.dev` disabled (trả 404).
-- [x] Trang admin gọi `/api/admin/ping` thành công (3 check xanh, 2026-10-25); DevTools không thấy `ADMIN_TOKEN`, không có `?token=`, không có `chat-admin-token`.
-- [x] Local `npm run dev` vẫn dùng được `/admin`, `/admin/chat`, `/dev/studio` (kiểm 2026-10-25); `/admin/scenes` đã 404.
-- [x] `npm run lint`, `npx tsc --noEmit`, `npm test` sạch.
-- [x] Bảng `admin_audit` + helper ghi audit sẵn sàng trước hành động ghi đầu tiên (đã chạy SQL trong D1 `zenspace`, 2026-10-25).
+- [X] `https://zenstudy.space/admin/` trả 404 (kiểm tra 2026-10-25).
+- [X] `https://tienxdun.github.io/Study_Space/admin/` và cả root đều trả 404 (kiểm tra 2026-10-25); GitHub Pages coi như đã tắt.
+- [X] `https://admin.zenstudy.space` bị Cloudflare Access chặn; chỉ đúng email admin vào được (OTP, đã đăng nhập thử 2026-10-25).
+- [X] Preview URL bị tắt: preview builds off, route `workers.dev` disabled (trả 404).
+- [X] Trang admin gọi `/api/admin/ping` thành công (3 check xanh, 2026-10-25); DevTools không thấy `ADMIN_TOKEN`, không có `?token=`, không có `chat-admin-token`.
+- [X] Local `npm run dev` vẫn dùng được `/admin`, `/admin/chat`, `/dev/studio` (kiểm 2026-10-25); `/admin/scenes` đã 404.
+- [X] `npm run lint`, `npx tsc --noEmit`, `npm test` sạch.
+- [X] Bảng `admin_audit` + helper ghi audit sẵn sàng trước hành động ghi đầu tiên (đã chạy SQL trong D1 `zenspace`, 2026-10-25).
 
 ## Đã chốt (2026-10-25)
 
@@ -35,6 +35,7 @@ Vì chỉ có 1 email: bật 2FA cho tài khoản Cloudflare và lưu mã khôi 
 ### B2 — Tách build web / admin (0.5 ngày)
 
 File mới:
+
 - `admin-host/index.html`: shell tĩnh (tiếng Việt, dark/emerald), không token, gọi `/api/admin/ping` và tự báo khi API chưa có.
 - `scripts/strip-admin-export.mjs`: xóa `out/admin`, `out/api`, `out/dev` sau build web; idempotent, log rõ đã xóa gì.
 - `scripts/prepare-admin-bundle.mjs`: dựng `dist-admin/` (shell + `_redirects` + `_headers`).
@@ -46,9 +47,9 @@ Lưu ý: `src/app/admin` và `src/app/api` đang bị gitignore nên Cloudflare 
 
 Cấu hình Cloudflare:
 
-| Phần | Build command | Output | Ghi chú |
-|---|---|---|---|
-| web (`zenstudy.space`, Pages) | `npm run build:web` | `out` | Project hiện có, env như cũ |
+| Phần                              | Build command           | Output         | Ghi chú                                                     |
+| ---------------------------------- | ----------------------- | -------------- | ------------------------------------------------------------ |
+| web (`zenstudy.space`, Pages)    | `npm run build:web`   | `out`        | Project hiện có, env như cũ                              |
 | admin (`zenstudy-admin`, Worker) | `npm run build:admin` | `dist-admin` | Deploy `npx wrangler deploy --config wrangler.admin.jsonc` |
 
 Nội dung `dist-admin/` ở P0:
@@ -68,6 +69,7 @@ Kiểm tra: `npm run build:admin` sinh `dist-admin/admin/index.html`; export web
 
 1. **Sửa project web hiện có** (`zenstudy.space`): Settings → Builds & deployments → Build command `npm run build:web`, Output `out`. Không đổi biến môi trường.
 2. **Tạo Worker từ Git**: Workers & Pages → Create → Import a repository → chọn repo → branch `main`. Điền đúng form:
+
    - Project name: `zenstudy-admin` (trùng `name` trong `wrangler.admin.jsonc`).
    - Build command: `npm run build:admin`.
    - Deploy command: `npx wrangler deploy --config wrangler.admin.jsonc`.
@@ -78,6 +80,7 @@ Kiểm tra: `npm run build:admin` sinh `dist-admin/admin/index.html`; export web
    - Kết quả lần deploy đầu: Worker tĩnh phục vụ `dist-admin/`; chưa có API.
 3. **Custom domain**: Worker `zenstudy-admin` → Settings → Domains & Routes → Add → Custom domain → `admin.zenstudy.space`. Zone đã ở Cloudflare nên DNS + TLS tự tạo.
 4. **Cloudflare Access** (đã làm 2026-10-25): **một** application self-hosted cho `admin.zenstudy.space`, include toàn bộ path; policy `Allow` khi `Emails` = đúng email admin (1 người), không thêm `Bypass`. One-time PIN bật ở Zero Trust → Integrations → Identity providers; session 24 giờ.
+
    - Không tạo application thứ hai cho `workers.dev`: route đó đã **tắt hẳn** (trả 404), nên không còn đường vòng.
    - Bật 2FA + lưu recovery code cho tài khoản Cloudflare.
 5. **Preview**: đã tắt ở bước 2; vào Settings → Builds & deployments kiểm lại là không còn preview build.
@@ -85,23 +88,24 @@ Kiểm tra: `npm run build:admin` sinh `dist-admin/admin/index.html`; export web
 
    Giá trị đang dùng (chốt 2026-10-25; đúng tên, **không** thêm tiền tố `NEXT_PUBLIC_`):
 
-   | Tên | Loại | Giá trị |
-   |---|---|---|
-   | `ACCESS_TEAM_DOMAIN` | Text | `https://leutiendung.cloudflareaccess.com` |
-   | `ACCESS_AUD` | Text | `e6f929aee1cb9cd8387c8b716f614db5d99579c9fdcdb2bef6a7080b6d371e32` |
-   | `ADMIN_TOKEN` | **Secret** | trùng đúng token của worker `livekit` |
-   | `CHAT_PROXY_URL` | Text | `https://chat-proxy.leutiendung-hht.workers.dev` |
-   | `DATA_API_URL` | Text | `https://data-api.leutiendung-hht.workers.dev` |
-   | `LIVEKIT_URL` | Text | `https://livekit.leutiendung-hht.workers.dev` |
+   | Tên                   | Loại            | Giá trị                                                            |
+   | ---------------------- | ---------------- | -------------------------------------------------------------------- |
+   | `ACCESS_TEAM_DOMAIN` | Text             | `https://leutiendung.cloudflareaccess.com`                         |
+   | `ACCESS_AUD`         | Text             | `e6f929aee1cb9cd8387c8b716f614db5d99579c9fdcdb2bef6a7080b6d371e32` |
+   | `ADMIN_TOKEN`        | **Secret** | trùng đúng token của worker `livekit`                          |
+   | `CHAT_PROXY_URL`     | Text             | `https://chat-proxy.leutiendung-hht.workers.dev`                   |
+   | `DATA_API_URL`       | Text             | `https://data-api.leutiendung-hht.workers.dev`                     |
+   | `LIVEKIT_URL`        | Text             |                                                                      |
 
    Ghi chú:
+
+
    - `ACCESS_TEAM_DOMAIN` lấy ở Zero Trust → Settings; đổi team domain thì phải cập nhật ngay, vì `iss` trong JWT đổi theo.
    - `ACCESS_AUD` là Application Audience Tag ở Zero Trust → Access → application `admin.zenstudy.space` → Overview; đối chiếu lại nếu nghi ngờ.
    - `ADMIN_TOKEN` **không bao giờ ghi vào repo hay chat**; B4 gọi `/usage` bằng header `Authorization: Bearer …`, dùng lại đúng giá trị của worker `livekit`, không tạo chuỗi mới lệch.
    - Ba URL worker lấy tương ứng từ `NEXT_PUBLIC_CHAT_API_URL`, `NEXT_PUBLIC_DATA_API_URL`, `NEXT_PUBLIC_LIVEKIT_TOKEN_URL` trong `.env.local`.
    - Sửa giá trị xong phải **Deploy** lại Worker thì mới có hiệu lực.
    - `wrangler deploy` (Workers Builds chạy mỗi lần push `main`) **xóa các biến Text đặt trên dashboard** nếu config không khai báo chúng; Secret như `ADMIN_TOKEN` thì được giữ. Vì vậy `wrangler.admin.jsonc` đặt `"keep_vars": true` — đừng bỏ dòng này, nếu không biến sẽ mất sau mỗi lần deploy. `keep_vars` **không** giữ binding; binding phải khai báo trong config (bước 7).
-
 7. **D1 binding**: khai báo trong `wrangler.admin.jsonc` (dùng cho audit ở B5):
 
    ```jsonc

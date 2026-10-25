@@ -76,8 +76,11 @@ export async function makeToken(
   return `${data}.${b64url(new Uint8Array(signature))}`;
 }
 
-export function accessRequest(token?: string): Request {
-  return new Request("https://admin.zenstudy.space/api/admin/ping", {
+export function accessRequest(
+  token?: string,
+  path = "/api/admin/ping",
+): Request {
+  return new Request(`https://admin.zenstudy.space${path}`, {
     headers: token ? { "Cf-Access-Jwt-Assertion": token } : {},
   });
 }

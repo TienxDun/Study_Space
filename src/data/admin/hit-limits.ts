@@ -47,12 +47,12 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     fallbackMechanism:
       "Cơ chế Multi-Provider Failover Chain tự động nhảy sang nhà cung cấp dự phòng tiếp theo (Groq Cloud hoặc OpenRouter) mà người học không nhận thấy gián đoạn.",
     remedyAction:
-      "Trong /admin/chat, cấu hình Groq làm bước dự phòng ưu tiên 1; giảm bớt Max Output Tokens xuống 1024; hạn mức Neurons tự reset vào 00:00 UTC (07:00 sáng VN).",
+      "Theo dõi số neurons thật trên Cloudflare Dashboard → Workers AI → Usage. ZenStudy không tự đếm neurons nữa vì ước lượng dễ sai; khi sát hạn mức thì đẩy Groq lên đầu chuỗi hoặc giảm Max Output Tokens. Hạn mức tự reset lúc 00:00 UTC (07:00 sáng VN).",
     severity: "warning",
     resetCycle: "00:00 UTC hàng ngày (07:00 giờ VN)",
     docUrl: "https://developers.cloudflare.com/workers-ai/platform/pricing/",
     troubleshootingSteps: [
-      "Kiểm tra telemetry tại trang /admin/chat xem cờ cooling có đang bật không.",
+      "Mở Cloudflare Dashboard → Workers AI → Usage để xem neurons đã dùng trong ngày.",
       "Xác nhận provider dự phòng (Groq) có API key hợp lệ và đang ở trạng thái Enabled.",
       "Nếu hết 10,000 Neurons trong ngày, đẩy Groq lên đầu chuỗi Chain Entry cho đến 07:00 sáng hôm sau.",
     ],
@@ -64,11 +64,11 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     component: "Hạn mức hỏi AI của mỗi người (USER_DAILY_LIMIT)",
     currentTier: "Cấu hình Worker (mặc định 30)",
     quotaDescription:
-      "Mỗi tài khoản được hỏi tối đa 30 câu/ngày (biến USER_DAILY_LIMIT). Bộ đếm lưu ở bảng chat_usage của D1, mỗi câu tốn 3 dòng ghi (chat_usage + cf_usage.requests + cf_usage.neurons).",
+      "Mỗi tài khoản được hỏi tối đa 30 câu/ngày (biến USER_DAILY_LIMIT). Mỗi câu ghi 1 dòng D1 vào chat_usage. Ngày tính theo giờ Thái Bình Dương. Lượt gọi và neurons Workers AI xem trực tiếp trên Cloudflare Dashboard.",
     rateLimits: [
       { label: "Số câu / người / ngày", value: "30 câu (USER_DAILY_LIMIT)" },
-      { label: "Dòng D1 ghi mỗi câu", value: "3 dòng" },
-      { label: "Thời điểm reset", value: "00:00 UTC" },
+      { label: "Dòng D1 ghi mỗi câu", value: "1 dòng (chat_usage)" },
+      { label: "Thời điểm reset", value: "00:00 giờ Thái Bình Dương" },
     ],
     hitLimitSymptoms: [
       "Chat báo đã hết lượt hỏi trong ngày và nút gửi bị khóa.",
@@ -80,7 +80,7 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     remedyAction:
       "Đổi USER_DAILY_LIMIT trong phần biến môi trường của worker chat-proxy nếu cần nới; kiểm tra bảng chat_usage để biết ai đang dùng nhiều.",
     severity: "warning",
-    resetCycle: "00:00 UTC hàng ngày (07:00 giờ VN)",
+    resetCycle: "00:00 giờ Thái Bình Dương hàng ngày (14:00–15:00 giờ VN tuỳ mùa)",
     docUrl: "workers/chat-proxy/worker.js",
     troubleshootingSteps: [
       "Chạy SELECT * FROM chat_usage ORDER BY day DESC LIMIT 10; trong D1 console.",
@@ -201,13 +201,13 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     fallbackMechanism:
       "Dữ liệu vẫn nằm đầy đủ trên máy; meta giữ trạng thái chưa đẩy nên lần đồng bộ sau (sau 00:00 UTC) sẽ gửi bù. Không mất dữ liệu.",
     remedyAction:
-      "Mỗi lần mở app tốn ~23 dòng đọc (1 ensureUser + 22 key), mỗi câu chat tốn 3 dòng ghi, mỗi lần đẩy chỉ ghi các key thay đổi. Giữ debounce, không bấm đồng bộ liên tục.",
+      "Mỗi câu chat tốn 1 dòng ghi (UPSERT chat_usage); mỗi lần đẩy snapshot chỉ ghi 1 dòng user_data. Giữ debounce 2s, không bấm đồng bộ liên tục.",
     severity: "critical",
     resetCycle: "00:00 UTC hàng ngày (07:00 giờ VN)",
     docUrl: "https://developers.cloudflare.com/d1/platform/pricing/",
     troubleshootingSteps: [
       "Cloudflare Dashboard → D1 → zenspace → Metrics: xem Rows read / Rows written trong ngày.",
-      "Kiểm tra bảng lớn: SELECT COUNT(*) FROM focus_sessions; (mỗi phiên là 1 dòng, cap 2.000/người).",
+      "Kiểm tra dung lượng thật: SELECT COUNT(*), MAX(LENGTH(data_json)) FROM user_data; và SELECT COUNT(*) FROM chat_usage;",
       "Dọn bớt dữ liệu cũ bằng DELETE có điều kiện nếu chạm 500 MB.",
     ],
   },
@@ -215,10 +215,10 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     id: "cf-kv-fallback",
     category: "backend",
     service: "Cloudflare Workers KV",
-    component: "Đường lùi của bộ đếm chat khi chat-proxy thiếu binding D1",
+    component: "Đường lùi của bộ đếm câu chat khi chat-proxy thiếu binding D1",
     currentTier: "Workers Free (KV free tier)",
     quotaDescription:
-      "100.000 lượt đọc/ngày, 1.000 lượt ghi/ngày, 1 GB. Chỉ dùng khi worker chat-proxy không có binding DB; bình thường bộ đếm đã chuyển sang D1.",
+      "100.000 lượt đọc/ngày, 1.000 lượt ghi/ngày, 1 GB. Chỉ dùng khi worker chat-proxy không có binding DB; bình thường bộ đếm câu chat đã nằm trong D1.",
     rateLimits: [
       { label: "Lượt đọc / ngày", value: "100,000" },
       { label: "Lượt ghi / ngày (key khác nhau)", value: "1,000" },
@@ -226,7 +226,7 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
       { label: "Dung lượng", value: "1 GB" },
     ],
     hitLimitSymptoms: [
-      "Bộ đếm chat dừng tăng sau ~330 câu/ngày (1.000 ghi).",
+      "Bộ đếm chat dừng tăng sau vài trăm câu/ngày (trần 1.000 lượt ghi).",
       "Log worker xuất hiện nhánh fallback KV thay vì D1.",
     ],
     errorCode: "KV PUT 429 / limit exceeded",
@@ -239,7 +239,7 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     docUrl: "https://developers.cloudflare.com/kv/platform/limits/",
     troubleshootingSteps: [
       "Kiểm tra Settings → Bindings của worker chat-proxy có biến DB trỏ tới D1 zenspace.",
-      "Xem nhánh fallback trong workers/chat-proxy/worker.js khi log báo lỗi D1.",
+      "Xem nhánh fallback KV trong workers/chat-proxy/worker.js khi log báo lỗi D1.",
     ],
   },
   {
@@ -323,12 +323,12 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     fallbackMechanism:
       "Khi D1 lỗi hoặc thiếu binding DB, Worker tự động fail-open (vẫn phát token) kèm quotaStatus: 'unknown' để không làm gián đoạn phòng học.",
     remedyAction:
-      "Theo dõi số phút và số phòng thực tế qua GET /usage (Worker với ADMIN_TOKEN qua header Authorization hoặc ?token=). Ngưỡng chặn an toàn 4.500 phút bảo vệ không vượt quá 5.000 phút miễn phí.",
+      "Theo dõi số phút và số phòng thực tế qua GET /usage với header Authorization: Bearer ADMIN_TOKEN. Ngưỡng chặn an toàn 4.500 phút bảo vệ không vượt quá 5.000 phút miễn phí.",
     severity: "critical",
     resetCycle: "Reset vào ngày 1 hàng tháng (00:00 UTC)",
     docUrl: "https://docs.livekit.io/home/cloud/quotas-and-limits",
     troubleshootingSteps: [
-      "Kiểm tra số phút và số phòng thực tế: curl.exe https://<worker>/usage?token=<ADMIN_TOKEN>.",
+      "Kiểm tra số phút và số phòng thực tế: curl.exe -H \"Authorization: Bearer <ADMIN_TOKEN>\" https://<worker>/usage.",
       "Kiểm tra danh sách phòng đang mở qua API /api/livekit-rooms hoặc GET /rooms.",
       "Nhắc nhở người tham gia tắt camera khi chỉ cần nghe nhạc hoặc học bài tập trung.",
       "Đối soát với số phút thực tế trên LiveKit Cloud Dashboard console.",

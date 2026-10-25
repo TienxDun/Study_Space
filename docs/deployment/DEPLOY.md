@@ -20,9 +20,10 @@ Các key từng dán ở khung chat coi như đã lộ:
    | `FIREBASE_PROJECT_ID` | Text được     | `zenspace-d10m13y26`                                                                                     |
    | `ALLOWED_ORIGINS`     | Text được     | `https://zenstudy.space,http://localhost:3001` (**không để `*`** khi online)                  |
    | `USER_DAILY_LIMIT`    | Text được     | không bắt buộc (mặc định 30)                                                                         |
-3. Settings → Bindings: `AI` (Workers AI) + `CHAT_QUOTA` (KV). Thiếu `AI` là `/chat` báo 500.
-4. Kiểm tra: mở `/health` phải thấy `{"ok":true,"aiBinding":true,"kv":true}`.
-5. Đổi model mặc định: mở trang admin local `http://localhost:3001/admin/chat` → thẻ Model → chọn → Đổi model (lưu vào KV, có hiệu lực ngay, không cần deploy lại). API tương ứng: `GET/POST /models?token=...`.
+3. Settings → Bindings: `AI` (Workers AI) + `CHAT_QUOTA` (KV) + `DB` (D1 `zenspace`). Thiếu `AI` là `/chat` báo 500; thiếu `DB` thì bộ đếm câu chat tự lùi về KV (nhanh chạm trần 1.000 ghi/ngày). Lượt gọi và neurons Workers AI xem trên Cloudflare Dashboard, worker không tự đếm.
+4. Nếu chưa có bảng, mở D1 `zenspace` → Console → dán `workers/schema.sql` (tạo `user_data`, `chat_usage`, `admin_audit`; xóa `cf_usage` cũ nếu có).
+5. Kiểm tra: mở `/health` phải thấy `{"ok":true,"aiBinding":true,"kv":true,"db":true,"schema":true}`.
+6. Đổi model mặc định: mở trang admin local `http://localhost:3001/admin/chat` → thẻ Model → chọn → Đổi model (lưu vào KV, có hiệu lực ngay, không cần deploy lại). API tương ứng: `GET/POST /models?token=...`.
 
 ## Bước 1b — Deploy Worker `livekit` (phòng học nhóm)
 
@@ -70,7 +71,7 @@ Các key từng dán ở khung chat coi như đã lộ:
    | `FIREBASE_PROJECT_ID` | Text  | `zenspace-d10m13y26`                           |
    | `ALLOWED_ORIGINS`     | Text  | `https://zenstudy.space,http://localhost:3001` |
 3. Settings → Bindings → Add → D1 database: Variable name: `DB` → Database: `zenspace`.
-4. Mở D1 Database `zenspace` → tab **Console** → dán toàn bộ file `workers/schema.sql` → bấm **Execute** (để xóa sạch bảng thừa và tạo 2 bảng `user_data` + `chat_usage`).
+4. Mở D1 Database `zenspace` → tab **Console** → dán toàn bộ file `workers/schema.sql` → bấm **Execute** (để xóa sạch bảng thừa và tạo `user_data`, `chat_usage`, `admin_audit`).
 5. Lấy địa chỉ Worker: `https://data-api.<bạn>.workers.dev` → điền vào `NEXT_PUBLIC_DATA_API_URL` ở Bước 3.
 
 ## Bước 2 — Firebase (Xác thực Google)
@@ -100,7 +101,8 @@ Các key từng dán ở khung chat coi như đã lộ:
 - [ ] Đăng nhập acc chưa ghi tên (Testing mode): bị Google chặn đúng luật.
 - [ ] Hỏi 1 câu: trả lời + Firestore có `conversations/{uid}`.
 - [ ] Acc A không đọc được dữ liệu acc B (mở 2 trình duyệt test).
-- [ ] `/status?token=...`: `workersAI.requestsToday` tăng, không có `lastAuthError` mới.
+- [ ] `/health`: `db: true`, `schema: true`; hỏi 1 câu thì `chat_usage` tăng đúng 1 dòng.
+- [ ] `/status` bằng Bearer: trả `dayPacific` + `auth.userDailyLimit`; số neurons thật xem trên Cloudflare Dashboard.
 - [ ] Dùng hết 30 câu: báo "mai quay lại" (test bằng acc phụ hoặc hạ `USER_DAILY_LIMIT` tạm thời).
 - [ ] Đồng bộ D1: đổi ghi chú ở laptop → F5 trên tab ẩn danh / điện thoại (cùng acc) thấy thay đổi nguyên vẹn.
 - [ ] Nút "Đồng bộ ngay": bấm vào badge góc trên → hiện toast "Đã sao lưu lên đám mây thành công!".
