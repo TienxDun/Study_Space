@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex, nofollow" />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#090a0f" />
-    <title>ZenStudy Admin · Bảng điều khiển hệ thống</title>
+    <title>ZenStudy · Bảng điều khiển hệ thống</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate icon" href="/favicon.ico" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -26,18 +26,18 @@
           </div>
           <div class="brand-text">
             <span>ZenStudy</span>
-            <span class="brand-badge">Trạm điều khiển</span>
+            <span class="brand-badge">Bảng điều khiển</span>
           </div>
         </div>
 
         <div class="topbar-actions">
           <div class="status-pill" id="global-status">
             <span class="pulse-indicator"></span>
-            <span id="global-status-text">Đang kiểm tra kết nối…</span>
+            <span id="global-status-text">Đang kiểm tra hệ thống…</span>
           </div>
 
           <a class="btn-ghost" href="https://zenstudy.space/" target="_blank" rel="noopener noreferrer">
-            <span>Về ứng dụng</span>
+            <span>Mở ứng dụng</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
               <path d="M7 17l10-10M7 7h10v10"/>
             </svg>
@@ -50,30 +50,28 @@
       <!-- Page Header -->
       <section class="page-header">
         <div class="header-meta">
-          <span>● Cụm dịch vụ Cloudflare Edge</span>
-          <span style="opacity: 0.4">•</span>
-          <span>Bảo mật Zero-Trust</span>
+          <span>● Hệ thống chạy trên Cloudflare</span>
         </div>
 
         <div class="header-title-row">
           <div>
-            <h1 class="page-title">Trạm Điều Khiển Hệ Thống</h1>
+            <h1 class="page-title">Bảng điều khiển hệ thống</h1>
             <p class="page-subtitle">
-              Bảng theo dõi thời gian thực cho cụm Worker: sức khỏe, độ trễ, lượt chat, đồng bộ D1 và hạn mức LiveKit trong một lần tải.
+              Xem nhanh hệ thống có đang chạy ổn không, hôm nay có bao nhiêu lượt chat, dữ liệu đã lưu lên đám mây chưa và tháng này đã dùng bao nhiêu phút học nhóm.
             </p>
           </div>
 
           <div class="action-controls">
             <label class="auto-refresh-toggle">
               <input type="checkbox" id="auto-refresh-check" checked />
-              <span>Tự động cập nhật (30s)</span>
+              <span>Tự động cập nhật (30 giây)</span>
             </label>
 
             <button class="btn-primary" id="refresh" type="button">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
               </svg>
-              <span>Kiểm tra ngay</span>
+              <span>Cập nhật ngay</span>
             </button>
           </div>
         </div>
@@ -84,7 +82,7 @@
         <!-- Card 1: Trạng thái Worker -->
         <div class="stat-card">
           <div class="stat-head">
-            <span class="stat-label">Sức Khỏe Worker</span>
+            <span class="stat-label">Tình trạng hệ thống</span>
             <div class="stat-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
@@ -96,14 +94,14 @@
             <span id="total-count" style="font-size: 16px; color: var(--text-muted); font-weight: 500;">/3</span>
           </div>
           <div class="stat-sub">
-            <span id="figure-label">Dịch vụ phản hồi tốt</span>
+            <span id="figure-label">Dịch vụ đang chạy tốt</span>
           </div>
         </div>
 
-        <!-- Card 2: Độ trễ trung bình -->
+        <!-- Card 2: Thời gian phản hồi -->
         <div class="stat-card">
           <div class="stat-head">
-            <span class="stat-label">Độ Trễ Trung Bình</span>
+            <span class="stat-label">Thời gian phản hồi</span>
             <div class="stat-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
                 <circle cx="12" cy="12" r="10"/>
@@ -116,14 +114,14 @@
             <span style="font-size: 14px; color: var(--text-muted); font-weight: 500;">ms</span>
           </div>
           <div class="stat-sub">
-            <span>Đo trực tiếp từ Edge</span>
+            <span>Số càng nhỏ, phản hồi càng nhanh</span>
           </div>
         </div>
 
         <!-- Card 3: Phiên xác thực -->
         <div class="stat-card">
           <div class="stat-head">
-            <span class="stat-label">Tài Khoản Phiên</span>
+            <span class="stat-label">Tài khoản đang dùng</span>
             <div class="stat-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -135,14 +133,14 @@
             <span id="session-email">Đang xác thực…</span>
           </div>
           <div class="stat-sub">
-            <span>Cấp quyền: <strong style="color: var(--emerald-400)">Chỉ đọc (P1a)</strong></span>
+            <span>Quyền: <strong style="color: var(--emerald-400)">chỉ xem</strong></span>
           </div>
         </div>
 
         <!-- Card 4: Lần kiểm tra cuối -->
         <div class="stat-card">
           <div class="stat-head">
-            <span class="stat-label">Cập Nhật Lần Cuối</span>
+            <span class="stat-label">Cập nhật lúc</span>
             <div class="stat-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
                 <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
@@ -153,7 +151,7 @@
             <span id="api-time">vừa xong</span>
           </div>
           <div class="stat-sub">
-            <span id="action-note">Sẵn sàng phản hồi</span>
+            <span id="action-note">Sẵn sàng</span>
           </div>
         </div>
       </section>
@@ -162,16 +160,16 @@
       <section class="usage-section" aria-labelledby="usage-title">
         <div class="usage-heading">
           <div>
-            <h2 class="usage-title" id="usage-title">Sử dụng &amp; hạn mức</h2>
-            <p class="usage-desc">Số thật lấy từ worker và D1 mỗi 30 giây; không dùng số ước lượng.</p>
+            <h2 class="usage-title" id="usage-title">Sử dụng &amp; giới hạn</h2>
+            <p class="usage-desc">Các số dưới đây tự động cập nhật mỗi 30 giây.</p>
           </div>
-          <span class="usage-source">Nguồn: /api/admin/overview</span>
+          <span class="usage-source">Tự động tổng hợp</span>
         </div>
 
         <div class="usage-grid">
           <article class="usage-card" id="chat-card">
             <div class="usage-card-head">
-              <span class="usage-label">Chat hôm nay</span>
+              <span class="usage-label">Chat hôm nay (giờ Mỹ)</span>
               <span class="usage-tag" id="chat-day">--</span>
             </div>
             <div class="usage-main">
@@ -180,32 +178,32 @@
             </div>
             <div class="usage-meter" aria-hidden="true"><span id="chat-meter" style="width: 0%"></span></div>
             <dl class="usage-facts">
-              <div><dt>Số uid</dt><dd id="chat-users">--</dd></div>
-              <div><dt>Hạn mức/ngày</dt><dd id="chat-limit">--</dd></div>
+              <div><dt>Số người dùng</dt><dd id="chat-users">--</dd></div>
+              <div><dt>Giới hạn mỗi ngày</dt><dd id="chat-limit">--</dd></div>
             </dl>
-            <p class="usage-note" id="chat-note">Ngày tính theo giờ Thái Bình Dương. Neurons xem trên Cloudflare Dashboard.</p>
+            <p class="usage-note" id="chat-note">Ngày tính theo giờ Mỹ (Thái Bình Dương). Chi phí dùng AI xem trên trang Cloudflare.</p>
           </article>
 
           <article class="usage-card" id="sync-card">
             <div class="usage-card-head">
-              <span class="usage-label">Đồng bộ D1</span>
-              <span class="usage-tag">Tất cả thời gian</span>
+              <span class="usage-label">Đồng bộ đám mây</span>
+              <span class="usage-tag">Tính đến hiện tại</span>
             </div>
             <div class="usage-main">
               <span id="sync-users">--</span>
-              <span class="usage-unit">uid đã sync</span>
+              <span class="usage-unit">người dùng đã lưu</span>
             </div>
             <div class="usage-meter is-muted" aria-hidden="true"><span style="width: 100%"></span></div>
             <dl class="usage-facts">
-              <div><dt>Lần gần nhất</dt><dd id="sync-last">--</dd></div>
-              <div><dt>Snapshot lớn nhất</dt><dd id="sync-max">--</dd></div>
+              <div><dt>Lần lưu gần nhất</dt><dd id="sync-last">--</dd></div>
+              <div><dt>Bản lưu lớn nhất</dt><dd id="sync-max">--</dd></div>
             </dl>
-            <p class="usage-note" id="sync-note">Nguồn: bảng user_data.</p>
+            <p class="usage-note" id="sync-note">Dữ liệu học tập tự động lưu lên mây.</p>
           </article>
 
           <article class="usage-card" id="livekit-card">
             <div class="usage-card-head">
-              <span class="usage-label">LiveKit tháng này</span>
+              <span class="usage-label">Phút học nhóm tháng này</span>
               <span class="usage-tag" id="livekit-month">--</span>
             </div>
             <div class="usage-main">
@@ -214,19 +212,19 @@
             </div>
             <div class="usage-meter" aria-hidden="true"><span id="livekit-meter" style="width: 0%"></span></div>
             <dl class="usage-facts">
-              <div><dt>Phòng đang mở</dt><dd id="livekit-rooms">--</dd></div>
-              <div><dt>Người tham gia</dt><dd id="livekit-people">--</dd></div>
+              <div><dt>Phòng đang học</dt><dd id="livekit-rooms">--</dd></div>
+              <div><dt>Người đang học</dt><dd id="livekit-people">--</dd></div>
             </dl>
-            <p class="usage-note" id="livekit-note">Tháng tính theo UTC.</p>
+            <p class="usage-note" id="livekit-note">Tháng tính theo giờ quốc tế (UTC).</p>
           </article>
         </div>
 
         <div class="limits-strip">
-          <span class="limits-title">Hạn mức tham chiếu</span>
+          <span class="limits-title">Giới hạn gói miễn phí</span>
           <div class="limits-items">
-            <span>Chat/ngày <strong id="limits-chat">--</strong></span>
-            <span>Snapshot tối đa <strong id="limits-snapshot">--</strong></span>
-            <span>R2 <strong id="limits-r2">--</strong></span>
+            <span>Chat mỗi ngày <strong id="limits-chat">--</strong></span>
+            <span>Mỗi bản lưu tối đa <strong id="limits-snapshot">--</strong></span>
+            <span>Kho tệp <strong id="limits-r2">--</strong></span>
           </div>
         </div>
       </section>
@@ -236,18 +234,18 @@
         <section class="panel-card">
           <div class="panel-header">
             <div class="panel-title-group">
-              <h2 class="panel-title">Dịch Vụ Worker Hoạt Động</h2>
-              <span class="panel-desc">Kiểm tra kết nối và thời gian phản hồi (timeout 3.000 ms)</span>
+              <h2 class="panel-title">Các dịch vụ đang chạy</h2>
+              <span class="panel-desc">Thời gian phản hồi của từng dịch vụ <span class="desc-extra">(tối đa 3 giây)</span></span>
             </div>
           </div>
 
           <table class="services-table">
             <thead>
               <tr>
-                <th>Dịch vụ worker</th>
-                <th>Endpoint kiểm tra</th>
-                <th>Phương thức xác thực</th>
-                <th class="text-right">Độ trễ phản hồi</th>
+                <th>Dịch vụ</th>
+                <th>Địa chỉ kiểm tra</th>
+                <th>Quyền truy cập</th>
+                <th class="text-right">Thời gian phản hồi</th>
                 <th class="text-right">Trạng thái</th>
               </tr>
             </thead>
@@ -259,20 +257,19 @@
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                     </div>
                     <div>
-                      <div class="service-name">chat-proxy</div>
-                      <div class="service-desc">Chat & Trợ lý học tập thông minh</div>
+                      <div class="service-name">Chat &amp; trợ lý</div>
+                      <div class="service-desc">Trả lời câu hỏi và gợi ý học tập</div>
                     </div>
                   </div>
                 </td>
                 <td>
                   <div class="endpoint-pill">
-                    <span class="method-tag">GET</span>
                     <span>/health</span>
                   </div>
                 </td>
-                <td><span class="auth-badge">Public (Không token)</span></td>
+                <td><span class="auth-badge">Công khai</span></td>
                 <td class="latency-cell">--</td>
-                <td class="text-right"><span class="badge-wait">Đang chờ</span></td>
+                <td class="text-right"><span class="badge-wait">Đang kiểm tra</span></td>
               </tr>
               <tr>
                 <td>
@@ -281,20 +278,19 @@
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
                     </div>
                     <div>
-                      <div class="service-name">data-api</div>
-                      <div class="service-desc">Đồng bộ đám mây Cloudflare D1</div>
+                      <div class="service-name">Lưu dữ liệu</div>
+                      <div class="service-desc">Lưu dữ liệu học tập lên đám mây</div>
                     </div>
                   </div>
                 </td>
                 <td>
                   <div class="endpoint-pill">
-                    <span class="method-tag">GET</span>
                     <span>/health</span>
                   </div>
                 </td>
-                <td><span class="auth-badge">Public (Không token)</span></td>
+                <td><span class="auth-badge">Công khai</span></td>
                 <td class="latency-cell">--</td>
-                <td class="text-right"><span class="badge-wait">Đang chờ</span></td>
+                <td class="text-right"><span class="badge-wait">Đang kiểm tra</span></td>
               </tr>
               <tr>
                 <td>
@@ -303,20 +299,19 @@
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                     </div>
                     <div>
-                      <div class="service-name">livekit</div>
-                      <div class="service-desc">Phòng học video & WebRTC nhóm</div>
+                      <div class="service-name">Phòng học nhóm</div>
+                      <div class="service-desc">Phòng học video nhóm</div>
                     </div>
                   </div>
                 </td>
                 <td>
                   <div class="endpoint-pill">
-                    <span class="method-tag">GET</span>
                     <span>/usage</span>
                   </div>
                 </td>
-                <td><span class="auth-badge token">Bearer Token</span></td>
+                <td><span class="auth-badge token">Cần mã quản trị</span></td>
                 <td class="latency-cell">--</td>
-                <td class="text-right"><span class="badge-wait">Đang chờ</span></td>
+                <td class="text-right"><span class="badge-wait">Đang kiểm tra</span></td>
               </tr>
             </tbody>
           </table>
@@ -326,46 +321,46 @@
         <section class="panel-card">
           <div class="panel-header">
             <div class="panel-title-group">
-              <h2 class="panel-title">Quy Trình Kiểm Tra Bảo Mật 4 Chặng</h2>
-              <span class="panel-desc">Nguyên tắc Zero-Trust: xác thực phía server, không lưu token tại client</span>
+              <h2 class="panel-title">4 lớp bảo vệ khi đăng nhập</h2>
+              <span class="panel-desc">Mật khẩu và mã truy cập không bao giờ được lưu trên trình duyệt.</span>
             </div>
           </div>
 
           <div class="pipeline-grid">
             <div class="pipeline-step">
               <div class="pipeline-step-head">
-                <span class="step-order">01 / REQUEST</span>
+                <span class="step-order">01 / GỬI YÊU CẦU</span>
                 <span class="step-icon">💻</span>
               </div>
-              <span class="step-name">Trình duyệt Client</span>
-              <p class="step-info">Gửi yêu cầu <code>GET /api/admin/overview</code> hoàn toàn không đính kèm secret token.</p>
+              <span class="step-name">Trình duyệt</span>
+              <p class="step-info">Trình duyệt hỏi số liệu tổng quan, không gửi kèm mật khẩu hay mã truy cập.</p>
             </div>
 
             <div class="pipeline-step">
               <div class="pipeline-step-head">
-                <span class="step-order">02 / EDGE GATE</span>
+                <span class="step-order">02 / KIỂM TRA ĐĂNG NHẬP</span>
                 <span class="step-icon">🛡️</span>
               </div>
-              <span class="step-name">Cloudflare Access</span>
-              <p class="step-info">Kiểm tra thông tin đăng nhập email và cấp JWT trước khi request tới Worker.</p>
+              <span class="step-name">Cổng đăng nhập Cloudflare</span>
+              <p class="step-info">Kiểm tra email đã được cấp quyền trước khi cho vào.</p>
             </div>
 
             <div class="pipeline-step">
               <div class="pipeline-step-head">
-                <span class="step-order">03 / SIGNATURE</span>
+                <span class="step-order">03 / XÁC THỰC MÁY CHỦ</span>
                 <span class="step-icon">🔑</span>
               </div>
-              <span class="step-name">Admin Worker</span>
-              <p class="step-info">Giải mã chữ ký RS256 JWT độc lập, từ chối 401 ngay lập tức nếu thiếu quyền.</p>
+              <span class="step-name">Máy chủ quản trị</span>
+              <p class="step-info">Máy chủ kiểm tra chữ ký số; thiếu quyền hoặc sai chữ ký thì từ chối ngay.</p>
             </div>
 
             <div class="pipeline-step">
               <div class="pipeline-step-head">
-                <span class="step-order">04 / SNAPSHOT</span>
+                <span class="step-order">04 / TỔNG HỢP SỐ LIỆU</span>
                 <span class="step-icon">⚡</span>
               </div>
-              <span class="step-name">Cụm Worker</span>
-              <p class="step-info">Gộp sức khỏe, chat, đồng bộ và LiveKit vào một snapshot; nguồn nào lỗi thì khối đó báo đỏ.</p>
+              <span class="step-name">Các dịch vụ</span>
+              <p class="step-info">Gom tình trạng, chat, dữ liệu và phút học nhóm; mục nào lỗi thì báo đỏ.</p>
             </div>
           </div>
         </section>
@@ -375,12 +370,12 @@
     <!-- Footer -->
     <footer class="container footer">
       <div>
-        <span>ZenStudy Control Center · Kiến trúc phân tán Cloudflare Workers Edge</span>
+        <span>ZenStudy · Bảng điều khiển hệ thống</span>
       </div>
       <div class="footer-links">
-        <span>Phiên bản <strong>P1a Read-only</strong></span>
+        <span>Phiên bản <strong>chỉ xem</strong></span>
         <span>•</span>
-        <span>Mã hóa <strong>RS256</strong></span>
+        <span>Bảo mật <strong>chữ ký số</strong></span>
       </div>
     </footer>
 
