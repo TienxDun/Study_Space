@@ -335,6 +335,202 @@
         </div>
       </section>
 
+      <!-- Trợ lý chat -->
+      <section class="panel-card chat-cfg-card" id="chat-cfg-card" aria-labelledby="chat-cfg-title">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <h2 class="panel-title" id="chat-cfg-title">Trợ lý chat</h2>
+            <span class="panel-desc">Chọn model, thứ tự dự phòng, câu lệnh hệ thống và nhà cung cấp. Lưu xong có hiệu lực trong khoảng 60 giây.</span>
+          </div>
+          <span class="usage-tag" id="chat-cfg-state">Đang đọc…</span>
+        </div>
+
+        <div class="chat-cfg-body">
+          <!-- Model + sinh câu trả lời -->
+          <div class="chat-block">
+            <div class="chat-block-head">
+              <h3 class="chat-block-title">Model trả lời</h3>
+              <span class="chat-block-desc">Đang dùng: <strong id="chat-model-current">--</strong></span>
+            </div>
+            <div class="chat-grid">
+              <label class="chat-field chat-span-2" for="chat-model">
+                <span class="flag-name">Model Cloudflare</span>
+                <select class="flag-input" id="chat-model" disabled></select>
+                <span class="flag-hint">Danh sách lấy từ chat-proxy. Model đang dùng được chọn sẵn.</span>
+              </label>
+              <label class="chat-field" for="chat-temp">
+                <span class="flag-name">Độ sáng tạo (temperature)</span>
+                <input
+                  class="flag-input flag-number"
+                  id="chat-temp"
+                  type="number"
+                  min="0"
+                  max="2"
+                  step="0.1"
+                  inputmode="decimal"
+                  disabled
+                />
+                <span class="flag-hint">Từ 0 đến 2. Thấp thì bám sát câu hỏi, cao thì linh hoạt hơn.</span>
+              </label>
+              <label class="chat-field" for="chat-tokens">
+                <span class="flag-name">Độ dài tối đa (max tokens)</span>
+                <input
+                  class="flag-input flag-number"
+                  id="chat-tokens"
+                  type="number"
+                  min="256"
+                  max="8000"
+                  step="32"
+                  inputmode="numeric"
+                  disabled
+                />
+                <span class="flag-hint">Từ 256 đến 8000 token cho mỗi câu trả lời.</span>
+              </label>
+            </div>
+            <p class="chat-test" id="chat-test-result" hidden></p>
+            <div class="chat-actions">
+              <p class="usage-note" id="chat-model-note">Chưa đọc được cấu hình model.</p>
+              <div class="chat-buttons">
+                <button class="btn-ghost" id="chat-test-model" type="button" disabled>Thử trả lời</button>
+                <button class="btn-primary" id="chat-model-save" type="button" data-label="Lưu model" disabled>
+                  <span>Lưu model</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thứ tự dự phòng -->
+          <div class="chat-block">
+            <div class="chat-block-head">
+              <h3 class="chat-block-title">Thứ tự dự phòng</h3>
+              <span class="chat-block-desc" id="chat-chain-hint">Tối đa 5 bước. Hết bước trước mới thử bước sau.</span>
+            </div>
+            <div class="chat-chain" id="chat-chain"></div>
+            <datalist id="chat-chain-models"></datalist>
+            <div class="chat-actions">
+              <p class="usage-note" id="chat-chain-note">Chưa đọc được thứ tự dự phòng.</p>
+              <div class="chat-buttons">
+                <button class="btn-ghost" id="chat-chain-add" type="button" disabled>Thêm bước</button>
+                <button class="btn-primary" id="chat-chain-save" type="button" data-label="Lưu thứ tự" disabled>
+                  <span>Lưu thứ tự</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Câu lệnh hệ thống -->
+          <div class="chat-block">
+            <div class="chat-block-head">
+              <h3 class="chat-block-title">Câu lệnh hệ thống</h3>
+              <span class="chat-block-desc">Áp dụng cho mọi câu trả lời của trợ lý.</span>
+            </div>
+            <label class="chat-field" for="chat-prompt">
+              <textarea
+                class="flag-input chat-prompt"
+                id="chat-prompt"
+                rows="6"
+                maxlength="4000"
+                spellcheck="false"
+                disabled
+              ></textarea>
+              <span class="flag-hint"><span id="chat-prompt-count">0</span>/4000 ký tự. Không được để trống.</span>
+            </label>
+            <div class="chat-actions">
+              <p class="usage-note" id="chat-prompt-note">Chưa đọc được câu lệnh hệ thống.</p>
+              <div class="chat-buttons">
+                <button class="btn-primary" id="chat-prompt-save" type="button" data-label="Lưu câu lệnh" disabled>
+                  <span>Lưu câu lệnh</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nhà cung cấp -->
+          <div class="chat-block">
+            <div class="chat-block-head">
+              <h3 class="chat-block-title">Nhà cung cấp</h3>
+              <span class="chat-block-desc">Dùng khi model Cloudflare lỗi hoặc hết hạn mức. Key đã lưu chỉ hiện dạng che.</span>
+            </div>
+            <div class="chat-providers" id="chat-providers"></div>
+
+            <div class="chat-provider-form" id="chat-provider-form">
+              <div class="chat-grid">
+                <label class="chat-field" for="chat-provider-id">
+                  <span class="flag-name">Mã nhà cung cấp</span>
+                  <input
+                    class="flag-input"
+                    id="chat-provider-id"
+                    type="text"
+                    maxlength="40"
+                    placeholder="Ví dụ: groq-1"
+                    autocomplete="off"
+                    spellcheck="false"
+                    disabled
+                  />
+                  <span class="flag-hint">Chữ, số, gạch ngang. Không đổi được sau khi lưu.</span>
+                </label>
+                <label class="chat-field" for="chat-provider-type">
+                  <span class="flag-name">Loại</span>
+                  <select class="flag-input" id="chat-provider-type" disabled></select>
+                  <span class="flag-hint">Chọn loại để tự điền địa chỉ gốc.</span>
+                </label>
+                <label class="chat-field" for="chat-provider-label">
+                  <span class="flag-name">Tên hiện trên bảng</span>
+                  <input
+                    class="flag-input"
+                    id="chat-provider-label"
+                    type="text"
+                    maxlength="60"
+                    placeholder="Ví dụ: Groq chính"
+                    autocomplete="off"
+                    disabled
+                  />
+                </label>
+                <label class="chat-field" for="chat-provider-url">
+                  <span class="flag-name">Địa chỉ gốc (https)</span>
+                  <input
+                    class="flag-input"
+                    id="chat-provider-url"
+                    type="url"
+                    maxlength="200"
+                    placeholder="https://api.example.com/v1"
+                    autocomplete="off"
+                    spellcheck="false"
+                    disabled
+                  />
+                </label>
+                <label class="chat-field chat-span-2" for="chat-provider-key">
+                  <span class="flag-name">API key</span>
+                  <input
+                    class="flag-input"
+                    id="chat-provider-key"
+                    type="password"
+                    maxlength="500"
+                    placeholder="Dán key của hãng"
+                    autocomplete="new-password"
+                    spellcheck="false"
+                    disabled
+                  />
+                  <span class="flag-hint" id="chat-provider-key-hint">Key chỉ gửi lên máy chủ, không lưu trong trình duyệt.</span>
+                </label>
+              </div>
+              <p class="chat-test" id="chat-provider-check-result" hidden></p>
+              <div class="chat-actions">
+                <p class="usage-note" id="chat-provider-note">Chưa đọc được danh sách nhà cung cấp.</p>
+                <div class="chat-buttons">
+                  <button class="btn-ghost" id="chat-provider-check" type="button" disabled>Kiểm tra key</button>
+                  <button class="btn-ghost" id="chat-provider-reset" type="button" disabled>Nhập lại</button>
+                  <button class="btn-ghost" id="chat-provider-apply" type="button" disabled>Thêm vào danh sách</button>
+                  <button class="btn-primary" id="chat-provider-save" type="button" data-label="Lưu nhà cung cấp" disabled>
+                    <span>Lưu nhà cung cấp</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Main Panel: Nhật ký lỗi & dịch vụ -->
       <div class="section-layout">
         <!-- Lỗi & dự phòng -->
