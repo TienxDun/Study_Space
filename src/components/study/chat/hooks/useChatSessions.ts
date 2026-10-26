@@ -26,7 +26,7 @@ import {
 interface SessionsArgs {
   user: { uid: string } | null;
   open: boolean;
-  setNotice: (msg: string) => void;
+  notify: (msg: string) => void;
 }
 
 function extractTimestamp(val: unknown): number | undefined {
@@ -45,7 +45,7 @@ function extractTimestamp(val: unknown): number | undefined {
 
 // Quản lý phiên trò chuyện: nghe document cha, dò phiên, tạo/chuyển/xóa đoạn.
 // activeSid null = chưa có phiên nào, câu gửi đầu sẽ tạo.
-export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
+export function useChatSessions({ user, open, notify }: SessionsArgs) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSid, setActiveSid] = useState<string | null>(null);
   const [resolved, setResolved] = useState(false);
@@ -220,7 +220,7 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
       if (prevTitle !== undefined) {
         setSessions((prev) => prev.map((s) => (s.id === sid ? { ...s, title: prevTitle } : s)));
       }
-      setNotice("Không thể đổi tên đoạn chat, bạn thử lại nhé.");
+      notify("Không thể đổi tên đoạn chat, bạn thử lại nhé.");
       return false;
     } finally {
       finishAction();
@@ -265,7 +265,7 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
       );
       setSessionsLoaded(true);
     } catch {
-      setNotice("Mạng chập chờn, bạn thử lại nhé.");
+      notify("Mạng chập chờn, bạn thử lại nhé.");
     } finally {
       setDrawerLoading(false);
     }
@@ -274,20 +274,20 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
   // Tạo phiên mới: đưa về trạng thái phiên mới (activeSid = null), câu hỏi đầu mới ghi DB để không sinh rác.
   const createSession = (hasMessages: boolean, busy: boolean, onSwitched: () => void) => {
     if (!user) {
-      setNotice("Bạn hãy đăng nhập để bắt đầu trò chuyện nhé!");
+      notify("Bạn hãy đăng nhập để bắt đầu trò chuyện nhé!");
       return;
     }
     if (busy) {
-      setNotice("Trợ lý đang trả lời câu hỏi, bạn đợi một lát nhé.");
+      notify("Trợ lý đang trả lời câu hỏi, bạn đợi một lát nhé.");
       return;
     }
     if (pendingActionRef.current) {
-      setNotice("Đang xử lý thao tác trước, bạn đợi một lát nhé.");
+      notify("Đang xử lý thao tác trước, bạn đợi một lát nhé.");
       return;
     }
     // Nếu người dùng ĐÃ đang ở phiên mới tinh và chưa có tin nhắn nào
     if (activeSid === null && !hasMessages) {
-      setNotice("Bạn đang ở đoạn chat mới rồi, hãy gửi câu hỏi nhé!");
+      notify("Bạn đang ở đoạn chat mới rồi, hãy gửi câu hỏi nhé!");
       setDrawerOpen(false);
       return;
     }
@@ -317,7 +317,7 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
       return;
     }
     if (busy) {
-      setNotice("Trợ lý đang trả lời câu hỏi, bạn đợi một lát nhé.");
+      notify("Trợ lý đang trả lời câu hỏi, bạn đợi một lát nhé.");
       setDrawerOpen(false);
       return;
     }
@@ -346,7 +346,7 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
   const deleteSession = async (sid: string, busy: boolean, onDeletedActive: () => void) => {
     if (!user) return;
     if (busy) {
-      setNotice("Trợ lý đang trả lời câu hỏi, bạn đợi một lát nhé.");
+      notify("Trợ lý đang trả lời câu hỏi, bạn đợi một lát nhé.");
       return;
     }
     if (!startAction("delete", sid)) return;
@@ -371,7 +371,7 @@ export function useChatSessions({ user, open, setNotice }: SessionsArgs) {
       }
     } catch (e) {
       const code = (e as { code?: string } | null)?.code;
-      setNotice(
+      notify(
         code === "permission-denied"
           ? "Chưa mở quyền xóa, báo admin cập nhật Rules nhé."
           : "Mạng chập chờn, bạn thử lại nhé."

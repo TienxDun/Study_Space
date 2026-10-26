@@ -8,6 +8,7 @@ import { firebaseConfigured } from "@/lib/firebase-config";
 import { useChatSessions } from "./hooks/useChatSessions";
 import { useChatMessages } from "./hooks/useChatMessages";
 import { useImageAttachments } from "./hooks/useImageAttachments";
+import { notifyChat } from "./utils/chatNotice";
 import { ChatFab } from "./components/ChatFab";
 import { ChatHeader } from "./components/ChatHeader";
 import { SessionDrawer } from "./components/SessionDrawer";
@@ -50,8 +51,7 @@ export function StudyChatWidget({
   );
 
   const [input, setInput] = useState("");
-  const [notice, setNotice] = useState("");
-  const attachmentsApi = useImageAttachments(setNotice);
+  const attachmentsApi = useImageAttachments(notifyChat);
   // Nhớ hội thoại: tắt mặc định cho rẻ token, bật thì gửi kèm 10 tin gần nhất.
   const [remember, setRemember] = useState(false);
   // Mở rộng kích thước khung chat để đọc câu trả lời dài thuận tiện hơn.
@@ -69,13 +69,6 @@ export function StudyChatWidget({
     }
   }, [user]);
 
-  // Tự động ẩn thông báo sau 3.5 giây để không làm phiền mắt người dùng
-  useEffect(() => {
-    if (!notice) return;
-    const timer = setTimeout(() => setNotice(""), 3500);
-    return () => clearTimeout(timer);
-  }, [notice]);
-
   const toggleRemember = () => {
     setRemember((v) => {
       const next = !v;
@@ -88,7 +81,7 @@ export function StudyChatWidget({
     });
   };
 
-  const sessionsApi = useChatSessions({ user, open, setNotice });
+  const sessionsApi = useChatSessions({ user, open, notify: notifyChat });
   const {
     sessions,
     activeSid,
@@ -111,7 +104,6 @@ export function StudyChatWidget({
     ensureSession: sessionsApi.ensureSession,
     noteFirstMessage: sessionsApi.noteFirstMessage,
     inputRef,
-    setNotice,
     getToken,
   });
   const { sending, regenerating } = messagesApi;
@@ -134,12 +126,14 @@ export function StudyChatWidget({
     };
   }, [open ]);
 
-  const send = () => {
+  const send = async () => {
     const text = input;
     const files = attachmentsApi.items;
     setInput("");
     attachmentsApi.clear();
-    messagesApi.sendWithText(text, files);
+    const ok = await messagesApi.sendWithText(text, files);
+    // Gửi hỏng thì trả lại chữ đã gõ để người dùng không phải viết lại.
+    if (!ok && text) setInput((cur) => cur || text);
   };
 
   const fillInput = (text: string) => {
@@ -160,7 +154,7 @@ export function StudyChatWidget({
 
       if (!user) {
         setInput(text);
-        setNotice("Vui lòng đăng nhập Google để hỏi Trợ lý học tập nhé!");
+        notifyChat("Vui lòng đăng nhập Google để hỏi Trợ lý học tập nhé!");
         return;
       }
 

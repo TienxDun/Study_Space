@@ -14,6 +14,7 @@ import { firebaseConfigured } from "@/lib/firebase-config";
 import { useChatSessions } from "../../chat/hooks/useChatSessions";
 import { useChatMessages } from "../../chat/hooks/useChatMessages";
 import { useImageAttachments } from "../../chat/hooks/useImageAttachments";
+import { notifyChat } from "../../chat/utils/chatNotice";
 import { SessionDrawer } from "../../chat/components/SessionDrawer";
 import { MessageList } from "../../chat/components/MessageList";
 import { ChatInput } from "../../chat/components/ChatInput";
@@ -33,8 +34,7 @@ export function MobileChatSheet({
 }: MobileChatSheetProps) {
   const { user, loading, redirectError, signIn, getToken } = useAuth();
   const [input, setInput] = useState("");
-  const [notice, setNotice] = useState("");
-  const attachmentsApi = useImageAttachments(setNotice);
+  const attachmentsApi = useImageAttachments(notifyChat);
 
   // Nhớ hội thoại
   const [remember, setRemember] = useState(false);
@@ -47,12 +47,6 @@ export function MobileChatSheet({
     } catch {}
   }, [user]);
 
-  useEffect(() => {
-    if (!notice) return;
-    const timer = setTimeout(() => setNotice(""), 3500);
-    return () => clearTimeout(timer);
-  }, [notice]);
-
   const toggleRemember = () => {
     setRemember((v) => {
       const next = !v;
@@ -63,7 +57,7 @@ export function MobileChatSheet({
     });
   };
 
-  const sessionsApi = useChatSessions({ user, open: isOpen, setNotice });
+  const sessionsApi = useChatSessions({ user, open: isOpen, notify: notifyChat });
   const {
     sessions,
     activeSid,
@@ -85,7 +79,6 @@ export function MobileChatSheet({
     ensureSession: sessionsApi.ensureSession,
     noteFirstMessage: sessionsApi.noteFirstMessage,
     inputRef,
-    setNotice,
     getToken,
   });
   const { sending, regenerating } = messagesApi;
@@ -96,12 +89,14 @@ export function MobileChatSheet({
     [sessionsApi.setDrawerOpen]
   );
 
-  const send = () => {
+  const send = async () => {
     const text = input;
     const files = attachmentsApi.items;
     setInput("");
     attachmentsApi.clear();
-    messagesApi.sendWithText(text, files);
+    const ok = await messagesApi.sendWithText(text, files);
+    // Gửi hỏng thì trả lại chữ đã gõ để người dùng không phải viết lại.
+    if (!ok && text) setInput((cur) => cur || text);
   };
 
   const fillInput = (text: string) => {
@@ -119,7 +114,7 @@ export function MobileChatSheet({
 
       if (!user) {
         setInput(text);
-        setNotice("Vui lòng đăng nhập Google để hỏi Trợ lý học tập nhé!");
+        notifyChat("Vui lòng đăng nhập Google để hỏi Trợ lý học tập nhé!");
         return;
       }
 
@@ -237,13 +232,6 @@ export function MobileChatSheet({
       }
     >
       <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden text-white select-none">
-        {/* Thông báo dạng pill nổi phía trên */}
-        {notice && (
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 w-max max-w-[calc(100%-1.5rem)] px-3.5 py-1.5 rounded-2xl bg-neutral-900/95 border border-white/20 text-xs text-white text-center break-words leading-snug shadow-xl pointer-events-none animate-in fade-in zoom-in-95 duration-150">
-            {notice}
-          </div>
-        )}
-
         {/* Khung lịch sử phiên chat chiếm toàn bộ view khi mở */}
         {drawerOpen && user && (
           <SessionDrawer

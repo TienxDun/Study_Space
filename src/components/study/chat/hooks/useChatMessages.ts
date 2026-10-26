@@ -17,6 +17,7 @@ import {
 import { firebaseConfigured, getFirebaseDb } from "@/lib/firebase";
 import { PAGE_SIZE, type Msg } from "../types";
 import { callChatApi, type ChatHistoryItem } from "../utils/chatApi";
+import { clearChatNotice, notifyChat } from "../utils/chatNotice";
 import type { ImageAttachment } from "./useImageAttachments";
 import type { MsgAttachment } from "../types";
 import { loadCache, saveCache, clearCache } from "../utils/chatCache";
@@ -31,7 +32,6 @@ interface MessagesArgs {
   ensureSession: () => Promise<string | null>;
   noteFirstMessage: (sid: string, text: string) => Promise<void>;
   inputRef: RefObject<HTMLInputElement | HTMLTextAreaElement | null>;
-  setNotice: (msg: string) => void;
   getToken: () => Promise<string | null>;
 }
 
@@ -45,7 +45,6 @@ export function useChatMessages({
   ensureSession,
   noteFirstMessage,
   inputRef,
-  setNotice,
   getToken,
 }: MessagesArgs) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -175,7 +174,7 @@ export function useChatMessages({
         console.warn("Firestore onSnapshot error:", err);
         setLoading(false);
         if ((err as { code?: string })?.code === "permission-denied") {
-          setNotice("Chưa mở quyền đọc tin nhắn, báo admin cập nhật Rules nhé.");
+          notifyChat("Chưa mở quyền đọc tin nhắn, báo admin cập nhật Rules nhé.");
         } else {
           // Fallback nếu orderBy thất bại (ví dụ missing single index)
           void getDocs(query(col, limit(PAGE_SIZE)))
@@ -193,7 +192,7 @@ export function useChatMessages({
         }
       }
     );
-  }, [open, user, activeSid, setNotice]);
+  }, [open, user, activeSid]);
 
   // Mở khung thì dính đáy lại.
   useEffect(() => {
@@ -265,7 +264,7 @@ export function useChatMessages({
       setCopiedId(id);
       setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 1500);
     } catch {
-      setNotice("Không sao chép được, bạn thử lại nhé.");
+      notifyChat("Không sao chép được, bạn thử lại nhé.");
     }
   };
 
@@ -299,7 +298,7 @@ export function useChatMessages({
       ...(a.kind === "image" && a.thumb ? { thumb: a.thumb } : {}),
       ...(a.kind === "image" && a.dataUrl ? { originalUrl: a.dataUrl } : {}),
     }));
-    if ((!text && meta.length === 0) || sending || regenerating || !user) return;
+    if ((!text && meta.length === 0) || sending || regenerating || !user) return false;
 
     // 1. Hiện câu hỏi ngay lập tức trên UI (Optimistic UI - không đợi bất kỳ lệnh await nào)
     pendingSeqRef.current += 1;
@@ -312,7 +311,7 @@ export function useChatMessages({
     };
     setMsgs((prev) => [...prev, newPendingMsg]);
     setSending(true);
-    setNotice("");
+    clearChatNotice();
     stickRef.current = true;
     setIsAtBottom(true);
     setPanelNewCount(0);
@@ -324,18 +323,18 @@ export function useChatMessages({
     const sid = await ensureSession().catch(() => null);
     if (!sid) {
       dropPending();
-      setNotice("Mạng chập chờn, bạn thử lại nhé.");
+      notifyChat("Mạng chập chờn, bạn thử lại nhé.");
       setSending(false);
-      return;
+      return false;
     }
 
     // 3. Gọi API AI
     const res = await callChatApi(getToken, text, recentHistory(), extras);
     if (!res.ok) {
       dropPending();
-      setNotice(res.notice);
+      notifyChat(res.notice);
       setSending(false);
-      return;
+      return false;
     }
     try {
       // Lưu 2 tin + preview: 3 lần ghi/câu (R2.2).
@@ -355,9 +354,11 @@ export function useChatMessages({
         { merge: true }
       );
       await noteFirstMessage(sid, text || "Câu hỏi kèm ảnh/file");
+      return true;
     } catch {
       dropPending();
-      setNotice("Mạng chập chờn, bạn thử lại nhé.");
+      notifyChat("Mạng chập chờn, bạn thử lại nhé.");
+      return false;
     } finally {
       setSending(false);
     }
@@ -370,13 +371,13 @@ export function useChatMessages({
     const lastAsst = rev.find((m) => m.role === "assistant");
     if (!activeSid || !lastUser || !lastAsst || sending || regenerating || !user) return;
     setRegenerating(true);
-    setNotice("");
+    clearChatNotice();
     stickRef.current = true;
     setIsAtBottom(true);
     setPanelNewCount(0);
     const res = await callChatApi(getToken, lastUser.text, recentHistory());
     if (!res.ok) {
-      setNotice(res.notice);
+      notifyChat(res.notice);
       setRegenerating(false);
       return;
     }
@@ -394,7 +395,7 @@ export function useChatMessages({
       );
     } catch (e) {
       const code = (e as { code?: string } | null)?.code;
-      setNotice(
+      notifyChat(
         code === "permission-denied"
           ? "Chưa mở quyền sửa tin nhắn, báo admin cập nhật Rules nhé."
           : "Mạng chập chờn, bạn thử lại nhé."
