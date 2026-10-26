@@ -452,6 +452,28 @@ a {
   color: var(--text-muted);
 }
 
+.panel-footer {
+  padding: 12px 24px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-nested);
+  display: flex;
+  align-items: center;
+}
+
+.panel-footer .usage-note {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+#errors-card.is-degraded {
+  border-color: rgba(251, 113, 133, 0.4);
+}
+
+#errors-card.is-degraded .usage-note {
+  color: var(--rose-400);
+}
+
 /* ================= WORKER SERVICES TABLE ================= */
 .services-table {
   width: 100%;
@@ -760,6 +782,9 @@ a {
     align-items: flex-start;
     gap: 4px;
     padding: 16px 20px;
+  }
+  .panel-footer {
+    padding: 12px 20px;
   }
   .panel-title-group {
     flex-direction: column;
