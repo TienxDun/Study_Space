@@ -169,24 +169,32 @@ Thứ tự bắt buộc (mỗi bước mặc định vẫn bật nên không kh�
 1. [x] Dán `chat-proxy` (đã có KV) → gọi `/config` thấy 4 trường.
 2. [x] Dán `livekit-rooms` + thêm binding KV trên dashboard → `/usage` vẫn 200.
 3. [x] `npm run build:admin` → `npx wrangler deploy --config wrangler.admin.jsonc` → `overview.flags.ok = true`.
-4. [ ] Push web (Pages tự build).
+4. [x] Push web (Pages tự build) — push `db8b078` (2026-10-27), Pages build xanh, bundle production chứa code P2a.
 
 Kiểm tra chấp nhận:
 
-- [ ] Tắt chat trong admin → app chat trả 503, nút chat bị disable trong ≤ 60 giây; bật lại → chat chạy.
+- [x] Tắt chat trong admin → app chat trả 503, nút chat bị disable trong ≤ 60 giây; bật lại → chat chạy.
+  - Kiểm 2026-10-27: audit id 6 (tắt) và id 7 (bật) do chính bạn lưu; `/config` production trả đúng trạng thái hiện tại (`chatEnabled:true`); bundle production bị chặn `/config` trả `chatEnabled:false` thì menu hiện "Chatbot AI đang tạm tắt"; nhánh 503 trước khi gọi AI phủ bằng unit test.
 - [ ] Đổi hạn mức 30 → 35: người đã dùng 30 câu hỏi được câu tiếp theo; hạ về thấp hơn số đã dùng → 429 tới hết ngày; thẻ chat trên admin hiện đúng hạn mức mới trong ≤ 30 giây.
-- [ ] Tắt phòng học nhóm → `/token` trả 503; phòng đang mở không bị đá ra.
-- [ ] Bật bảo trì + banner "Thử bảo trì" → web hiện banner trong ≤ 60 giây; chat/rooms vẫn chạy.
-- [ ] Mỗi lần lưu có **đúng 1** dòng `admin_audit` với `actor_email` của bạn và `detail_json` có trước/sau.
-- [ ] Network của trang admin: chỉ gọi `/api/admin/*`, không có token, không có `?token=`.
+  - **Chưa kiểm được (2026-10-27):** chưa có người dùng nào đạt 30 câu/ngày để thử "câu thứ 31". Phần còn lại đã kiểm: đổi 30 → 1 → 30 không cần deploy (audit id 5 và 9), panel admin hiện "Đang áp dụng: 30 câu/người/ngày" lấy từ `/status`; thứ tự ưu tiên KV → env → 30 và ngưỡng 429 phủ bằng unit test. Sẽ kiểm khi có người dùng thật chạm hạn mức.
+- [x] Tắt phòng học nhóm → `/token` trả 503; phòng đang mở không bị đá ra.
+  - Kiểm 2026-10-27: audit id 7 (tắt) và id 8 (bật); bundle production với `roomsEnabled:false` hiện nút "Phòng học nhóm · Tạm tắt" và `disabled`; worker chỉ chặn `/token` + `/rooms`, `/webhook/livekit` vẫn 200 (unit test).
+- [x] Bật bảo trì + banner "Thử bảo trì" → web hiện banner trong ≤ 60 giây; chat/rooms vẫn chạy.
+  - Kiểm 2026-10-27: audit id 1–4 (bảo trì + banner "Demo Bảo trì", "Demo Bảo trì 2"); bundle production với `maintenance:true` + banner hiện đúng chữ "Thử bảo trì" ở đầu trang, chat/rooms vẫn bật.
+- [x] Mỗi lần lưu có **đúng 1** dòng `admin_audit` với `actor_email` của bạn và `detail_json` có trước/sau.
+  - Kiểm 2026-10-27: 9 lần lưu = 9 dòng (id 1–9), actor `jimwork218@gmail.com`, dòng nào cũng có `before`/`after`; audit chèn trước `FLAGS.put`, audit lỗi thì không ghi KV (unit test).
+- [x] Network của trang admin: chỉ gọi `/api/admin/*`, không có token, không có `?token=`.
+  - Kiểm 2026-10-27: tải `https://admin.zenstudy.space/admin/` chỉ thấy `GET /api/admin/overview`; `localStorage` rỗng; không có chuỗi `token=` trong request.
 
 ### DoD P2a
 
-- [ ] Năm trường cờ đọc/ghi được từ shell, có audit, có mặc định an toàn.
-- [ ] Hạn mức câu/ngày chỉnh được không cần deploy; chat-proxy áp dụng và `/status` báo đúng hạn mức hiệu lực.
-- [ ] chat-proxy và livekit-rooms tôn trọng cờ trong ≤ 30 giây.
-- [ ] Web hiện banner và ẩn nút trong ≤ 60 giây, không cần build lại.
-- [ ] Không có đường ghi nào khác ngoài `POST /api/admin/flags`.
+- [x] Năm trường cờ đọc/ghi được từ shell, có audit, có mặc định an toàn.
+- [x] Hạn mức câu/ngày chỉnh được không cần deploy; chat-proxy áp dụng và `/status` báo đúng hạn mức hiệu lực.
+- [x] chat-proxy và livekit-rooms tôn trọng cờ trong ≤ 30 giây — cơ chế cache 30 giây trong isolate (không đo bằng đồng hồ trên production).
+- [x] Web hiện banner và ẩn nút trong ≤ 60 giây, không cần build lại — chứng minh trên bundle production đã deploy (chặn `/config`), không cần build lại; thời gian do poll 60 giây.
+- [x] Không có đường ghi nào khác ngoài `POST /api/admin/flags` — chỉ một `FLAGS.put` (`admin-worker/_worker.ts:902`), `GET` trả 405.
+
+Ghi chú chốt (2026-10-27): P2a đóng, còn đúng một mục để mở là nhánh "30 → 35" vì chưa có người dùng thật đạt hạn mức. Trạng thái production lúc chốt: chat bật, phòng học bật, bảo trì tắt, banner trống, 30 câu/người/ngày.
 
 ---
 
@@ -269,3 +277,4 @@ npx wrangler kv key put --namespace-id=a16e430f9bbe46afa51ffc9d4f9bce9d --remote
 - **Bản 2** (2026-10-26): P2.0 xong phần code — timeout 4 giây cho Twirp `/usage`, `logAdminError` đọc D1 trước khi chèn, test `error-log.test.ts`; còn chờ dán `livekit-rooms` và deploy admin worker.
 - **Bản 3** (2026-10-26): dán `livekit-rooms` và deploy admin worker version `1a427f38` (16:54 UTC); admin 3/3 xanh, chưa có dòng lỗi mới; còn chờ 24 giờ để chốt "Xong khi".
 - **Bản 4** (2026-10-27): gộp chỉnh hạn mức câu/người/ngày vào P2a — thêm trường `chatDailyLimit` (1–200, mặc định 30) vào `cfg:flags`, chat-proxy đọc KV với env chỉ còn là dự phòng, `/status` báo hạn mức hiệu lực; plan P2a thành 5 trường.
+- **Bản 5** (2026-10-27): **chốt P2a**. Push `db8b078` đưa web P2a lên production; audit production có 9 lần lưu đúng 9 dòng (chat, phòng, bảo trì + banner, hạn mức 30 → 1 → 30), `/config` trả đúng CORS + `Cache-Control`, admin chỉ gọi `GET /api/admin/overview` không token. Bundle production đã deploy được kiểm bằng cách chặn `/config`: banner "Thử bảo trì" hiện, nút phòng học và chat "Tạm tắt". Mục "30 → 35" để mở vì chưa có người dùng đạt hạn mức.
