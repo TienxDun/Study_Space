@@ -1,6 +1,6 @@
 # P1 — Nhìn thấy hệ thống (kế hoạch triển khai)
 
-Trạng thái: kế hoạch, chưa triển khai. Bản 1 — 2026-10-26.
+Trạng thái: P1a đã deploy; P1b xong code + test (chờ deploy để xác minh); P1c sẵn sàng thực thi. Bản 3 — 2026-10-26.
 Thuộc P1 của `docs/features/ADMIN_CONSOLE_PLAN.md`. P0 đã đóng, runbook ở `docs/archive/ADMIN_P0_PLAN.md`.
 
 Mục tiêu: mở `admin.zenstudy.space/admin/` là thấy hệ thống khỏe hay ốm, đang dùng bao nhiêu, có lỗi gì, kho nội dung ra sao. Mọi số lấy từ worker, không chép tay vào UI; trình duyệt không giữ token.
@@ -81,7 +81,18 @@ Trình duyệt chỉ gọi đường dẫn tương đối `/api/admin/overview`;
 }
 ```
 
-- P1b thêm `errors`; P1c thêm `r2`.
+- P1b thêm `errors`:
+
+```json
+"errors": {
+  "ok": true,
+  "items": [
+    { "id": 1, "source": "chat-proxy", "code": "all_busy", "message": "…", "createdAt": 1761450000000 }
+  ]
+}
+```
+
+- P1c thêm `r2`.
 - Mỗi khối có `ok`; nguồn lỗi trả `{ "ok": false, "error": "ma_loi" }`, không trả stack trace hay URL nội bộ.
 - `degraded = true` nếu có khối `ok: false`. Endpoint vẫn trả **200** để trang tải được; chỉ Access sai mới trả 401.
 - Dùng `Promise.allSettled`, timeout 3 giây cho mỗi lần gọi worker. Không để một worker chết làm hỏng cả snapshot.
@@ -166,43 +177,69 @@ admin-host/
 5. Ngắt một worker (hoặc xóa một URL env) → khối tương ứng đỏ, trang vẫn 200.
 6. DevTools → Network: không có `ADMIN_TOKEN`, không có `?token=`.
 
-## P1b — Lỗi & fallback
+## P1b — Lỗi & fallback (xong code 2026-10-26)
+
+Mục tiêu: khi chat-proxy hết đường dự phòng, hoặc admin worker không đọc được D1, có một dòng log để mở trang là thấy thay vì đoán.
 
 ### B1. Bảng D1
 
-Thêm vào `workers/schema.sql` và chạy trong D1 `zenspace`:
+Thêm vào `workers/schema.sql` **và** dán riêng block này vào D1 `zenspace` → Console:
 
 ```sql
 CREATE TABLE IF NOT EXISTS admin_error_log (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  source TEXT NOT NULL,
-  severity TEXT NOT NULL,
-  code TEXT,
-  message TEXT NOT NULL,
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  source     TEXT NOT NULL,
+  code       TEXT NOT NULL,
+  message    TEXT NOT NULL,
   created_at INTEGER NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_admin_error_log_created
-  ON admin_error_log (created_at);
+CREATE INDEX IF NOT EXISTS idx_admin_error_log_created ON admin_error_log (created_at);
+
+-- Nợ của A1, chưa nằm trong schema.sql:
+CREATE INDEX IF NOT EXISTS idx_chat_usage_day_count ON chat_usage (day, count DESC);
 ```
+
+Không dán cả `workers/schema.sql` vào DB đang chạy: file đó là script cài mới, đầu file có `DROP TABLE`.
+
+`created_at` là mili giây (`Date.now()`), giống `admin_audit`. Không có cột `severity`: mọi dòng đều là lỗi; thêm khi có mức cảnh báo thật.
 
 ### B2. Ghi log
 
-- chat-proxy: ghi khi fallback thất bại, chỉ các mã cuối (`provider_bad_key`, `all_busy`, `fallback_failed`). Không ghi `chat_auth` (bot spam).
-- admin worker: ghi lỗi cấu hình/binding/D1 khi overview không dựng được. Không ghi lặp lại lỗi health mỗi 30 giây.
-- `message` cắt tối đa 200 ký tự; không chứa câu hỏi, uid, email, key hay body thô từ provider.
-- Nếu bảng chưa có hoặc D1 lỗi: bỏ qua, không làm hỏng request chính.
+**chat-proxy** (`workers/chat-proxy/worker.js`):
+
+- Ba nhánh cuối thêm field `code`, giữ nguyên text trả người dùng: `worker.js:977` → `provider_bad_key`, `:983` → `all_busy`, `:989` → `fallback_failed`.
+- Ghi log khi vào đúng ba nhánh đó. `message` lấy từ bảng tĩnh theo `code`; **không** dùng `r.error` hay `mem.lastError` (hai chỗ đó chứa body provider).
+- Không ghi 401 ở `/chat` (bot spam).
+- Ghi bằng `ctx.waitUntil` để không chặn câu trả lời, nên phải thêm `ctx` vào chữ ký `fetch(req, env, ctx)`. Chưa gắn `DB` hoặc insert lỗi: bỏ qua.
+
+**Admin worker** (`admin-worker/_worker.ts`):
+
+- Ghi khi `chat`, `sync` hoặc `errors` có `ok: false`; **không** ghi `health` (trang tự refresh 30 giây).
+- Giới hạn: Map trong isolate theo khóa `<source>:<code>`, cùng khóa chỉ ghi tối đa 1 dòng/giờ.
+- Bỏ `logAudit` (`_worker.ts:233`) cùng file test `src/__tests__/unit/admin/audit.test.ts` — không chỗ nào gọi helper này; giữ bảng `admin_audit` cho sau này.
 
 ### B3. Đọc và dọn
 
-- `GET /api/admin/overview` thêm `errors`: 20 bản ghi gần nhất, sắp theo `created_at DESC`.
-- Mỗi lần ghi/đọc: `DELETE FROM admin_error_log WHERE created_at < ?` với mốc 14 ngày.
-- UI thêm khối Lỗi & fallback; bảng gọn, có thời gian, nguồn, mã lỗi.
+- `GET /api/admin/overview` thêm khối `errors` theo hình dạng ở phần Hợp đồng API.
+- 20 dòng mới nhất, `ORDER BY created_at DESC`. Bảng rỗng: `ok: true, items: []`.
+- Bảng chưa tạo hoặc D1 lỗi: `{ "ok": false, "error": "d1_error" }`, trang vẫn 200.
+- `errors.ok: false` cũng bật `degraded = true` (cập nhật `_worker.ts:479`).
+- Dọn bản ghi quá 14 ngày **chỉ khi ghi log mới**, tối đa 1 lần/giờ; không dọn trong đường đọc (trang tự refresh 30 giây).
 
-### B4. Deploy và kiểm tra
+### B4. UI
 
-- Gây một lỗi fallback → log xuất hiện sau reload và sau một lần deploy.
-- Chỉ còn 20 dòng gần nhất; bản ghi quá 14 ngày bị xóa.
-- Tắt D1 hoặc xóa bảng → khối lỗi báo không khả dụng, trang vẫn 200.
+- Thêm khối Lỗi & fallback vào `admin-host/index.html`, hàm `renderErrors` trong `admin-host/admin.js` theo pattern `renderRows` (`admin.js:167`): thời gian, nguồn, mã lỗi.
+- Bảng gọn; `message` cắt 200 ký tự.
+
+### B5. Deploy và kiểm tra
+
+- Dán lại `chat-proxy` trên dashboard (đã có binding `DB`); `npm run build:admin`; `npx wrangler deploy --config wrangler.admin.jsonc`.
+- Gây một lỗi fallback → có dòng log sau reload và sau một lần deploy.
+- Chỉ còn 20 dòng gần nhất; dòng quá 14 ngày bị xóa ở lần ghi kế tiếp.
+- Xóa bảng hoặc tắt D1 → khối lỗi đỏ (`errors.ok: false`), trang vẫn 200.
+- Kiểm tra DB: `message` không chứa câu hỏi, uid, email, key hay body provider.
+
+Trạng thái 2026-10-26: code, unit test, `tsc`, `lint`, `npm test` sạch. Các bước deploy và kiểm tra ở trên chưa chạy trên bản thật.
 
 ## P1c — Nội dung
 
@@ -216,22 +253,35 @@ Thêm vào `wrangler.admin.jsonc`:
 ]
 ```
 
-Binding phải nằm trong config; thêm tay trên dashboard sẽ bị xóa ở lần deploy sau.
+Binding phải nằm trong config; `keep_vars` không giữ binding, thêm tay trên dashboard sẽ bị xóa ở lần deploy sau.
+
+Local: `wrangler dev` tự tạo bucket rỗng trong `.wrangler/state`, thấy 0 object là đúng, không phải lỗi.
 
 ### C2. Đọc dung lượng và số object
 
-- Thêm type R2 vào `AdminEnv`.
-- `env.R2.list({ limit: 1000, cursor })`, lặp đến khi `truncated === false`.
-- Cộng `size` của từng object; đếm số object.
-- Cache kết quả 60 giây trong RAM isolate để tránh list lại mỗi 30 giây.
-- Lỗi R2 → `r2.ok = false`, trang vẫn 200.
+- Repo không có `@cloudflare/workers-types`, nên khai type tối giản `R2BucketLike` (giống `D1DatabaseLike`) và thêm `R2?: R2BucketLike` vào `AdminEnv`.
+- `list({ limit: 1000, cursor })`, lặp đến `truncated === false`. Dừng cứng ở **30 trang** (≈30.000 object) và trả `partial: true` nếu chạm trần, tránh treo request.
+- Cộng `size`, đếm object; trả `{ ok: true, bytes, objects, partial }`.
+- Thiếu binding → `{ ok: false, error: "missing_binding" }`; list lỗi → `{ ok: false, error: "r2_error" }` (khớp bộ mã sẵn có).
+- Cache **cả thành công lẫn lỗi** 60 giây trong RAM isolate (trang tự refresh 30 giây); thêm `__resetR2Cache()` cho test.
+- `r2.ok: false` bật `degraded` (giống P1b) và ghi `logAdminError(env, "r2", code)`; thêm nhãn `r2: "Kho nội dung"` vào `ERROR_SOURCE_LABELS` để dùng lại throttle 1 giờ.
 - Chưa so manifest, chưa báo mồ côi/thiếu.
+- Chi phí: mỗi lần list đầy đủ tốn `ceil(số object / 1000)` thao tác Class A. Với ~5.000 object, cache 60 giây, mở trang 8 tiếng ≈ 2.400 thao tác/ngày, dưới hạn miễn phí 1 triệu/tháng.
 
-### C3. UI và kiểm tra
+### C3. UI
 
-- Thêm khối Nội dung: tổng dung lượng, số object, trạng thái R2.
-- So số object/dung lượng với dashboard R2.
+- Thêm card thứ 4 vào `usage-grid` ("Kho nội dung"): dung lượng đã dùng / 10 GiB, meter, số object, ghi chú "Tính cả tệp cảnh và âm thanh trên R2."
+- `usage-grid` dùng `auto-fit`, không phải sửa CSS.
+- Thêm `R2_LIMIT_BYTES = 10 * 1024 ** 3`; `R2_LIMIT_LABEL` suy ra từ đó và trả thêm `limits.r2Bytes` để JS tính phần trăm, không hardcode 10 GiB ở client.
+- Nhãn "Kho tệp" trong `limits-strip` vẫn là hạn mức gói; số dùng thật chỉ nằm trong card mới.
+- Lỗi → card đỏ, ghi chú "Không đọc được kho nội dung: …"; chạm trần 30 trang → ghi chú "Số liệu có thể chưa đủ".
+
+### C4. Test và kiểm tra
+
+- Unit: R2 giả 2 trang (1.500 object) → đúng tổng bytes và số object; thiếu binding → `missing_binding`; list ném lỗi → `r2_error` + `degraded`; gọi overview 2 lần → `list` chỉ chạy 1 lần (cache 60 giây).
+- Local: `npm run build:admin` → `wrangler dev` → card hiện 0 B / 0 object.
 - `npx wrangler deploy --dry-run --config wrangler.admin.jsonc` phải thấy `env.R2 (study-space)`.
+- Deploy xong: so số object và dung lượng với dashboard R2. Dashboard có thể hiển thị GB thập phân còn Worker tính byte nhị phân (GiB) — lệch nhỏ là bình thường, lệch lớn mới là lỗi.
 
 ## Chạy local
 
@@ -242,14 +292,15 @@ Binding phải nằm trong config; thêm tay trên dashboard sẽ bị xóa ở 
 
 ## Definition of Done
 
-- [ ] P1a: `/api/admin/overview` trả đúng `health`, `chat`, `sync`, `livekit`, `limits`; số chat khớp D1.
+- [x] P1a: `/api/admin/overview` trả đúng `health`, `chat`, `sync`, `livekit`, `limits`; số chat khớp D1.
 - [ ] P1a: ngắt một worker → khối tương ứng đỏ, trang vẫn 200.
-- [ ] P1a: `docs/guides/SYSTEM_LIMITS.md` sinh từ `hit-limits.ts`.
-- [ ] P1b: log lỗi sống qua reload và một lần deploy; UI hiện 20 lỗi gần nhất; dọn sau 14 ngày.
+- [x] P1a: `docs/guides/SYSTEM_LIMITS.md` sinh từ `hit-limits.ts`.
+- [x] P1b: log lỗi sống qua reload và một lần deploy; UI hiện 20 lỗi gần nhất; dọn sau 14 ngày. (code + unit test; xác minh bản deploy theo B5)
+- [x] P1b: xóa bảng `admin_error_log` hoặc tắt D1 → khối lỗi đỏ, trang vẫn 200; `message` trong DB không có PII. (code + unit test)
 - [ ] P1c: tổng dung lượng và số object khớp R2; R2 lỗi không làm hỏng trang.
 - [ ] Không có `ADMIN_TOKEN`, `?token=`, `chat-admin-token` trong Response, Network hay localStorage.
 - [ ] `zenstudy.space/admin/` và `/dev/studio/` vẫn 404.
-- [ ] `npm run lint`, `npx tsc --noEmit`, `npm test` sạch.
+- [x] `npm run lint`, `npx tsc --noEmit`, `npm test` sạch.
 - [ ] `npm run build:admin` và `npx wrangler deploy --dry-run --config wrangler.admin.jsonc` thấy đúng binding.
 
 ## Rollback
@@ -282,3 +333,5 @@ Binding phải nằm trong config; thêm tay trên dashboard sẽ bị xóa ở 
 ## Lịch sử bản
 
 - **Bản 1** (2026-10-26): tách P1 khỏi plan tổng; chốt shell tĩnh, P1a/P1b/P1c, D1 chat-proxy không backfill, log lỗi D1 dọn khi đọc, R2 chỉ dung lượng/số object.
+- **Bản 2** (2026-10-26): đánh dấu P1a xong; viết lại P1b sau duyệt — thêm `code` cho 3 nhánh cuối chat-proxy (mã cũ chưa tồn tại), ghi bằng `ctx.waitUntil`, admin worker chỉ log `chat`/`sync`/`errors` với throttle 1 dòng/giờ, dọn log chỉ khi ghi, bỏ cột `severity` và helper `logAudit` chết, `errors.ok: false` bật `degraded`, block SQL rời thay vì dán cả `schema.sql`.
+- **Bản 3** (2026-10-26): đóng P1b (code + test, chờ xác minh deploy); duyệt lại P1c — thêm type tối giản vì repo không có `workers-types`, trần 30 trang + `partial`, cache cả lỗi, mã `missing_binding`/`r2_error`, `r2.ok: false` bật `degraded` và ghi vào `admin_error_log`, `R2_LIMIT_BYTES` thay vì hardcode nhãn, card thứ 4 dùng `auto-fit` không sửa CSS.

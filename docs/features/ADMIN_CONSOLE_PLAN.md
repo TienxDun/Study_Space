@@ -1,6 +1,6 @@
 # Kế Hoạch Mở Rộng Admin Console
 
-Trạng thái: P0 đã xong 2026-10-25; P1 chưa triển khai. Bản 8 — 2026-10-26.
+Trạng thái: P0 đã xong 2026-10-25; P1a đã xong, P1b xong code (chờ xác minh deploy), P1c sẵn sàng. Bản 8 — 2026-10-26.
 Đã chốt: admin chạy trên Cloudflare Workers + Static Assets sau Cloudflare Access. GitHub Actions đã bỏ; web chính deploy bằng Cloudflare Pages.
 
 Chi tiết từng mục viết khi bắt tay làm. P0 đã đóng, runbook ở `docs/archive/ADMIN_P0_PLAN.md`. P1 có kế hoạch riêng ở `docs/features/ADMIN_P1_PLAN.md`. Lịch sử thay đổi ở cuối file.
@@ -58,7 +58,7 @@ Biên bản triển khai và kiểm tra đầy đủ ở `docs/archive/ADMIN_P0_
 3. **Worker làm cổng duy nhất — xong.** `wrangler.admin.jsonc` khai `main` → `admin-worker/_worker.ts`, `assets` → `./dist-admin`, `keep_vars: true`, binding `DB` → D1 `zenspace`. `verifyAccessJwt` kiểm `Cf-Access-Jwt-Assertion` (RS256; `aud`/`iss`/`exp`; cache certs 1 giờ) cho mọi `/api/admin/*`, fail closed; path khác đi qua `env.ASSETS.fetch()`. Env Production: `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`, `ADMIN_TOKEN` (Secret), `CHAT_PROXY_URL`, `DATA_API_URL`, `LIVEKIT_URL`. `GET /api/admin/ping` gọi 3 worker song song, timeout 3 giây, trả 200 kèm `checks[].ok` và `Cache-Control: no-store`; không trả token hay URL nội bộ. Local dùng `wrangler dev` + `ENVIRONMENT=development`, chỉ bỏ Access khi host là localhost; Production không đặt biến này.
    - **Còn nợ:** trang chat local `/admin/chat` vẫn lưu `chat-admin-token` trong localStorage và gọi `/usage` bằng `?token=`. Trang này không publish nên không lộ ra ngoài; dọn khi làm lại chat admin ở P2.
 4. **Dọn tab — xong.** Đã xóa `/admin/toasts`; Studio cảnh chuyển sang `/dev/studio` (tracked nhưng bị strip khỏi bản web); `/admin/scenes` trả 404. Sinh `docs/guides/SYSTEM_LIMITS.md` cùng `scripts/gen-limits-docs.mjs` chuyển sang P1.
-5. **Audit — xong phần nền.** Bảng `admin_audit` + index trong `workers/schema.sql`, đã chạy trên D1 `zenspace`; helper `logAudit()` dùng `env.DB`, thiếu binding hoặc D1 lỗi thì trả `false` để caller chặn hành động. Chưa có endpoint ghi vì P0 chưa có hành động ghi; endpoint đầu tiên làm cùng hành động ghi đầu tiên ở P2.
+5. **Audit — xong phần nền.** Bảng `admin_audit` + index trong `workers/schema.sql`, đã chạy trên D1 `zenspace`. Helper `logAudit()` đã bỏ ở P1b vì chưa có endpoint ghi nào gọi; dựng lại cùng hành động ghi đầu tiên ở P2.
 6. **Test cổng — xong.** `src/__tests__/unit/admin/` gồm `access-jwt.test.ts` (thiếu header, hết hạn, sai `aud`/`iss`/chữ ký, `alg: none`, kid lạ, certs lỗi, cache, `aud` dạng mảng), `admin-worker.test.ts` (routing, 401, ping, thiếu env, backend lỗi, 405/404, không lộ token) và `audit.test.ts`. `npm run lint`, `npx tsc --noEmit`, `npm test` sạch; `wrangler deploy --dry-run` thấy `env.DB (zenspace)`.
 
 Bài học đã ghim vào config: một lần push `main` bật lại route `workers.dev` và xóa binding `DB` thêm tay trên dashboard. Vì vậy `workers_dev`/`preview_urls` phải nằm trong config, và mọi binding phải khai trong `wrangler.admin.jsonc` — `keep_vars` chỉ giữ biến Text.
