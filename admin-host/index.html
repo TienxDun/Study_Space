@@ -161,7 +161,7 @@
         <div class="usage-heading">
           <div>
             <h2 class="usage-title" id="usage-title">Sử dụng &amp; giới hạn</h2>
-            <p class="usage-desc">Các số dưới đây tự động cập nhật mỗi 30 giây.</p>
+            <p class="usage-desc">Các số dưới đây tự động cập nhật.</p>
           </div>
           <span class="usage-source">Tự động tổng hợp</span>
         </div>
@@ -217,6 +217,23 @@
             </dl>
             <p class="usage-note" id="livekit-note">Tháng tính theo giờ quốc tế (UTC).</p>
           </article>
+
+          <article class="usage-card" id="r2-card">
+            <div class="usage-card-head">
+              <span class="usage-label">Kho tệp</span>
+              <span class="usage-tag">Tính đến hiện tại</span>
+            </div>
+            <div class="usage-main">
+              <span id="r2-used">--</span>
+              <span class="usage-unit">/ <span id="r2-limit">--</span></span>
+            </div>
+            <div class="usage-meter" aria-hidden="true"><span id="r2-meter" style="width: 0%"></span></div>
+            <dl class="usage-facts">
+              <div><dt>Số tệp</dt><dd id="r2-objects">--</dd></div>
+              <div><dt>Trạng thái</dt><dd id="r2-state">Đang đọc…</dd></div>
+            </dl>
+            <p class="usage-note" id="r2-note">Tính cả tệp cảnh và âm thanh trên R2. Cập nhật tối đa mỗi 60 giây.</p>
+          </article>
         </div>
 
         <div class="limits-strip">
@@ -229,37 +246,40 @@
         </div>
       </section>
 
-      <!-- Lỗi & dự phòng -->
-      <section class="panel-card" id="errors-card" aria-labelledby="errors-title">
-        <div class="panel-header">
-          <div class="panel-title-group">
-            <h2 class="panel-title" id="errors-title">Lỗi &amp; dự phòng gần đây</h2>
-            <span class="panel-desc">20 lỗi mới nhất, tự xóa sau 14 ngày</span>
-          </div>
-        </div>
-        <table class="services-table">
-          <thead>
-            <tr>
-              <th>Thời gian</th>
-              <th>Nguồn</th>
-              <th>Mã lỗi</th>
-              <th>Ghi chú</th>
-            </tr>
-          </thead>
-          <tbody id="error-rows">
-            <tr><td colspan="4">Chưa có lỗi nào.</td></tr>
-          </tbody>
-        </table>
-        <p class="usage-note" id="errors-note">Không có lỗi nào trong 14 ngày gần đây.</p>
-      </section>
-
-      <!-- Main Panel: Dịch vụ thành phần -->
+      <!-- Main Panel: Nhật ký lỗi & dịch vụ -->
       <div class="section-layout">
+        <!-- Lỗi & dự phòng -->
+        <section class="panel-card" id="errors-card" aria-labelledby="errors-title">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <h2 class="panel-title" id="errors-title">Lỗi &amp; dự phòng gần đây</h2>
+              <span class="panel-desc">20 lỗi mới nhất, tự xóa sau 14 ngày</span>
+            </div>
+          </div>
+          <table class="services-table">
+            <thead>
+              <tr>
+                <th>Thời gian</th>
+                <th>Nguồn</th>
+                <th>Mã lỗi</th>
+                <th>Ghi chú</th>
+              </tr>
+            </thead>
+            <tbody id="error-rows">
+              <tr><td colspan="4">Chưa có lỗi nào.</td></tr>
+            </tbody>
+          </table>
+          <div class="panel-footer">
+            <p class="usage-note" id="errors-note">Không có lỗi nào trong 14 ngày gần đây.</p>
+          </div>
+        </section>
+
+        <!-- Dịch vụ thành phần -->
         <section class="panel-card">
           <div class="panel-header">
             <div class="panel-title-group">
               <h2 class="panel-title">Các dịch vụ đang chạy</h2>
-              <span class="panel-desc">Thời gian phản hồi của từng dịch vụ <span class="desc-extra">(tối đa 3 giây)</span></span>
+              <span class="panel-desc">Thời gian phản hồi của từng dịch vụ <span class="desc-extra">(tối đa 10 giây)</span></span>
             </div>
           </div>
 

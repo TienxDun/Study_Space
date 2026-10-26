@@ -1,6 +1,6 @@
 # P1 — Nhìn thấy hệ thống (kế hoạch triển khai)
 
-Trạng thái: P1a đã deploy; P1b xong code + test (chờ deploy để xác minh); P1c sẵn sàng thực thi. Bản 3 — 2026-10-26.
+Trạng thái: P1a đã deploy; P1b xong code + test (chờ deploy để xác minh); P1c xong code + test (chờ deploy để xác minh). Bản 5 — 2026-10-26.
 Thuộc P1 của `docs/features/ADMIN_CONSOLE_PLAN.md`. P0 đã đóng, runbook ở `docs/archive/ADMIN_P0_PLAN.md`.
 
 Mục tiêu: mở `admin.zenstudy.space/admin/` là thấy hệ thống khỏe hay ốm, đang dùng bao nhiêu, có lỗi gì, kho nội dung ra sao. Mọi số lấy từ worker, không chép tay vào UI; trình duyệt không giữ token.
@@ -76,7 +76,8 @@ Trình duyệt chỉ gọi đường dẫn tương đối `/api/admin/overview`;
   "limits": {
     "chatDaily": 30,
     "snapshotMaxBytes": 2000000,
-    "r2": "10 GiB"
+    "r2": "10 GB",
+    "r2Bytes": 10000000000
   }
 }
 ```
@@ -92,10 +93,20 @@ Trình duyệt chỉ gọi đường dẫn tương đối `/api/admin/overview`;
 }
 ```
 
-- P1c thêm `r2`.
-- Mỗi khối có `ok`; nguồn lỗi trả `{ "ok": false, "error": "ma_loi" }`, không trả stack trace hay URL nội bộ.
-- `degraded = true` nếu có khối `ok: false`. Endpoint vẫn trả **200** để trang tải được; chỉ Access sai mới trả 401.
-- Dùng `Promise.allSettled`, timeout 3 giây cho mỗi lần gọi worker. Không để một worker chết làm hỏng cả snapshot.
+- P1c thêm `r2`:
+
+```json
+"r2": {
+  "ok": true,
+  "bytes": 487851634,
+  "objects": 121,
+  "partial": false
+}
+```
+
+- Mỗi khối có `ok`; nguồn lỗi trả `{ "ok": false, "error": "ma_loi" }`, không trả stack trace, object key hay URL nội bộ.
+- `degraded = true` nếu có khối `ok: false`. Endpoint vẫn trả **200** để trang tải được; chỉ Access sai mới trả 401. `r2.partial: true` vẫn là `ok: true`, không bật `degraded`.
+- Dùng `Promise.allSettled`, timeout 10 giây cho mỗi lần gọi worker (khớp `PROBE_TIMEOUT_MS` và nhãn "tối đa 10 giây" trên UI). Không để một worker chết làm hỏng cả snapshot. Gọi R2 là binding, không có `AbortSignal`; trần 30 trang ở P1c là giới hạn thời gian.
 - `Cache-Control: no-store`.
 
 ## P1a — Sức khỏe + Sử dụng & hạn mức
@@ -139,7 +150,7 @@ FROM user_data;
 ```
 
 - LiveKit: gọi `/usage` bằng Bearer, lấy `month`, `usedMinutes`, `limitMinutes`, `roomsOpen`, `participants`.
-- `limits`: lấy từ `/status` và `/usage`; chỉ để hằng số gói (2 MB snapshot = 2.000.000 byte theo data-api, 10 GiB R2) trong Worker và gắn nhãn "tham chiếu".
+- `limits`: lấy từ `/status` và `/usage`; chỉ để hằng số gói (2 MB snapshot = 2.000.000 byte theo data-api, 10 GB R2) trong Worker và gắn nhãn "tham chiếu".
 - Ngày chat dùng `America/Los_Angeles` giống `pacificDay()`; tháng LiveKit là UTC (`monthKeyUtc()`). UI phải ghi rõ nhãn.
 
 ### A3. Shell mới
@@ -223,12 +234,12 @@ Không dán cả `workers/schema.sql` vào DB đang chạy: file đó là script
 - `GET /api/admin/overview` thêm khối `errors` theo hình dạng ở phần Hợp đồng API.
 - 20 dòng mới nhất, `ORDER BY created_at DESC`. Bảng rỗng: `ok: true, items: []`.
 - Bảng chưa tạo hoặc D1 lỗi: `{ "ok": false, "error": "d1_error" }`, trang vẫn 200.
-- `errors.ok: false` cũng bật `degraded = true` (cập nhật `_worker.ts:479`).
+- `errors.ok: false` cũng bật `degraded = true` (trong `buildOverview`).
 - Dọn bản ghi quá 14 ngày **chỉ khi ghi log mới**, tối đa 1 lần/giờ; không dọn trong đường đọc (trang tự refresh 30 giây).
 
 ### B4. UI
 
-- Thêm khối Lỗi & fallback vào `admin-host/index.html`, hàm `renderErrors` trong `admin-host/admin.js` theo pattern `renderRows` (`admin.js:167`): thời gian, nguồn, mã lỗi.
+- Thêm khối Lỗi & fallback vào `admin-host/index.html`, hàm `renderErrors` trong `admin-host/admin.js` theo pattern `renderRows`: thời gian, nguồn, mã lỗi.
 - Bảng gọn; `message` cắt 200 ký tự.
 
 ### B5. Deploy và kiểm tra
@@ -241,7 +252,7 @@ Không dán cả `workers/schema.sql` vào DB đang chạy: file đó là script
 
 Trạng thái 2026-10-26: code, unit test, `tsc`, `lint`, `npm test` sạch. Các bước deploy và kiểm tra ở trên chưa chạy trên bản thật.
 
-## P1c — Nội dung
+## P1c — Nội dung (xong code 2026-10-26)
 
 ### C1. R2 binding
 
@@ -253,35 +264,42 @@ Thêm vào `wrangler.admin.jsonc`:
 ]
 ```
 
-Binding phải nằm trong config; `keep_vars` không giữ binding, thêm tay trên dashboard sẽ bị xóa ở lần deploy sau.
+Binding phải nằm trong config; `keep_vars` không giữ binding, thêm tay trên dashboard sẽ bị xóa ở lần deploy sau. Bucket `study-space` đã tồn tại trong tài khoản (kiểm tra bằng `wrangler r2 bucket list` ngày 2026-10-26), nên deploy sẽ không vướng lỗi bucket không tồn tại.
 
 Local: `wrangler dev` tự tạo bucket rỗng trong `.wrangler/state`, thấy 0 object là đúng, không phải lỗi.
 
 ### C2. Đọc dung lượng và số object
 
 - Repo không có `@cloudflare/workers-types`, nên khai type tối giản `R2BucketLike` (giống `D1DatabaseLike`) và thêm `R2?: R2BucketLike` vào `AdminEnv`.
-- `list({ limit: 1000, cursor })`, lặp đến `truncated === false`. Dừng cứng ở **30 trang** (≈30.000 object) và trả `partial: true` nếu chạm trần, tránh treo request.
-- Cộng `size`, đếm object; trả `{ ok: true, bytes, objects, partial }`.
+- `list({ limit: 1000, cursor })`, lặp đến `truncated === false`. Dừng cứng ở **30 trang** (≈30.000 object) và trả `partial: true` nếu chạm trần, tránh treo request. `truncated: true` mà không có `cursor` cũng dừng, không lặp vô hạn.
+- Cộng `size`, đếm object; trả `{ ok: true, bytes, objects, partial }`. Không trả key hay cursor xuống client.
 - Thiếu binding → `{ ok: false, error: "missing_binding" }`; list lỗi → `{ ok: false, error: "r2_error" }` (khớp bộ mã sẵn có).
-- Cache **cả thành công lẫn lỗi** 60 giây trong RAM isolate (trang tự refresh 30 giây); thêm `__resetR2Cache()` cho test.
-- `r2.ok: false` bật `degraded` (giống P1b) và ghi `logAdminError(env, "r2", code)`; thêm nhãn `r2: "Kho nội dung"` vào `ERROR_SOURCE_LABELS` để dùng lại throttle 1 giờ.
+- Cache **cả thành công lẫn lỗi** 60 giây trong RAM isolate (trang tự refresh 30 giây); thêm `__resetR2Cache()` cho test và gọi nó trong `beforeEach` của `admin-worker.test.ts`.
+- `r2.ok: false` bật `degraded` (giống P1b) và ghi `logAdminError(env, "r2", code)`; thêm nhãn `r2: "Kho tệp"` vào `ERROR_SOURCE_LABELS` để dùng lại throttle 1 giờ. `partial: true` không bật `degraded`.
 - Chưa so manifest, chưa báo mồ côi/thiếu.
-- Chi phí: mỗi lần list đầy đủ tốn `ceil(số object / 1000)` thao tác Class A. Với ~5.000 object, cache 60 giây, mở trang 8 tiếng ≈ 2.400 thao tác/ngày, dưới hạn miễn phí 1 triệu/tháng.
+- Dung lượng chuẩn: hạn mức miễn phí của Cloudflare và `docs/guides/SYSTEM_LIMITS.md` ghi **10 GB** (thập phân), nên dùng `R2_LIMIT_BYTES = 10 * 1000 ** 3` và suy ra nhãn `"10 GB"`, thay cho `"10 GiB"` đang có ở P1a. Cập nhật test `limits` hiện tại theo giá trị mới.
+- Baseline đo ngày 2026-10-26 bằng S3 `ListObjectsV2`: **121 object, 487.851.634 byte** (một trang list). Trần 30 trang rất xa thực tế; với cache 60 giây, mở trang 8 tiếng ≈ 480 thao tác Class A/ngày, không đáng kể so với 1 triệu/tháng.
 
 ### C3. UI
 
-- Thêm card thứ 4 vào `usage-grid` ("Kho nội dung"): dung lượng đã dùng / 10 GiB, meter, số object, ghi chú "Tính cả tệp cảnh và âm thanh trên R2."
+- Thêm card thứ 4 vào `usage-grid`, tên **"Kho tệp"** (thống nhất với nhãn trong `limits-strip`): dung lượng đã dùng / 10 GB lấy từ `limits.r2`, meter, số object, ghi chú "Tính cả tệp cảnh và âm thanh trên R2."
 - `usage-grid` dùng `auto-fit`, không phải sửa CSS.
-- Thêm `R2_LIMIT_BYTES = 10 * 1024 ** 3`; `R2_LIMIT_LABEL` suy ra từ đó và trả thêm `limits.r2Bytes` để JS tính phần trăm, không hardcode 10 GiB ở client.
+- Thêm `R2_LIMIT_BYTES = 10 * 1000 ** 3` trong worker; `R2_LIMIT_LABEL` suy ra từ đó và trả thêm `limits.r2Bytes` để JS tính phần trăm, không hardcode hạn mức ở client.
+- `formatBytes` hiện chỉ lên tới MB; thêm nhánh GB/TB để số dùng lớn hơn 1 GB không hiện "1024.00 MB".
+- Thêm `missing_binding` và `r2_error` vào `ERROR_LABELS`, thêm `r2: "Kho tệp"` vào `SOURCE_LABELS` (bảng lỗi); thiếu hai chỗ này UI sẽ hiện mã thô.
 - Nhãn "Kho tệp" trong `limits-strip` vẫn là hạn mức gói; số dùng thật chỉ nằm trong card mới.
-- Lỗi → card đỏ, ghi chú "Không đọc được kho nội dung: …"; chạm trần 30 trang → ghi chú "Số liệu có thể chưa đủ".
+- Lỗi → card đỏ, ghi chú "Không đọc được kho tệp: …"; chạm trần 30 trang → card vẫn xanh nhưng ghi chú "Số liệu có thể chưa đủ".
+- R2 cache 60 giây trong khi trang refresh 30 giây: đổi `usage-desc` thành "Các số dưới đây tự động cập nhật." và thêm vào ghi chú card "Cập nhật tối đa mỗi 60 giây."
 
 ### C4. Test và kiểm tra
 
 - Unit: R2 giả 2 trang (1.500 object) → đúng tổng bytes và số object; thiếu binding → `missing_binding`; list ném lỗi → `r2_error` + `degraded`; gọi overview 2 lần → `list` chỉ chạy 1 lần (cache 60 giây).
+- Test cũ phải sửa theo: thêm R2 giả vào env của các ca đang kỳ vọng `degraded: false`, thêm `r2Bytes` vào kỳ vọng `limits`, gọi `__resetR2Cache()` trong `beforeEach`.
 - Local: `npm run build:admin` → `wrangler dev` → card hiện 0 B / 0 object.
 - `npx wrangler deploy --dry-run --config wrangler.admin.jsonc` phải thấy `env.R2 (study-space)`.
-- Deploy xong: so số object và dung lượng với dashboard R2. Dashboard có thể hiển thị GB thập phân còn Worker tính byte nhị phân (GiB) — lệch nhỏ là bình thường, lệch lớn mới là lỗi.
+- Deploy xong: so số object và dung lượng với dashboard R2. Baseline 2026-10-26 là **121 object / 487.851.634 byte**. Dashboard hiển thị GB thập phân, Worker trả byte; lệch đơn vị nhỏ là bình thường, lệch số object hoặc lệch byte quá vài % mới là lỗi (metadata có thể tính khác).
+
+Trạng thái 2026-10-26: code, 5 unit test mới, `tsc`, `lint`, `npm test` (393 test) và `build:admin` sạch; `wrangler deploy --dry-run` thấy `env.R2 (study-space)`; local `wrangler dev` hiện card 0 B / 0 tệp, không lỗi console. Các bước deploy và đối chiếu R2 thật chưa chạy.
 
 ## Chạy local
 
@@ -297,11 +315,11 @@ Local: `wrangler dev` tự tạo bucket rỗng trong `.wrangler/state`, thấy 0
 - [x] P1a: `docs/guides/SYSTEM_LIMITS.md` sinh từ `hit-limits.ts`.
 - [x] P1b: log lỗi sống qua reload và một lần deploy; UI hiện 20 lỗi gần nhất; dọn sau 14 ngày. (code + unit test; xác minh bản deploy theo B5)
 - [x] P1b: xóa bảng `admin_error_log` hoặc tắt D1 → khối lỗi đỏ, trang vẫn 200; `message` trong DB không có PII. (code + unit test)
-- [ ] P1c: tổng dung lượng và số object khớp R2; R2 lỗi không làm hỏng trang.
+- [ ] P1c: tổng dung lượng và số object khớp R2; R2 lỗi không làm hỏng trang. (code + unit test; xác minh bản deploy theo C4)
 - [ ] Không có `ADMIN_TOKEN`, `?token=`, `chat-admin-token` trong Response, Network hay localStorage.
 - [ ] `zenstudy.space/admin/` và `/dev/studio/` vẫn 404.
 - [x] `npm run lint`, `npx tsc --noEmit`, `npm test` sạch.
-- [ ] `npm run build:admin` và `npx wrangler deploy --dry-run --config wrangler.admin.jsonc` thấy đúng binding.
+- [x] `npm run build:admin` và `npx wrangler deploy --dry-run --config wrangler.admin.jsonc` thấy đúng binding.
 
 ## Rollback
 
@@ -335,3 +353,5 @@ Local: `wrangler dev` tự tạo bucket rỗng trong `.wrangler/state`, thấy 0
 - **Bản 1** (2026-10-26): tách P1 khỏi plan tổng; chốt shell tĩnh, P1a/P1b/P1c, D1 chat-proxy không backfill, log lỗi D1 dọn khi đọc, R2 chỉ dung lượng/số object.
 - **Bản 2** (2026-10-26): đánh dấu P1a xong; viết lại P1b sau duyệt — thêm `code` cho 3 nhánh cuối chat-proxy (mã cũ chưa tồn tại), ghi bằng `ctx.waitUntil`, admin worker chỉ log `chat`/`sync`/`errors` với throttle 1 dòng/giờ, dọn log chỉ khi ghi, bỏ cột `severity` và helper `logAudit` chết, `errors.ok: false` bật `degraded`, block SQL rời thay vì dán cả `schema.sql`.
 - **Bản 3** (2026-10-26): đóng P1b (code + test, chờ xác minh deploy); duyệt lại P1c — thêm type tối giản vì repo không có `workers-types`, trần 30 trang + `partial`, cache cả lỗi, mã `missing_binding`/`r2_error`, `r2.ok: false` bật `degraded` và ghi vào `admin_error_log`, `R2_LIMIT_BYTES` thay vì hardcode nhãn, card thứ 4 dùng `auto-fit` không sửa CSS.
+- **Bản 4** (2026-10-26): duyệt P1c để thực thi — đo baseline R2 121 object / 487.851.634 byte và xác nhận bucket tồn tại; đổi hạn mức sang 10 GB thập phân cho khớp Cloudflare/`SYSTEM_LIMITS.md`; bổ sung UI còn thiếu (nhãn lỗi, nhãn nguồn, `formatBytes` GB/TB, ghi chú cache 60 giây); ghi rõ cập nhật test cũ + `beforeEach`; đồng bộ timeout 10 giây và bỏ tham chiếu dòng code đã trôi.
+- **Bản 5** (2026-10-26): P1c xong code + test — binding `R2`, khối `r2` có cache 60 giây, card "Kho tệp"; dry-run thấy `env.R2`, local hiện 0 B / 0 tệp; chờ deploy đối chiếu R2 thật.

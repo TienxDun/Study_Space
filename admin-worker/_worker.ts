@@ -3,8 +3,10 @@
  *
  * - `/api/admin/*`: xác thực Cloudflare Access JWT rồi mới xử lý.
  * - `GET /api/admin/ping`: sức khỏe 3 worker.
- * - `GET /api/admin/overview`: snapshot sức khỏe + sử dụng (P1a) + nhật ký lỗi (P1b).
+ * - `GET /api/admin/overview`: snapshot sức khỏe + sử dụng (P1a) + nhật ký lỗi (P1b) + kho R2 (P1c).
  * - Mọi path khác: trả static asset trong `dist-admin/` qua binding `ASSETS`.
+ *
+ * Binding: `DB` → D1, `R2` → bucket study-space (khai trong `wrangler.admin.jsonc`).
  *
  * Biến môi trường (chỉ Production, không đặt ở Preview):
  *   ACCESS_TEAM_DOMAIN  Text   https://<team>.cloudflareaccess.com
@@ -22,11 +24,16 @@
 const API_PREFIX = "/api/admin";
 const CERT_TTL_MS = 60 * 60 * 1000;
 const CLOCK_SKEW_SEC = 60;
-const PROBE_TIMEOUT_MS = 3000;
+const PROBE_TIMEOUT_MS = 10_000;
 const LOCAL_DEV_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 const DEFAULT_CHAT_DAILY = 30;
 const SNAPSHOT_MAX_BYTES = 2_000_000;
-const R2_LIMIT_LABEL = "10 GiB";
+// Cloudflare tính hạn mức R2 theo GB thập phân (10 GB), không phải GiB.
+const R2_LIMIT_BYTES = 10 * 1000 ** 3;
+const R2_LIMIT_LABEL = `${R2_LIMIT_BYTES / 1000 ** 3} GB`;
+const R2_LIST_PAGE = 1000;
+const R2_LIST_MAX_PAGES = 30;
+const R2_CACHE_TTL_MS = 60 * 1000;
 // P1b: nhật ký lỗi D1 (bảng admin_error_log).
 const ERROR_ROWS_LIMIT = 20;
 const ERROR_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
@@ -44,6 +51,21 @@ interface D1DatabaseLike {
   prepare(query: string): D1Statement;
 }
 
+interface R2ObjectLike {
+  key?: string;
+  size?: number;
+}
+
+interface R2ListPage {
+  objects?: R2ObjectLike[];
+  truncated?: boolean;
+  cursor?: string;
+}
+
+interface R2BucketLike {
+  list(options?: { limit?: number; cursor?: string }): Promise<R2ListPage>;
+}
+
 export interface AdminEnv {
   ACCESS_TEAM_DOMAIN?: string;
   ACCESS_AUD?: string;
@@ -54,6 +76,7 @@ export interface AdminEnv {
   ENVIRONMENT?: string;
   ASSETS?: { fetch(request: Request): Promise<Response> };
   DB?: D1DatabaseLike;
+  R2?: R2BucketLike;
 }
 
 export type VerifyResult =
@@ -230,6 +253,7 @@ const ERROR_SOURCE_LABELS: Record<string, string> = {
   sync: "Số liệu đồng bộ",
   livekit: "Số liệu phòng học nhóm",
   errors: "Nhật ký lỗi",
+  r2: "Kho tệp",
 };
 
 const errorLogThrottle = new Map<string, number>();
@@ -454,6 +478,58 @@ async function readSyncUsage(
   }
 }
 
+type R2Usage =
+  | { ok: true; bytes: number; objects: number; partial: boolean }
+  | { ok: false; error: string };
+
+let r2Cache: { at: number; value: R2Usage } | null = null;
+
+/** Test dùng để xóa cache dung lượng R2 giữa các ca. */
+export function __resetR2Cache(): void {
+  r2Cache = null;
+}
+
+/**
+ * Tổng dung lượng và số object trong bucket. Trang tự làm mới 30 giây nhưng
+ * list R2 tốn Class A, nên cache 60 giây cho cả kết quả lỗi.
+ */
+async function readR2Usage(env: AdminEnv): Promise<R2Usage> {
+  const now = Date.now();
+  if (r2Cache && now - r2Cache.at < R2_CACHE_TTL_MS) return r2Cache.value;
+
+  let result: R2Usage;
+  if (!env.R2) {
+    result = { ok: false, error: "missing_binding" };
+  } else {
+    let bytes = 0;
+    let objects = 0;
+    let cursor: string | undefined;
+    let partial = false;
+    try {
+      for (let page = 1; ; page += 1) {
+        const res = await env.R2.list({ limit: R2_LIST_PAGE, cursor });
+        for (const object of res?.objects || []) {
+          bytes += Number(object?.size) || 0;
+          objects += 1;
+        }
+        if (!res?.truncated) break;
+        // Tránh treo request nếu bucket quá lớn hoặc cursor rỗng.
+        if (!res.cursor || page >= R2_LIST_MAX_PAGES) {
+          partial = true;
+          break;
+        }
+        cursor = res.cursor;
+      }
+      result = { ok: true, bytes, objects, partial };
+    } catch {
+      result = { ok: false, error: "r2_error" };
+    }
+  }
+
+  r2Cache = { at: now, value: result };
+  return result;
+}
+
 async function buildOverview(env: AdminEnv, email: string) {
   const day = pacificDay();
   const token = String(env.ADMIN_TOKEN || "").trim();
@@ -462,7 +538,7 @@ async function buildOverview(env: AdminEnv, email: string) {
   const livekitUrl = trimUrl(env.LIVEKIT_URL);
   const probes = pingProbes(env);
 
-  const [probeResults, chatStatus, livekitUsage, chatUsage, syncUsage, errorsRead] =
+  const [probeResults, chatStatus, livekitUsage, chatUsage, syncUsage, errorsRead, r2] =
     await Promise.all([
       Promise.allSettled(probes.map((probe) => probeCheck(probe))),
       chatUrl
@@ -477,6 +553,7 @@ async function buildOverview(env: AdminEnv, email: string) {
       readChatUsage(env, day),
       readSyncUsage(env),
       readErrors(env),
+      readR2Usage(env),
     ]);
 
   const checks: CheckResult[] = probeResults.map((result, index) =>
@@ -532,6 +609,7 @@ async function buildOverview(env: AdminEnv, email: string) {
     chatDaily: dailyLimit,
     snapshotMaxBytes: SNAPSHOT_MAX_BYTES,
     r2: R2_LIMIT_LABEL,
+    r2Bytes: R2_LIMIT_BYTES,
   };
 
   const degraded =
@@ -539,7 +617,8 @@ async function buildOverview(env: AdminEnv, email: string) {
     chat.ok !== true ||
     sync.ok !== true ||
     livekit.ok !== true ||
-    errors.ok !== true;
+    errors.ok !== true ||
+    r2.ok !== true;
 
   // Ghi lỗi cấu hình/D1 để mở trang là thấy, không ghi health (trang tự làm mới 30 giây).
   await Promise.all([
@@ -547,6 +626,7 @@ async function buildOverview(env: AdminEnv, email: string) {
     sync.ok === true ? null : logAdminError(env, "sync", String(sync.error)),
     livekit.ok === true ? null : logAdminError(env, "livekit", String(livekit.error)),
     errors.ok === true ? null : logAdminError(env, "errors", String(errors.error)),
+    r2.ok === true ? null : logAdminError(env, "r2", String(r2.error)),
   ]);
 
   return {
@@ -558,6 +638,7 @@ async function buildOverview(env: AdminEnv, email: string) {
     sync,
     livekit,
     errors,
+    r2,
     limits,
   };
 }

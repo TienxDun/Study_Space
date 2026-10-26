@@ -114,7 +114,23 @@
     if (typeof val !== "number" || !isFinite(val) || val < 0) return "--";
     if (val < 1024) return val + " B";
     if (val < 1024 * 1024) return (val / 1024).toFixed(1) + " KB";
-    return (val / (1024 * 1024)).toFixed(2) + " MB";
+    if (val < 1024 * 1024 * 1024) return (val / (1024 * 1024)).toFixed(2) + " MB";
+    if (val < 1024 ** 4) return (val / 1024 ** 3).toFixed(2) + " GB";
+    return (val / 1024 ** 4).toFixed(2) + " TB";
+  }
+
+  // R2 dashboard dùng GB thập phân; card kho tệp theo cùng đơn vị để dễ đối chiếu.
+  function formatDecimalBytes(val) {
+    if (typeof val !== "number" || !isFinite(val) || val < 0) return "--";
+    if (val < 1000) return val + " B";
+    var units = ["KB", "MB", "GB", "TB"];
+    var value = val;
+    var index = -1;
+    do {
+      value /= 1000;
+      index += 1;
+    } while (value >= 1000 && index < units.length - 1);
+    return value.toFixed(2) + " " + units[index];
   }
 
   function setWidth(id, ratio) {
@@ -138,6 +154,8 @@
     d1_error: "Cơ sở dữ liệu không phản hồi",
     missing_url: "Chưa cấu hình địa chỉ",
     missing_token: "Thiếu mã truy cập",
+    missing_binding: "Chưa gắn kho R2",
+    r2_error: "Kho R2 không phản hồi",
     unreachable: "Không kết nối được"
   };
 
@@ -216,6 +234,7 @@
     var chat = data.chat || {};
     var sync = data.sync || {};
     var livekit = data.livekit || {};
+    var r2 = data.r2 || {};
     var limits = data.limits || {};
 
     if (chat.ok === true) {
@@ -259,6 +278,32 @@
     }
     markBlock("livekit-card", "livekit-note", livekit, "Tháng tính theo giờ quốc tế (UTC).");
 
+    if (r2.ok === true) {
+      setText("r2-used", formatDecimalBytes(r2.bytes));
+      setText("r2-limit", limits.r2 || "--");
+      setText("r2-objects", formatNumber(r2.objects));
+      setText("r2-state", r2.partial ? "Có thể chưa đủ" : "Đầy đủ");
+      var r2Ratio = limits.r2Bytes > 0 ? r2.bytes / limits.r2Bytes : 0;
+      setWidth("r2-meter", r2Ratio);
+      setMeterState("r2-meter", r2Ratio);
+    } else {
+      clearBlock(["r2-used", "r2-objects", "r2-state"]);
+      setText("r2-limit", limits.r2 || "--");
+      setWidth("r2-meter", 0);
+      setMeterState("r2-meter", 0);
+    }
+
+    var r2Card = document.getElementById("r2-card");
+    if (r2Card) r2Card.classList.toggle("is-degraded", r2.ok !== true);
+    setText(
+      "r2-note",
+      r2.ok !== true
+        ? "Không đọc được kho tệp: " + errorLabel(r2.error) + "."
+        : r2.partial
+          ? "Số liệu có thể chưa đủ vì kho quá lớn."
+          : "Tính cả tệp cảnh và âm thanh trên R2. Cập nhật tối đa mỗi 60 giây."
+    );
+
     setText("limits-chat", formatNumber(limits.chatDaily) + " câu");
     setText("limits-snapshot", formatBytes(limits.snapshotMaxBytes));
     setText("limits-r2", limits.r2 || "--");
@@ -269,7 +314,8 @@
     chat: "Số liệu chat",
     sync: "Đồng bộ dữ liệu",
     livekit: "Phòng học nhóm",
-    errors: "Nhật ký lỗi"
+    errors: "Nhật ký lỗi",
+    r2: "Kho tệp"
   };
 
   function renderErrors(block) {

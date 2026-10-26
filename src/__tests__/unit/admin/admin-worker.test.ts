@@ -2,6 +2,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import worker, {
   __resetAccessCertsCache,
   __resetErrorLogThrottle,
+  __resetR2Cache,
   type AdminEnv,
 } from "../../../../admin-worker/_worker";
 import {
@@ -27,6 +28,7 @@ beforeAll(async () => {
 beforeEach(() => {
   __resetAccessCertsCache();
   __resetErrorLogThrottle();
+  __resetR2Cache();
 });
 
 afterEach(() => {
@@ -80,6 +82,37 @@ type FakeDb = {
   chatBinds: unknown[][];
   inserts: unknown[][];
 };
+
+type FakeR2 = {
+  bucket: AdminEnv["R2"];
+  calls: Array<string | undefined>;
+};
+
+function fakeR2(
+  options: { pages?: number[][]; totalPages?: number; fail?: boolean } = {},
+): FakeR2 {
+  const pages = options.pages ?? [[]];
+  const totalPages = options.totalPages ?? pages.length;
+  const calls: Array<string | undefined> = [];
+  let index = 0;
+
+  const bucket = {
+    async list(input?: { limit?: number; cursor?: string }) {
+      calls.push(input?.cursor);
+      if (options.fail) throw new Error("R2 không phản hồi");
+      const sizes = pages[Math.min(index, pages.length - 1)] || [];
+      index += 1;
+      const isLast = index >= totalPages;
+      return {
+        objects: sizes.map((size) => ({ key: "study/scene.mp4", size })),
+        truncated: !isLast,
+        cursor: isLast ? undefined : `page-${index}`,
+      };
+    },
+  };
+
+  return { bucket: bucket as unknown as AdminEnv["R2"], calls };
+}
 
 function fakeDb(
   options: {
@@ -319,9 +352,11 @@ describe("admin overview", () => {
     expect(body.limits).toEqual({
       chatDaily: 25,
       snapshotMaxBytes: 2_000_000,
-      r2: "10 GiB",
+      r2: "10 GB",
+      r2Bytes: 10_000_000_000,
     });
     expect(body.errors).toEqual({ ok: true, items: [] });
+    expect(body.r2).toEqual({ ok: true, bytes: 0, objects: 0, partial: false });
 
     const statusCall = calls.find((call) => call.url.endsWith("/status"));
     expect(statusCall?.headers.get("Authorization")).toBe(
@@ -488,5 +523,103 @@ describe("admin overview", () => {
     expect(chatRows[0]?.[1]).toBe("http_500");
     expect(String(chatRows[0]?.[2])).toContain("http_500");
     expect(String(chatRows[0]?.[2])).not.toContain("hỏng");
+  });
+
+  it("cộng dung lượng và số object qua nhiều trang R2", async () => {
+    stubBackend();
+    const fake = fakeDb();
+    const r2 = fakeR2({ pages: [Array(1000).fill(10), Array(500).fill(20)] });
+
+    const res = await worker.fetch(
+      await overviewRequest(),
+      baseEnv({ DB: fake.db, R2: r2.bucket }),
+    );
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(200);
+    expect(body.r2).toEqual({
+      ok: true,
+      bytes: 1000 * 10 + 500 * 20,
+      objects: 1500,
+      partial: false,
+    });
+    expect(body.degraded).toBe(false);
+    expect(r2.calls).toHaveLength(2);
+  });
+
+  it("thiếu binding R2 thì báo missing_binding và bật degraded", async () => {
+    stubBackend();
+    const fake = fakeDb();
+
+    const res = await worker.fetch(
+      await overviewRequest(),
+      baseEnv({ DB: fake.db, R2: undefined }),
+    );
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(200);
+    expect(body.r2).toEqual({ ok: false, error: "missing_binding" });
+    expect(body.degraded).toBe(true);
+    expect(fake.inserts.some((row) => row[0] === "r2")).toBe(true);
+  });
+
+  it("R2 list lỗi thì báo r2_error, degraded và không làm hỏng API", async () => {
+    stubBackend();
+    const fake = fakeDb();
+    const r2 = fakeR2({ fail: true });
+
+    const res = await worker.fetch(
+      await overviewRequest(),
+      baseEnv({ DB: fake.db, R2: r2.bucket }),
+    );
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(200);
+    expect(body.r2).toEqual({ ok: false, error: "r2_error" });
+    expect(body.degraded).toBe(true);
+    expect(
+      fake.inserts.some((row) => row[0] === "r2" && row[1] === "r2_error"),
+    ).toBe(true);
+  });
+
+  it("cache R2 60 giây: hai lần overview chỉ list một lần", async () => {
+    stubBackend();
+    const fake = fakeDb();
+    const r2 = fakeR2({ pages: [[7, 3]] });
+
+    await worker.fetch(
+      await overviewRequest(),
+      baseEnv({ DB: fake.db, R2: r2.bucket }),
+    );
+    await worker.fetch(
+      await overviewRequest(),
+      baseEnv({ DB: fake.db, R2: r2.bucket }),
+    );
+
+    expect(r2.calls).toHaveLength(1);
+  });
+
+  it("chạm trần 30 trang thì partial và không bật degraded", async () => {
+    stubBackend();
+    const fake = fakeDb();
+    const r2 = fakeR2({
+      pages: Array.from({ length: 30 }, () => Array(1000).fill(1)),
+      totalPages: 31,
+    });
+
+    const res = await worker.fetch(
+      await overviewRequest(),
+      baseEnv({ DB: fake.db, R2: r2.bucket }),
+    );
+    const body = (await res.json()) as any;
+
+    expect(body.r2).toEqual({
+      ok: true,
+      bytes: 30_000,
+      objects: 30_000,
+      partial: true,
+    });
+    expect(body.degraded).toBe(false);
+    expect(r2.calls).toHaveLength(30);
   });
 });
