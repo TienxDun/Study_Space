@@ -20,6 +20,9 @@
  * D1 Database Binding:
  *   DB                      = Database D1 zenspace (chạy workers/livekit-schema.sql)
  *
+ * KV Namespace Binding (để đọc cờ hệ thống admin ghi, cùng kho với chat-proxy):
+ *   CHAT_QUOTA              = namespace CHAT_QUOTA (key `cfg:flags`)
+ *
  * Web gọi kèm vé Firebase: header `Authorization: Bearer <idToken>`.
  * Vé hợp lệ mới phát vé LiveKit, và danh tính lấy từ uid trong vé — nên người
  * dùng không cần khai userId, cũng không thể giả danh người khác.
@@ -212,7 +215,7 @@ export async function verifyWebhookJwt(secret, authHeader, rawBody, expectedIss)
 // ---------- Kiểm vé Firebase (copy từ data-api, giữ y nguyên) ----------
 const CERT_URL =
   "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
-const mem = { certAt: 0, certs: {} };
+const mem = { certAt: 0, certs: {}, flags: null, flagsAt: 0 };
 
 function pemToDerBytes(pem) {
   const b64 = String(pem || "").replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
@@ -368,6 +371,37 @@ function getConfig(env) {
     departureTimeoutSec: clampInt(env.ROOM_DEPARTURE_TIMEOUT_SEC, 300, 60, 3600),
     sessionMaxMinutes: clampInt(env.SESSION_MAX_MINUTES, 120, 15, 240),
   };
+}
+
+// ---------- Cờ hệ thống (admin ghi `cfg:flags`, đọc có nhớ 30 giây) ----------
+// Thiếu binding, KV lỗi hay JSON hỏng -> coi như phòng đang bật (trạng thái an toàn).
+const FLAGS_TTL_MS = 30 * 1000;
+const FLAGS_KEY = "cfg:flags";
+
+async function getFlags(env) {
+  const now = Date.now();
+  if (mem.flags && now - mem.flagsAt < FLAGS_TTL_MS) return mem.flags;
+  let parsed = null;
+  if (env.CHAT_QUOTA) {
+    const raw = await env.CHAT_QUOTA.get(FLAGS_KEY).catch(() => null);
+    if (raw) {
+      try {
+        const obj = JSON.parse(raw);
+        if (obj && typeof obj === "object") parsed = obj;
+      } catch {
+        /* JSON hỏng: dùng mặc định bật */
+      }
+    }
+  }
+  mem.flags = { roomsEnabled: !(parsed && parsed.roomsEnabled === false) };
+  mem.flagsAt = now;
+  return mem.flags;
+}
+
+// Test dùng để xóa bộ nhớ cờ giữa các ca.
+function resetFlagsCache() {
+  mem.flags = null;
+  mem.flagsAt = 0;
 }
 
 async function resolveMonthQuota(env, cfg) {
@@ -759,6 +793,9 @@ const worker = {
             Authorization: `Bearer ${adminToken}`,
           },
           body: "{}",
+          // Admin worker chỉ chờ /usage 10 giây; phần đếm phòng phải tự bỏ
+          // trước ngưỡng đó để không bị coi là unreachable khi LiveKit chậm.
+          signal: AbortSignal.timeout(4000),
         });
         if (r.ok) {
           const data = await r.json().catch(() => ({}));
@@ -785,6 +822,11 @@ const worker = {
 
     // --- Phát vé vào phòng (cần vé Firebase hợp lệ) ---
     if (url.pathname === "/token" && req.method === "POST") {
+      // Cờ tắt phòng: chặn trước khi kiểm vé và mint token.
+      const flags = await getFlags(env);
+      if (!flags.roomsEnabled) {
+        return json({ error: "Phòng học nhóm đang tạm tắt. Vui lòng quay lại sau.", code: "ROOMS_DISABLED" }, 503);
+      }
       const verifyToken = env._verifyToken || verifyFirebaseToken;
       const checked = await verifyToken(env, bearerToken(req));
       if (!checked.uid) {
@@ -983,6 +1025,10 @@ const worker = {
 
     // --- Danh sách phòng đang có người (cần đăng nhập, hoặc ADMIN_TOKEN) ---
     if (url.pathname === "/rooms" && req.method === "GET") {
+      const flags = await getFlags(env);
+      if (!flags.roomsEnabled) {
+        return json({ error: "Phòng học nhóm đang tạm tắt. Vui lòng quay lại sau.", code: "ROOMS_DISABLED" }, 503);
+      }
       const admin = String(env.ADMIN_TOKEN || "");
       let allowed = !!admin && url.searchParams.get("token") === admin;
       if (!allowed) {
@@ -1296,3 +1342,4 @@ export function createWorker(deps = {}) {
 }
 
 export default worker;
+export { resetFlagsCache as __resetFlagsCache };

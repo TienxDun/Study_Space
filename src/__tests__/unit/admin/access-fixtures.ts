@@ -98,6 +98,34 @@ export function baseEnv(overrides: Partial<AdminEnv> = {}): AdminEnv {
     DATA_API_URL: "https://data.example.com",
     LIVEKIT_URL: "https://livekit.example.com",
     R2: { list: async () => ({ objects: [], truncated: false }) },
+    FLAGS: fakeKv().kv,
     ...overrides,
   };
+}
+
+export type FakeKv = {
+  kv: NonNullable<AdminEnv["FLAGS"]>;
+  store: Map<string, string>;
+  puts: Array<{ key: string; value: string }>;
+};
+
+export function fakeKv(
+  initial: Record<string, string> = {},
+  options: { failGet?: boolean; failPut?: boolean; onPut?: () => void } = {},
+): FakeKv {
+  const store = new Map(Object.entries(initial));
+  const puts: Array<{ key: string; value: string }> = [];
+  const kv = {
+    async get(key: string) {
+      if (options.failGet) throw new Error("KV lỗi");
+      return store.get(key) ?? null;
+    },
+    async put(key: string, value: string) {
+      options.onPut?.();
+      if (options.failPut) throw new Error("KV lỗi");
+      puts.push({ key, value });
+      store.set(key, value);
+    },
+  };
+  return { kv, store, puts };
 }

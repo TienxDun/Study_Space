@@ -20,6 +20,11 @@ import { useStudySettings } from "@/lib/use-study-settings";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { sendYouTubeCommand } from "@/lib/youtube-remote";
 import { useIsMobile } from "@/components/study/mobile/hooks/useIsMobile";
+import {
+  SYSTEM_FLAGS_DEFAULT,
+  fetchSystemFlags,
+  type SystemFlags,
+} from "@/lib/system-flags";
 
 export function useStudySpaceState() {
   const {
@@ -57,6 +62,63 @@ export function useStudySpaceState() {
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPomodoroNavActive, setIsPomodoroNavActive] = useState(false);
+
+  // Cờ hệ thống lấy từ chat-proxy /config: quyết định banner và việc khóa nút.
+  const [systemFlags, setSystemFlags] = useState<SystemFlags>(SYSTEM_FLAGS_DEFAULT);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadFlags = async () => {
+      const next = await fetchSystemFlags();
+      if (cancelled) return;
+      setSystemFlags((prev) =>
+        prev.chatEnabled === next.chatEnabled &&
+        prev.roomsEnabled === next.roomsEnabled &&
+        prev.maintenance === next.maintenance &&
+        prev.banner === next.banner
+          ? prev
+          : next
+      );
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") void loadFlags();
+    };
+
+    void loadFlags();
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") void loadFlags();
+    }, 60 * 1000);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, []);
+
+  // Setter có cổng: cờ tắt thì không mở được, nhưng đóng thì luôn cho phép.
+  const setChatOpenGated = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
+    (value) => {
+      setIsChatOpen((prev) => {
+        const next = typeof value === "function" ? value(prev) : value;
+        return systemFlags.chatEnabled ? next : false;
+      });
+    },
+    [systemFlags.chatEnabled]
+  );
+
+  const setRoomsOpenGated = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
+    (value) => {
+      setIsRoomsOpen((prev) => {
+        const next = typeof value === "function" ? value(prev) : value;
+        return systemFlags.roomsEnabled ? next : false;
+      });
+    },
+    [systemFlags.roomsEnabled]
+  );
 
   // Đồng bộ mở đúng Sheet theo màn hình đỉnh stack mobile
   const syncScreenToStates = useCallback((screen: MobileStackItem | null) => {
@@ -463,8 +525,8 @@ export function useStudySpaceState() {
     setShortcutsOpen: setIsShortcutsHelpOpen,
     setZenMode: setIsZenMode,
     setCommandOpen: setIsCommandOpen,
-    setRoomsOpen: setIsRoomsOpen,
-    setChatOpen: setIsChatOpen,
+    setRoomsOpen: setRoomsOpenGated,
+    setChatOpen: setChatOpenGated,
   });
 
   // Lắng nghe sự kiện mở Takenote từ các component khác
@@ -489,6 +551,7 @@ export function useStudySpaceState() {
   // Lắng nghe sự kiện gửi ghi chú sang Trợ lý AI
   useEffect(() => {
     const handleSendToChat = () => {
+      if (!systemFlags.chatEnabled) return;
       if (isMobile) {
         if (mobileCurrentScreen) {
           mobilePush("chat", "Trợ lý AI");
@@ -503,7 +566,7 @@ export function useStudySpaceState() {
     return () => {
       window.removeEventListener("study-space:send-to-chat", handleSendToChat);
     };
-  }, [isMobile, mobileCurrentScreen, mobilePush, mobileOpenRoot]);
+  }, [isMobile, mobileCurrentScreen, mobilePush, mobileOpenRoot, systemFlags.chatEnabled]);
 
   // Mở 1 panel duy nhất
   const openPanelOnly = useCallback((
@@ -532,16 +595,22 @@ export function useStudySpaceState() {
   const handleCloseDetail = useCallback(() => mobilePop(), [mobilePop]);
 
   const handleOpenChatRoot = useCallback(
-    () => mobileOpenRoot("chat", "Trợ lý AI"),
-    [mobileOpenRoot]
+    () => {
+      if (!systemFlags.chatEnabled) return;
+      mobileOpenRoot("chat", "Trợ lý AI");
+    },
+    [mobileOpenRoot, systemFlags.chatEnabled]
   );
   const handleOpenScenesRoot = useCallback(
     () => mobileOpenRoot("scenes", "Không gian"),
     [mobileOpenRoot]
   );
   const handleOpenRoomsRoot = useCallback(
-    () => mobileOpenRoot("rooms", "Phòng học nhóm"),
-    [mobileOpenRoot]
+    () => {
+      if (!systemFlags.roomsEnabled) return;
+      mobileOpenRoot("rooms", "Phòng học nhóm");
+    },
+    [mobileOpenRoot, systemFlags.roomsEnabled]
   );
   const handleOpenRadioRoot = useCallback(
     () => mobileOpenRoot("embed", "Đài phát"),
@@ -635,9 +704,9 @@ export function useStudySpaceState() {
       } else if (id === "embed") {
         mobilePush("embed", "Đài phát");
       } else if (id === "rooms") {
-        mobilePush("rooms", "Phòng học nhóm");
+        if (systemFlags.roomsEnabled) mobilePush("rooms", "Phòng học nhóm");
       } else if (id === "chat") {
-        mobilePush("chat", "Trợ lý AI");
+        if (systemFlags.chatEnabled) mobilePush("chat", "Trợ lý AI");
       } else if (id === "settings") {
         mobilePush("settings", "Cài đặt");
       } else if (id === "stats") {
@@ -647,7 +716,7 @@ export function useStudySpaceState() {
         setIsZenMode(true);
       }
     },
-    [mobilePush, handleMobileCloseAllSheets]
+    [mobilePush, handleMobileCloseAllSheets, systemFlags.chatEnabled, systemFlags.roomsEnabled]
   );
 
   const handleWidgetToggleVisibility = useCallback(() => {
@@ -731,7 +800,9 @@ export function useStudySpaceState() {
       { id: "nav-scenes", group: "Mở nhanh", label: "Không gian làm việc", hint: "B", run: () => openPanelOnly(setIsScenesOpen) },
       { id: "nav-embed", group: "Mở nhanh", label: "Đài phát YouTube & Spotify", hint: "E", run: () => openPanelOnly(setIsEmbedPlayerOpen) },
       { id: "nav-mixer", group: "Mở nhanh", label: "Bộ trộn âm thanh", hint: "P", run: () => openPanelOnly(setIsMixerOpen) },
-      { id: "nav-chat", group: "Mở nhanh", label: "Trợ lý học tập AI", hint: "C", run: () => openPanelOnly(setIsChatOpen) },
+      ...(systemFlags.chatEnabled
+        ? [{ id: "nav-chat", group: "Mở nhanh", label: "Trợ lý học tập AI", hint: "C", run: () => openPanelOnly(setChatOpenGated) }]
+        : []),
       { id: "nav-settings", group: "Mở nhanh", label: "Cài đặt không gian", run: () => handleOpenSettings() },
       { id: "nav-tour", group: "Mở nhanh", label: "Xem lại tour hướng dẫn", run: () => setIsTourOpen(true) },
       { id: "act-zen", group: "Hành động", label: "Bật/tắt chế độ Zen", hint: "Z", run: () => setIsZenMode((prev) => !prev) },
@@ -751,6 +822,8 @@ export function useStudySpaceState() {
       toggleGlobalMute,
       toggleFullscreen,
       handleSelectScene,
+      systemFlags.chatEnabled,
+      setChatOpenGated,
     ]
   );
 
@@ -908,11 +981,13 @@ export function useStudySpaceState() {
       setIsCommandOpen,
       commandActions,
 
+      systemFlags,
+
       isRoomsOpen,
-      setIsRoomsOpen,
+      setIsRoomsOpen: setRoomsOpenGated,
 
       isChatOpen,
-      setIsChatOpen,
+      setIsChatOpen: setChatOpenGated,
 
       isStatsOpen,
       setIsStatsOpen,
@@ -1023,10 +1098,11 @@ export function useStudySpaceState() {
       isCommandOpen,
       setIsCommandOpen,
       commandActions,
+      systemFlags,
       isRoomsOpen,
-      setIsRoomsOpen,
+      setRoomsOpenGated,
       isChatOpen,
-      setIsChatOpen,
+      setChatOpenGated,
       isStatsOpen,
       setIsStatsOpen,
       isMoreOpen,

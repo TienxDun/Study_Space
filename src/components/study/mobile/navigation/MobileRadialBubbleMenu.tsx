@@ -17,6 +17,8 @@ interface MobileRadialBubbleMenuProps {
   onOpenRooms: () => void;
   onOpenRadio: () => void;
   onOpenStats: () => void;
+  chatEnabled?: boolean;
+  roomsEnabled?: boolean;
 }
 
 export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu({
@@ -25,6 +27,8 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
   onOpenRooms,
   onOpenRadio,
   onOpenStats,
+  chatEnabled = true,
+  roomsEnabled = true,
 }: MobileRadialBubbleMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasAudioBar, setHasAudioBar] = useState(false);
@@ -97,10 +101,10 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
           } catch {}
         }
         closeMenu();
-        onOpenChat();
+        if (chatEnabled) onOpenChat();
       }, 450);
     },
-    [closeMenu, onOpenChat]
+    [closeMenu, onOpenChat, chatEnabled]
   );
 
   const handleTouchMove = useCallback(
@@ -164,12 +168,13 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
       },
       {
         id: "study-rooms",
-        label: "Phòng học nhóm",
-        icon: <UsersIcon className="w-5 h-5 text-white/95" weight="fill" />,
+        label: roomsEnabled ? "Phòng học nhóm" : "Phòng học nhóm · Tạm tắt",
+        icon: <UsersIcon className={`w-5 h-5 ${roomsEnabled ? "text-white/95" : "text-white/40"}`} weight="fill" />,
         x: -94,
         y: -54,
         labelAlignClass: "-translate-y-1/2 mr-3",
         onClick: () => {
+          if (!roomsEnabled) return;
           closeMenu();
           onOpenRooms();
         },
@@ -187,7 +192,7 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
         },
       },
     ],
-    [closeMenu, onOpenStats, onOpenScenes, onOpenRooms, onOpenRadio]
+    [closeMenu, onOpenStats, onOpenScenes, onOpenRooms, onOpenRadio, roomsEnabled]
   );
 
   return (
@@ -217,6 +222,7 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
         <div className="relative w-[52px] h-[52px] flex items-center justify-center pointer-events-auto">
           {/* Cụm bong bóng con bung tỏa hình nan quạt (Phong cách Kính lỏng Pure Liquid Glass) */}
           {items.map((item, index) => {
+            const itemDisabled = item.id === "study-rooms" && !roomsEnabled;
             const transitionDelay = isOpen
               ? `${index * 30}ms`
               : `${(items.length - 1 - index) * 20}ms`;
@@ -249,9 +255,13 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
                 <button
                   type="button"
                   onClick={item.onClick}
-                  tabIndex={isOpen ? 0 : -1}
+                  disabled={itemDisabled}
+                  tabIndex={isOpen && !itemDisabled ? 0 : -1}
                   aria-hidden={!isOpen}
-                  className={`absolute right-full py-1 px-1 flex items-center justify-end select-none cursor-pointer active:scale-95 transition-all duration-200 whitespace-nowrap top-1/2 ${item.labelAlignClass} ${
+                  aria-disabled={itemDisabled}
+                  className={`absolute right-full py-1 px-1 flex items-center justify-end select-none active:scale-95 transition-all duration-200 whitespace-nowrap top-1/2 ${item.labelAlignClass} ${
+                    itemDisabled ? "cursor-not-allowed" : "cursor-pointer"
+                  } ${
                     isOpen
                       ? "opacity-100 translate-x-0 scale-100 pointer-events-auto"
                       : "opacity-0 translate-x-2 scale-90 pointer-events-none"
@@ -260,7 +270,9 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
                     transitionDelay: labelDelay,
                   }}
                 >
-                  <span className="text-[12.5px] font-semibold text-white tracking-wide filter drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.95)]">
+                  <span className={`text-[12.5px] font-semibold tracking-wide filter drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.95)] ${
+                    itemDisabled ? "text-white/45" : "text-white"
+                  }`}>
                     {item.label}
                   </span>
                 </button>
@@ -271,11 +283,14 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
                   label={item.label}
                   title={item.label}
                   aria-label={item.label}
+                  aria-disabled={itemDisabled}
+                  disabled={itemDisabled}
                   variant="liquid"
                   plate="none"
                   size={46}
                   onClick={item.onClick}
-                  tabIndex={isOpen ? 0 : -1}
+                  tabIndex={isOpen && !itemDisabled ? 0 : -1}
+                  className={itemDisabled ? "opacity-40 cursor-not-allowed" : undefined}
                 />
               </div>
             );
@@ -307,8 +322,14 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
             }}
             onMouseUp={cancelLongPress}
             onMouseLeave={cancelLongPress}
-            aria-label={isOpen ? "Đóng menu tiện ích" : "Mở menu tiện ích nhanh (Nhấn giữ để mở Chatbot AI)"}
-            title="Chạm để mở menu, Nhấn giữ để mở Chatbot AI"
+            aria-label={
+              isOpen
+                ? "Đóng menu tiện ích"
+                : chatEnabled
+                  ? "Mở menu tiện ích nhanh (Nhấn giữ để mở Chatbot AI)"
+                  : "Mở menu tiện ích nhanh"
+            }
+            title={chatEnabled ? "Chạm để mở menu, Nhấn giữ để mở Chatbot AI" : "Chạm để mở menu (Chatbot AI đang tạm tắt)"}
             aria-expanded={isOpen}
             className="relative z-10 w-[52px] h-[52px] rounded-full flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-150 touch-manipulation select-none"
           >

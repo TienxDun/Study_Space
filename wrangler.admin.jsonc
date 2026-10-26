@@ -20,6 +20,13 @@
       "bucket_name": "study-space"
     }
   ],
+  // Cùng namespace với chat-proxy: key `cfg:flags` là nguồn của cờ hệ thống.
+  "kv_namespaces": [
+    {
+      "binding": "FLAGS",
+      "id": "a16e430f9bbe46afa51ffc9d4f9bce9d"
+    }
+  ],
   "assets": {
     "directory": "./dist-admin",
     "binding": "ASSETS",

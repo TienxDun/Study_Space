@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { CircleNotchIcon } from "@phosphor-icons/react";
 import { StudyBackground } from "@/components/study/StudyBackground";
+import { SystemBanner } from "@/components/study/SystemBanner";
 import { StudyMusicPlayer } from "@/components/study/music/StudyMusicPlayer";
 import { StudyPomodoroWidget } from "@/components/study/pomodoro/StudyPomodoroWidget";
 import { MobilePomodoroView } from "@/components/study/mobile/pomodoro/MobilePomodoroView";
@@ -81,6 +82,9 @@ export default function StudySpacePage() {
         isBlurActive={state.isAnyModalOpen}
         onLoaded={() => setIsBackgroundReady(true)}
       />
+
+      {/* Thông báo bảo trì / banner chung từ cờ hệ thống */}
+      <SystemBanner flags={state.systemFlags} />
 
       {/* Thông báo capsule khi đang tải bối cảnh mới */}
       <AnimatePresence>
@@ -208,6 +212,7 @@ export default function StudySpacePage() {
         isOpen={state.isRoomsOpen}
         onClose={state.isMobile ? state.handleMobileCloseAllSheets : () => state.setIsRoomsOpen(false)}
         onOpen={() => {
+          if (!state.systemFlags.roomsEnabled) return;
           if (state.isMobile) {
             state.mobileOpenRoot("rooms", "Phòng học nhóm");
           } else {

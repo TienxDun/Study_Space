@@ -103,6 +103,7 @@ export const StudyDesktopLayout = React.memo(function StudyDesktopLayout({
     isCommandOpen,
     setIsCommandOpen,
     commandActions,
+    systemFlags,
   } = state;
 
   return (
@@ -157,6 +158,7 @@ export const StudyDesktopLayout = React.memo(function StudyDesktopLayout({
           onToggleScenes={handleToggleScenes}
           onToggleEmbed={handleToggleEmbed}
           isRoomsOpen={isRoomsOpen}
+          roomsEnabled={systemFlags.roomsEnabled}
           onToggleRooms={() => setIsRoomsOpen((prev) => !prev)}
         />
       </div>
@@ -229,6 +231,7 @@ export const StudyDesktopLayout = React.memo(function StudyDesktopLayout({
         onOpenChange={setIsChatOpen}
         onClose={() => setIsChatOpen(false)}
         isZenMode={isZenMode}
+        chatEnabled={systemFlags.chatEnabled}
       />
 
       {/* Command Palette mở nhanh (Cmd/Ctrl+K) */}

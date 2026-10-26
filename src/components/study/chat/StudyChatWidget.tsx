@@ -19,6 +19,7 @@ export interface StudyChatWidgetProps {
   onOpenChange?: (open: boolean) => void;
   onClose?: () => void;
   isZenMode?: boolean;
+  chatEnabled?: boolean;
 }
 
 /** Bong bóng chat góc phải: đăng nhập Google mới chat được, lịch sử lưu Firestore. */
@@ -27,6 +28,7 @@ export function StudyChatWidget({
   onOpenChange,
   onClose: controlledClose,
   isZenMode = false,
+  chatEnabled = true,
 }: StudyChatWidgetProps = {}) {
   const { user, loading, redirectError, signIn, signOut, getToken } = useAuth();
   const [internalOpen, setInternalOpen] = useState(false);
@@ -149,6 +151,7 @@ export function StudyChatWidget({
   // Lắng nghe yêu cầu gửi ghi chú từ Takenote sang Chatbot
   useEffect(() => {
     const handleSendToChat = (e: Event) => {
+      if (!chatEnabled) return;
       const customEvent = e as CustomEvent<{ text: string; autoSend?: boolean }>;
       const text = customEvent.detail?.text;
       if (!text) return;
@@ -177,7 +180,7 @@ export function StudyChatWidget({
     return () => {
       window.removeEventListener("study-space:send-to-chat", handleSendToChat);
     };
-  }, [user, messagesApi]);
+  }, [user, messagesApi, chatEnabled]);
 
   const busy = sending || regenerating;
   const closeDrawer = useCallback(() => sessionsApi.setDrawerOpen(false), [sessionsApi.setDrawerOpen]);
@@ -186,7 +189,9 @@ export function StudyChatWidget({
 
   return (
     <>
-      {!open && !isZenMode && <ChatFab hasNew={hasNew} onOpen={() => setOpen(true)} />}
+      {!open && !isZenMode && (
+        <ChatFab hasNew={hasNew} onOpen={() => setOpen(true)} disabled={!chatEnabled} />
+      )}
 
       <AnimatePresence>
         {open && !isZenMode && (

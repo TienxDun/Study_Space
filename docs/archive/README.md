@@ -15,3 +15,5 @@ Các file dưới đây đã hoàn thành hoặc đã được thay thế. Giữ
 | [`CLOUD_SYNC_PLAN.md`](./CLOUD_SYNC_PLAN.md) | Kế hoạch triển khai đã xong; vận hành xem [`CLOUD_SYNC_GUIDE.md`](../guides/CLOUD_SYNC_GUIDE.md) |
 | [`BA_FULLSTACK_SPEC.md`](./BA_FULLSTACK_SPEC.md) | Đặc tả AS-IS/TO-BE cũ, không còn phản ánh code hiện tại |
 | [`bg-asset-studio-plan.md`](./bg-asset-studio-plan.md) | Kế hoạch Background Asset Studio; chỉ còn hạng mục R2 chờ cấu hình |
+| [`ADMIN_P0_PLAN.md`](./ADMIN_P0_PLAN.md) | P0 (dựng Worker admin + Access) đã đóng 2026-10-25; runbook kiểm chứng ở cuối file |
+| [`ADMIN_P1_PLAN.md`](./ADMIN_P1_PLAN.md) | P1 (overview chỉ đọc) đã đóng và đối chiếu production 2026-10-26; tiếp theo xem [`ADMIN_P2_PLAN.md`](../features/ADMIN_P2_PLAN.md) |

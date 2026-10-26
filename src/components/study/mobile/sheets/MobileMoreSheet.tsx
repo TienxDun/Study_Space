@@ -20,6 +20,8 @@ interface MobileMoreSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (id: MobilePanelId) => void;
+  chatEnabled?: boolean;
+  roomsEnabled?: boolean;
 }
 
 function MoreButton({
@@ -60,6 +62,8 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
   isOpen,
   onClose,
   onSelect,
+  chatEnabled = true,
+  roomsEnabled = true,
 }: MobileMoreSheetProps) {
   const go = (id: MobilePanelId) => {
     onSelect(id);
@@ -84,8 +88,20 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
         <section>
           <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/50">Học cùng nhau</p>
           <div className="space-y-1.5">
-            <MoreButton label="Phòng học nhóm" onClick={() => go("rooms")} icon={<UsersIcon className="w-5 h-5 text-violet-300" />} />
-            <MoreButton label="Trợ lý AI" onClick={() => go("chat")} icon={<SparkleIcon className="w-5 h-5 text-amber-300" />} />
+            <MoreButton
+              label="Phòng học nhóm"
+              sub={roomsEnabled ? undefined : "Tạm tắt"}
+              disabled={!roomsEnabled}
+              onClick={() => go("rooms")}
+              icon={<UsersIcon className="w-5 h-5 text-violet-300" />}
+            />
+            <MoreButton
+              label="Trợ lý AI"
+              sub={chatEnabled ? undefined : "Tạm tắt"}
+              disabled={!chatEnabled}
+              onClick={() => go("chat")}
+              icon={<SparkleIcon className="w-5 h-5 text-amber-300" />}
+            />
           </div>
         </section>
         <section>

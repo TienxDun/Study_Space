@@ -14,9 +14,23 @@
   var globalStatusText = document.getElementById("global-status-text");
   var autoRefreshCheck = document.getElementById("auto-refresh-check");
   var errorRowsEl = document.getElementById("error-rows");
+  var flagsCard = document.getElementById("flags-card");
+  var flagsStateEl = document.getElementById("flags-state");
+  var flagChat = document.getElementById("flag-chat");
+  var flagRooms = document.getElementById("flag-rooms");
+  var flagMaintenance = document.getElementById("flag-maintenance");
+  var flagBanner = document.getElementById("flag-banner");
+  var flagBannerCount = document.getElementById("flag-banner-count");
+  var flagLimit = document.getElementById("flag-limit");
+  var flagLimitCurrent = document.getElementById("flag-limit-current");
+  var flagSave = document.getElementById("flags-save");
+  var flagsNote = document.getElementById("flags-note");
 
   var loading = false;
   var autoTimer = null;
+  var flagsBaseline = null;
+  var flagsReadable = false;
+  var flagsSaving = false;
 
   var SERVICE_META = {
     "chat-proxy": {
@@ -156,6 +170,8 @@
     missing_token: "Thiếu mã truy cập",
     missing_binding: "Chưa gắn kho R2",
     r2_error: "Kho R2 không phản hồi",
+    invalid_json: "Cấu hình lưu sai định dạng",
+    kv_error: "Kho cấu hình không phản hồi",
     unreachable: "Không kết nối được"
   };
 
@@ -315,7 +331,8 @@
     sync: "Đồng bộ dữ liệu",
     livekit: "Phòng học nhóm",
     errors: "Nhật ký lỗi",
-    r2: "Kho tệp"
+    r2: "Kho tệp",
+    flags: "Cờ hệ thống"
   };
 
   function renderErrors(block) {
@@ -344,6 +361,159 @@
 
     var card = document.getElementById("errors-card");
     if (card) card.classList.toggle("is-degraded", !ok);
+  }
+
+  var FLAG_ERROR_MESSAGES = {
+    invalid_body: "Dữ liệu gửi lên không hợp lệ, chưa có thay đổi nào.",
+    audit_failed: "Không ghi được nhật ký hành động nên chưa lưu.",
+    kv_error: "Kho cấu hình không phản hồi, chưa lưu được.",
+    rate_limited: "Bạn vừa lưu quá nhiều lần, chờ một phút rồi thử lại."
+  };
+
+  function readFormFlags() {
+    return {
+      chatEnabled: flagChat.checked,
+      roomsEnabled: flagRooms.checked,
+      maintenance: flagMaintenance.checked,
+      banner: flagBanner.value,
+      chatDailyLimit: Number(flagLimit.value)
+    };
+  }
+
+  function flagsDirty() {
+    if (!flagsBaseline) return false;
+    var form = readFormFlags();
+    return (
+      form.chatEnabled !== flagsBaseline.chatEnabled ||
+      form.roomsEnabled !== flagsBaseline.roomsEnabled ||
+      form.maintenance !== flagsBaseline.maintenance ||
+      form.banner !== flagsBaseline.banner ||
+      form.chatDailyLimit !== flagsBaseline.chatDailyLimit
+    );
+  }
+
+  function limitsValid() {
+    var value = Number(flagLimit.value);
+    return Number.isInteger(value) && value >= 1 && value <= 200;
+  }
+
+  function syncFlagsButtons() {
+    var canEdit = flagsReadable && !flagsSaving;
+    [flagChat, flagRooms, flagMaintenance, flagBanner, flagLimit].forEach(function (el) {
+      if (el) el.disabled = !canEdit;
+    });
+    flagSave.disabled = !canEdit || !flagsDirty();
+    flagSave.classList.toggle("is-loading", flagsSaving);
+    flagSave.querySelector("span").textContent = flagsSaving ? "Đang lưu…" : "Lưu thay đổi";
+  }
+
+  function formatFlagsStamp(updatedAt, updatedBy) {
+    if (!updatedAt) return "Chưa ai chỉnh từ bảng điều khiển.";
+    var stamp = formatTime(updatedAt);
+    return updatedBy ? "Cập nhật lúc " + stamp + " bởi " + updatedBy + "." : "Cập nhật lúc " + stamp + ".";
+  }
+
+  function renderFlags(block) {
+    if (!block || block.ok !== true) {
+      flagsReadable = false;
+      flagsCard.classList.add("is-degraded");
+      flagsStateEl.textContent = "Không đọc được";
+      var reason = block && block.error === "missing_binding" ? "chưa gắn kho cấu hình" : errorLabel(block && block.error);
+      flagsNote.textContent = "Không đọc được cờ hệ thống: " + reason + ". Các công tắc đang bị khóa.";
+      syncFlagsButtons();
+      return;
+    }
+
+    flagsReadable = true;
+    flagsCard.classList.remove("is-degraded");
+    flagsStateEl.textContent = block.chatEnabled && block.roomsEnabled ? "Đang bật đủ" : "Đang tắt bớt";
+    flagLimitCurrent.textContent = formatNumber(block.chatDailyLimit);
+
+    // Người đang sửa dở thì không ghi đè ô nhập mỗi lần trang tự cập nhật.
+    if (!flagsDirty()) {
+      flagsBaseline = {
+        chatEnabled: block.chatEnabled === true,
+        roomsEnabled: block.roomsEnabled === true,
+        maintenance: block.maintenance === true,
+        banner: String(block.banner || ""),
+        chatDailyLimit: Number(block.chatDailyLimit) || 30
+      };
+      flagChat.checked = flagsBaseline.chatEnabled;
+      flagRooms.checked = flagsBaseline.roomsEnabled;
+      flagMaintenance.checked = flagsBaseline.maintenance;
+      flagBanner.value = flagsBaseline.banner;
+      flagLimit.value = String(flagsBaseline.chatDailyLimit);
+      flagBannerCount.textContent = String(flagsBaseline.banner.length);
+    }
+    flagsNote.textContent = formatFlagsStamp(block.updatedAt, block.updatedBy);
+    syncFlagsButtons();
+  }
+
+  function saveFlags() {
+    if (!flagsReadable || flagsSaving || !flagsDirty()) return;
+    if (!limitsValid()) {
+      flagsNote.textContent = "Hạn mức phải là số nguyên từ 1 đến 200 câu.";
+      flagLimit.focus();
+      return;
+    }
+
+    var next = readFormFlags();
+    var lines = ["Lưu thay đổi cờ hệ thống?"];
+    if (flagsBaseline.chatEnabled && !next.chatEnabled) {
+      lines.push("Tắt chat sẽ chặn tất cả người dùng ngay.");
+    }
+    if (flagsBaseline.roomsEnabled && !next.roomsEnabled) {
+      lines.push("Tắt phòng học nhóm sẽ chặn tạo phòng mới ngay.");
+    }
+    if (next.chatDailyLimit < flagsBaseline.chatDailyLimit) {
+      lines.push("Hạ hạn mức xuống " + next.chatDailyLimit + " câu sẽ chặn người đã dùng nhiều hơn tới hết ngày.");
+    }
+    if (next.maintenance) {
+      lines.push("Chế độ bảo trì hiện banner cho mọi người; chat và phòng học vẫn chạy.");
+    }
+    if (!window.confirm(lines.join("\n\n"))) return;
+
+    flagsSaving = true;
+    syncFlagsButtons();
+    flagsNote.textContent = "Đang lưu…";
+
+    fetch("/api/admin/flags", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      credentials: "same-origin",
+      cache: "no-store",
+      body: JSON.stringify(next)
+    })
+      .then(function (res) {
+        if (res.status === 401 || res.status === 403) {
+          throw new Error("Phiên đăng nhập đã hết hạn, tải lại trang rồi thử lại.");
+        }
+        return res
+          .json()
+          .catch(function () {
+            return {};
+          })
+          .then(function (data) {
+            return { ok: res.ok, data: data };
+          });
+      })
+      .then(function (result) {
+        flagsSaving = false;
+        if (!result.ok || !result.data || result.data.ok !== true) {
+          var code = result.data && result.data.error;
+          flagsNote.textContent = FLAG_ERROR_MESSAGES[code] || "Không lưu được thay đổi, thử lại sau.";
+          syncFlagsButtons();
+          return;
+        }
+        flagsBaseline = null;
+        renderFlags(Object.assign({ ok: true }, result.data.flags));
+        runCheck();
+      })
+      .catch(function (err) {
+        flagsSaving = false;
+        flagsNote.textContent = (err && err.message) || "Không kết nối được máy chủ.";
+        syncFlagsButtons();
+      });
   }
 
   function handleSuccess(data) {
@@ -393,6 +563,7 @@
     renderRows(checks);
     renderUsage(data);
     renderErrors(data.errors || {});
+    renderFlags(data.flags || {});
   }
 
   function handleFailure(errText) {
@@ -402,6 +573,11 @@
     globalStatusText.textContent = "Không kết nối được hệ thống";
     actionNote.textContent = errText || "Có lỗi kết nối";
     figureLabelEl.textContent = "Không kiểm tra được";
+
+    flagsReadable = false;
+    flagsStateEl.textContent = "Không đọc được";
+    flagsNote.textContent = errText || "Có lỗi kết nối";
+    syncFlagsButtons();
   }
 
   function runCheck() {
@@ -451,7 +627,17 @@
 
   autoRefreshCheck.addEventListener("change", setupAutoRefresh);
 
+  [flagChat, flagRooms, flagMaintenance, flagBanner, flagLimit].forEach(function (el) {
+    el.addEventListener("input", function () {
+      flagBannerCount.textContent = String(flagBanner.value.length);
+      syncFlagsButtons();
+    });
+    el.addEventListener("change", syncFlagsButtons);
+  });
+  flagSave.addEventListener("click", saveFlags);
+
   // Run initial check
+  syncFlagsButtons();
   runCheck();
   setupAutoRefresh();
 })();

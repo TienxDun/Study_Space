@@ -246,6 +246,95 @@
         </div>
       </section>
 
+      <!-- Cờ hệ thống -->
+      <section class="panel-card flags-card" id="flags-card" aria-labelledby="flags-title">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <h2 class="panel-title" id="flags-title">Cờ hệ thống</h2>
+            <span class="panel-desc">Lưu xong có hiệu lực trong khoảng 30 giây, không cần deploy</span>
+          </div>
+          <span class="usage-tag" id="flags-state">Đang đọc…</span>
+        </div>
+
+        <div class="flags-body">
+          <div class="flags-toggles">
+            <label class="flag-row" for="flag-chat">
+              <span class="flag-text">
+                <span class="flag-name">Trợ lý chat</span>
+                <span class="flag-desc">Tắt thì mọi người không gửi được câu hỏi mới.</span>
+              </span>
+              <span class="switch">
+                <input type="checkbox" id="flag-chat" />
+                <span class="switch-track" aria-hidden="true"></span>
+              </span>
+            </label>
+
+            <label class="flag-row" for="flag-rooms">
+              <span class="flag-text">
+                <span class="flag-name">Phòng học nhóm</span>
+                <span class="flag-desc">Tắt thì không tạo phòng mới và không xem danh sách phòng.</span>
+              </span>
+              <span class="switch">
+                <input type="checkbox" id="flag-rooms" />
+                <span class="switch-track" aria-hidden="true"></span>
+              </span>
+            </label>
+
+            <label class="flag-row" for="flag-maintenance">
+              <span class="flag-text">
+                <span class="flag-name">Chế độ bảo trì</span>
+                <span class="flag-desc">Hiện banner nhắc trên web; chat và phòng học vẫn chạy.</span>
+              </span>
+              <span class="switch">
+                <input type="checkbox" id="flag-maintenance" />
+                <span class="switch-track" aria-hidden="true"></span>
+              </span>
+            </label>
+          </div>
+
+          <div class="flags-fields">
+            <div class="flag-field">
+              <label class="flag-name" for="flag-banner">Thông báo trên trang chủ</label>
+              <input
+                class="flag-input"
+                id="flag-banner"
+                type="text"
+                maxlength="140"
+                placeholder="Ví dụ: Tối nay bảo trì từ 22:00 đến 22:30."
+                autocomplete="off"
+              />
+              <span class="flag-hint"><span id="flag-banner-count">0</span>/140 ký tự. Để trống thì không hiện banner.</span>
+            </div>
+
+            <div class="flag-field">
+              <label class="flag-name" for="flag-limit">Câu hỏi mỗi người mỗi ngày</label>
+              <input
+                class="flag-input flag-number"
+                id="flag-limit"
+                type="number"
+                min="1"
+                max="200"
+                step="1"
+                inputmode="numeric"
+              />
+              <span class="flag-hint">Từ 1 đến 200 câu. Đang áp dụng: <strong id="flag-limit-current">--</strong> câu/người/ngày.</span>
+            </div>
+          </div>
+
+          <div class="flags-actions">
+            <p class="usage-note" id="flags-note">Chưa đọc được cờ hệ thống.</p>
+            <button class="btn-primary" id="flags-save" type="button" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/>
+                <polyline points="7 3 7 8 15 8"/>
+              </svg>
+              <span>Lưu thay đổi</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
       <!-- Main Panel: Nhật ký lỗi & dịch vụ -->
       <div class="section-layout">
         <!-- Lỗi & dự phòng -->

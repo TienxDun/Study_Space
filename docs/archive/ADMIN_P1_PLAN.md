@@ -1,6 +1,6 @@
 # P1 — Nhìn thấy hệ thống (kế hoạch triển khai)
 
-Trạng thái: P1a đã deploy; P1b xong code + test (chờ deploy để xác minh); P1c xong code + test (chờ deploy để xác minh). Bản 5 — 2026-10-26.
+Trạng thái: P1 xong và đã đối chiếu production 2026-10-26 (P1a, P1b, P1c). Bản 6 — 2026-10-26.
 Thuộc P1 của `docs/features/ADMIN_CONSOLE_PLAN.md`. P0 đã đóng, runbook ở `docs/archive/ADMIN_P0_PLAN.md`.
 
 Mục tiêu: mở `admin.zenstudy.space/admin/` là thấy hệ thống khỏe hay ốm, đang dùng bao nhiêu, có lỗi gì, kho nội dung ra sao. Mọi số lấy từ worker, không chép tay vào UI; trình duyệt không giữ token.
@@ -106,7 +106,7 @@ Trình duyệt chỉ gọi đường dẫn tương đối `/api/admin/overview`;
 
 - Mỗi khối có `ok`; nguồn lỗi trả `{ "ok": false, "error": "ma_loi" }`, không trả stack trace, object key hay URL nội bộ.
 - `degraded = true` nếu có khối `ok: false`. Endpoint vẫn trả **200** để trang tải được; chỉ Access sai mới trả 401. `r2.partial: true` vẫn là `ok: true`, không bật `degraded`.
-- Dùng `Promise.allSettled`, timeout 10 giây cho mỗi lần gọi worker (khớp `PROBE_TIMEOUT_MS` và nhãn "tối đa 10 giây" trên UI). Không để một worker chết làm hỏng cả snapshot. Gọi R2 là binding, không có `AbortSignal`; trần 30 trang ở P1c là giới hạn thời gian.
+- Mỗi nguồn tự bắt lỗi: probes dùng `Promise.allSettled`, các nguồn còn lại chạy trong `Promise.all` nhưng mỗi hàm đã `try/catch` nên không nguồn nào làm hỏng snapshot. Timeout 10 giây cho mỗi lần gọi worker (khớp `PROBE_TIMEOUT_MS` và nhãn "tối đa 10 giây" trên UI). Gọi R2 là binding, không có `AbortSignal`; trần 30 trang ở P1c là giới hạn thời gian.
 - `Cache-Control: no-store`.
 
 ## P1a — Sức khỏe + Sử dụng & hạn mức
@@ -225,8 +225,8 @@ Không dán cả `workers/schema.sql` vào DB đang chạy: file đó là script
 
 **Admin worker** (`admin-worker/_worker.ts`):
 
-- Ghi khi `chat`, `sync` hoặc `errors` có `ok: false`; **không** ghi `health` (trang tự refresh 30 giây).
-- Giới hạn: Map trong isolate theo khóa `<source>:<code>`, cùng khóa chỉ ghi tối đa 1 dòng/giờ.
+- Ghi khi `chat`, `sync`, `livekit`, `errors` hoặc `r2` có `ok: false`; **không** ghi `health` (trang tự refresh 30 giây).
+- Giới hạn: Map trong isolate theo khóa `<source>:<code>`, cùng khóa chỉ ghi tối đa 1 dòng/giờ. Map không chia sẻ giữa các isolate nên đây là giới hạn mềm, không phải chặn tuyệt đối (xem Rủi ro).
 - Bỏ `logAudit` (`_worker.ts:233`) cùng file test `src/__tests__/unit/admin/audit.test.ts` — không chỗ nào gọi helper này; giữ bảng `admin_audit` cho sau này.
 
 ### B3. Đọc và dọn
@@ -235,7 +235,7 @@ Không dán cả `workers/schema.sql` vào DB đang chạy: file đó là script
 - 20 dòng mới nhất, `ORDER BY created_at DESC`. Bảng rỗng: `ok: true, items: []`.
 - Bảng chưa tạo hoặc D1 lỗi: `{ "ok": false, "error": "d1_error" }`, trang vẫn 200.
 - `errors.ok: false` cũng bật `degraded = true` (trong `buildOverview`).
-- Dọn bản ghi quá 14 ngày **chỉ khi ghi log mới**, tối đa 1 lần/giờ; không dọn trong đường đọc (trang tự refresh 30 giây).
+- Dọn bản ghi quá 14 ngày **chỉ khi ghi log mới**, không dọn trong đường đọc (trang tự refresh 30 giây). Admin worker dọn tối đa 1 lần/giờ; chat-proxy dọn ngay sau mỗi lần ghi (một câu `DELETE` chỉ chạy khi đã có lỗi).
 
 ### B4. UI
 
@@ -250,7 +250,7 @@ Không dán cả `workers/schema.sql` vào DB đang chạy: file đó là script
 - Xóa bảng hoặc tắt D1 → khối lỗi đỏ (`errors.ok: false`), trang vẫn 200.
 - Kiểm tra DB: `message` không chứa câu hỏi, uid, email, key hay body provider.
 
-Trạng thái 2026-10-26: code, unit test, `tsc`, `lint`, `npm test` sạch. Các bước deploy và kiểm tra ở trên chưa chạy trên bản thật.
+Trạng thái 2026-10-26: đã xác minh trên production. `admin_error_log` trong D1 `zenspace` có dòng thật (`source: livekit`, 4 dòng, message đúng 52 ký tự, không có PII); dòng sống qua reload và qua hai lần deploy admin; trang hiện "4 lỗi mới nhất". Bảng và index tồn tại đúng tên.
 
 ## P1c — Nội dung (xong code 2026-10-26)
 
@@ -299,27 +299,40 @@ Local: `wrangler dev` tự tạo bucket rỗng trong `.wrangler/state`, thấy 0
 - `npx wrangler deploy --dry-run --config wrangler.admin.jsonc` phải thấy `env.R2 (study-space)`.
 - Deploy xong: so số object và dung lượng với dashboard R2. Baseline 2026-10-26 là **121 object / 487.851.634 byte**. Dashboard hiển thị GB thập phân, Worker trả byte; lệch đơn vị nhỏ là bình thường, lệch số object hoặc lệch byte quá vài % mới là lỗi (metadata có thể tính khác).
 
-Trạng thái 2026-10-26: code, 5 unit test mới, `tsc`, `lint`, `npm test` (393 test) và `build:admin` sạch; `wrangler deploy --dry-run` thấy `env.R2 (study-space)`; local `wrangler dev` hiện card 0 B / 0 tệp, không lỗi console. Các bước deploy và đối chiếu R2 thật chưa chạy.
+Trạng thái 2026-10-26: đã deploy và đối chiếu production. `/api/admin/overview` trả `r2: { ok: true, bytes: 487851634, objects: 121, partial: false }` — khớp **byte chính xác** với baseline S3; card hiện "487.85 MB / 10 GB", "121", "Đầy đủ"; `limits.r2Bytes` = 10.000.000.000. Version deploy `c92c69e1` có đủ binding `DB`, `R2 (study-space)`, `ASSETS`.
+
+## Triển khai (chốt 2026-10-26)
+
+- Push `main` **không** deploy worker admin; nó chỉ kích hoạt Cloudflare Pages cho web. Sau mỗi thay đổi admin: `npm run build:admin` → `npx wrangler deploy --config wrangler.admin.jsonc`, rồi xác nhận bằng `npx wrangler deployments list --config wrangler.admin.jsonc`. (Đã kiểm ngày 2026-10-26: sau khi push, chỉ có check `Cloudflare Pages`, bảng deployment không đổi.)
+- `chat-proxy` và `livekit-rooms` vẫn deploy bằng cách dán code trên dashboard; không có pipeline tự động cho hai worker này.
 
 ## Chạy local
 
 - `npm run build:admin` rồi `npx wrangler dev --config wrangler.admin.jsonc --port 8787`.
 - `.dev.vars` (gitignored) đặt `ENVIRONMENT=development` để bỏ qua Access **chỉ khi** host là localhost; không đặt biến này ở Production.
+- Sửa `.dev.vars` mà số liệu không đổi thì kiểm tra còn tiến trình `wrangler dev` cũ giữ cổng 8787 (`netstat -ano | grep 8787`). Trên Windows nhiều `workerd` có thể cùng listen một cổng; trình duyệt sẽ vào bản cũ và bạn dễ kết luận sai.
 - D1 local mặc định rỗng; muốn xem dữ liệu thật thì kiểm tra trên bản deploy, không dựa vào local.
 - Không chạy `npm run dev` của Next cho UI mới; UI mới là file tĩnh trong `admin-host/`.
 
 ## Definition of Done
 
-- [x] P1a: `/api/admin/overview` trả đúng `health`, `chat`, `sync`, `livekit`, `limits`; số chat khớp D1.
-- [ ] P1a: ngắt một worker → khối tương ứng đỏ, trang vẫn 200.
-- [x] P1a: `docs/guides/SYSTEM_LIMITS.md` sinh từ `hit-limits.ts`.
-- [x] P1b: log lỗi sống qua reload và một lần deploy; UI hiện 20 lỗi gần nhất; dọn sau 14 ngày. (code + unit test; xác minh bản deploy theo B5)
-- [x] P1b: xóa bảng `admin_error_log` hoặc tắt D1 → khối lỗi đỏ, trang vẫn 200; `message` trong DB không có PII. (code + unit test)
-- [ ] P1c: tổng dung lượng và số object khớp R2; R2 lỗi không làm hỏng trang. (code + unit test; xác minh bản deploy theo C4)
-- [ ] Không có `ADMIN_TOKEN`, `?token=`, `chat-admin-token` trong Response, Network hay localStorage.
-- [ ] `zenstudy.space/admin/` và `/dev/studio/` vẫn 404.
-- [x] `npm run lint`, `npx tsc --noEmit`, `npm test` sạch.
-- [x] `npm run build:admin` và `npx wrangler deploy --dry-run --config wrangler.admin.jsonc` thấy đúng binding.
+- [X] P1a: `/api/admin/overview` trả đúng `health`, `chat`, `sync`, `livekit`, `limits`; số chat khớp D1.
+- [X] P1a: ngắt một worker → khối tương ứng đỏ, trang vẫn 200. (local: xóa `LIVEKIT_URL` trong `.dev.vars` → card Phòng học nhóm `is-degraded`, badge "Không phản hồi", thanh trạng thái "Có dịch vụ đang gặp lỗi", trang vẫn 200)
+- [X] P1a: `docs/guides/SYSTEM_LIMITS.md` sinh từ `hit-limits.ts`.
+- [X] P1b: log lỗi sống qua reload và một lần deploy; UI hiện 20 lỗi gần nhất. (production: 4 dòng `livekit:unreachable`, sống qua hai lần deploy; chưa có dòng nào quá 14 ngày nên đường xóa chưa chạy thật — chỉ có unit test)
+- [X] P1b: D1 lỗi → khối lỗi đỏ, trang vẫn 200; `message` trong DB không có PII. (unit test; production giữ nguyên bảng, không xóa thử)
+- [X] P1c: tổng dung lượng và số object khớp R2; R2 lỗi không làm hỏng trang. (production: 487.851.634 byte / 121 object, khớp baseline S3; nhánh lỗi có unit test, card đỏ dùng chung cơ chế `is-degraded` đã kiểm ở P1a)
+- [X] Không có `ADMIN_TOKEN`, `?token=`, `chat-admin-token` trong Response, Network hay localStorage. (production: chỉ một request `/api/admin/overview`, không query token, `localStorage` rỗng)
+- [X] `zenstudy.space/admin/` và `/dev/studio/` vẫn 404.
+- [X] `npm run lint`, `npx tsc --noEmit`, `npm test` sạch.
+- [X] `npm run build:admin` và `npx wrangler deploy --dry-run --config wrangler.admin.jsonc` thấy đúng binding.
+
+### Kết quả đối chiếu production 2026-10-26
+
+- Version admin đang chạy: `c92c69e1-1ca5-411f-a419-1bab169d4b13` (100% traffic), binding `DB (zenspace)`, `R2 (study-space)`, `ASSETS`.
+- `/api/admin/overview` trả 200, `degraded: false`; health 3/3 (19–166 ms); chat 0 câu / 0 uid / hạn mức 30, ngày `2026-10-26`; sync 3 uid, bản lưu lớn nhất 19.316 byte; LiveKit 440/4.500 phút tháng 10; R2 487.851.634 byte / 121 object; `errors.items` 4 dòng.
+- Access vẫn chặn ở edge: `/api/admin/overview` và `/admin/` trả 302 về trang đăng nhập khi không có phiên; `zenstudy-admin.*.workers.dev` không phân giải.
+- Ghi chú mở: 4 dòng `livekit:unreachable` xuất hiện lúc LiveKit vẫn đang 200 — `/usage` có lúc vượt timeout 10 giây (nó gọi Twirp `ListRooms` không có timeout riêng). Chưa đủ dữ liệu để khẳng định nguyên nhân; hướng xử lý rẻ nhất là đặt timeout 3–5 giây cho Twirp trong `livekit-rooms` để `/usage` luôn trả nhanh. Xem thêm Rủi ro.
 
 ## Rollback
 
@@ -334,7 +347,8 @@ Trạng thái 2026-10-26: code, 5 unit test mới, `tsc`, `lint`, `npm test` (39
 - **Token trong URL**: chỉ dùng Bearer server-side; không đưa token xuống browser.
 - **D1 local rỗng**: đừng kết luận số liệu sai từ môi trường local.
 - **R2 list tốn thời gian**: phân trang, cache 60 giây; không list mỗi lần refresh.
-- **Log lỗi spam/PII**: chỉ lỗi cuối, cắt ngắn, không ghi nội dung người dùng.
+- **Log lỗi spam/PII**: chỉ lỗi cuối, cắt ngắn, không ghi nội dung người dùng. Giới hạn 1 dòng/giờ nằm trong RAM của từng isolate nên **không tuyệt đối**: ngày 2026-10-26 có 3 dòng cùng `livekit:unreachable` trong 30 phút. Muốn chặn thật thì phải đọc D1 trước khi ghi (thêm 1 read ở đường lỗi) hoặc gộp trùng khi đọc.
+- **LiveKit `/usage` có thể chậm**: endpoint gọi Twirp `ListRooms` không có timeout riêng; khi chậm quá 10 giây, admin worker bỏ cuộc và ghi `unreachable` dù LiveKit vẫn sống. Đặt timeout 3–5 giây cho Twirp trong `livekit-rooms` (đã có nhánh lỗi trả `roomsOpen: 0`).
 - **Múi giờ**: chat theo Thái Bình Dương, LiveKit theo UTC; UI phải ghi nhãn.
 - **Access lockout**: một email admin; bật 2FA và lưu mã khôi phục trước khi đổi policy.
 - **Không có cảnh báo tự động**: dashboard chỉ hiển thị khi mở; chưa có thông báo khi worker chết.
@@ -355,3 +369,4 @@ Trạng thái 2026-10-26: code, 5 unit test mới, `tsc`, `lint`, `npm test` (39
 - **Bản 3** (2026-10-26): đóng P1b (code + test, chờ xác minh deploy); duyệt lại P1c — thêm type tối giản vì repo không có `workers-types`, trần 30 trang + `partial`, cache cả lỗi, mã `missing_binding`/`r2_error`, `r2.ok: false` bật `degraded` và ghi vào `admin_error_log`, `R2_LIMIT_BYTES` thay vì hardcode nhãn, card thứ 4 dùng `auto-fit` không sửa CSS.
 - **Bản 4** (2026-10-26): duyệt P1c để thực thi — đo baseline R2 121 object / 487.851.634 byte và xác nhận bucket tồn tại; đổi hạn mức sang 10 GB thập phân cho khớp Cloudflare/`SYSTEM_LIMITS.md`; bổ sung UI còn thiếu (nhãn lỗi, nhãn nguồn, `formatBytes` GB/TB, ghi chú cache 60 giây); ghi rõ cập nhật test cũ + `beforeEach`; đồng bộ timeout 10 giây và bỏ tham chiếu dòng code đã trôi.
 - **Bản 5** (2026-10-26): P1c xong code + test — binding `R2`, khối `r2` có cache 60 giây, card "Kho tệp"; dry-run thấy `env.R2`, local hiện 0 B / 0 tệp; chờ deploy đối chiếu R2 thật.
+- **Bản 6** (2026-10-26): đóng P1 sau đối chiếu production — R2 khớp byte baseline, Access/network không lộ token, log lỗi sống thật; sửa docs theo code (`Promise.all` + try/catch, log cả `livekit`, chat-proxy dọn ở mỗi lần ghi); ghi rõ **push `main` không deploy admin**; thêm rủi ro throttle log theo isolate và LiveKit `/usage` chậm; thêm bẫy nhiều `wrangler dev` cùng giữ cổng 8787.

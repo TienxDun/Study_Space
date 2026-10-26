@@ -12,13 +12,15 @@
  *   FIREBASE_PROJECT_ID = "zenspace-d10m13y26" (để kiểm vé đăng nhập, loại Text là được)
  *
  * Luồng /chat: bắt buộc vé Firebase (header Authorization: Bearer <idToken>)
- * -> đúng người mới cho qua -> mỗi người 30 câu/ngày (sổ user:{uid}:{ngày}).
+ * -> đúng người mới cho qua -> mỗi người N câu/ngày (sổ user:{uid}:{ngày}).
+ * N lấy từ cờ `cfg:flags.chatDailyLimit` (admin sửa được), dự phòng env USER_DAILY_LIMIT, cuối cùng 30.
  *
  * Bindings (Settings -> Bindings -> Add):
  *   AI: Workers AI -> tên biến đúng "AI"
  *   KV: namespace "CHAT_QUOTA" -> tên biến đúng "CHAT_QUOTA"
  *
  *  POST /chat   { text, history?, images?[{name,data}], files?[{name,text}] } -> { text, provider, model }
+ *  GET  /config -> cờ công khai cho web tĩnh { chatEnabled, roomsEnabled, maintenance, banner, updatedAt }
  *  GET  /status -> lượt dùng + chain (Bearer ADMIN_TOKEN; ?token= chỉ nhận trên localhost)
  *  GET  /models?token=... -> list CF + hãng ngoài + chain + câu hướng dẫn
  *  POST /models?token=... -> lưu chain, câu hướng dẫn, nhiệt độ, hãng
@@ -42,6 +44,11 @@ const CFG_TTL_MS = 60 * 1000; // nhớ cấu hình admin trong 60s để đỡ �
 const MAX_CHAIN = 5; // thứ tự tối đa 5 đường gọi
 const MAX_PROVIDERS = 10; // tối đa 10 hãng ngoài
 const CF_COOLDOWN_MS = 10 * 60 * 1000; // Workers AI kẹt thì nghỉ 10 phút
+const FLAGS_TTL_MS = 30 * 1000; // cờ hệ thống: nhớ 30s để đổi bên admin có hiệu lực nhanh
+const FLAGS_KEY = "cfg:flags";
+const DAILY_LIMIT_MIN = 1;
+const DAILY_LIMIT_MAX = 200; // trần chống gõ nhầm; nâng hạn mức làm tăng chi phí gọi AI
+const DEFAULT_DAILY_LIMIT = 30;
 
 // Hãng ngoài: OpenAI (Groq/OpenRouter/OpenAI) chung 1 cách gọi,
 // Gemini (AI Studio) cách gọi riêng (X-goog-api-key + contents).
@@ -83,7 +90,7 @@ const DEFAULT_SYSTEM_VN = [
 ].join("\n");
 const DEFAULT_GEN = { temperature: 0.7, max_tokens: 2048 };
 
-const mem = { cfCooldownUntil: 0, lastError: null, certAt: 0, certs: {} };
+const mem = { cfCooldownUntil: 0, lastError: null, certAt: 0, certs: {}, flags: null, flagsAt: 0 };
 
 function pacificDay() {
   return new Intl.DateTimeFormat("en-CA", {
@@ -129,6 +136,54 @@ async function incrCount(env, key, ttlSeconds) {
   const cur = (Number(await store.get(key).catch(() => 0)) || 0) + 1;
   await store.put(key, String(cur), { expirationTtl: Math.max(ttlSeconds, 60) }).catch(() => {});
   return cur;
+}
+
+// ---------- Cờ hệ thống (admin ghi ở KV `cfg:flags`, đọc có nhớ 30 giây) ----------
+// Thiếu cờ, KV lỗi hay JSON hỏng -> coi như đang bật bình thường (trạng thái an toàn).
+const BANNER_MAX = 140;
+function cleanFlagText(value) {
+  return String(value || "").replace(/[\u0000-\u001F\u007F]/g, " ").trim().slice(0, BANNER_MAX);
+}
+function validDailyLimit(value) {
+  return Number.isInteger(value) && value >= DAILY_LIMIT_MIN && value <= DAILY_LIMIT_MAX
+    ? value
+    : null;
+}
+async function getFlags(env) {
+  const now = Date.now();
+  if (mem.flags && now - mem.flagsAt < FLAGS_TTL_MS) return mem.flags;
+  let parsed = null;
+  if (kv(env)) {
+    const raw = await kv(env).get(FLAGS_KEY).catch(() => null);
+    if (raw) {
+      try {
+        const obj = JSON.parse(raw);
+        if (obj && typeof obj === "object") parsed = obj;
+      } catch { /* JSON hỏng: dùng mặc định bật */ }
+    }
+  }
+  mem.flags = {
+    chatEnabled: !(parsed && parsed.chatEnabled === false),
+    roomsEnabled: !(parsed && parsed.roomsEnabled === false),
+    maintenance: !!(parsed && parsed.maintenance === true),
+    banner: cleanFlagText(parsed && parsed.banner),
+    chatDailyLimit: validDailyLimit(parsed && parsed.chatDailyLimit),
+    updatedAt: Number(parsed && parsed.updatedAt) || 0,
+  };
+  mem.flagsAt = now;
+  return mem.flags;
+}
+// Hạn mức hiệu lực: cờ trong KV -> env USER_DAILY_LIMIT -> 30.
+async function getDailyLimit(env) {
+  const flags = await getFlags(env);
+  if (flags.chatDailyLimit) return flags.chatDailyLimit;
+  const envLimit = Number(env.USER_DAILY_LIMIT);
+  return Number.isInteger(envLimit) && envLimit >= DAILY_LIMIT_MIN ? envLimit : DEFAULT_DAILY_LIMIT;
+}
+// Test dùng để xóa bộ nhớ cờ giữa các ca.
+function resetFlagsCache() {
+  mem.flags = null;
+  mem.flagsAt = 0;
 }
 
 // ---------- Nhật ký lỗi cuối cho trang admin (bảng admin_error_log, giữ 14 ngày) ----------
@@ -766,6 +821,29 @@ const worker = {
       return json({ ok: true, aiBinding: !!env.AI, kv: !!kv(env), db: !!db, schema, pid: !!env.FIREBASE_PROJECT_ID, time: new Date().toISOString() });
     }
 
+    // Cấu hình công khai cho web tĩnh: đọc lúc chạy, không nhúng vào bản build.
+    // Không trả updatedBy (email) và không trả hạn mức.
+    if (url.pathname === "/config" && req.method === "GET") {
+      const flags = await getFlags(env);
+      return new Response(
+        JSON.stringify({
+          chatEnabled: flags.chatEnabled,
+          roomsEnabled: flags.roomsEnabled,
+          maintenance: flags.maintenance,
+          banner: flags.banner,
+          updatedAt: flags.updatedAt,
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            ...cors,
+            "Cache-Control": "public, max-age=30",
+          },
+        }
+      );
+    }
+
     if (url.pathname === "/status" && req.method === "GET") {
       const secret = String(env.ADMIN_TOKEN || "").trim();
       if (!secret) return json({ error: "Worker chưa cấu hình ADMIN_TOKEN." }, 503);
@@ -781,7 +859,7 @@ const worker = {
       try { if (lastAuthRaw) lastAuthError = JSON.parse(lastAuthRaw); } catch { /* bỏ qua */ }
       return json({
         dayPacific: day,
-        auth: { required: true, userDailyLimit: Number(env.USER_DAILY_LIMIT) || 30, projectIdSet: !!env.FIREBASE_PROJECT_ID, lastAuthError },
+        auth: { required: true, userDailyLimit: await getDailyLimit(env), projectIdSet: !!env.FIREBASE_PROJECT_ID, lastAuthError },
         workersAI: { coolingDownUntil: mem.cfCooldownUntil, lastError: mem.lastError, currentModel: await getCfModel(env) },
         providers: maskProviders(providers),
         chain: chain.map((e) => `${e.provider}:${e.modelId}`),
@@ -911,6 +989,11 @@ const worker = {
     }
 
     if (url.pathname === "/chat" && req.method === "POST") {
+      // Cờ tắt chat: chặn trước khi đọc body hay gọi AI để không tốn lượt.
+      const flags = await getFlags(env);
+      if (!flags.chatEnabled) {
+        return json({ error: "Trợ lý chat đang tạm tắt. Bạn vẫn học và ghi chú bình thường.", code: "CHAT_DISABLED" }, 503);
+      }
       let body = {};
       try { body = await req.json(); } catch { return json({ error: "Body phải là JSON." }, 400); }
       const parsed = parseAttachments(body);
@@ -941,7 +1024,7 @@ const worker = {
           return json({ error: "Bạn đăng nhập lại để chat nhé." }, 401);
         }
         uid = checked.uid;
-        const userLimit = Number(env.USER_DAILY_LIMIT) || 30;
+        const userLimit = await getDailyLimit(env);
         const uCount = await getCount(env, `user:${uid}:${day}`);
         if (uCount >= userLimit) {
           return json({ error: `Hôm nay bạn đã dùng hết ${userLimit} câu, mai quay lại nhé.` }, 429);
@@ -1024,8 +1107,9 @@ const worker = {
       return json({ error: `Dự phòng bận: ${String(lastError).slice(0, 200)}`, code: "fallback_failed" }, 502);
     }
 
-    return json({ error: "Dùng POST /chat, GET /status, GET /models, POST /providers/check, GET /providers/models, GET /health." }, 404);
+    return json({ error: "Dùng POST /chat, GET /config, GET /status, GET /models, POST /providers/check, GET /providers/models, GET /health." }, 404);
   },
 };
 
 export default worker;
+export { resetFlagsCache as __resetFlagsCache };

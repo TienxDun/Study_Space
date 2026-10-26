@@ -4,9 +4,11 @@
  * - `/api/admin/*`: xác thực Cloudflare Access JWT rồi mới xử lý.
  * - `GET /api/admin/ping`: sức khỏe 3 worker.
  * - `GET /api/admin/overview`: snapshot sức khỏe + sử dụng (P1a) + nhật ký lỗi (P1b) + kho R2 (P1c).
+ * - `POST /api/admin/flags`: đổi cờ hệ thống (P2a), audit trước khi ghi KV.
  * - Mọi path khác: trả static asset trong `dist-admin/` qua binding `ASSETS`.
  *
- * Binding: `DB` → D1, `R2` → bucket study-space (khai trong `wrangler.admin.jsonc`).
+ * Binding: `DB` → D1, `R2` → bucket study-space, `FLAGS` → KV CHAT_QUOTA
+ * (khai trong `wrangler.admin.jsonc`).
  *
  * Biến môi trường (chỉ Production, không đặt ở Preview):
  *   ACCESS_TEAM_DOMAIN  Text   https://<team>.cloudflareaccess.com
@@ -39,6 +41,13 @@ const ERROR_ROWS_LIMIT = 20;
 const ERROR_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
 const ERROR_THROTTLE_MS = 60 * 60 * 1000;
 const ERROR_MESSAGE_MAX = 200;
+// P2a: cờ hệ thống nằm ở KV CHAT_QUOTA, key `cfg:flags` (dùng chung với chat-proxy).
+const FLAGS_KEY = "cfg:flags";
+const FLAG_BANNER_MAX = 140;
+const FLAG_LIMIT_MIN = 1;
+const FLAG_LIMIT_MAX = 200;
+const FLAG_WRITE_LIMIT = 10;
+const FLAG_WRITE_WINDOW_MS = 60 * 1000;
 
 interface D1Statement {
   bind(...values: unknown[]): D1Statement;
@@ -66,6 +75,11 @@ interface R2BucketLike {
   list(options?: { limit?: number; cursor?: string }): Promise<R2ListPage>;
 }
 
+interface KvNamespaceLike {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string): Promise<void>;
+}
+
 export interface AdminEnv {
   ACCESS_TEAM_DOMAIN?: string;
   ACCESS_AUD?: string;
@@ -77,6 +91,7 @@ export interface AdminEnv {
   ASSETS?: { fetch(request: Request): Promise<Response> };
   DB?: D1DatabaseLike;
   R2?: R2BucketLike;
+  FLAGS?: KvNamespaceLike;
 }
 
 export type VerifyResult =
@@ -254,6 +269,7 @@ const ERROR_SOURCE_LABELS: Record<string, string> = {
   livekit: "Số liệu phòng học nhóm",
   errors: "Nhật ký lỗi",
   r2: "Kho tệp",
+  flags: "Cờ hệ thống",
 };
 
 const errorLogThrottle = new Map<string, number>();
@@ -267,6 +283,8 @@ export function __resetErrorLogThrottle(): void {
 
 /**
  * Ghi một dòng lỗi cho trang admin. Cùng `source:code` chỉ ghi tối đa 1 dòng/giờ.
+ * Map trong RAM chỉ chặn trong một isolate, nên phải đọc dòng mới nhất trong D1
+ * trước khi chèn để các isolate khác cũng thấy giới hạn này.
  * Không chứa câu hỏi, uid, email hay key; D1 lỗi thì bỏ qua, không làm hỏng request chính.
  */
 export async function logAdminError(
@@ -278,11 +296,23 @@ export async function logAdminError(
 
   const key = `${source}:${code}`;
   const now = Date.now();
-  if (now - (errorLogThrottle.get(key) || 0) < ERROR_THROTTLE_MS) return false;
-  errorLogThrottle.set(key, now);
+  const lastInMemory = errorLogThrottle.get(key) || 0;
+  if (now - lastInMemory < ERROR_THROTTLE_MS) return false;
 
   const message = `${ERROR_SOURCE_LABELS[source] || source} không lấy được (${code}).`;
   try {
+    const recent = await env.DB.prepare(
+      "SELECT created_at FROM admin_error_log WHERE source = ? AND code = ? ORDER BY created_at DESC LIMIT 1",
+    )
+      .bind(source, code)
+      .first<{ created_at: number }>();
+    const lastAt = Math.max(lastInMemory, Number(recent?.created_at) || 0);
+    if (now - lastAt < ERROR_THROTTLE_MS) {
+      if (recent) errorLogThrottle.set(key, lastAt);
+      return false;
+    }
+    errorLogThrottle.set(key, now);
+
     await env.DB.prepare(
       "INSERT INTO admin_error_log (source, code, message, created_at) VALUES (?, ?, ?, ?)",
     )
@@ -332,6 +362,164 @@ async function readErrors(env: AdminEnv): Promise<
   } catch {
     return { ok: false, error: "d1_error" };
   }
+}
+
+export type SystemFlags = {
+  chatEnabled: boolean;
+  roomsEnabled: boolean;
+  maintenance: boolean;
+  banner: string;
+  chatDailyLimit: number;
+  updatedAt: number;
+  updatedBy: string;
+};
+
+/** Cờ đọc từ KV; `chatDailyLimit: null` nghĩa là chưa ai đặt, nơi hiển thị tự lấy hạn mức hiệu lực. */
+type StoredFlags = Omit<SystemFlags, "chatDailyLimit"> & { chatDailyLimit: number | null };
+
+type FlagsRead =
+  | { ok: true; flags: StoredFlags }
+  | { ok: false; error: string };
+
+const DEFAULT_FLAGS: StoredFlags = {
+  chatEnabled: true,
+  roomsEnabled: true,
+  maintenance: false,
+  banner: "",
+  chatDailyLimit: null,
+  updatedAt: 0,
+  updatedBy: "",
+};
+
+function cleanBannerText(value: unknown): string {
+  return String(value ?? "")
+    .replace(/[\u0000-\u001F\u007F]/g, " ")
+    .trim()
+    .slice(0, FLAG_BANNER_MAX);
+}
+
+function validFlagLimit(value: unknown): number | null {
+  return typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= FLAG_LIMIT_MIN &&
+    value <= FLAG_LIMIT_MAX
+    ? value
+    : null;
+}
+
+/**
+ * Đọc cờ hệ thống. Thiếu binding hoặc JSON hỏng thì báo lỗi rõ ràng để
+ * trang admin hiện panel đỏ và khóa công tắc, không âm thầm ghi đè.
+ */
+export async function readFlags(env: AdminEnv): Promise<FlagsRead> {
+  if (!env.FLAGS) return { ok: false, error: "missing_binding" };
+
+  let raw: string | null = null;
+  try {
+    raw = await env.FLAGS.get(FLAGS_KEY);
+  } catch {
+    return { ok: false, error: "kv_error" };
+  }
+  if (!raw) return { ok: true, flags: { ...DEFAULT_FLAGS } };
+
+  let parsed: unknown = null;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { ok: false, error: "invalid_json" };
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return { ok: false, error: "invalid_json" };
+  }
+
+  const source = parsed as Record<string, unknown>;
+  return {
+    ok: true,
+    flags: {
+      chatEnabled: typeof source.chatEnabled === "boolean" ? source.chatEnabled : DEFAULT_FLAGS.chatEnabled,
+      roomsEnabled: typeof source.roomsEnabled === "boolean" ? source.roomsEnabled : DEFAULT_FLAGS.roomsEnabled,
+      maintenance: typeof source.maintenance === "boolean" ? source.maintenance : DEFAULT_FLAGS.maintenance,
+      banner: cleanBannerText(source.banner),
+      chatDailyLimit: validFlagLimit(source.chatDailyLimit),
+      updatedAt: Number(source.updatedAt) > 0 ? Number(source.updatedAt) : 0,
+      updatedBy: typeof source.updatedBy === "string" ? source.updatedBy.slice(0, 200) : "",
+    },
+  };
+}
+
+type FlagsInput = {
+  chatEnabled: boolean;
+  roomsEnabled: boolean;
+  maintenance: boolean;
+  banner: string;
+  chatDailyLimit: number;
+};
+
+function parseFlagsBody(body: unknown): FlagsInput | null {
+  if (!body || typeof body !== "object" || Array.isArray(body)) return null;
+  const raw = body as Record<string, unknown>;
+  if (
+    typeof raw.chatEnabled !== "boolean" ||
+    typeof raw.roomsEnabled !== "boolean" ||
+    typeof raw.maintenance !== "boolean" ||
+    typeof raw.banner !== "string"
+  ) {
+    return null;
+  }
+  if (/[\u0000-\u001F\u007F]/.test(raw.banner) || raw.banner.length > FLAG_BANNER_MAX) {
+    return null;
+  }
+  const limit = validFlagLimit(raw.chatDailyLimit);
+  if (limit === null) return null;
+  return {
+    chatEnabled: raw.chatEnabled,
+    roomsEnabled: raw.roomsEnabled,
+    maintenance: raw.maintenance,
+    banner: raw.banner,
+    chatDailyLimit: limit,
+  };
+}
+
+async function logAudit(
+  env: AdminEnv,
+  entry: { actorEmail: string; action: string; target: string; detail: unknown },
+): Promise<boolean> {
+  if (!env.DB) return false;
+  try {
+    await env.DB.prepare(
+      "INSERT INTO admin_audit (actor_email, action, target, detail_json, created_at) VALUES (?, ?, ?, ?, ?)",
+    )
+      .bind(
+        entry.actorEmail.slice(0, 200),
+        entry.action,
+        entry.target,
+        JSON.stringify(entry.detail).slice(0, 4000),
+        Date.now(),
+      )
+      .run();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const flagWriteLog = new Map<string, number[]>();
+
+/** Test dùng để xóa bộ đếm giới hạn ghi giữa các ca. */
+export function __resetFlagWriteLog(): void {
+  flagWriteLog.clear();
+}
+
+function allowFlagWrite(email: string): boolean {
+  const now = Date.now();
+  const hits = (flagWriteLog.get(email) || []).filter((at) => now - at < FLAG_WRITE_WINDOW_MS);
+  if (hits.length >= FLAG_WRITE_LIMIT) {
+    flagWriteLog.set(email, hits);
+    return false;
+  }
+  hits.push(now);
+  flagWriteLog.set(email, hits);
+  return true;
 }
 
 function json(data: unknown, status = 200): Response {
@@ -538,7 +726,7 @@ async function buildOverview(env: AdminEnv, email: string) {
   const livekitUrl = trimUrl(env.LIVEKIT_URL);
   const probes = pingProbes(env);
 
-  const [probeResults, chatStatus, livekitUsage, chatUsage, syncUsage, errorsRead, r2] =
+  const [probeResults, chatStatus, livekitUsage, chatUsage, syncUsage, errorsRead, r2, flagsRead] =
     await Promise.all([
       Promise.allSettled(probes.map((probe) => probeCheck(probe))),
       chatUrl
@@ -554,6 +742,7 @@ async function buildOverview(env: AdminEnv, email: string) {
       readSyncUsage(env),
       readErrors(env),
       readR2Usage(env),
+      readFlags(env),
     ]);
 
   const checks: CheckResult[] = probeResults.map((result, index) =>
@@ -605,6 +794,15 @@ async function buildOverview(env: AdminEnv, email: string) {
     ? { ok: true, items: errorsRead.items }
     : { ok: false, error: errorsRead.error };
 
+  // Chưa ai đặt hạn mức trong KV thì hiện hạn mức hiệu lực mà chat-proxy đang dùng.
+  const flags = flagsRead.ok
+    ? {
+        ok: true,
+        ...flagsRead.flags,
+        chatDailyLimit: flagsRead.flags.chatDailyLimit ?? dailyLimit,
+      }
+    : { ok: false, error: flagsRead.error };
+
   const limits = {
     chatDaily: dailyLimit,
     snapshotMaxBytes: SNAPSHOT_MAX_BYTES,
@@ -618,7 +816,8 @@ async function buildOverview(env: AdminEnv, email: string) {
     sync.ok !== true ||
     livekit.ok !== true ||
     errors.ok !== true ||
-    r2.ok !== true;
+    r2.ok !== true ||
+    flags.ok !== true;
 
   // Ghi lỗi cấu hình/D1 để mở trang là thấy, không ghi health (trang tự làm mới 30 giây).
   await Promise.all([
@@ -627,6 +826,7 @@ async function buildOverview(env: AdminEnv, email: string) {
     livekit.ok === true ? null : logAdminError(env, "livekit", String(livekit.error)),
     errors.ok === true ? null : logAdminError(env, "errors", String(errors.error)),
     r2.ok === true ? null : logAdminError(env, "r2", String(r2.error)),
+    flags.ok === true ? null : logAdminError(env, "flags", String(flags.error)),
   ]);
 
   return {
@@ -639,6 +839,7 @@ async function buildOverview(env: AdminEnv, email: string) {
     livekit,
     errors,
     r2,
+    flags,
     limits,
   };
 }
@@ -659,6 +860,50 @@ async function handleApi(
       return json({ error: "Chỉ hỗ trợ GET." }, 405);
     }
     return json(await buildOverview(env, identity.email));
+  }
+
+  if (pathname === `${API_PREFIX}/flags`) {
+    if (request.method !== "POST") {
+      return json({ error: "Chỉ hỗ trợ POST." }, 405);
+    }
+    if (!env.FLAGS) {
+      return json({ error: "kv_error" }, 500);
+    }
+    let body: unknown = null;
+    try {
+      body = await request.json();
+    } catch {
+      return json({ error: "invalid_body" }, 400);
+    }
+    const next = parseFlagsBody(body);
+    if (!next) {
+      return json({ error: "invalid_body" }, 400);
+    }
+    if (!allowFlagWrite(identity.email)) {
+      return json({ error: "rate_limited" }, 429);
+    }
+
+    const before = await readFlags(env);
+    const record: SystemFlags = {
+      ...next,
+      updatedAt: Date.now(),
+      updatedBy: identity.email,
+    };
+    const audited = await logAudit(env, {
+      actorEmail: identity.email,
+      action: "flags.update",
+      target: FLAGS_KEY,
+      detail: { before: before.ok ? before.flags : null, after: record },
+    });
+    if (!audited) {
+      return json({ error: "audit_failed" }, 500);
+    }
+    try {
+      await env.FLAGS.put(FLAGS_KEY, JSON.stringify(record));
+    } catch {
+      return json({ error: "kv_error" }, 500);
+    }
+    return json({ ok: true, flags: record });
   }
 
   if (pathname === `${API_PREFIX}/ping`) {

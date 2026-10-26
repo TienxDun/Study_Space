@@ -105,6 +105,7 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
     handleOpenRoomsRoot,
     handleOpenRadioRoot,
     handleOpenStatsRoot,
+    systemFlags,
   } = state;
 
   // Chỉ mount các bảng chức năng khi người dùng mở lần đầu để tiết kiệm RAM tối đa cho mobile
@@ -295,6 +296,8 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
             isOpen={isMoreOpen}
             onClose={handleMobileCloseAllSheets}
             onSelect={handleMoreSelect}
+            chatEnabled={systemFlags.chatEnabled}
+            roomsEnabled={systemFlags.roomsEnabled}
           />
         </ErrorBoundary>
       )}
@@ -318,6 +321,8 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
               onOpenRooms={handleOpenRoomsRoot}
               onOpenRadio={handleOpenRadioRoot}
               onOpenStats={handleOpenStatsRoot}
+              chatEnabled={systemFlags.chatEnabled}
+              roomsEnabled={systemFlags.roomsEnabled}
             />
           </div>
         )}
