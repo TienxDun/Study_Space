@@ -1,6 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import worker, {
   __resetAccessCertsCache,
+  __resetErrorLogThrottle,
   type AdminEnv,
 } from "../../../../admin-worker/_worker";
 import {
@@ -25,6 +26,7 @@ beforeAll(async () => {
 
 beforeEach(() => {
   __resetAccessCertsCache();
+  __resetErrorLogThrottle();
 });
 
 afterEach(() => {
@@ -76,17 +78,27 @@ type FakeDb = {
   db: AdminEnv["DB"];
   queries: string[];
   chatBinds: unknown[][];
+  inserts: unknown[][];
 };
 
 function fakeDb(
   options: {
     fail?: boolean;
+    failErrors?: boolean;
     chat?: { total: number; users: number };
     sync?: { users: number; lastAt: number | null; maxBytes: number };
+    errors?: Array<{
+      id: number;
+      source: string;
+      code: string;
+      message: string;
+      created_at: number;
+    }>;
   } = {},
 ): FakeDb {
   const queries: string[] = [];
   const chatBinds: unknown[][] = [];
+  const inserts: unknown[][] = [];
   const db = {
     prepare(query: string) {
       queries.push(query);
@@ -94,6 +106,7 @@ function fakeDb(
       const stmt = {
         bind(...values: unknown[]) {
           bound = values;
+          if (query.includes("INSERT INTO admin_error_log")) inserts.push(values);
           return stmt;
         },
         async run() {
@@ -111,13 +124,14 @@ function fakeDb(
           return null;
         },
         async all() {
-          return { results: [] };
+          if (options.failErrors) throw new Error("D1 không phản hồi");
+          return { results: options.errors ?? [] };
         },
       };
       return stmt;
     },
   };
-  return { db: db as unknown as AdminEnv["DB"], queries, chatBinds };
+  return { db: db as unknown as AdminEnv["DB"], queries, chatBinds, inserts };
 }
 
 describe("admin worker", () => {
@@ -307,6 +321,7 @@ describe("admin overview", () => {
       snapshotMaxBytes: 2_000_000,
       r2: "10 GiB",
     });
+    expect(body.errors).toEqual({ ok: true, items: [] });
 
     const statusCall = calls.find((call) => call.url.endsWith("/status"));
     expect(statusCall?.headers.get("Authorization")).toBe(
@@ -385,5 +400,93 @@ describe("admin overview", () => {
 
     expect(res.status).toBe(401);
     expect(calls).toHaveLength(0);
+  });
+
+  it("đọc nhật ký lỗi: trả đúng dòng và hỏi 20 dòng mới nhất", async () => {
+    stubBackend();
+    const fake = fakeDb({
+      errors: [
+        {
+          id: 2,
+          source: "chat-proxy",
+          code: "all_busy",
+          message: "Tất cả đường dự phòng đều bận hoặc đang nghỉ.",
+          created_at: 1_730_000_500_000,
+        },
+        {
+          id: 1,
+          source: "chat",
+          code: "d1_error",
+          message: "Số liệu chat không lấy được (d1_error).",
+          created_at: 1_730_000_000_000,
+        },
+      ],
+    });
+
+    const res = await worker.fetch(
+      await overviewRequest(),
+      baseEnv({ DB: fake.db }),
+    );
+    const body = (await res.json()) as any;
+
+    expect(body.errors.ok).toBe(true);
+    expect(body.errors.items).toEqual([
+      {
+        id: 2,
+        source: "chat-proxy",
+        code: "all_busy",
+        message: "Tất cả đường dự phòng đều bận hoặc đang nghỉ.",
+        createdAt: 1_730_000_500_000,
+      },
+      {
+        id: 1,
+        source: "chat",
+        code: "d1_error",
+        message: "Số liệu chat không lấy được (d1_error).",
+        createdAt: 1_730_000_000_000,
+      },
+    ]);
+    expect(
+      fake.queries.some((q) => q.includes("ORDER BY created_at DESC LIMIT")),
+    ).toBe(true);
+  });
+
+  it("không đọc được nhật ký lỗi thì errors đỏ, degraded bật, trang vẫn 200", async () => {
+    stubBackend();
+    const fake = fakeDb({ failErrors: true });
+
+    const res = await worker.fetch(
+      await overviewRequest(),
+      baseEnv({ DB: fake.db }),
+    );
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(200);
+    expect(body.errors).toEqual({ ok: false, error: "d1_error" });
+    expect(body.degraded).toBe(true);
+    expect(fake.inserts.some((row) => row[0] === "errors")).toBe(true);
+  });
+
+  it("thiếu binding DB thì errors báo d1_unavailable", async () => {
+    stubBackend();
+
+    const res = await worker.fetch(await overviewRequest(), baseEnv());
+    const body = (await res.json()) as any;
+
+    expect(body.errors).toEqual({ ok: false, error: "d1_unavailable" });
+  });
+
+  it("cùng một lỗi chỉ ghi 1 dòng trong vòng 1 giờ và không chép body thô", async () => {
+    stubBackend({ statusCode: 500 });
+    const fake = fakeDb();
+
+    await worker.fetch(await overviewRequest(), baseEnv({ DB: fake.db }));
+    await worker.fetch(await overviewRequest(), baseEnv({ DB: fake.db }));
+
+    const chatRows = fake.inserts.filter((row) => row[0] === "chat");
+    expect(chatRows).toHaveLength(1);
+    expect(chatRows[0]?.[1]).toBe("http_500");
+    expect(String(chatRows[0]?.[2])).toContain("http_500");
+    expect(String(chatRows[0]?.[2])).not.toContain("hỏng");
   });
 });

@@ -3,7 +3,7 @@
  *
  * - `/api/admin/*`: xác thực Cloudflare Access JWT rồi mới xử lý.
  * - `GET /api/admin/ping`: sức khỏe 3 worker.
- * - `GET /api/admin/overview`: snapshot sức khỏe + sử dụng (P1a).
+ * - `GET /api/admin/overview`: snapshot sức khỏe + sử dụng (P1a) + nhật ký lỗi (P1b).
  * - Mọi path khác: trả static asset trong `dist-admin/` qua binding `ASSETS`.
  *
  * Biến môi trường (chỉ Production, không đặt ở Preview):
@@ -27,6 +27,11 @@ const LOCAL_DEV_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 const DEFAULT_CHAT_DAILY = 30;
 const SNAPSHOT_MAX_BYTES = 2_000_000;
 const R2_LIMIT_LABEL = "10 GiB";
+// P1b: nhật ký lỗi D1 (bảng admin_error_log).
+const ERROR_ROWS_LIMIT = 20;
+const ERROR_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
+const ERROR_THROTTLE_MS = 60 * 60 * 1000;
+const ERROR_MESSAGE_MAX = 200;
 
 interface D1Statement {
   bind(...values: unknown[]): D1Statement;
@@ -220,41 +225,88 @@ export async function verifyAccessJwt(
   return { ok: true, email };
 }
 
-export type AuditEntry = {
-  actor: string;
-  action: string;
-  target?: string;
-  detail?: unknown;
+const ERROR_SOURCE_LABELS: Record<string, string> = {
+  chat: "Số liệu chat",
+  sync: "Số liệu đồng bộ",
+  livekit: "Số liệu phòng học nhóm",
+  errors: "Nhật ký lỗi",
 };
 
-/**
- * Endpoint ghi phải dừng hành động khi hàm này trả `false` (fail closed).
- */
-export async function logAudit(
-  env: AdminEnv,
-  entry: AuditEntry,
-): Promise<boolean> {
-  if (!env.DB) {
-    console.error("admin audit: thiếu binding DB");
-    return false;
-  }
+const errorLogThrottle = new Map<string, number>();
+let errorCleanupAt = 0;
 
+/** Test dùng để xóa bộ nhớ đệm giới hạn tần suất giữa các ca. */
+export function __resetErrorLogThrottle(): void {
+  errorLogThrottle.clear();
+  errorCleanupAt = 0;
+}
+
+/**
+ * Ghi một dòng lỗi cho trang admin. Cùng `source:code` chỉ ghi tối đa 1 dòng/giờ.
+ * Không chứa câu hỏi, uid, email hay key; D1 lỗi thì bỏ qua, không làm hỏng request chính.
+ */
+export async function logAdminError(
+  env: AdminEnv,
+  source: string,
+  code: string,
+): Promise<boolean> {
+  if (!env.DB) return false;
+
+  const key = `${source}:${code}`;
+  const now = Date.now();
+  if (now - (errorLogThrottle.get(key) || 0) < ERROR_THROTTLE_MS) return false;
+  errorLogThrottle.set(key, now);
+
+  const message = `${ERROR_SOURCE_LABELS[source] || source} không lấy được (${code}).`;
   try {
     await env.DB.prepare(
-      "INSERT INTO admin_audit (actor_email, action, target, detail_json, created_at) VALUES (?, ?, ?, ?, ?)",
+      "INSERT INTO admin_error_log (source, code, message, created_at) VALUES (?, ?, ?, ?)",
     )
-      .bind(
-        entry.actor,
-        entry.action,
-        entry.target ?? null,
-        entry.detail === undefined ? null : JSON.stringify(entry.detail),
-        Date.now(),
-      )
+      .bind(source, code, message.slice(0, ERROR_MESSAGE_MAX), now)
       .run();
+
+    // Dọn bản ghi quá 14 ngày, tối đa 1 lần/giờ, chỉ ở đường ghi.
+    if (now - errorCleanupAt >= ERROR_THROTTLE_MS) {
+      errorCleanupAt = now;
+      await env.DB.prepare("DELETE FROM admin_error_log WHERE created_at < ?")
+        .bind(now - ERROR_RETENTION_MS)
+        .run();
+    }
     return true;
   } catch {
-    console.error("admin audit: ghi thất bại");
     return false;
+  }
+}
+
+type ErrorRow = {
+  id: number;
+  source: string;
+  code: string;
+  message: string;
+  created_at: number;
+};
+
+async function readErrors(env: AdminEnv): Promise<
+  | { ok: true; items: Array<Record<string, unknown>> }
+  | { ok: false; error: string }
+> {
+  if (!env.DB) return { ok: false, error: "d1_unavailable" };
+  try {
+    const res = await env.DB.prepare(
+      "SELECT id, source, code, message, created_at FROM admin_error_log ORDER BY created_at DESC LIMIT ?",
+    )
+      .bind(ERROR_ROWS_LIMIT)
+      .all<ErrorRow>();
+    const items = (res?.results || []).map((row) => ({
+      id: Number(row.id) || 0,
+      source: String(row.source || ""),
+      code: String(row.code || ""),
+      message: String(row.message || "").slice(0, ERROR_MESSAGE_MAX),
+      createdAt: Number(row.created_at) || 0,
+    }));
+    return { ok: true, items };
+  } catch {
+    return { ok: false, error: "d1_error" };
   }
 }
 
@@ -410,20 +462,22 @@ async function buildOverview(env: AdminEnv, email: string) {
   const livekitUrl = trimUrl(env.LIVEKIT_URL);
   const probes = pingProbes(env);
 
-  const [probeResults, chatStatus, livekitUsage, chatUsage, syncUsage] = await Promise.all([
-    Promise.allSettled(probes.map((probe) => probeCheck(probe))),
-    chatUrl
-      ? fetchJson<ChatStatusBody>(`${chatUrl}/status`, authHeaders)
-      : Promise.resolve<SourceResult<ChatStatusBody>>({ ok: false, error: "missing_url" }),
-    livekitUrl && token
-      ? fetchJson<LivekitUsageBody>(`${livekitUrl}/usage`, authHeaders)
-      : Promise.resolve<SourceResult<LivekitUsageBody>>({
-          ok: false,
-          error: livekitUrl ? "missing_token" : "missing_url",
-        }),
-    readChatUsage(env, day),
-    readSyncUsage(env),
-  ]);
+  const [probeResults, chatStatus, livekitUsage, chatUsage, syncUsage, errorsRead] =
+    await Promise.all([
+      Promise.allSettled(probes.map((probe) => probeCheck(probe))),
+      chatUrl
+        ? fetchJson<ChatStatusBody>(`${chatUrl}/status`, authHeaders)
+        : Promise.resolve<SourceResult<ChatStatusBody>>({ ok: false, error: "missing_url" }),
+      livekitUrl && token
+        ? fetchJson<LivekitUsageBody>(`${livekitUrl}/usage`, authHeaders)
+        : Promise.resolve<SourceResult<LivekitUsageBody>>({
+            ok: false,
+            error: livekitUrl ? "missing_token" : "missing_url",
+          }),
+      readChatUsage(env, day),
+      readSyncUsage(env),
+      readErrors(env),
+    ]);
 
   const checks: CheckResult[] = probeResults.map((result, index) =>
     result.status === "fulfilled"
@@ -470,13 +524,30 @@ async function buildOverview(env: AdminEnv, email: string) {
       }
     : { ok: false, error: livekitUsage.error };
 
+  const errors = errorsRead.ok
+    ? { ok: true, items: errorsRead.items }
+    : { ok: false, error: errorsRead.error };
+
   const limits = {
     chatDaily: dailyLimit,
     snapshotMaxBytes: SNAPSHOT_MAX_BYTES,
     r2: R2_LIMIT_LABEL,
   };
 
-  const degraded = !healthOk || chat.ok !== true || sync.ok !== true || livekit.ok !== true;
+  const degraded =
+    !healthOk ||
+    chat.ok !== true ||
+    sync.ok !== true ||
+    livekit.ok !== true ||
+    errors.ok !== true;
+
+  // Ghi lỗi cấu hình/D1 để mở trang là thấy, không ghi health (trang tự làm mới 30 giây).
+  await Promise.all([
+    chat.ok === true ? null : logAdminError(env, "chat", String(chat.error)),
+    sync.ok === true ? null : logAdminError(env, "sync", String(sync.error)),
+    livekit.ok === true ? null : logAdminError(env, "livekit", String(livekit.error)),
+    errors.ok === true ? null : logAdminError(env, "errors", String(errors.error)),
+  ]);
 
   return {
     generatedAt: new Date().toISOString(),
@@ -486,6 +557,7 @@ async function buildOverview(env: AdminEnv, email: string) {
     chat,
     sync,
     livekit,
+    errors,
     limits,
   };
 }

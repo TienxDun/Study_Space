@@ -148,6 +148,45 @@ describe("chat-proxy /chat", () => {
   });
 });
 
+describe("chat-proxy /chat lỗi cuối", () => {
+  async function sendPlain(env: Record<string, unknown>) {
+    const res = await worker.fetch(
+      new Request("http://localhost/chat", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer secret",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: "abcd", strict: true, modelId: "qwen3-30b" }),
+      }),
+      env as never,
+    );
+    return { status: res.status, body: (await res.json()) as any };
+  }
+
+  it("trả mã lỗi máy đọc được và ghi 1 dòng admin_error_log", async () => {
+    const db = fakeDb();
+    const env: Record<string, unknown> = makeEnv({ DB: db });
+    env.AI = {
+      async run() {
+        throw new Error("quota");
+      },
+    };
+
+    const first = await sendPlain(env);
+    expect(first.status).toBe(502);
+    expect(first.body.code).toBe("fallback_failed");
+    expect(first.body.error).toContain("Dự phòng bận");
+    expect(
+      db.queries.some((q) => q.includes("INSERT INTO admin_error_log")),
+    ).toBe(true);
+
+    const second = await sendPlain(env);
+    expect(second.status).toBe(503);
+    expect(second.body.code).toBe("all_busy");
+  });
+});
+
 describe("chat-proxy /health", () => {
   it("báo schema đủ khi có bảng chat_usage", async () => {
     const db = fakeDb({ tables: 1 });

@@ -131,6 +131,38 @@ async function incrCount(env, key, ttlSeconds) {
   return cur;
 }
 
+// ---------- Nhật ký lỗi cuối cho trang admin (bảng admin_error_log, giữ 14 ngày) ----------
+// message lấy từ bảng tĩnh: không chứa câu hỏi, uid, email, key hay body provider.
+const ERROR_MESSAGES = {
+  provider_bad_key: "Key của một hãng bị từ chối.",
+  all_busy: "Tất cả đường dự phòng đều bận hoặc đang nghỉ.",
+  fallback_failed: "Đường dự phòng cuối trả lỗi.",
+};
+const ERROR_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
+
+async function logAdminError(env, code) {
+  const db = d1(env);
+  const message = ERROR_MESSAGES[code];
+  if (!db || !message) return;
+  try {
+    await db.prepare(
+      "INSERT INTO admin_error_log (source, code, message, created_at) VALUES (?, ?, ?, ?)"
+    ).bind("chat-proxy", code, message, Date.now()).run();
+    await db.prepare("DELETE FROM admin_error_log WHERE created_at < ?")
+      .bind(Date.now() - ERROR_RETENTION_MS).run();
+  } catch { /* bảng chưa có hoặc D1 lỗi: bỏ qua, không làm hỏng câu trả lời */ }
+}
+
+// Ghi log ngoài đường trả lời (ctx.waitUntil). Không có ctx (test/local) thì chờ.
+async function fireErrorLog(ctx, env, code) {
+  const pending = logAdminError(env, code);
+  if (ctx && typeof ctx.waitUntil === "function") {
+    ctx.waitUntil(pending);
+    return;
+  }
+  await pending;
+}
+
 // Giữ min trong ctx để sau này hãng mới cần giới hạn theo phút thì dùng ngay.
 
 // Model mặc định do admin chọn (sổ chung KV), nhớ tạm 60s để đỡ đọc KV.
@@ -710,7 +742,7 @@ function hasAdminAccess(req, env, url) {
 }
 
 const worker = {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const cors = corsHeaders(req, env);
     const json = (obj, status = 200) =>
       new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json; charset=utf-8", ...cors } });
@@ -975,7 +1007,8 @@ const worker = {
         lastError = r.error || "";
       }
       if (badProvider) {
-        return json({ error: `Key hãng ${badProvider} bị từ chối, kiểm tra lại key ở admin.` }, 502);
+        await fireErrorLog(ctx, env, "provider_bad_key");
+        return json({ error: `Key hãng ${badProvider} bị từ chối, kiểm tra lại key ở admin.`, code: "provider_bad_key" }, 502);
       }
       if (noVision.length > 0 && !lastError && !sawBusy) {
         return json({ error: `Model ${noVision.join(", ")} không đọc được ảnh. Đổi sang model có mắt như Gemini rồi gửi lại nhé.` }, 400);
@@ -984,9 +1017,11 @@ const worker = {
         const coolLeft = Math.max(0, mem.cfCooldownUntil - Date.now());
         const coolMsg = coolLeft > 0 ? ` Cloudflare đang nghỉ ${Math.ceil(coolLeft / 60000)} phút nữa.` : "";
         const lastErr = mem.lastError?.error ? ` Lỗi gần nhất: ${String(mem.lastError.error).slice(0, 150)}.` : "";
-        return json({ error: `Các đường đều bận (${skipped.join(", ") || "không rõ đường"}).${coolMsg}${lastErr} Kiểm tra /status rồi thử lại.` }, 503);
+        await fireErrorLog(ctx, env, "all_busy");
+        return json({ error: `Các đường đều bận (${skipped.join(", ") || "không rõ đường"}).${coolMsg}${lastErr} Kiểm tra /status rồi thử lại.`, code: "all_busy" }, 503);
       }
-      return json({ error: `Dự phòng bận: ${String(lastError).slice(0, 200)}` }, 502);
+      await fireErrorLog(ctx, env, "fallback_failed");
+      return json({ error: `Dự phòng bận: ${String(lastError).slice(0, 200)}`, code: "fallback_failed" }, 502);
     }
 
     return json({ error: "Dùng POST /chat, GET /status, GET /models, POST /providers/check, GET /providers/models, GET /health." }, 404);

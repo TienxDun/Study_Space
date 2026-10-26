@@ -13,6 +13,7 @@
   var globalStatusPill = document.getElementById("global-status");
   var globalStatusText = document.getElementById("global-status-text");
   var autoRefreshCheck = document.getElementById("auto-refresh-check");
+  var errorRowsEl = document.getElementById("error-rows");
 
   var loading = false;
   var autoTimer = null;
@@ -263,6 +264,42 @@
     setText("limits-r2", limits.r2 || "--");
   }
 
+  var SOURCE_LABELS = {
+    "chat-proxy": "Trợ lý chat",
+    chat: "Số liệu chat",
+    sync: "Đồng bộ dữ liệu",
+    livekit: "Phòng học nhóm",
+    errors: "Nhật ký lỗi"
+  };
+
+  function renderErrors(block) {
+    var items = block && Array.isArray(block.items) ? block.items : [];
+    var ok = block && block.ok === true;
+
+    if (!ok) {
+      errorRowsEl.innerHTML = '<tr><td colspan="4">Không đọc được nhật ký lỗi.</td></tr>';
+      setText("errors-note", "Không đọc được nhật ký lỗi: " + errorLabel(block && block.error) + ".");
+    } else if (items.length === 0) {
+      errorRowsEl.innerHTML = '<tr><td colspan="4">Chưa có lỗi nào.</td></tr>';
+      setText("errors-note", "Không có lỗi nào trong 14 ngày gần đây.");
+    } else {
+      errorRowsEl.innerHTML = "";
+      items.forEach(function (item) {
+        var tr = document.createElement("tr");
+        tr.innerHTML =
+          '<td class="latency-cell">' + escapeHtml(formatTime(item.createdAt)) + '</td>' +
+          '<td>' + escapeHtml(SOURCE_LABELS[item.source] || item.source) + '</td>' +
+          '<td><span class="endpoint-pill"><span>' + escapeHtml(item.code) + '</span></span></td>' +
+          '<td>' + escapeHtml(String(item.message || "").slice(0, 200)) + '</td>';
+        errorRowsEl.appendChild(tr);
+      });
+      setText("errors-note", "Hiện " + items.length + " lỗi mới nhất. Giữ 14 ngày.");
+    }
+
+    var card = document.getElementById("errors-card");
+    if (card) card.classList.toggle("is-degraded", !ok);
+  }
+
   function handleSuccess(data) {
     var health = data.health || {};
     var checks = Array.isArray(health.checks) ? health.checks : [];
@@ -309,6 +346,7 @@
     actionNote.textContent = "Vừa cập nhật xong";
     renderRows(checks);
     renderUsage(data);
+    renderErrors(data.errors || {});
   }
 
   function handleFailure(errText) {
