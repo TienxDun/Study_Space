@@ -23,7 +23,7 @@ Các key từng dán ở khung chat coi như đã lộ:
 3. Settings → Bindings: `AI` (Workers AI) + `CHAT_QUOTA` (KV) + `DB` (D1 `zenspace`). Thiếu `AI` là `/chat` báo 500; thiếu `DB` thì bộ đếm câu chat tự lùi về KV (nhanh chạm trần 1.000 ghi/ngày). Lượt gọi và neurons Workers AI xem trên Cloudflare Dashboard, worker không tự đếm.
 4. Nếu chưa có bảng, mở D1 `zenspace` → Console → dán `workers/schema.sql` (tạo `user_data`, `chat_usage`, `admin_audit`; xóa `cf_usage` cũ nếu có).
 5. Kiểm tra: mở `/health` phải thấy `{"ok":true,"aiBinding":true,"kv":true,"db":true,"schema":true}`.
-6. Đổi model mặc định: mở trang admin local `http://localhost:3001/admin/chat` → thẻ Model → chọn → Đổi model (lưu vào KV, có hiệu lực ngay, không cần deploy lại). API tương ứng: `GET/POST /models?token=...`.
+6. Đổi model mặc định / thứ tự trả lời: mở shell admin `admin.zenstudy.space/admin/` (hoặc `npx wrangler dev --config wrangler.admin.jsonc --port 8787` rồi vào `http://localhost:8787/admin/`) → panel "Trợ lý chat" (lưu vào KV, có hiệu lực ngay, không cần deploy lại). API tương ứng: `GET/POST /api/admin/chat/config` (đi qua Access).
 
 ## Bước 1b — Deploy Worker `livekit` (phòng học nhóm)
 

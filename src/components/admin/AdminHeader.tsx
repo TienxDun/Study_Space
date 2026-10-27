@@ -3,7 +3,6 @@
 import Link from "next/link";
 import {
   LightningIcon,
-  ChatCenteredDotsIcon,
   FilmStripIcon,
   ArrowLeftIcon,
   ShieldCheckIcon,
@@ -12,7 +11,7 @@ import {
 } from "@phosphor-icons/react";
 import { useAdminTheme } from "./AdminThemeContext";
 
-export type AdminTab = "limits" | "chat" | "studio";
+export type AdminTab = "limits" | "studio";
 
 interface AdminHeaderProps {
   activeTab: AdminTab;
@@ -23,7 +22,6 @@ interface AdminHeaderProps {
 
 const TABS: { id: AdminTab; href: string; label: string; icon: typeof LightningIcon }[] = [
   { id: "limits", href: "/admin", label: "Hạn Mức Hệ Thống", icon: LightningIcon },
-  { id: "chat", href: "/admin/chat", label: "Quản Lý Chatbot", icon: ChatCenteredDotsIcon },
   { id: "studio", href: "/dev/studio", label: "Studio Bối Cảnh (local)", icon: FilmStripIcon },
 ];
 

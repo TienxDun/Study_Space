@@ -13,7 +13,6 @@ describe("AdminHeader Component", () => {
     );
 
     expect(html).toContain("Hạn Mức Hệ Thống");
-    expect(html).toContain("Quản Lý Chatbot");
     expect(html).toContain("Studio Bối Cảnh (local)");
     expect(html).toContain('href="/dev/studio"');
     expect(html).not.toContain("Xem Trước Toasts");

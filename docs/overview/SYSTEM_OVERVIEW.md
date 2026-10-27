@@ -117,7 +117,7 @@ flowchart TD
 
 ### 3.12 Admin (dev-only, NODE_ENV=development)
 
-- `/admin`, `/admin/scenes` (edit scenes.json + media), `/admin/chat`, `/admin/toasts`.
+- `/admin` (hạn mức), `/dev/studio` (edit scenes.json + media). Trang `/admin/chat` local đã xóa 2026-10-27; cấu hình chat nằm ở panel "Trợ lý chat" trong shell admin.
 - API routes: admin scenes/sync, livekit token/rooms.
 - Hit-limits config.
 
