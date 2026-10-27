@@ -205,19 +205,23 @@ Mục tiêu: đổi model mặc định, thứ tự chuỗi dự phòng, prompt 
 Các bước nhỏ dự kiến:
 
 - [x] B1. Chốt phạm vi: model mặc định, chain, prompt, danh sách hãng (thêm/sửa/xóa/tắt), thử nhanh một model. Không đụng lịch sử chat.
-  - `temperature` và `max_tokens` gộp chung khối Model (chốt 2026-10-27).
+  - `temperature` và `max_tokens` gộp chung khối Model (chốt 2026-10-27); **bỏ khỏi UI cùng ngày** — giữ mặc định đang lưu, chỉ chọn model.
 - [x] B2. Endpoint proxy trong worker admin: `GET /api/admin/chat/config` (không trả API key, chỉ trạng thái "đã có key") và `POST /api/admin/chat/config` cho từng nhóm thay đổi. Browser không gọi thẳng chat-proxy bằng token.
   - Thực tế trả **key đã che** (`***abcd`) từ chat-proxy để giữ key cũ khi sửa; key thật không bao giờ về trình duyệt và POST nhận lại mặt nạ thì giữ key cũ.
   - Endpoint phụ: `POST /api/admin/chat/check-key`, `GET /api/admin/chat/provider-models?id=`, `POST /api/admin/chat/test` (Bearer `ADMIN_TOKEN`, `strict:true`, không trừ lượt người dùng).
 - [x] B3. Validate + audit mỗi lần đổi (cùng khuôn A2), không ghi log nội dung prompt vào audit — chỉ ghi hành động và khác biệt khóa.
   - Audit `chat.config.update`, target `cfg:cfModel` / `cfg:gen` / `cfg:prompt` / `cfg:chain` / `cfg:providers`; prompt chỉ ghi `beforeChars`/`afterChars`, hãng chỉ ghi id/type/baseUrl/enabled.
   - Giới hạn 10 lần ghi/phút/email; audit lỗi thì không gọi chat-proxy.
-- [x] B4. UI: các khối Model / Chain / Prompt / Hãng; key nhập một chiều (không hiện lại), có nút xóa.
-  - Khối Model gồm model Cloudflare + temperature + max tokens + nút "Thử trả lời".
-  - Chain 1–5 bước: đổi thứ tự, xóa, chọn hãng, thử từng bước, gợi ý model từ datalist.
-  - Hãng: bật/tắt, sửa, xóa, "Xem model", "Kiểm tra key"; sửa key đã lưu phải xóa ô rồi dán key mới.
+- [x] B4. UI: các khối Thử model / Thứ tự trả lời / Prompt / Hãng; key nhập một chiều (không hiện lại), có nút xóa.
+  - **Mục 1 chỉ để thử, không lưu gì (chốt lại 2026-10-27):** chọn hãng (Cloudflare + hãng đã lưu đang bật) → chọn model của hãng đó → "Thử" → `POST /api/admin/chat/test` đúng cặp hãng/model. Bỏ ô "Model Cloudflare", dòng "Đang dùng", nút "Lưu model" và lệnh `kind:"model"` khỏi UI; endpoint `cfg:cfModel` giữ nguyên trong chat-proxy.
+  - **Why:** chat-proxy chạy thật theo `cfg:chain` đúng thứ tự, bước 1 trước ([`worker.js:1055`](../../workers/chat-proxy/worker.js)); web chỉ gửi câu hỏi, không gửi model ([`chatApi.ts:38`](../../src/components/study/chat/utils/chatApi.ts)). `cfg:cfModel` chỉ để hiển thị, nên "model chính" ở mục 1 là khái niệm sai.
+  - **Mục 2 đổi tên "Thứ tự trả lời":** bước 1 chạy trước, lỗi mới xuống bước 2, 3; toàn quyền thêm/xóa/đổi thứ tự, Cloudflare là một hãng bình thường trong danh sách.
+  - Chain 1–5 bước: đổi thứ tự, xóa, chọn hãng, thử từng bước; mỗi bước tự tải model của hãng đang chọn vào dropdown thật, có thêm ô nhập mã riêng khi cần.
+  - Hãng: bật/tắt, sửa, xóa, "Kiểm tra key", "Làm mới" danh sách model; sửa key đã lưu phải xóa ô rồi dán key mới.
+  - **Dựng lại 2026-10-27:** bỏ datalist dùng chung + nút "Xem model" (danh sách chọn bị chập chờn), thay bằng 4 mục đánh số, dropdown tự tải theo hãng, chip trạng thái từng mục; script tách riêng `admin-host/admin-chat.js`.
 - [ ] B5. Kiểm tra: đổi model → câu trả lời dùng model mới; đổi chain → thứ tự thử đúng; key sai → lỗi hiện ở khối Lỗi.
-  - **Đã kiểm local (2026-10-27):** đọc cấu hình thật qua `wrangler dev` (4 model, 3 bước chain, 3 hãng), key chỉ hiện mặt nạ, không có key/localStorage/token trong trang, không tràn ngang ở 430px, layout desktop 2 cột ở 1200px; 15 test DOM bấm nút thật (lưu model/gen/chain/prompt/hãng, kiểm tra key, xem model, chặn xóa hãng đang dùng, lỗi 502 khóa panel).
+  - **Đã kiểm local (2026-10-27):** đọc cấu hình thật qua `wrangler dev` (4 model, 3 bước chain, 3 hãng), key chỉ hiện mặt nạ, không có key/localStorage/token trong trang, không tràn ngang ở 390px, layout desktop 2 cột ở 1200px; 19 test DOM bấm nút thật (khối thử tự tải model theo hãng, nhập mã tay, tải lại khi lỗi, lưu chain/prompt/hãng, kiểm tra key, chặn xóa hãng đang dùng, thử model chỉ gọi `/test`, lỗi 502 khóa panel).
+  - **Kiểm khối thử (2026-10-27):** danh sách hãng có Cloudflare đứng đầu cùng các hãng đã lưu; đổi hãng thì model tải theo hãng (Groq 4, OpenRouter 200); thử model free OpenRouter trả lời sau 2.093 ms, mạng chỉ có `POST /chat/test`, không có `POST /config`; 320/390/640px xếp một cột, 641/1200px một hàng, không tràn ngang.
   - **Chưa kiểm production:** cần deploy rồi đổi model/chain thật và đọc lại câu trả lời; chưa ghi gì lên production trong lúc kiểm local.
 - [ ] Quyết định cần chốt khi bắt tay: có giữ trang `/admin/chat` local song song không (mặc định: giữ đến khi P2b xong kiểm tra, rồi xóa).
   - Chốt 2026-10-27: giữ `src/app/admin/chat/page.tsx` tới khi kiểm production xong, sau đó xóa.
@@ -290,3 +294,4 @@ npx wrangler kv key put --namespace-id=a16e430f9bbe46afa51ffc9d4f9bce9d --remote
 - **Bản 4** (2026-10-27): gộp chỉnh hạn mức câu/người/ngày vào P2a — thêm trường `chatDailyLimit` (1–200, mặc định 30) vào `cfg:flags`, chat-proxy đọc KV với env chỉ còn là dự phòng, `/status` báo hạn mức hiệu lực; plan P2a thành 5 trường.
 - **Bản 5** (2026-10-27): **chốt P2a**. Push `db8b078` đưa web P2a lên production; audit production có 9 lần lưu đúng 9 dòng (chat, phòng, bảo trì + banner, hạn mức 30 → 1 → 30), `/config` trả đúng CORS + `Cache-Control`, admin chỉ gọi `GET /api/admin/overview` không token. Bundle production đã deploy được kiểm bằng cách chặn `/config`: banner "Thử bảo trì" hiện, nút phòng học và chat "Tạm tắt". Mục "30 → 35" để mở vì chưa có người dùng đạt hạn mức.
 - **Bản 6** (2026-10-27): P2b xong phần code — worker admin thêm 5 endpoint (config GET/POST, check-key, provider-models, test), audit trước ghi, prompt không vào audit, key chỉ trả mặt nạ; shell thêm panel "Trợ lý chat" (Model + gen, Chain 1–5, Prompt, Hãng). 15 test DOM chạy trên `index.html`/`admin.js` thật; 501 test toàn repo xanh. Kiểm local với cấu hình thật qua `wrangler dev`, không ghi production. Còn chờ deploy + kiểm production rồi xóa trang `/admin/chat` local.
+- **Bản 7** (2026-10-27): chỉnh theo yêu cầu người dùng — **mục 1 chỉ để thử** (hãng + model + Thử, không lưu, có cả Cloudflare), bỏ khái niệm "model chính" và nút "Lưu model" khỏi UI; **mục 2 đổi thành "Thứ tự trả lời"**, bước 1 chạy trước và toàn quyền sắp xếp. Lý do: chat-proxy vốn chạy theo `cfg:chain`, `cfg:cfModel` chỉ để hiển thị.

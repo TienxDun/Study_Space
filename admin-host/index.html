@@ -336,95 +336,86 @@
       </section>
 
       <!-- Trợ lý chat -->
-      <section class="panel-card chat-cfg-card" id="chat-cfg-card" aria-labelledby="chat-cfg-title">
+      <section class="panel-card chat-panel" id="chat-panel" aria-labelledby="chat-title">
         <div class="panel-header">
           <div class="panel-title-group">
-            <h2 class="panel-title" id="chat-cfg-title">Trợ lý chat</h2>
-            <span class="panel-desc">Chọn model, thứ tự dự phòng, câu lệnh hệ thống và nhà cung cấp. Lưu xong có hiệu lực trong khoảng 60 giây.</span>
+            <h2 class="panel-title" id="chat-title">Trợ lý chat</h2>
+            <span class="panel-desc">Thử model, thứ tự trả lời, câu lệnh hệ thống và tài khoản hãng. Mỗi mục lưu riêng; thay đổi áp dụng sau khoảng 60 giây.</span>
           </div>
-          <span class="usage-tag" id="chat-cfg-state">Đang đọc…</span>
+          <span class="usage-tag" id="chat-state">Đang đọc…</span>
         </div>
 
-        <div class="chat-cfg-body">
-          <!-- Model + sinh câu trả lời -->
-          <div class="chat-block">
-            <div class="chat-block-head">
-              <h3 class="chat-block-title">Model trả lời</h3>
-              <span class="chat-block-desc">Đang dùng: <strong id="chat-model-current">--</strong></span>
-            </div>
-            <div class="chat-grid">
-              <label class="chat-field chat-span-2" for="chat-model">
-                <span class="flag-name">Model Cloudflare</span>
-                <select class="flag-input" id="chat-model" disabled></select>
-                <span class="flag-hint">Danh sách lấy từ chat-proxy. Model đang dùng được chọn sẵn.</span>
-              </label>
-              <label class="chat-field" for="chat-temp">
-                <span class="flag-name">Độ sáng tạo (temperature)</span>
-                <input
-                  class="flag-input flag-number"
-                  id="chat-temp"
-                  type="number"
-                  min="0"
-                  max="2"
-                  step="0.1"
-                  inputmode="decimal"
-                  disabled
-                />
-                <span class="flag-hint">Từ 0 đến 2. Thấp thì bám sát câu hỏi, cao thì linh hoạt hơn.</span>
-              </label>
-              <label class="chat-field" for="chat-tokens">
-                <span class="flag-name">Độ dài tối đa (max tokens)</span>
-                <input
-                  class="flag-input flag-number"
-                  id="chat-tokens"
-                  type="number"
-                  min="256"
-                  max="8000"
-                  step="32"
-                  inputmode="numeric"
-                  disabled
-                />
-                <span class="flag-hint">Từ 256 đến 8000 token cho mỗi câu trả lời.</span>
-              </label>
-            </div>
-            <p class="chat-test" id="chat-test-result" hidden></p>
-            <div class="chat-actions">
-              <p class="usage-note" id="chat-model-note">Chưa đọc được cấu hình model.</p>
-              <div class="chat-buttons">
-                <button class="btn-ghost" id="chat-test-model" type="button" disabled>Thử trả lời</button>
-                <button class="btn-primary" id="chat-model-save" type="button" data-label="Lưu model" disabled>
-                  <span>Lưu model</span>
-                </button>
+        <div class="chat-body">
+          <section class="chat-section" aria-labelledby="chat-model-title">
+            <header class="chat-section-head">
+              <span class="chat-step" aria-hidden="true">1</span>
+              <div class="chat-section-titles">
+                <h3 class="chat-section-title" id="chat-model-title">Thử model</h3>
+                <p class="chat-section-desc">Chọn hãng, chọn model của hãng đó rồi bấm Thử. Chỉ thử, không lưu vào cấu hình.</p>
               </div>
-            </div>
-          </div>
+            </header>
 
-          <!-- Thứ tự dự phòng -->
-          <div class="chat-block">
-            <div class="chat-block-head">
-              <h3 class="chat-block-title">Thứ tự dự phòng</h3>
-              <span class="chat-block-desc" id="chat-chain-hint">Tối đa 5 bước. Hết bước trước mới thử bước sau.</span>
+            <div class="chat-try" id="chat-try" hidden>
+              <div class="chat-try-row">
+                <div class="chat-try-field">
+                  <span class="chat-step-label">Hãng</span>
+                  <select
+                    class="flag-input chat-try-provider"
+                    id="chat-try-provider"
+                    aria-label="Hãng để thử"
+                    disabled
+                  ></select>
+                </div>
+                <div class="chat-try-field chat-try-model-field">
+                  <span class="chat-step-label">Model</span>
+                  <div class="chat-try-model-control" id="chat-try-model"></div>
+                </div>
+                <button class="btn-ghost chat-mini-btn" id="chat-try-run" type="button" disabled>Thử</button>
+              </div>
+              <p class="chat-feedback" id="chat-try-result" hidden></p>
             </div>
+
+            <footer class="chat-section-foot">
+              <p class="chat-hint" id="chat-model-note">Chưa đọc được cấu hình chat.</p>
+            </footer>
+          </section>
+
+          <section class="chat-section" aria-labelledby="chat-chain-title">
+            <header class="chat-section-head">
+              <span class="chat-step" aria-hidden="true">2</span>
+              <div class="chat-section-titles">
+                <h3 class="chat-section-title" id="chat-chain-title">Thứ tự trả lời</h3>
+                <p class="chat-section-desc">Trợ lý chạy bước 1 trước; lỗi mới xuống bước 2, rồi bước 3. Sắp xếp tùy ý.</p>
+              </div>
+              <span class="chat-chip" id="chat-chain-chip">Đã lưu</span>
+            </header>
+
             <div class="chat-chain" id="chat-chain"></div>
-            <datalist id="chat-chain-models"></datalist>
-            <div class="chat-actions">
-              <p class="usage-note" id="chat-chain-note">Chưa đọc được thứ tự dự phòng.</p>
-              <div class="chat-buttons">
+            <p class="chat-hint" id="chat-chain-hint">Tối đa 5 bước. Bước 1 chạy trước, lỗi mới sang bước sau.</p>
+
+            <footer class="chat-section-foot">
+              <p class="chat-hint" id="chat-chain-note">Chưa đọc được thứ tự dự phòng.</p>
+              <div class="chat-actions">
                 <button class="btn-ghost" id="chat-chain-add" type="button" disabled>Thêm bước</button>
                 <button class="btn-primary" id="chat-chain-save" type="button" data-label="Lưu thứ tự" disabled>
                   <span>Lưu thứ tự</span>
                 </button>
               </div>
-            </div>
-          </div>
+            </footer>
+          </section>
 
-          <!-- Câu lệnh hệ thống -->
-          <div class="chat-block">
-            <div class="chat-block-head">
-              <h3 class="chat-block-title">Câu lệnh hệ thống</h3>
-              <span class="chat-block-desc">Áp dụng cho mọi câu trả lời của trợ lý.</span>
-            </div>
+          <section class="chat-section" aria-labelledby="chat-prompt-title">
+            <header class="chat-section-head">
+              <span class="chat-step" aria-hidden="true">3</span>
+              <div class="chat-section-titles">
+                <h3 class="chat-section-title" id="chat-prompt-title">Câu lệnh hệ thống</h3>
+                <p class="chat-section-desc">Quy tắc trả lời áp dụng cho mọi câu hỏi của trợ lý.</p>
+              </div>
+              <span class="chat-chip" id="chat-prompt-chip">Đã lưu</span>
+            </header>
+
             <label class="chat-field" for="chat-prompt">
+              <span class="chat-label">Nội dung câu lệnh</span>
               <textarea
                 class="flag-input chat-prompt"
                 id="chat-prompt"
@@ -433,30 +424,39 @@
                 spellcheck="false"
                 disabled
               ></textarea>
-              <span class="flag-hint"><span id="chat-prompt-count">0</span>/4000 ký tự. Không được để trống.</span>
+              <span class="chat-help"><span id="chat-prompt-count">0</span>/4000 ký tự. Không được để trống.</span>
             </label>
-            <div class="chat-actions">
-              <p class="usage-note" id="chat-prompt-note">Chưa đọc được câu lệnh hệ thống.</p>
-              <div class="chat-buttons">
+
+            <footer class="chat-section-foot">
+              <p class="chat-hint" id="chat-prompt-note">Chưa đọc được câu lệnh hệ thống.</p>
+              <div class="chat-actions">
                 <button class="btn-primary" id="chat-prompt-save" type="button" data-label="Lưu câu lệnh" disabled>
                   <span>Lưu câu lệnh</span>
                 </button>
               </div>
-            </div>
-          </div>
+            </footer>
+          </section>
 
-          <!-- Nhà cung cấp -->
-          <div class="chat-block">
-            <div class="chat-block-head">
-              <h3 class="chat-block-title">Nhà cung cấp</h3>
-              <span class="chat-block-desc">Dùng khi model Cloudflare lỗi hoặc hết hạn mức. Key đã lưu chỉ hiện dạng che.</span>
-            </div>
+          <section class="chat-section" aria-labelledby="chat-provider-title">
+            <header class="chat-section-head">
+              <span class="chat-step" aria-hidden="true">4</span>
+              <div class="chat-section-titles">
+                <h3 class="chat-section-title" id="chat-provider-title">Nhà cung cấp</h3>
+                <p class="chat-section-desc">Tài khoản của các hãng dùng trong bước dự phòng. Key đã lưu chỉ hiện dạng che.</p>
+              </div>
+              <span class="chat-chip" id="chat-provider-chip">Đã lưu</span>
+            </header>
+
             <div class="chat-providers" id="chat-providers"></div>
 
-            <div class="chat-provider-form" id="chat-provider-form">
-              <div class="chat-grid">
+            <button class="btn-ghost chat-provider-toggle" id="chat-provider-toggle" type="button" disabled>
+              Thêm nhà cung cấp
+            </button>
+
+            <div class="chat-provider-form" id="chat-provider-form" hidden>
+              <div class="chat-fields">
                 <label class="chat-field" for="chat-provider-id">
-                  <span class="flag-name">Mã nhà cung cấp</span>
+                  <span class="chat-label">Mã nhà cung cấp</span>
                   <input
                     class="flag-input"
                     id="chat-provider-id"
@@ -467,15 +467,15 @@
                     spellcheck="false"
                     disabled
                   />
-                  <span class="flag-hint">Chữ, số, gạch ngang. Không đổi được sau khi lưu.</span>
+                  <span class="chat-help">Chữ, số, gạch ngang. Không đổi được sau khi lưu.</span>
                 </label>
                 <label class="chat-field" for="chat-provider-type">
-                  <span class="flag-name">Loại</span>
+                  <span class="chat-label">Loại</span>
                   <select class="flag-input" id="chat-provider-type" disabled></select>
-                  <span class="flag-hint">Chọn loại để tự điền địa chỉ gốc.</span>
+                  <span class="chat-help">Chọn loại để tự điền địa chỉ gốc.</span>
                 </label>
                 <label class="chat-field" for="chat-provider-label">
-                  <span class="flag-name">Tên hiện trên bảng</span>
+                  <span class="chat-label">Tên hiển thị</span>
                   <input
                     class="flag-input"
                     id="chat-provider-label"
@@ -487,7 +487,7 @@
                   />
                 </label>
                 <label class="chat-field" for="chat-provider-url">
-                  <span class="flag-name">Địa chỉ gốc (https)</span>
+                  <span class="chat-label">Địa chỉ gốc</span>
                   <input
                     class="flag-input"
                     id="chat-provider-url"
@@ -499,8 +499,8 @@
                     disabled
                   />
                 </label>
-                <label class="chat-field chat-span-2" for="chat-provider-key">
-                  <span class="flag-name">API key</span>
+                <label class="chat-field chat-field-wide" for="chat-provider-key">
+                  <span class="chat-label">API key</span>
                   <input
                     class="flag-input"
                     id="chat-provider-key"
@@ -511,23 +511,29 @@
                     spellcheck="false"
                     disabled
                   />
-                  <span class="flag-hint" id="chat-provider-key-hint">Key chỉ gửi lên máy chủ, không lưu trong trình duyệt.</span>
+                  <span class="chat-help" id="chat-provider-key-hint">Key chỉ gửi lên máy chủ, không lưu trong trình duyệt.</span>
                 </label>
               </div>
-              <p class="chat-test" id="chat-provider-check-result" hidden></p>
+
+              <p class="chat-feedback" id="chat-provider-check-result" hidden></p>
+              <p class="chat-hint" id="chat-provider-note">Điền thông tin rồi thêm vào danh sách nháp.</p>
+
               <div class="chat-actions">
-                <p class="usage-note" id="chat-provider-note">Chưa đọc được danh sách nhà cung cấp.</p>
-                <div class="chat-buttons">
-                  <button class="btn-ghost" id="chat-provider-check" type="button" disabled>Kiểm tra key</button>
-                  <button class="btn-ghost" id="chat-provider-reset" type="button" disabled>Nhập lại</button>
-                  <button class="btn-ghost" id="chat-provider-apply" type="button" disabled>Thêm vào danh sách</button>
-                  <button class="btn-primary" id="chat-provider-save" type="button" data-label="Lưu nhà cung cấp" disabled>
-                    <span>Lưu nhà cung cấp</span>
-                  </button>
-                </div>
+                <button class="btn-ghost" id="chat-provider-check" type="button" disabled>Kiểm tra key</button>
+                <button class="btn-ghost" id="chat-provider-reset" type="button" disabled>Hủy</button>
+                <button class="btn-ghost" id="chat-provider-apply" type="button" disabled>Thêm vào danh sách</button>
               </div>
             </div>
-          </div>
+
+            <footer class="chat-section-foot">
+              <p class="chat-hint" id="chat-provider-save-note">Sửa danh sách xong bấm “Lưu nhà cung cấp” để áp dụng.</p>
+              <div class="chat-actions">
+                <button class="btn-primary" id="chat-provider-save" type="button" data-label="Lưu nhà cung cấp" disabled>
+                  <span>Lưu nhà cung cấp</span>
+                </button>
+              </div>
+            </footer>
+          </section>
         </div>
       </section>
 
@@ -709,6 +715,7 @@
     </footer>
 
     <!-- Logic Script -->
+    <script src="admin-chat.js" defer></script>
     <script src="admin.js" defer></script>
   </body>
 </html>
