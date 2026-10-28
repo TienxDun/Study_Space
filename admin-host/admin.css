@@ -1672,7 +1672,9 @@ textarea.chat-prompt {
   width: 30px;
   height: 30px;
   padding: 0;
+  justify-content: center;
   font-size: 13px;
+  line-height: 1;
 }
 
 .chat-icon-btn.is-danger {

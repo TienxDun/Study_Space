@@ -1,6 +1,6 @@
 # P2 — Quản lý được (kế hoạch triển khai)
 
-Trạng thái: P2.0 đã deploy 2026-10-26, đang theo dõi 24 giờ; P2a có thêm chỉnh hạn mức câu/ngày, chưa bắt đầu. Bản 4 — 2026-10-27.
+Trạng thái (2026-10-28): P2.0 code + deploy xong, còn 2 mục quan sát 24 giờ chưa chốt; P2a đóng 2026-10-27, mở đúng nhánh hạn mức 30 → 35; P2b đóng 2026-10-28; P2c đang soạn kế hoạch chờ duyệt, P2d chưa bắt đầu. Bản 10 — 2026-10-28.
 Thuộc P2 của `docs/features/ADMIN_CONSOLE_PLAN.md`; P1 đã đóng, xem `docs/archive/ADMIN_P1_PLAN.md`.
 
 Mục tiêu: bảng điều khiển từ chỗ **chỉ xem** chuyển sang **sửa được** — chặn sự cố không cần deploy, đổi cấu hình chat, đẩy nội dung có phiên bản và quay lại, dọn kho — nhưng mọi hành động ghi đều đi qua Access, có audit ghi trước, và không đưa token xuống trình duyệt.
@@ -58,6 +58,8 @@ Chọn một hướng, mặc định là (a):
 - [x] Unit test: hai lần gọi liên tiếp chỉ chèn 1 dòng; quá 1 giờ thì chèn tiếp (`src/__tests__/unit/admin/error-log.test.ts`, 6 ca).
 - [x] Deploy admin worker: version `1a427f38`, 2026-10-26 16:54 UTC.
 - [ ] Xong khi: bảng lỗi không còn nhiều dòng giống nhau trong cùng một giờ (theo dõi 24 giờ sau deploy).
+
+Rà soát 2026-10-28: code và deploy của 0.1 và 0.2 đều đã xong; hai mục "Xong khi" vẫn để mở vì chưa có bằng chứng 24 giờ trong `admin_error_log` — muốn chốt thì mở admin, xem khối Lỗi và đếm dòng `livekit:unreachable`.
 
 ---
 
@@ -198,7 +200,7 @@ Ghi chú chốt (2026-10-27): P2a đóng, còn đúng một mục để mở là
 
 ---
 
-## P2b — Chat admin (khung, chi tiết khi bắt tay)
+## P2b — Chat admin (đóng 2026-10-28)
 
 Mục tiêu: đổi model mặc định, thứ tự chuỗi dự phòng, prompt và hãng ngoài từ shell mới — thay trang `/admin/chat` local.
 
@@ -219,13 +221,16 @@ Các bước nhỏ dự kiến:
   - Chain 1–5 bước: đổi thứ tự, xóa, chọn hãng, thử từng bước; mỗi bước tự tải model của hãng đang chọn vào dropdown thật, có thêm ô nhập mã riêng khi cần.
   - Hãng: bật/tắt, sửa, xóa, "Kiểm tra key", "Làm mới" danh sách model; sửa key đã lưu phải xóa ô rồi dán key mới.
   - **Dựng lại 2026-10-27:** bỏ datalist dùng chung + nút "Xem model" (danh sách chọn bị chập chờn), thay bằng 4 mục đánh số, dropdown tự tải theo hãng, chip trạng thái từng mục; script tách riêng `admin-host/admin-chat.js`.
-- [ ] B5. Kiểm tra: đổi model → câu trả lời dùng model mới; đổi chain → thứ tự thử đúng; key sai → lỗi hiện ở khối Lỗi.
+- [x] B5. Kiểm tra: đổi model → câu trả lời dùng model mới; đổi chain → thứ tự thử đúng; key sai → lỗi hiện ở khối Lỗi.
   - **Đã kiểm local (2026-10-27):** đọc cấu hình thật qua `wrangler dev` (4 model, 3 bước chain, 3 hãng), key chỉ hiện mặt nạ, không có key/localStorage/token trong trang, không tràn ngang ở 390px, layout desktop 2 cột ở 1200px; 19 test DOM bấm nút thật (khối thử tự tải model theo hãng, nhập mã tay, tải lại khi lỗi, lưu chain/prompt/hãng, kiểm tra key, chặn xóa hãng đang dùng, thử model chỉ gọi `/test`, lỗi 502 khóa panel).
   - **Kiểm khối thử (2026-10-27):** danh sách hãng có Cloudflare đứng đầu cùng các hãng đã lưu; đổi hãng thì model tải theo hãng (Groq 4, OpenRouter 200); thử model free OpenRouter trả lời sau 2.093 ms, mạng chỉ có `POST /chat/test`, không có `POST /config`; 320/390/640px xếp một cột, 641/1200px một hàng, không tràn ngang.
   - **Chưa kiểm production:** cần deploy rồi đổi model/chain thật và đọc lại câu trả lời; chưa ghi gì lên production trong lúc kiểm local.
+  - **Rà soát 2026-10-28:** code B5 đã lên production (local trùng `origin/main` ở `9a30f7a`, Workers Builds deploy admin theo mỗi lần push).
+  - **Chốt 2026-10-28 — nhìn thấy hãng/model thật của lần thử:** khối "Thử model" chỉ in câu trả lời + số ms nên không phân biệt được Cloudflare với hãng ngoài. `testText()` ([`admin-chat.js`](../../admin-host/admin-chat.js)) giờ in `nội dung · provider:model · N ms`, lấy `provider`/`model` từ **response** của chat-proxy (giá trị của lần gọi thành công thật, không phải giá trị gửi lên), và `strict:true` bảo đảm không rơi êm sang bước khác. Kiểm trên shell local bằng cách chỉ chặn `/api/admin/chat/test` rồi trả `{ provider: "groq-1", model: "llama-3.3-70b-versatile", ms: 1234 }` → dòng kết quả hiện `Xin chào… · groq-1:llama-3.3-70b-versatile · 1.234 ms`; test DOM `chat-panel.test.ts` thêm ca kiểm `Cloudflare:qwen3-30b`. Kèm sửa nút icon ↑ ↓ ✕ dính mép trái (`justify-content: center` + `line-height: 1` cho `.chat-icon-btn`, [`admin.css:1671`](../../admin-host/admin.css)).
+  - **Còn lại sau deploy:** bấm Thử/đổi chain trên bản production để xác nhận bằng mắt — code đã nằm trong `main`, chỉ chờ bản deploy chứa `testText()` và bản sửa icon.
 - [x] Xóa trang `/admin/chat` local (chốt 2026-10-27, người dùng xác nhận P2b xong): xóa `src/app/admin/chat/`, gỡ tab "Quản Lý Chatbot" khỏi `src/components/admin/AdminHeader.tsx` (`AdminTab` còn `limits | studio`), cập nhật `admin-header.test.tsx`.
 
-## P2c — Nội dung runtime (khung)
+## P2c — Nội dung runtime (chưa bắt đầu, xác nhận 2026-10-28)
 
 Mục tiêu: cảnh/âm thanh/track có manifest trong D1, media trên R2, publish và rollback theo phiên bản; studio dev chỉ để thử.
 
@@ -235,7 +240,7 @@ Mục tiêu: cảnh/âm thanh/track có manifest trong D1, media trên R2, publi
 - [ ] C4. Media: URL đi qua `src/lib/asset-resolver.ts`; kiểm tra file tồn tại trên R2 trước khi publish.
 - [ ] Quyết định cần chốt khi bắt tay: cache manifest ở client bao lâu; rollback giữ bao nhiêu bản (mặc định 10).
 
-## P2d — Kho R2 (khung)
+## P2d — Kho R2 (chưa bắt đầu, xác nhận 2026-10-28)
 
 Mục tiêu: biết file nào mồ côi/thiếu so với manifest và xóa được, có xác nhận.
 
@@ -293,5 +298,7 @@ npx wrangler kv key put --namespace-id=a16e430f9bbe46afa51ffc9d4f9bce9d --remote
 - **Bản 4** (2026-10-27): gộp chỉnh hạn mức câu/người/ngày vào P2a — thêm trường `chatDailyLimit` (1–200, mặc định 30) vào `cfg:flags`, chat-proxy đọc KV với env chỉ còn là dự phòng, `/status` báo hạn mức hiệu lực; plan P2a thành 5 trường.
 - **Bản 5** (2026-10-27): **chốt P2a**. Push `db8b078` đưa web P2a lên production; audit production có 9 lần lưu đúng 9 dòng (chat, phòng, bảo trì + banner, hạn mức 30 → 1 → 30), `/config` trả đúng CORS + `Cache-Control`, admin chỉ gọi `GET /api/admin/overview` không token. Bundle production đã deploy được kiểm bằng cách chặn `/config`: banner "Thử bảo trì" hiện, nút phòng học và chat "Tạm tắt". Mục "30 → 35" để mở vì chưa có người dùng đạt hạn mức.
 - **Bản 6** (2026-10-27): P2b xong phần code — worker admin thêm 5 endpoint (config GET/POST, check-key, provider-models, test), audit trước ghi, prompt không vào audit, key chỉ trả mặt nạ; shell thêm panel "Trợ lý chat" (Model + gen, Chain 1–5, Prompt, Hãng). 15 test DOM chạy trên `index.html`/`admin.js` thật; 501 test toàn repo xanh. Kiểm local với cấu hình thật qua `wrangler dev`, không ghi production.
-- **Bản 8** (2026-10-27): xóa trang admin chat local. `src/app/admin/chat/` (93 KB, đọc/ghi `chat-admin-token` trong localStorage) đã xóa; tab "Quản Lý Chatbot" gỡ khỏi `AdminHeader` để không còn link chết; `AdminTab` còn `limits | studio`. `npx tsc --noEmit` sạch sau khi xóa `.next` (types cũ còn trỏ `admin/chat/page`); test `admin-header` 3/3 xanh.
 - **Bản 7** (2026-10-27): chỉnh theo yêu cầu người dùng — **mục 1 chỉ để thử** (hãng + model + Thử, không lưu, có cả Cloudflare), bỏ khái niệm "model chính" và nút "Lưu model" khỏi UI; **mục 2 đổi thành "Thứ tự trả lời"**, bước 1 chạy trước và toàn quyền sắp xếp. Lý do: chat-proxy vốn chạy theo `cfg:chain`, `cfg:cfModel` chỉ để hiển thị.
+- **Bản 8** (2026-10-27): xóa trang admin chat local. `src/app/admin/chat/` (93 KB, đọc/ghi `chat-admin-token` trong localStorage) đã xóa; tab "Quản Lý Chatbot" gỡ khỏi `AdminHeader` để không còn link chết; `AdminTab` còn `limits | studio`. `npx tsc --noEmit` sạch sau khi xóa `.next` (types cũ còn trỏ `admin/chat/page`); test `admin-header` 3/3 xanh.
+- **Bản 9** (2026-10-28): rà soát lại tiến độ so với code — xác nhận P2.0 đã có `AbortSignal.timeout(4000)` và chặn log trùng 1 giờ, P2b đã có đủ 5 endpoint và panel, P2c/P2d chưa có dòng code nào; sửa dòng trạng thái và thứ tự "Lịch sử bản" bị lệch. Sửa môi trường test: Node 26 gắn `localStorage` toàn cục trả `undefined`, đè bản của happy-dom làm 13 test DOM fail → thêm shim `vitest.setup.ts` (Storage trong RAM) và đăng ký `setupFiles`; toàn bộ 505 test xanh. Sửa kèm nút icon ↑ ↓ ✕ trong mục "Thứ tự trả lời" bị dính mép trái.
+- **Bản 10** (2026-10-28): **chốt P2b**. Khối "Thử model" in thêm `provider:model` lấy từ response của chat-proxy để nhìn ra hãng/model thật của lần gọi (`strict:true`, không rơi êm); test DOM thêm ca `Cloudflare:qwen3-30b`; sửa `localStorage` cho Node 26 bằng `vitest.setup.ts`; B5 tick kèm ghi chú "còn bấm lại trên production sau deploy". P2c chuyển sang bước soạn kế hoạch, chờ duyệt trước khi viết code.

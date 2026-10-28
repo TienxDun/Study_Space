@@ -285,6 +285,7 @@ describe("panel Trợ lý chat", () => {
     const testCall = calls.find((call) => call.url.endsWith("/chat/test"));
     expect(testCall?.body).toEqual({ provider: "cf", modelId: "llama-4" });
     expect(el("chat-try-result").textContent).toContain("Chào bạn!");
+    expect(el("chat-try-result").textContent).toContain("Cloudflare:qwen3-30b");
     expect(el("chat-try-result").textContent).toContain("420 ms");
   });
 

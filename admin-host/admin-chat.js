@@ -371,9 +371,15 @@
       return { text: "Lỗi: " + errorText(res.data && res.data.error), kind: "error" };
     }
     var text = String(res.data.text || "").trim();
+    // provider/model do chat-proxy trả về từ lần gọi thật, không phải giá trị gửi lên.
+    var provider = String(res.data.provider || "");
+    var route = [(provider === "cf" ? "Cloudflare" : provider), String(res.data.model || "")]
+      .filter(Boolean)
+      .join(":");
     return {
       text:
         (text ? text.slice(0, 200) : "(không có chữ trả về)") +
+        (route ? " · " + route : "") +
         " · " +
         Math.round(Number(res.data.ms) || 0).toLocaleString("vi-VN") +
         " ms",
