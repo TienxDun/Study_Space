@@ -41,24 +41,63 @@ interface SceneSelectorWidgetProps {
   onCycleSlideshowInterval?: () => void;
 }
 
+// Panel bị unmount mỗi lần đóng, nên nếu không ghi nhớ ở cấp module thì mở lại
+// thumbnail nào cũng quay về khung xương + fade-in, trông như ảnh bị tải lại.
+const loadedThumbnails = new Set<string>();
+// Lần mở đầu cần nhường main thread cho animation; các lần sau ảnh đã nằm trong
+// cache nên dựng lưới ngay, không phải chờ khung xương.
+let hasOpenedOnce = false;
+
 const SceneThumbnail = React.memo<{ scene: Scene }>(({ scene }) => {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const cached = loadedThumbnails.has(scene.thumbnailUrl);
+  const [isLoaded, setIsLoaded] = useState(cached);
+  const [shouldLoad, setShouldLoad] = useState(cached);
+  const frameRef = useRef<HTMLDivElement>(null);
+
+  // Thumbnail chính là ảnh nền gốc 4K, nên chỉ tải khi card sắp vào khung nhìn.
+  // Để `loading="lazy"` tự nhiên, Chrome tải trước ~1250px và kéo cả chục ảnh
+  // cùng lúc, làm khựng đúng lúc panel đang chạy animation mở.
+  useEffect(() => {
+    const node = frameRef.current;
+    if (!node || shouldLoad) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setShouldLoad(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setShouldLoad(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "150px 0px" }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [shouldLoad]);
 
   return (
-    <div className="relative w-full h-full bg-slate-900/80 overflow-hidden">
-      {!isLoaded && (
+    <div ref={frameRef} className="relative w-full h-full bg-slate-900/80 overflow-hidden">
+      {(!shouldLoad || !isLoaded) && (
         <div className="absolute inset-0 bg-white/5 animate-pulse" />
       )}
-      <Image
-        src={scene.thumbnailUrl}
-        alt={scene.name}
-        fill
-        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-        className={`object-cover transform-gpu [@media(hover:hover)]:group-hover:scale-105 [@media(hover:hover)]:transition-transform [@media(hover:hover)]:duration-500 [@media(hover:hover)]:ease-out transition-opacity duration-300 ${
-          isLoaded ? "opacity-100" : "opacity-0"
-        }`}
-        onLoad={() => setIsLoaded(true)}
-      />
+      {shouldLoad && (
+        <Image
+          src={scene.thumbnailUrl}
+          alt={scene.name}
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          decoding="async"
+          className={`object-cover transform-gpu [@media(hover:hover)]:group-hover:scale-105 [@media(hover:hover)]:transition-transform [@media(hover:hover)]:duration-500 [@media(hover:hover)]:ease-out transition-opacity duration-300 ${
+            isLoaded ? "opacity-100" : "opacity-0"
+          }`}
+          onLoad={() => {
+            loadedThumbnails.add(scene.thumbnailUrl);
+            setIsLoaded(true);
+          }}
+        />
+      )}
     </div>
   );
 });
@@ -82,6 +121,7 @@ const SceneCardItem = React.memo<SceneCardItemProps>(
       role="button"
       tabIndex={0}
       onClick={() => onSelect(scene)}
+      style={{ contentVisibility: "auto", containIntrinsicSize: "0 120px" }}
       onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
@@ -210,31 +250,26 @@ export const SceneSelectorWidget = ({
     } catch { }
   }, []);
 
-  // Đợi khung mở xong 1 nhịp rồi mới cho lưới hình hiện ra (mượt hơn trên tablet)
+  // Đợi panel chạy xong animation mở (160ms) rồi mới dựng lưới hình, để 40 card
+  // và ảnh thumbnail không tranh main thread với hiệu ứng trượt. Lần mở lại thì
+  // giữ nguyên lưới đã dựng, tránh nháy khung xương mỗi lần đóng/mở.
   useEffect(() => {
-    if (!isOpen) {
-      setIsPanelReady(false);
+    if (!isOpen || isPanelReady) return;
+    if (hasOpenedOnce) {
+      setIsPanelReady(true);
       return;
     }
     let cancelled = false;
-    let raf1 = 0;
-    let raf2 = 0;
     const timer = window.setTimeout(() => {
-      if (!cancelled) setIsPanelReady(true);
-    }, 140);
-    raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => {
-        if (!cancelled) setIsPanelReady(true);
-        window.clearTimeout(timer);
-      });
-    });
+      if (cancelled) return;
+      hasOpenedOnce = true;
+      setIsPanelReady(true);
+    }, 190);
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
     };
-  }, [isOpen]);
+  }, [isOpen, isPanelReady]);
 
   // Khôi phục chính xác vị trí cuộn mỗi khi mở lại modal (dùng flag isRestoringScrollRef chống ghi đè 0)
   useEffect(() => {
