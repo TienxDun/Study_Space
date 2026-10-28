@@ -54,3 +54,16 @@ CREATE TABLE IF NOT EXISTS admin_error_log (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_admin_error_log_created ON admin_error_log (created_at);
+
+-- 6. BẢN PHÁT HÀNH NỘI DUNG (cảnh / âm thanh / nhạc) — P2c
+-- Mỗi lần lưu là một version mới gồm đủ 3 dòng (kind = scenes | sounds | tracks).
+-- Lịch sử chỉ được thêm; quay lại bản cũ = ghi tiếp một version mới cùng nội dung.
+CREATE TABLE IF NOT EXISTS content_manifest (
+  version    INTEGER NOT NULL,
+  kind       TEXT NOT NULL,
+  json       TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  created_by TEXT NOT NULL,
+  PRIMARY KEY (version, kind)
+);
+CREATE INDEX IF NOT EXISTS idx_content_manifest_created ON content_manifest (created_at DESC);

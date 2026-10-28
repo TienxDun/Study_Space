@@ -537,6 +537,369 @@
         </div>
       </section>
 
+      <!-- Nội dung: cảnh nền, âm thanh, nhạc -->
+      <section class="panel-card content-panel" id="content-panel" aria-labelledby="content-title">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <h2 class="panel-title" id="content-title">Nội dung</h2>
+            <span class="panel-desc">Thêm, sửa, ẩn và xóa cảnh nền, âm thanh, nhạc. Bấm Lưu là lên sóng ngay; mỗi lần lưu tạo một bản trong Lịch sử để quay lại khi cần.</span>
+          </div>
+          <span class="usage-tag" id="content-state">Đang đọc…</span>
+        </div>
+
+        <div class="content-body">
+          <div class="content-meta" id="content-meta">Chưa đọc được bản phát hành.</div>
+
+          <div class="content-seed" id="content-seed" hidden>
+            <p>
+              Kho nội dung đang trống. Nạp bộ nội dung đang đóng gói trong ứng dụng
+              (cảnh, âm thanh, nhạc) làm bản đầu tiên rồi sửa dần từ đó.
+            </p>
+            <button class="btn-primary" id="content-seed-run" type="button" data-label="Nạp bộ nội dung ban đầu">
+              <span>Nạp bộ nội dung ban đầu</span>
+            </button>
+            <p class="chat-feedback" id="content-seed-note" hidden></p>
+          </div>
+
+          <div class="content-tabs" role="tablist" aria-label="Loại nội dung">
+            <button class="content-tab is-active" id="tab-scenes" type="button" role="tab" aria-selected="true" aria-controls="pane-scenes" data-tab="scenes">Cảnh nền <span class="content-tab-count" id="count-scenes">--</span></button>
+            <button class="content-tab" id="tab-sounds" type="button" role="tab" aria-selected="false" aria-controls="pane-sounds" data-tab="sounds">Âm thanh <span class="content-tab-count" id="count-sounds">--</span></button>
+            <button class="content-tab" id="tab-tracks" type="button" role="tab" aria-selected="false" aria-controls="pane-tracks" data-tab="tracks">Nhạc <span class="content-tab-count" id="count-tracks">--</span></button>
+          </div>
+
+          <!-- Cảnh nền -->
+          <div class="content-pane" id="pane-scenes" role="tabpanel" aria-labelledby="tab-scenes">
+            <form class="content-form" id="scene-form" hidden novalidate>
+              <header class="content-form-head">
+                <h3 class="chat-section-title" id="scene-form-title">Thêm cảnh</h3>
+                <p class="chat-feedback" id="scene-form-note" hidden></p>
+              </header>
+              <div class="chat-fields">
+                <label class="chat-field">
+                  <span class="chat-label">Tên cảnh</span>
+                  <input class="flag-input" id="scene-name" type="text" maxlength="80" placeholder="Ví dụ: Mưa trên phố Nhật" />
+                </label>
+                <label class="chat-field">
+                  <span class="chat-label">Nhóm</span>
+                  <select class="flag-input" id="scene-category">
+                    <option value="chill">Chill</option>
+                    <option value="anime">Anime</option>
+                    <option value="cyberpunk">Cyberpunk</option>
+                    <option value="dark">Tối</option>
+                    <option value="urban">Thành phố</option>
+                    <option value="nature">Thiên nhiên</option>
+                    <option value="cartoon">Hoạt hình</option>
+                    <option value="cute">Dễ thương</option>
+                  </select>
+                </label>
+                <label class="chat-field">
+                  <span class="chat-label">Loại</span>
+                  <select class="flag-input" id="scene-type">
+                    <option value="IMAGE">Ảnh</option>
+                    <option value="VIDEO">Video</option>
+                  </select>
+                </label>
+                <label class="chat-field">
+                  <span class="chat-label">Nhãn (không bắt buộc)</span>
+                  <select class="flag-input" id="scene-badge">
+                    <option value="">Không nhãn</option>
+                    <option value="4K">4K</option>
+                    <option value="HD">HD</option>
+                    <option value="MỚI">MỚI</option>
+                    <option value="HOT">HOT</option>
+                  </select>
+                </label>
+                <label class="chat-field chat-field-wide">
+                  <span class="chat-label">Đường dẫn file (trong kho)</span>
+                  <input class="flag-input" id="scene-media" type="text" maxlength="200" placeholder="scenes/ten-file.webp" />
+                  <span class="chat-help">Tương đối so với gốc kho, ví dụ <strong>scenes/mua-pho.webp</strong>.</span>
+                </label>
+                <label class="chat-field chat-field-wide">
+                  <span class="chat-label">Ảnh xem trước</span>
+                  <input class="flag-input" id="scene-thumb" type="text" maxlength="200" placeholder="thumbnails/mua-pho.webp" />
+                  <span class="chat-help">Video cần ảnh xem trước; ảnh thường dùng lại chính file ảnh.</span>
+                </label>
+                <label class="chat-field chat-field-wide">
+                  <span class="chat-label">Mô tả (không bắt buộc)</span>
+                  <input class="flag-input" id="scene-description" type="text" maxlength="300" placeholder="Một dòng mô tả không khí của cảnh" />
+                </label>
+                <label class="chat-field chat-field-wide">
+                  <span class="chat-label">Thẻ (cách nhau bằng dấu phẩy)</span>
+                  <input class="flag-input" id="scene-tags" type="text" placeholder="chill, mưa, đêm" />
+                </label>
+                <div class="chat-field chat-field-wide">
+                  <span class="chat-label">Ẩn khỏi ứng dụng</span>
+                  <label class="chat-check">
+                    <span class="chat-mini-switch">
+                      <input id="scene-hidden" type="checkbox" />
+                      <span class="switch-track"></span>
+                    </span>
+                    <span class="chat-help">Mục ẩn vẫn nằm trong kho nhưng người học không thấy.</span>
+                  </label>
+                </div>
+              </div>
+              <div class="content-preview" id="scene-preview"></div>
+              <footer class="chat-section-foot">
+                <p class="chat-hint" id="scene-form-hint">Điền tên và đường dẫn file rồi bấm Lưu.</p>
+                <div class="chat-actions">
+                  <button class="btn-ghost" id="scene-cancel" type="button">Hủy</button>
+                  <button class="btn-primary" id="scene-save" type="button" data-label="Lưu cảnh">
+                    <span>Lưu cảnh</span>
+                  </button>
+                </div>
+              </footer>
+            </form>
+
+            <div class="content-toolbar">
+              <input class="flag-input content-search" id="scene-search" type="search" placeholder="Tìm theo tên…" />
+              <select class="flag-input content-filter" id="scene-filter">
+                <option value="">Tất cả nhóm</option>
+                <option value="chill">Chill</option>
+                <option value="anime">Anime</option>
+                <option value="cyberpunk">Cyberpunk</option>
+                <option value="dark">Tối</option>
+                <option value="urban">Thành phố</option>
+                <option value="nature">Thiên nhiên</option>
+                <option value="cartoon">Hoạt hình</option>
+                <option value="cute">Dễ thương</option>
+              </select>
+              <button class="btn-primary" id="scene-add" type="button">Thêm cảnh</button>
+            </div>
+
+            <div class="content-table-wrap">
+              <table class="services-table content-table">
+                <thead>
+                  <tr>
+                    <th>Xem trước</th>
+                    <th>Tên</th>
+                    <th>Nhóm</th>
+                    <th>Loại</th>
+                    <th>File</th>
+                    <th class="text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="scene-rows">
+                  <tr><td colspan="6">Đang đọc…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Âm thanh -->
+          <div class="content-pane" id="pane-sounds" role="tabpanel" aria-labelledby="tab-sounds" hidden>
+            <form class="content-form" id="sound-form" hidden novalidate>
+              <header class="content-form-head">
+                <h3 class="chat-section-title" id="sound-form-title">Thêm âm thanh</h3>
+                <p class="chat-feedback" id="sound-form-note" hidden></p>
+              </header>
+              <div class="chat-fields">
+                <label class="chat-field">
+                  <span class="chat-label">Tên âm thanh</span>
+                  <input class="flag-input" id="sound-name" type="text" maxlength="60" placeholder="Ví dụ: Mưa rào" />
+                </label>
+                <label class="chat-field">
+                  <span class="chat-label">Nhóm</span>
+                  <select class="flag-input" id="sound-category">
+                    <option value="rain">Mưa</option>
+                    <option value="nature">Thiên nhiên</option>
+                    <option value="indoor">Trong nhà</option>
+                  </select>
+                </label>
+                <label class="chat-field">
+                  <span class="chat-label">Icon</span>
+                  <select class="flag-input" id="sound-icon">
+                    <option value="CloudRain">CloudRain — mưa</option>
+                    <option value="Zap">Zap — sấm</option>
+                    <option value="Trees">Trees — cây</option>
+                    <option value="Bird">Bird — chim</option>
+                    <option value="Flame">Flame — lửa</option>
+                    <option value="Waves">Waves — sóng</option>
+                    <option value="Wind">Wind — gió</option>
+                    <option value="Keyboard">Keyboard — bàn phím</option>
+                    <option value="Coffee">Coffee — quán cà phê</option>
+                    <option value="Fan">Fan — quạt</option>
+                    <option value="TrainTrack">TrainTrack — tàu</option>
+                    <option value="Plane">Plane — máy bay</option>
+                    <option value="Car">Car — xe</option>
+                    <option value="Droplets">Droplets — giọt nước</option>
+                    <option value="Orbit">Orbit — không gian</option>
+                  </select>
+                </label>
+                <label class="chat-field">
+                  <span class="chat-label">Đường dẫn file mp3</span>
+                  <input class="flag-input" id="sound-audio" type="text" maxlength="200" placeholder="sounds/mua-rao.mp3" />
+                </label>
+                <div class="chat-field chat-field-wide">
+                  <span class="chat-label">Ẩn khỏi ứng dụng</span>
+                  <label class="chat-check">
+                    <span class="chat-mini-switch">
+                      <input id="sound-hidden" type="checkbox" />
+                      <span class="switch-track"></span>
+                    </span>
+                    <span class="chat-help">Mục ẩn vẫn nằm trong kho nhưng người học không thấy.</span>
+                  </label>
+                </div>
+              </div>
+              <div class="content-preview" id="sound-preview"></div>
+              <footer class="chat-section-foot">
+                <p class="chat-hint" id="sound-form-hint">Điền tên và đường dẫn file rồi bấm Lưu.</p>
+                <div class="chat-actions">
+                  <button class="btn-ghost" id="sound-cancel" type="button">Hủy</button>
+                  <button class="btn-primary" id="sound-save" type="button" data-label="Lưu âm thanh">
+                    <span>Lưu âm thanh</span>
+                  </button>
+                </div>
+              </footer>
+            </form>
+
+            <div class="content-toolbar">
+              <input class="flag-input content-search" id="sound-search" type="search" placeholder="Tìm theo tên…" />
+              <button class="btn-primary" id="sound-add" type="button">Thêm âm thanh</button>
+            </div>
+
+            <div class="content-table-wrap">
+              <table class="services-table content-table">
+                <thead>
+                  <tr>
+                    <th>Icon</th>
+                    <th>Tên</th>
+                    <th>Nhóm</th>
+                    <th>File</th>
+                    <th class="text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="sound-rows">
+                  <tr><td colspan="5">Đang đọc…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Nhạc -->
+          <div class="content-pane" id="pane-tracks" role="tabpanel" aria-labelledby="tab-tracks" hidden>
+            <form class="content-form" id="track-form" hidden novalidate>
+              <header class="content-form-head">
+                <h3 class="chat-section-title" id="track-form-title">Thêm bài nhạc</h3>
+                <p class="chat-feedback" id="track-form-note" hidden></p>
+              </header>
+              <div class="chat-fields">
+                <label class="chat-field">
+                  <span class="chat-label">Tiêu đề</span>
+                  <input class="flag-input" id="track-title" type="text" maxlength="120" placeholder="Ví dụ: Đêm yên" />
+                </label>
+                <label class="chat-field">
+                  <span class="chat-label">Ca sĩ / nghệ sĩ</span>
+                  <input class="flag-input" id="track-artist" type="text" maxlength="80" placeholder="Tên nghệ sĩ" />
+                </label>
+                <label class="chat-field">
+                  <span class="chat-label">Thể loại</span>
+                  <input class="flag-input" id="track-genre" type="text" maxlength="40" placeholder="Ví dụ: Lo-fi" />
+                </label>
+                <label class="chat-field">
+                  <span class="chat-label">Nhóm nhạc</span>
+                  <select class="flag-input" id="track-mood">
+                    <option value="lofi">Lo-fi</option>
+                    <option value="jazz">Jazz</option>
+                    <option value="relax">Thư giãn</option>
+                  </select>
+                </label>
+                <label class="chat-field chat-field-wide">
+                  <span class="chat-label">Đường dẫn file mp3</span>
+                  <input class="flag-input" id="track-audio" type="text" maxlength="200" placeholder="musics/lofi/dem-yen.mp3" />
+                </label>
+                <label class="chat-field chat-field-wide">
+                  <span class="chat-label">Ảnh bìa</span>
+                  <input class="flag-input" id="track-cover" type="text" maxlength="500" placeholder="https://… hoặc covers/dem-yen.webp" />
+                  <span class="chat-help">Dán URL ngoài hoặc đường dẫn tương đối trong kho.</span>
+                </label>
+                <div class="chat-field chat-field-wide">
+                  <span class="chat-label">Ẩn khỏi ứng dụng</span>
+                  <label class="chat-check">
+                    <span class="chat-mini-switch">
+                      <input id="track-hidden" type="checkbox" />
+                      <span class="switch-track"></span>
+                    </span>
+                    <span class="chat-help">Mục ẩn vẫn nằm trong kho nhưng người học không thấy.</span>
+                  </label>
+                </div>
+              </div>
+              <div class="content-preview" id="track-preview"></div>
+              <footer class="chat-section-foot">
+                <p class="chat-hint" id="track-form-hint">Đổi nhóm nhạc là bài chuyển sang nhóm mới khi lưu.</p>
+                <div class="chat-actions">
+                  <button class="btn-ghost" id="track-cancel" type="button">Hủy</button>
+                  <button class="btn-primary" id="track-save" type="button" data-label="Lưu bài nhạc">
+                    <span>Lưu bài nhạc</span>
+                  </button>
+                </div>
+              </footer>
+            </form>
+
+            <div class="content-toolbar">
+              <input class="flag-input content-search" id="track-search" type="search" placeholder="Tìm theo tên bài hoặc ca sĩ…" />
+              <select class="flag-input content-filter" id="track-filter">
+                <option value="">Tất cả nhóm</option>
+                <option value="lofi">Lo-fi</option>
+                <option value="jazz">Jazz</option>
+                <option value="relax">Thư giãn</option>
+              </select>
+              <button class="btn-primary" id="track-add" type="button">Thêm bài nhạc</button>
+            </div>
+
+            <div class="content-table-wrap">
+              <table class="services-table content-table">
+                <thead>
+                  <tr>
+                    <th>Bìa</th>
+                    <th>Bài</th>
+                    <th>Nhóm</th>
+                    <th>File</th>
+                    <th class="text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="track-rows">
+                  <tr><td colspan="5">Đang đọc…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <p class="chat-feedback" id="content-note" hidden></p>
+
+          <section class="content-history" aria-labelledby="content-history-title">
+            <header class="chat-section-head">
+              <span class="chat-step" aria-hidden="true">↺</span>
+              <div class="chat-section-titles">
+                <h3 class="chat-section-title" id="content-history-title">Lịch sử</h3>
+                <p class="chat-section-desc">20 bản gần nhất. Quay lại một bản sẽ tạo bản mới cùng nội dung, không xóa bản cũ.</p>
+              </div>
+            </header>
+            <div class="content-table-wrap">
+              <table class="services-table content-table">
+                <thead>
+                  <tr>
+                    <th>Bản</th>
+                    <th>Thời gian</th>
+                    <th>Người lưu</th>
+                    <th>Số mục</th>
+                    <th class="text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="content-version-rows">
+                  <tr><td colspan="5">Đang đọc…</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <footer class="chat-section-foot">
+              <p class="chat-hint" id="content-history-note">Chưa đọc được lịch sử.</p>
+              <div class="chat-actions">
+                <button class="btn-ghost" id="content-download" type="button" disabled>Tải JSON bản mới nhất</button>
+              </div>
+            </footer>
+          </section>
+        </div>
+      </section>
+
       <!-- Main Panel: Nhật ký lỗi & dịch vụ -->
       <div class="section-layout">
         <!-- Lỗi & dự phòng -->
@@ -715,6 +1078,7 @@
     </footer>
 
     <!-- Logic Script -->
+    <script src="admin-content.js" defer></script>
     <script src="admin-chat.js" defer></script>
     <script src="admin.js" defer></script>
   </body>

@@ -1,6 +1,6 @@
 # P2 — Quản lý được (kế hoạch triển khai)
 
-Trạng thái (2026-10-28): P2.0 code + deploy xong, còn 2 mục quan sát 24 giờ chưa chốt; P2a đóng 2026-10-27, mở đúng nhánh hạn mức 30 → 35; P2b đóng 2026-10-28; P2c đang soạn kế hoạch chờ duyệt, P2d chưa bắt đầu. Bản 10 — 2026-10-28.
+Trạng thái (2026-10-28): P2.0 code + deploy xong, còn 2 mục quan sát 24 giờ chưa chốt; P2a đóng 2026-10-27, mở đúng nhánh hạn mức 30 → 35; P2b đóng 2026-10-28; P2c **đợt 1 đã code xong T1–T19** (Bản 14), chỉ còn T20 deploy chờ lệnh; P2d thu hẹp còn dọn mồ côi hàng loạt. Bản 14 — 2026-10-28.
 Thuộc P2 của `docs/features/ADMIN_CONSOLE_PLAN.md`; P1 đã đóng, xem `docs/archive/ADMIN_P1_PLAN.md`.
 
 Mục tiêu: bảng điều khiển từ chỗ **chỉ xem** chuyển sang **sửa được** — chặn sự cố không cần deploy, đổi cấu hình chat, đẩy nội dung có phiên bản và quay lại, dọn kho — nhưng mọi hành động ghi đều đi qua Access, có audit ghi trước, và không đưa token xuống trình duyệt.
@@ -230,23 +230,202 @@ Các bước nhỏ dự kiến:
   - **Còn lại sau deploy:** bấm Thử/đổi chain trên bản production để xác nhận bằng mắt — code đã nằm trong `main`, chỉ chờ bản deploy chứa `testText()` và bản sửa icon.
 - [x] Xóa trang `/admin/chat` local (chốt 2026-10-27, người dùng xác nhận P2b xong): xóa `src/app/admin/chat/`, gỡ tab "Quản Lý Chatbot" khỏi `src/components/admin/AdminHeader.tsx` (`AdminTab` còn `limits | studio`), cập nhật `admin-header.test.tsx`.
 
-## P2c — Nội dung runtime (chưa bắt đầu, xác nhận 2026-10-28)
+## P2c — Quản lý nội dung trong admin (đã chốt hướng, chưa code — 2026-10-28)
 
-Mục tiêu: cảnh/âm thanh/track có manifest trong D1, media trên R2, publish và rollback theo phiên bản; studio dev chỉ để thử.
+Mục tiêu: mọi thao tác với thư viện nội dung — **thêm, xem, sửa, xóa từng cảnh / âm thanh / bài nhạc và cả file media của nó** — làm được ngay trong shell admin: không cần máy local, không sửa JSON tay, không build lại web. Studio `/dev/studio` vẫn giữ nhưng chỉ để thử.
 
-- [ ] C1. Định nghĩa manifest (cùng shape với `src/data/assets/*.json`) + bảng `content_manifest(version, kind, json, created_at, created_by)`.
-- [ ] C2. Seed v1 từ file hiện tại; web đọc manifest qua data-api, lỗi thì rơi về file bundled.
-- [ ] C3. UI: xem phiên bản, publish bản mới, rollback về bản trước (audit từng lần).
-- [ ] C4. Media: URL đi qua `src/lib/asset-resolver.ts`; kiểm tra file tồn tại trên R2 trước khi publish.
-- [ ] Quyết định cần chốt khi bắt tay: cache manifest ở client bao lâu; rollback giữ bao nhiêu bản (mặc định 10).
+### Vì sao bản 11 chưa đủ
 
-## P2d — Kho R2 (chưa bắt đầu, xác nhận 2026-10-28)
+Bản 11 chỉ cho dán nguyên 3 file JSON: vẫn phải sửa JSON ở ngoài máy, không upload hay xóa được file media, và một lỗi cú pháp làm hỏng cả danh sách. Yêu cầu hiện tại là CRUD theo từng mục + kiểm soát file, nên đổi cách làm.
 
-Mục tiêu: biết file nào mồ côi/thiếu so với manifest và xóa được, có xác nhận.
+### Có sẵn gì để dựa vào (đo 2026-10-28)
 
-- [ ] D1. So manifest với `R2.list()` → danh sách thiếu/mồ côi (dùng lại phân trang 30 trang + cache 60 giây của P1c).
+- Studio local đã có đúng quy tắc CRUD cảnh: 50 MB/file, video bắt buộc có ảnh xem trước, tên file làm sạch, **không ghi đè** file trùng tên, xóa mục thì xóa file nhưng **chừa file còn mục khác dùng** ([`route.ts:95-263`](../../src/app/api/admin/scenes/route.ts)). Port các quy tắc này sang worker là xong phần khó nhất.
+- Catalog hiện tại: 40 cảnh, 20 âm, 49 nhạc (lofi 22, jazz 15, relax 12); **118 file media / 449 MB**; file lớn nhất 34,5 MB; mọi đường dẫn trong JSON đều trỏ tới file có thật.
+- Âm thanh dùng **15 tên icon cố định** (`CloudRain`, `Zap`, `Trees`, `Bird`, …); tên lạ thì web rơi về icon loa ([`SoundTileItem.tsx:33`](../../src/components/study/mixer/components/SoundTileItem.tsx)) — nên form phải chọn từ danh sách, không cho gõ tự do.
+- Admin worker đã bind `DB` + `R2` và đã có liệt kê R2 phân trang 30 trang, cache 60 giây ([`_worker.ts:1020`](../../admin-worker/_worker.ts)).
+- Web đọc catalog qua đúng **3 hằng** ở [`study-types.ts:55-63`](../../src/components/study/study-types.ts); 14 file dùng nhưng đều đi qua 3 hằng đó.
+- data-api khóa mọi route sau token trừ `/health`, nên cần thêm một route công khai để web đọc danh sách đang phát.
+
+### Kiến trúc
+
+| Thao tác | Đường đi | Ghi chú |
+| --- | --- | --- |
+| Thêm / sửa / xóa mục | `POST` `PATCH` `DELETE /api/admin/content/items` | validate → audit → ghi phiên bản mới |
+| Upload / thay file | `POST /api/admin/content/media` (thân nhị phân ≤ 50 MB) | vào thẳng R2, không qua Next |
+| Xem / xóa file | `GET` `DELETE /api/admin/content/media` | chỉ xóa file không mục nào dùng |
+| Xem / quay lại bản cũ | `GET /api/admin/content/versions`, `POST .../rollback` | rollback = tạo phiên bản mới |
+| Web đọc | `GET data-api /content` (công khai, `max-age=60`) | lỗi hoặc chưa có bản → dùng JSON bundle |
+
+Không có đường nào khác được ghi vào bảng `content_manifest` hay vào R2.
+
+### Nguyên tắc cố định (không cần bàn)
+
+- **id không đổi sau khi tạo** — localStorage của người dùng đang giữ `sceneId` / `trackId`; server sinh id dạng `scene-custom-<ms>`.
+- **Không ghi đè file**: thay media thì tạo tên mới, file cũ thành mồ côi (dọn ở tab Kho tệp). Nếu ghi đè, CDN có thể còn phục vụ bản cũ.
+- Chỉ nhận `mp4, webm, mp3, jpg, jpeg, png, webp, avif`, ≤ 50 MB; tên file được làm sạch, không `..`, không đường dẫn tuyệt đối; `Content-Type` suy ra từ đuôi file, không tin header của trình duyệt.
+- Video bắt buộc kèm ảnh xem trước; cảnh loại ảnh thì dùng chính nó làm ảnh xem trước.
+- Audit ghi id, đường dẫn, dung lượng; **không** ghi nội dung file hay nội dung JSON.
+
+### Đã chốt (2026-10-28)
+
+| # | Chốt | Hệ quả |
+| --- | --- | --- |
+| 1 | **Lưu = lên sóng ngay**, mỗi lần lưu thành 1 phiên bản | Không có bản nháp; sai thì bấm Quay lại |
+| 2 | **Có trường `hidden`** (nút Ẩn/Hiện) | Web bỏ qua mục ẩn ngay ở khối dựng danh sách, một chỗ duy nhất; admin vẫn thấy |
+| 3 | **Xóa mục ≠ xóa file**: xóa mục chỉ bỏ dòng khỏi danh sách, file giữ nguyên trong kho | Dọn file là việc riêng ở tab "Kho tệp", chỉ file không mục nào dùng mới xóa được |
+| 4 | **Chia 2 đợt, mỗi đợt chia task nhỏ** | Đợt 1: T1–T20 (CRUD mục + web đọc + xem kho). Đợt 2: T21–T24 (upload + xóa file) |
+
+Vì sao tách xóa mục và xóa file: một file có thể được nhiều mục dùng chung (nhiều cảnh trỏ cùng ảnh xem trước). Xóa mục chỉ ảnh hưởng danh sách và **hoàn tác được** bằng Quay lại; xóa file là mất dữ liệu thật, không hoàn tác được và có thể làm vỡ mục khác. Tách hai việc giúp thao tác thường ngày (xóa cảnh) không bao giờ đụng tới dữ liệu thật.
+
+### Task nhỏ (làm đúng thứ tự, xong task nào kiểm task đó)
+
+**Đợt 1 — Mốc A: dữ liệu và API (chưa đụng web)**
+
+| # | Task | Xong khi |
+| --- | --- | --- |
+| T1 | Thêm bảng `content_manifest` + index vào `workers/schema.sql` và một file SQL dán tay cho DB đang chạy | `wrangler d1 execute --local` chạy sạch, bảng có trong D1 local |
+| T2 | Kiểu & hằng dùng chung trong worker: `ContentKind`, `ContentItem`, 8 nhóm cảnh, 15 icon, 3 mood, các trần kích thước | `tsc --noEmit` sạch |
+| T3 | Port `sanitizeFileName`, `uniqueKey`, `detectKind` từ studio | 6 unit test |
+| T4 | `validateItem` + `validateCatalog` (không ném lỗi, trả danh sách lỗi) | 8 unit test (trùng id, `type` sai, icon lạ, path tuyệt đối, quá trần, JSON hỏng) |
+| T5 | `readPublished()` + `writeVersion()` (batch, `version = MAX+1`) | 3 unit test, ghi lỗi giữa chừng không để lại bản nửa vời |
+| T6 | `GET /api/admin/content/items?kind=` + `fileState` theo `R2.list` cache 60 giây | 3 unit test, 40 cảnh trả về trong 1 lần gọi |
+| T7 | `POST` / `PATCH` / `DELETE` mục (không xóa file) + audit trước khi ghi | 6 unit test, audit lỗi thì không ghi |
+| T8 | `GET versions`, `GET versions/:version`, `POST rollback` | 3 unit test, rollback tạo bản mới cùng nội dung |
+| T9 | Giới hạn 20 lần ghi/phút/email + 401 khi thiếu JWT | 2 unit test |
+
+**Đợt 1 — Mốc B: web đọc**
+
+| # | Task | Xong khi |
+| --- | --- | --- |
+| T10 | data-api `GET /content` công khai, trước cửa kiểm token, `max-age=60` | 4 unit test, route cũ vẫn 401 |
+| T11 | `content-catalog.ts` + khóa `contentCatalog` + đổi nguồn 3 hằng ở `study-types.ts` + bỏ mục `hidden` | 6 unit test, mục ẩn không xuất hiện |
+| T12 | `refreshCatalog()` + tự reload 1 lần/phiên khi version đổi | 2 unit test, fetch lỗi thì giữ bundle |
+
+**Đợt 1 — Mốc C: giao diện**
+
+| # | Task | Xong khi |
+| --- | --- | --- |
+| T13 | Khung panel "Nội dung": 4 tab, dòng "Bản v… · số lượng · cập nhật lúc", style bảng/tab | DOM test: đủ tab, không tràn ngang ở 390px |
+| T14 | Tab Cảnh: bảng + ảnh xem trước + tìm kiếm + lọc nhóm + trạng thái file | DOM test: đếm đúng 40 dòng, lọc đúng |
+| T15 | Form cảnh (thêm/sửa) gồm nút Ẩn/Hiện, xem trước, cảnh báo rời form chưa lưu | DOM test: mở form điền sẵn, lưu gọi đúng endpoint |
+| T16 | Tab Âm thanh: bảng + form chọn 15 icon + nghe thử | DOM test: icon lạ không chọn được |
+| T17 | Tab Nhạc: bảng + form mood/ảnh bìa/nghe thử | DOM test: đổi mood đổi nhóm |
+| T18 | Khối Lịch sử: 20 bản gần nhất, Quay lại, Tải JSON | DOM test: nút Quay lại hỏi xác nhận |
+| T19 | Build admin nhúng 3 file JSON làm bản khởi tạo + nút "Khởi tạo v1" khi chưa có bản nào | `npm run build:admin` sinh `dist-admin/seed/*.json`; bấm khởi tạo ra version 1 |
+
+**Đợt 1 — Mốc D: deploy**
+
+| # | Task | Xong khi |
+| --- | --- | --- |
+| T20 | Deploy theo C7 bước 1–5 (chưa publish nội dung mới), kiểm trên production | Web vẫn 40/20/49, `/content` trả version 1, shell đọc được danh sách |
+
+**Đợt 2 — upload và kho tệp**
+
+| # | Task | Xong khi |
+| --- | --- | --- |
+| T21 | `POST /api/admin/content/media` (thân nhị phân, ≤ 50 MB, tên làm sạch) | 4 unit test (sai đuôi, quá 50 MB, tên trùng, thiếu JWT) |
+| T22 | `GET /api/admin/content/media?prefix=` + "đang dùng bởi" + cờ mồ côi | 3 unit test |
+| T23 | `DELETE media` chặn khi còn mục dùng, audit trước khi xóa | 3 unit test, xóa file dùng chung vẫn được nếu mục khác dùng |
+| T24 | Tab "Kho tệp" + upload trong form cảnh/âm/nhạc có thanh tiến trình | Kiểm production: upload 1 cảnh mới, xóa file mồ côi, file đang dùng bị chặn |
+
+### Tiến độ đợt 1 (2026-10-28)
+
+T1–T19 đã xong: 82 test mới (21 validate, 30 API worker, 9 data-api, 13 catalog web, 7 DOM panel, 2 seed); `npm test` 72 file / 587 test xanh, `npx tsc --noEmit` sạch, `npm run lint` chỉ còn cảnh báo cũ, `npm run build:admin` sinh `dist-admin/admin/seed/*.json`. Chưa deploy, chưa commit — T20 chờ lệnh.
+
+### C1. Bảng dữ liệu và validate (đợt 1)
+
+- [x] `workers/schema.sql`: thêm bảng; bản dán tay riêng để chạy trên D1 đang sống ở `workers/content-schema.sql`.
+
+```sql
+CREATE TABLE IF NOT EXISTS content_manifest (
+  version    INTEGER NOT NULL,
+  kind       TEXT NOT NULL,          -- 'scenes' | 'sounds' | 'tracks'
+  json       TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  created_by TEXT NOT NULL,
+  PRIMARY KEY (version, kind)
+);
+CREATE INDEX IF NOT EXISTS idx_content_manifest_created ON content_manifest (created_at DESC);
+```
+
+- [x] `admin-worker/content.ts`: kiểu `ContentKind`, `ContentItem`; `validateItem(kind, item)` trả `{ ok, errors[] }` (không ném lỗi), mỗi lỗi gồm `kind`, `id`, `field`, `message`. `_worker.ts` nhận `catalogFromRows` / `validateCatalog` từ đây.
+- [x] Luật: `id` không rỗng và không trùng trong cùng loại; cảnh `type` ∈ `VIDEO|IMAGE`; nhóm cảnh thuộc 8 nhóm hiện có; âm thanh `icon` thuộc 15 tên hợp lệ; nhạc `category` ∈ `lofi|jazz|relax` và khớp khóa trong `tracks`; `mediaPath`/`thumbnailPath`/`audioPath` phải tương đối; `coverPath` được URL tuyệt đối; trần số mục (cảnh 200, âm 100, nhạc 100/mood) và tổng JSON ≤ 256 KB.
+- [x] Port từ studio: `sanitizeFileName`, `uniqueKey` (tránh trùng), `detectKind` theo đuôi file.
+- [x] Mỗi lần ghi: đọc phiên bản đang phát → áp thay đổi → validate **toàn bộ** danh sách → ghi 3 dòng của version mới bằng **một** câu `INSERT` nhiều dòng (atomic, không để lại bản nửa vời); trùng version → 409 `version_conflict`.
+
+### C2. API mục — thêm / sửa / xóa (đợt 1)
+
+- [x] `GET /api/admin/content/items?kind=` → danh sách mục của bản đang phát + `fileState` cho từng file (`ok` / `missing`), suy ra từ một lần `R2.list` theo tiền tố, cache 60 giây (không gọi `head` từng file để khỏi vượt hạn mức subrequest).
+- [x] `POST` thêm mục: nhận các trường + đường dẫn file đã có trong kho; server sinh `id`; validate; audit `content.item.create` → ghi phiên bản mới.
+- [x] `PATCH` sửa mục theo `id`: cho sửa tên, nhóm, tags, icon, badge, `type`, đường dẫn media, `hidden`; **không** cho sửa `id`; audit `content.item.update` với danh sách trường đã đổi (trước → sau).
+- [x] `DELETE` xóa mục theo `id`: chỉ bỏ dòng khỏi danh sách, **không** đụng file; audit `content.item.delete` kèm danh sách file vừa thành mồ côi (response trả `files`) để tab Kho tệp biết.
+- [x] Giới hạn 20 lần ghi/phút/email (CRUD bấm nhiều hơn cờ); audit lỗi → không ghi gì.
+- [x] `GET /api/admin/content/versions` (20 bản mới nhất, chỉ số lượng + người + giờ), `GET /api/admin/content/versions/:version` (JSON đầy đủ), `POST /api/admin/content/rollback` `{ version }` → audit `content.rollback` `{ from, to }` → tạo phiên bản mới.
+
+### C3. API tệp — upload và xóa (đợt 2)
+
+- [ ] `POST /api/admin/content/media?kind=scenes&name=<tên gốc>`: đọc thân nhị phân, chặn `Content-Length` > 50 MB trước khi đọc, làm sạch tên, chọn key trống, `R2.put(key, body, { httpMetadata })`;
+  trả `{ ok, key, size, url }`.
+- [ ] `GET /api/admin/content/media?prefix=scenes/` → key, dung lượng, ngày, và **đang dùng bởi** bao nhiêu mục (đối chiếu catalog đang phát) + cờ mồ côi.
+- [ ] `DELETE /api/admin/content/media?key=` → chặn nếu còn mục dùng (409 `{ error: "media_in_use", usedBy }`); audit `content.media.delete` **trước** khi xóa R2; lỗi audit thì không xóa.
+- [ ] Upload từ trình duyệt dùng `XMLHttpRequest` để có thanh tiến trình (fetch không báo tiến trình upload).
+
+### C4. Web đọc danh sách đang phát (đợt 1)
+
+- [x] `workers/data-api/worker.js`: thêm `GET /content` **trước** cửa kiểm Authorization; trả `{ ok, version, updatedAt, scenes, sounds, tracks }` đúng shape 3 file bundle; `Cache-Control: public, max-age=60`; dùng `corsHeaders` sẵn có; bảng trống → `{ ok: true, version: 0 }`; route cũ giữ nguyên.
+- [x] `src/lib/content-catalog.ts` (mới): đọc cache `localStorage` lúc import (đồng bộ, không có màn hình chờ), `refreshCatalog()` gọi `/content` (timeout 3 giây) → ghi cache → `splice()` nội dung mới vào 3 mảng cũ; bỏ qua mục `hidden`; payload sai shape thì giữ bundle.
+- [x] `src/lib/storage-keys.ts`: thêm khóa `contentCatalog` (không nằm trong snapshot cloud-sync).
+- [x] [`study-types.ts`](../../src/components/study/study-types.ts): 3 hằng giữ nguyên tên và kiểu, chỉ đổi nguồn khởi tạo — 14 file đang đọc không phải sửa.
+- [x] `useContentCatalog` (hook mount ở `src/app/page.tsx`) gọi `refreshCatalog()` một lần sau mount; nếu version khác cache và chưa reload trong phiên (`sessionStorage`) thì `location.reload()` để bản mới hiện ngay.
+- [x] Không có mạng, `/content` chết, JSON hỏng → app chạy y như hôm nay bằng bundle.
+
+### C5. Giao diện panel "Nội dung" (đợt 1 phần chính, đợt 2 thêm upload)
+
+- [x] `index.html`: `panel-card` `content-panel` đặt sau "Trợ lý chat", trước "Lỗi"; đầu panel hiện "Bản v3 · 40 cảnh · 20 âm · 49 nhạc · 28/10 14:32 bởi email".
+- [x] Ba tab đợt 1: **Cảnh nền** · **Âm thanh** · **Nhạc**; tab **Kho tệp** để đợt 2.
+- [x] Tab Cảnh: bảng có ảnh xem trước nhỏ, tên, nhóm, loại, trạng thái file, **Ẩn/Hiện**, nút **Sửa** / **Xóa**; ô tìm kiếm + lọc nhóm + lọc "đang ẩn"; nút **Thêm cảnh**.
+- [x] Form thêm/sửa cảnh (mở ngay trong panel, che bảng — master/detail, không cần modal mới): tên, nhóm, tags, file ảnh/video, ảnh xem trước cho video, công tắc **Ẩn khỏi web**, xem trước ngay trên form, nút **Lưu** / **Hủy**, cảnh báo khi rời form còn thay đổi chưa lưu.
+- [x] Tab Âm thanh: tên, nhóm, **icon chọn từ 15 tên**, file mp3, công tắc Ẩn, nghe thử tại chỗ.
+- [x] Tab Nhạc: tiêu đề, ca sĩ, thể loại, mood (`lofi`/`jazz`/`relax`, đổi mood là chuyển nhóm), file mp3, ảnh bìa (upload hoặc dán URL ngoài), công tắc Ẩn, nghe thử.
+- [ ] Tab Kho tệp: chọn thư mục, bảng key / dung lượng / ngày / đang dùng bởi; nút **Xóa** chỉ bật với file mồ côi và phải gõ đúng tên file; tổng dung lượng + số file mồ côi.
+- [x] Khối "Lịch sử": 20 bản gần nhất, **Quay lại** (có `confirm()` nêu rõ sẽ tạo bản mới), **Tải JSON**.
+- [x] `admin-host/admin-content.js` (mới) + `admin.css` thêm style bảng, tab, form; dưới 640px xếp một cột như panel chat hiện có.
+- [ ] Nút lưu hiện tiến trình upload (%); file nào upload lỗi thì báo rõ tên file và giữ nguyên form.
+
+### C6. Test (đợt 1 và 2)
+
+- [x] worker: validate (trùng id, sai `type`, icon lạ, `mediaPath` tuyệt đối, quá trần số mục, JSON hỏng); tạo/sửa/xóa ghi đúng 1 phiên bản + 1 dòng audit **trước** khi ghi; audit lỗi → không ghi; rollback tạo bản mới cùng nội dung; xóa mục không gọi xóa file và `releasedFiles` đúng; upload sai đuôi / quá 50 MB → 400; xóa file đang dùng → 409; thiếu JWT → 401; rate limit.
+- [x] data-api: `/content` công khai không cần token, đúng `Cache-Control` + CORS, bảng trống trả `version: 0`, route cũ vẫn 401 khi thiếu token.
+- [x] web: cache ghi/đọc, payload sai shape bị bỏ, fetch lỗi → giữ bundle, mục `hidden` không xuất hiện, `splice` đổi nội dung mà `resolveAssetUrl` vẫn đúng.
+- [x] DOM: bảng hiện đúng số mục, mở form sửa điền sẵn giá trị, lưu gọi đúng endpoint, xóa hỏi xác nhận, tab Kho tệp chặn xóa file đang dùng.
+- [x] `npm run lint`, `npx tsc --noEmit`, `npm test` sạch.
+
+### C7. Deploy và kiểm tra (thứ tự bắt buộc, mỗi bước không khóa ai)
+
+1. [ ] Chạy SQL C1 trên D1 `zenspace` (bảng mới, không đụng 4 bảng cũ).
+2. [ ] Dán `data-api` mới → `GET /content` trả `{ ok: true, version: 0 }`.
+3. [ ] `npm run build:admin` + deploy admin worker → panel hiện "chưa có bản nào", đọc được 40 cảnh từ bundle.
+4. [ ] Push web → trang chủ vẫn chạy bằng bundle (chưa có bản nào).
+5. [ ] Trong shell: publish lần đầu bằng chính 3 file bundle → `/content` trả `version: 1`, web vẫn 40 cảnh / 20 âm / 49 nhạc.
+6. [ ] Sửa tên 1 cảnh → tải lại web thấy tên mới; xóa 1 cảnh thử → biến mất và file được chừa lại nếu mục khác dùng; rollback → như cũ.
+7. [ ] Upload 1 cảnh mới (đợt 2) → file nằm trên R2, cảnh hiện trên web sau khi tải lại; thử xóa file đang dùng → bị chặn.
+
+Xong khi: thêm/sửa/xóa một cảnh, một âm, một bài nhạc và file của nó đều làm được trong shell **không cần máy local, không build lại web**; mọi lần ghi có đúng 1 dòng `admin_audit`; web vẫn chạy bình thường khi `/content` chết.
+
+### Ước lượng và ranh giới
+
+- Đợt 1: ~600–700 dòng (worker ~350, web ~120, UI ~350 gồm cả style) + ~12 test.
+- Đợt 2: ~400 dòng (upload + kho tệp + tiến trình) + ~8 test.
+- Việc còn lại của **P2d** sau P2c: tổng quan dung lượng theo thư mục, dọn mồ côi **hàng loạt**, cảnh báo file thiếu trên toàn kho — phần lẻ đã nằm trong tab Kho tệp.
+
+## P2d — Kho R2 (thu hẹp sau P2c, chưa bắt đầu)
+
+Mục tiêu: phần **hàng loạt** của kho — tổng quan dung lượng theo thư mục, dọn file mồ côi một lượt, cảnh báo file thiếu trên toàn kho. Xem/sửa/xóa từng file đã nằm trong tab "Kho tệp" của P2c.
+
+- [ ] D1. So catalog đang phát với `R2.list()` → danh sách thiếu/mồ côi (dùng lại phân trang 30 trang + cache 60 giây của P1c).
 - [ ] D2. UI: đếm theo loại, danh sách rút gọn, không hiện key đầy đủ của ảnh người dùng.
-- [ ] D3. Xóa: chỉ file mồ côi, gõ đúng tên file để xác nhận, audit trước khi xóa.
+- [ ] D3. Xóa hàng loạt: chỉ file mồ côi, gõ đúng số lượng + `confirm()`, audit trước khi xóa (single-file đã có ở P2c).
 - [ ] Quyết định cần chốt khi bắt tay: có cho xóa hàng loạt không (mặc định: không, từng file).
 
 ---
@@ -302,3 +481,7 @@ npx wrangler kv key put --namespace-id=a16e430f9bbe46afa51ffc9d4f9bce9d --remote
 - **Bản 8** (2026-10-27): xóa trang admin chat local. `src/app/admin/chat/` (93 KB, đọc/ghi `chat-admin-token` trong localStorage) đã xóa; tab "Quản Lý Chatbot" gỡ khỏi `AdminHeader` để không còn link chết; `AdminTab` còn `limits | studio`. `npx tsc --noEmit` sạch sau khi xóa `.next` (types cũ còn trỏ `admin/chat/page`); test `admin-header` 3/3 xanh.
 - **Bản 9** (2026-10-28): rà soát lại tiến độ so với code — xác nhận P2.0 đã có `AbortSignal.timeout(4000)` và chặn log trùng 1 giờ, P2b đã có đủ 5 endpoint và panel, P2c/P2d chưa có dòng code nào; sửa dòng trạng thái và thứ tự "Lịch sử bản" bị lệch. Sửa môi trường test: Node 26 gắn `localStorage` toàn cục trả `undefined`, đè bản của happy-dom làm 13 test DOM fail → thêm shim `vitest.setup.ts` (Storage trong RAM) và đăng ký `setupFiles`; toàn bộ 505 test xanh. Sửa kèm nút icon ↑ ↓ ✕ trong mục "Thứ tự trả lời" bị dính mép trái.
 - **Bản 10** (2026-10-28): **chốt P2b**. Khối "Thử model" in thêm `provider:model` lấy từ response của chat-proxy để nhìn ra hãng/model thật của lần gọi (`strict:true`, không rơi êm); test DOM thêm ca `Cloudflare:qwen3-30b`; sửa `localStorage` cho Node 26 bằng `vitest.setup.ts`; B5 tick kèm ghi chú "còn bấm lại trên production sau deploy". P2c chuyển sang bước soạn kế hoạch, chờ duyệt trước khi viết code.
+- **Bản 11** (2026-10-28): viết kế hoạch chi tiết P2c — đếm lại catalog (40 cảnh / 20 âm / 49 nhạc, 114 đường dẫn media duy nhất), xác định 14 file đọc hằng catalog nên chỉ 3 hằng trong `study-types.ts` phải đổi nguồn; chốt cấu trúc bảng `content_manifest` (version + kind làm khóa chính), route công khai `GET /content` đặt trong data-api trước cửa kiểm token, rollback = tạo version mới, kiểm media bằng `R2.list()` theo tiền tố. Sáu quyết định kèm đề xuất đang chờ duyệt.
+- **Bản 12** (2026-10-28): **đổi hướng P2c** theo yêu cầu — không dán file JSON nữa mà CRUD từng mục (cảnh / âm / nhạc) và quản lý luôn file media trong shell. Port quy tắc từ studio local (50 MB, video phải có ảnh xem trước, không ghi đè, xóa chừa file dùng chung), thêm bảng `content_manifest` giữ mọi lần lưu thành một phiên bản, thêm `hidden` để ẩn thay vì xóa, tab "Kho tệp" xem/xóa file mồ côi, upload có thanh tiến trình. Chia 2 đợt (đợt 1 CRUD mục + web đọc, đợt 2 upload). P2d thu hẹp còn phần hàng loạt. Bốn quyết định chờ duyệt.
+- **Bản 13** (2026-10-28): chốt 4 quyết định P2c — Lưu là lên sóng ngay; có `hidden` (Ẩn/Hiện); **xóa mục tách hẳn khỏi xóa file** (xóa mục chỉ bỏ dòng, file dọn riêng ở tab Kho tệp vì một file có thể được nhiều mục dùng chung); chia 24 task nhỏ T1–T24 theo 4 mốc (dữ liệu/API → web đọc → giao diện → deploy) cộng đợt 2 upload/kho tệp.
+- **Bản 14** (2026-10-28): **code xong đợt 1 P2c (T1–T19)**. Worker: `content.ts` (validate/chuẩn hoá/insert/update/delete/diff) + `_worker.ts` (`GET/POST/PATCH/DELETE /api/admin/content/items`, `versions`, `rollback`, `init`, audit trước ghi, 20 lần ghi/phút, đọc dung lượng R2 cache 60 giây); bảng `content_manifest` trong `workers/schema.sql` + bản dán tay `workers/content-schema.sql`. Web: data-api `GET /content` công khai (60 giây), `content-catalog.ts` thay 3 hằng ở `study-types.ts` (live binding, lọc `hidden`), hook `useContentCatalog` reload 1 lần/phiên. Admin shell: panel "Nội dung" 3 tab + form master/detail + khối Lịch sử + nút nạp bộ nội dung ban đầu, `admin-content.js` ~1.000 dòng, seed JSON được `build:admin` chép vào `dist-admin/admin/seed/`. Test: 82 ca mới, toàn bộ 587 ca xanh. Còn T20 (deploy) và đợt 2 T21–T24.

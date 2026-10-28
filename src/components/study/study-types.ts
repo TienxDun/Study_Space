@@ -1,15 +1,4 @@
-import rawScenes from "@/data/assets/scenes.json";
-import rawTracks from "@/data/assets/tracks.json";
-import rawSounds from "@/data/assets/sounds.json";
-import { 
-  resolveScene, 
-  resolveTrack, 
-  resolveAmbientSound,
-  LegacyScene,
-  LegacyTrack,
-  LegacyAmbientSound
-} from "@/lib/asset-resolver";
-import { SceneAsset, TrackAsset, AmbientSoundAsset } from "@/types/assets";
+import { LegacyScene, LegacyTrack, LegacyAmbientSound } from "@/lib/asset-resolver";
 
 export type MoodType = "lofi" | "jazz" | "relax";
 
@@ -51,16 +40,12 @@ export interface KanbanBoard {
   createdAt: number;
 }
 
-// Chuyển đổi dữ liệu từ catalog JSON sang objects hoàn chỉnh
-export const STUDY_TRACKS_BY_MOOD: Record<MoodType, Track[]> = {
-  lofi: (rawTracks.lofi as TrackAsset[]).map(resolveTrack),
-  jazz: (rawTracks.jazz as TrackAsset[]).map(resolveTrack),
-  relax: (rawTracks.relax as TrackAsset[]).map(resolveTrack),
-};
-
-export const AMBIENT_SOUNDS: AmbientSound[] = (rawSounds as AmbientSoundAsset[]).map(resolveAmbientSound);
-
-export const STUDY_SCENES: Scene[] = (rawScenes as SceneAsset[]).map(resolveScene);
+// Catalog do admin phát hành; đổi bản sẽ gán lại cả 3 mảng bên content-catalog.
+export {
+  STUDY_TRACKS_BY_MOOD,
+  AMBIENT_SOUNDS,
+  STUDY_SCENES,
+} from "@/lib/content-catalog";
 
 export type EmbedPlatform = "youtube" | "spotify" | "custom";
 

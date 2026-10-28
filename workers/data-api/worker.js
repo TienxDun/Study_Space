@@ -1,9 +1,10 @@
 /**
  * ZenStudy — Worker Lưu Trữ Đám Mây Tinh Gọn (Cloud Save Snapshot)
  * Endpoint:
- *   GET  /health -> kiểm tra trạng thái
- *   GET  /data   -> tải toàn bộ dữ liệu của người dùng
- *   POST /data   -> lưu toàn bộ dữ liệu của người dùng
+ *   GET  /health  -> kiểm tra trạng thái
+ *   GET  /content -> catalog nội dung công khai (cảnh / âm thanh / nhạc), không cần token
+ *   GET  /data    -> tải toàn bộ dữ liệu của người dùng
+ *   POST /data    -> lưu toàn bộ dữ liệu của người dùng
  */
 
 const CERT_URL =
@@ -172,6 +173,87 @@ const workerHandler = {
       );
     }
 
+    // 2. GET /content — catalog công khai, không cần token.
+    // Nội dung do admin phát hành (bảng content_manifest, mỗi lần lưu là một version).
+    if (url.pathname === "/content") {
+      if (req.method !== "GET") {
+        return json({ error: "Chỉ hỗ trợ GET." }, 405, cors);
+      }
+      if (!env.DB) {
+        return json(
+          { ok: false, error: "missing_binding" },
+          500,
+          { ...cors, "Cache-Control": "no-store" }
+        );
+      }
+      const cache = {
+        ...cors,
+        "Cache-Control": "public, max-age=60, stale-while-revalidate=300",
+      };
+      try {
+        const res = await env.DB.prepare(
+          `SELECT version, kind, json, created_at
+             FROM content_manifest
+            WHERE version = (SELECT MAX(version) FROM content_manifest)`
+        ).all();
+        const rows = Array.isArray(res?.results) ? res.results : [];
+
+        const catalog = { scenes: [], sounds: [], tracks: { lofi: [], jazz: [], relax: [] } };
+        let version = 0;
+        let updatedAt = 0;
+        for (const row of rows) {
+          const kind = String(row?.kind || "");
+          let parsed = null;
+          try {
+            parsed = JSON.parse(String(row?.json || ""));
+          } catch {
+            parsed = null;
+          }
+          if (!parsed) {
+            return json(
+              { ok: false, error: "invalid_json" },
+              500,
+              { ...cors, "Cache-Control": "no-store" }
+            );
+          }
+          version = Math.max(version, Number(row?.version) || 0);
+          updatedAt = Math.max(updatedAt, Number(row?.created_at) || 0);
+          if (kind === "scenes" && Array.isArray(parsed)) catalog.scenes = parsed;
+          else if (kind === "sounds" && Array.isArray(parsed)) catalog.sounds = parsed;
+          else if (kind === "tracks" && parsed && typeof parsed === "object") {
+            for (const mood of ["lofi", "jazz", "relax"]) {
+              if (Array.isArray(parsed[mood])) catalog.tracks[mood] = parsed[mood];
+            }
+          }
+        }
+
+        return json(
+          {
+            ok: true,
+            version,
+            updatedAt,
+            counts: {
+              scenes: catalog.scenes.length,
+              sounds: catalog.sounds.length,
+              tracks:
+                catalog.tracks.lofi.length +
+                catalog.tracks.jazz.length +
+                catalog.tracks.relax.length,
+            },
+            ...catalog,
+          },
+          200,
+          cache
+        );
+      } catch (err) {
+        return json(
+          { ok: false, error: "d1_error", detail: String(err?.message || err) },
+          500,
+          { ...cors, "Cache-Control": "no-store" }
+        );
+      }
+    }
+
     // Kiểm tra Authorization Header
     const authHeader = req.headers.get("Authorization") || "";
     if (!authHeader.startsWith("Bearer ")) {
@@ -190,7 +272,7 @@ const workerHandler = {
       return json({ error: "Lỗi kết nối cơ sở dữ liệu." }, 500, cors);
     }
 
-    // 2. GET /data — Tải toàn bộ dữ liệu của người dùng
+    // 3. GET /data — Tải toàn bộ dữ liệu của người dùng
     if (req.method === "GET" && url.pathname === "/data") {
       try {
         const row = await db
@@ -223,7 +305,7 @@ const workerHandler = {
       }
     }
 
-    // 3. POST /data — Lưu toàn bộ dữ liệu của người dùng
+    // 4. POST /data — Lưu toàn bộ dữ liệu của người dùng
     if (req.method === "POST" && url.pathname === "/data") {
       try {
         const body = await req.json().catch(() => null);

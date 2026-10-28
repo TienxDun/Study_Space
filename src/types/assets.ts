@@ -11,6 +11,8 @@ export interface BaseAsset {
   tags?: string[];
   author?: AssetAuthor;
   isFeatured?: boolean;
+  /** Mục ẩn vẫn nằm trong catalog nhưng không hiện cho người học. */
+  hidden?: boolean;
 }
 
 export type SceneCategory =

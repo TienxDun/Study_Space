@@ -72,6 +72,8 @@ export const STORAGE_KEYS = {
   mobileSheetZenMap: "study_space_mobile_sheet_zen_map",
   // Màn hình chào mừng Mobile (Chỉ hiện ở lần đầu tiên mở app)
   mobileWelcomeCompleted: "zenstudy_mobile_welcome_completed",
+  // Bản catalog nội dung mới nhất tải từ data-api (cache để mở app là có ngay)
+  contentCatalog: "study_space_content_catalog_v1",
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

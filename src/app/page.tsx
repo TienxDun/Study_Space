@@ -18,6 +18,7 @@ import { MobileWelcomeScreen } from "@/components/study/mobile/welcome/MobileWel
 import { MobileSplashScreen } from "@/components/study/mobile/splash/MobileSplashScreen";
 import { MobileLandscapeGuard } from "@/components/study/mobile/MobileLandscapeGuard";
 import { useStudySpaceState } from "@/components/study/hooks/useStudySpaceState";
+import { useContentCatalog } from "@/components/study/hooks/useContentCatalog";
 import { useAuth } from "@/lib/use-auth";
 import { useCloudSync } from "@/lib/use-cloud-sync";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
@@ -35,6 +36,8 @@ const StudyRoomsWidget = dynamic(
 
 export default function StudySpacePage() {
   const state = useStudySpaceState();
+  // Lấy catalog cảnh/âm thanh/nhạc do admin phát hành (cache trong máy, tự làm mới 1 lần/phiên).
+  useContentCatalog();
 
   // Đồng bộ dữ liệu học tập lên Cloudflare D1 khi đã đăng nhập (localStorage vẫn là bản chính).
   const { user, loading, getToken } = useAuth();

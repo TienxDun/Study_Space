@@ -23,6 +23,18 @@ if (existsSync(favicon)) {
   cpSync(favicon, path.join(dist, "favicon.svg"));
 }
 
+// P2c: bộ nội dung đóng gói sẵn để nút "Nạp bộ nội dung ban đầu" gửi lên Worker.
+const seedDir = path.join(dist, "admin", "seed");
+mkdirSync(seedDir, { recursive: true });
+for (const name of ["scenes.json", "sounds.json", "tracks.json"]) {
+  const source = path.join(root, "src", "data", "assets", name);
+  if (!existsSync(source)) {
+    console.error(`Thiếu src/data/assets/${name} — không dựng được bộ nội dung ban đầu.`);
+    process.exit(1);
+  }
+  cpSync(source, path.join(seedDir, name));
+}
+
 writeFileSync(
   path.join(dist, "_redirects"),
   [
