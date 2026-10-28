@@ -2048,7 +2048,8 @@ textarea.chat-prompt {
 }
 
 .content-table-wrap {
-  overflow-x: auto;
+  overflow: auto;
+  max-height: 520px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
 }
@@ -2056,6 +2057,14 @@ textarea.chat-prompt {
 .content-table {
   width: 100%;
   border-collapse: collapse;
+}
+
+/* Danh sách cuộn trong khung riêng nên đầu bảng phải dính lại. */
+.content-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: #12151f;
 }
 
 .content-table td {

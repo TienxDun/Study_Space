@@ -71,6 +71,14 @@
     return node;
   }
 
+  function debounce(fn, wait) {
+    var timer = 0;
+    return function () {
+      clearTimeout(timer);
+      timer = setTimeout(fn, wait);
+    };
+  }
+
   function call(path, options) {
     options = options || {};
     return fetch(API + path, {
@@ -137,6 +145,41 @@
   function mediaNode(node) {
     node.setAttribute("referrerpolicy", "origin");
     return node;
+  }
+
+  // Ảnh xem trước chỉ tải khi hàng sắp vào khung nhìn. Ảnh gốc là file 4K
+  // (ảnh nền dùng chung), nên để `loading="lazy"` tự nhiên sẽ kéo cả chục file
+  // vài trăm KB ngay khi mở tab.
+  var thumbObserver =
+    "IntersectionObserver" in window
+      ? new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (!entry.isIntersecting) return;
+              var img = entry.target;
+              thumbObserver.unobserve(img);
+              img.src = img.getAttribute("data-src") || "";
+              img.removeAttribute("data-src");
+            });
+          },
+          { rootMargin: "200px 0px" }
+        )
+      : null;
+
+  function thumbNode(src, alt) {
+    var img = mediaNode(el("img", "content-thumb"));
+    img.alt = alt || "";
+    img.width = 74;
+    img.height = 44;
+    img.loading = "lazy";
+    img.decoding = "async";
+    if (thumbObserver) {
+      img.setAttribute("data-src", src);
+      thumbObserver.observe(img);
+    } else {
+      img.src = src;
+    }
+    return img;
   }
 
   function setNote(node, message, mode) {
@@ -427,11 +470,7 @@
         var preview = el("div");
         var src = item.type === "VIDEO" ? item.thumbnailPath : item.thumbnailPath || item.mediaPath;
         if (src) {
-          var img = mediaNode(el("img", "content-thumb"));
-          img.alt = item.name || "";
-          img.loading = "lazy";
-          img.src = mediaUrl(src);
-          preview.appendChild(img);
+          preview.appendChild(thumbNode(mediaUrl(src), item.name || ""));
         } else {
           preview.appendChild(el("div", "content-thumb is-empty", item.type === "VIDEO" ? "Video" : "Chưa có ảnh"));
         }
@@ -517,11 +556,7 @@
       cells: function (item) {
         var coverCell = el("td");
         if (item.coverPath) {
-          var img = mediaNode(el("img", "content-thumb"));
-          img.alt = item.title || "";
-          img.loading = "lazy";
-          img.src = mediaUrl(item.coverPath);
-          coverCell.appendChild(img);
+          coverCell.appendChild(thumbNode(mediaUrl(item.coverPath), item.title || ""));
         } else {
           coverCell.appendChild(el("div", "content-thumb is-empty", "Chưa có bìa"));
         }
@@ -572,13 +607,27 @@
     stateEl.textContent = dirty ? "Có thay đổi chưa lưu" : release.version ? "Đã đọc bản v" + release.version : "Chưa phát hành";
   }
 
+  // Hàng được dựng một lần cho mỗi lần đọc dữ liệu; lọc chỉ ẩn/hiện lại để
+  // ảnh xem trước không bị tạo lại (và tải lại) theo từng ký tự gõ vào ô tìm.
+  var rowCaches = { scenes: null, sounds: null, tracks: null };
+
+  function buildRow(kind, item) {
+    var row = el("tr");
+    SPECS[kind].cells(item).forEach(function (cellNode) {
+      row.appendChild(cellNode);
+    });
+    row.appendChild(actionsCell(kind, item));
+    return row;
+  }
+
   function renderList(kind) {
     var spec = SPECS[kind];
     var list = lists[kind];
     var body = spec.rows;
-    body.textContent = "";
 
     if (!list) {
+      body.textContent = "";
+      rowCaches[kind] = null;
       var wait = el("tr");
       var waitCell = el("td", null, "Đang đọc…");
       waitCell.colSpan = spec.columns;
@@ -587,29 +636,43 @@
       return;
     }
 
+    if (!rowCaches[kind]) {
+      body.textContent = "";
+      var rows = new Map();
+      (list.items || []).forEach(function (item) {
+        var row = buildRow(kind, item);
+        rows.set(item, row);
+        body.appendChild(row);
+      });
+
+      var empty = el("tr");
+      var emptyCell = el("td");
+      emptyCell.colSpan = spec.columns;
+      empty.appendChild(emptyCell);
+      empty.hidden = true;
+      body.appendChild(empty);
+
+      rowCaches[kind] = { rows: rows, empty: empty, emptyCell: emptyCell };
+    }
+
+    var cache = rowCaches[kind];
     var query = String(spec.search && spec.search.value ? spec.search.value : "").trim().toLowerCase();
     var filter = spec.filter ? spec.filter.value : "";
     var items = (list.items || []).filter(function (item) {
       return spec.matches(item, query, filter);
     });
+    var visible = new Set(items);
 
-    if (!items.length) {
-      var empty = el("tr");
-      var cell = el("td", null, list.items && list.items.length ? "Không có mục nào khớp bộ lọc." : "Chưa có mục nào.");
-      cell.colSpan = spec.columns;
-      empty.appendChild(cell);
-      body.appendChild(empty);
-      return;
-    }
-
-    items.forEach(function (item) {
-      var row = el("tr");
-      spec.cells(item).forEach(function (cellNode) {
-        row.appendChild(cellNode);
-      });
-      row.appendChild(actionsCell(kind, item));
-      body.appendChild(row);
+    cache.rows.forEach(function (row, item) {
+      row.hidden = !visible.has(item);
     });
+
+    cache.emptyCell.textContent = list.items && list.items.length ? "Không có mục nào khớp bộ lọc." : "Chưa có mục nào.";
+    cache.empty.hidden = items.length > 0;
+
+    // Danh sách cuộn trong khung riêng: đổi bộ lọc thì đưa về đầu để thấy kết quả.
+    var scroller = body.parentNode && body.parentNode.parentNode;
+    if (scroller && scroller.scrollTop) scroller.scrollTop = 0;
   }
 
   // ---------- Biểu mẫu: mở / đóng / lưu ----------
@@ -731,6 +794,7 @@
 
   function applyList(kind, payload) {
     lists[kind] = payload;
+    rowCaches[kind] = null;
     release = {
       version: Number(payload.version) || 0,
       createdAt: Number(payload.createdAt) || 0,
@@ -988,9 +1052,12 @@
     spec.saveBtn.addEventListener("click", function () {
       save(kind);
     });
-    spec.search.addEventListener("input", function () {
-      renderList(kind);
-    });
+    spec.search.addEventListener(
+      "input",
+      debounce(function () {
+        renderList(kind);
+      }, 120)
+    );
     if (spec.filter) {
       spec.filter.addEventListener("change", function () {
         renderList(kind);
