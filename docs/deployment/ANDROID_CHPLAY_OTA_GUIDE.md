@@ -3,6 +3,8 @@
 > **Dự án:** ZenStudy Space (`study_space`)  
 > **Kiến trúc:** Next.js (React 19) + Capacitor + Firebase + LiveKit + Cloudflare R2  
 > **Mục tiêu:** Đóng gói ứng dụng thành Android App Bundle (`.aab`), nộp lên CH Play và thiết lập cơ chế cập nhật từ xa OTA (Over-The-Air) không cần nộp duyệt lại store ở các phiên bản giao diện tiếp theo.
+>
+> **Trạng thái (2026-10-28):** tài khoản Google Play Developer **đã có**. Kế hoạch tổng thể và thứ tự ưu tiên: [CHPLAY_LAUNCH_PLAN.md](./CHPLAY_LAUNCH_PLAN.md). Phần policy đã triển khai trước (`/privacy` trên web + link trong app).
 
 ---
 
@@ -44,6 +46,8 @@ flowchart TD
    npm run build
    ```
    *Đảm bảo thư mục `out/` được tạo ra thành công ở thư mục gốc dự án.*
+
+> **Lưu ý với repo hiện tại:** [next.config.ts](../../next.config.ts) chỉ bật `output: "export"` khi có biến `CF_PAGES`, và máy local có `src/app/admin` + `src/app/api` (gitignored) nên `next build` thường sẽ từ chối export. Dùng script `build:mobile` (tạm ẩn 2 thư mục đó khi build) thay vì `npm run build` trần — xem P1 trong [CHPLAY_LAUNCH_PLAN.md](./CHPLAY_LAUNCH_PLAN.md).
 
 ---
 

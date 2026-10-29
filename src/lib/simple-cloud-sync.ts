@@ -319,6 +319,30 @@ export async function pushData(): Promise<boolean> {
   }
 }
 
+// ---------- Xoá toàn bộ dữ liệu tài khoản trên mây ----------
+// Worker xoá D1 rồi xoá tài khoản Firebase bằng service account.
+export async function deleteCloudAccount(token: string): Promise<void> {
+  if (!token) throw new Error("Không thể lấy token xác thực.");
+
+  const res = await fetch(`${apiBaseUrl}/account`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    let detail = "";
+    try {
+      const body = await res.json();
+      detail = String(body?.error || body?.code || "");
+    } catch {
+      /* body rỗng hoặc không phải JSON */
+    }
+    const err = new Error(detail || `Máy chủ trả về mã lỗi: ${res.status}`);
+    (err as Error & { status?: number }).status = res.status;
+    throw err;
+  }
+}
+
 // ---------- Tự động lưu sau 2 giây (Debounce) ----------
 export function scheduleAutoSave() {
   if (!activeUid || !tokenProvider) return;

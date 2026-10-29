@@ -20,6 +20,11 @@ service cloud.firestore {
       );
       allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
       allow update: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+      // Xoá đoạn chat: chính chủ (xóa tài khoản / xoá hội thoại).
+      allow delete: if request.auth != null && (
+        request.auth.uid == cid ||
+        resource.data.ownerUid == request.auth.uid
+      );
 
       // Tin nhắn trong phiên: chính chủ (cid == uid) thì khỏi đọc thêm
       // document cha để đỡ tốn lượt đọc của Rules.

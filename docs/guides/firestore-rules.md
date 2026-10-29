@@ -46,6 +46,7 @@
 - [R4.2] Collection `usage/*`: client chỉ được đọc của mình, **cấm ghi trực tiếp** (số lượt do Worker cộng bằng Admin SDK hoặc increment có validate).
 - [R4.3] Validate kiểu dữ liệu ở Rules (text là string, ≤ 8000 ký tự).
 - [R4.4] Không bao giờ để rule `allow read, write: if true`.
+- [R4.5] Xoá tài khoản cần xoá cả document cha `conversations/{cid}`: cho phép `delete` khi `cid == uid` hoặc `ownerUid == uid`. Subcollection `sessions`/`messages` xoá trước, document cha xoá sau (client bỏ qua `permission-denied` ở document cha nếu rules chưa publish).
 
 ## 5. Rules cấm
 

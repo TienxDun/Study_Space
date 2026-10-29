@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import {
   FileTextIcon,
   RadioIcon,
@@ -111,10 +112,25 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
             <MoreButton label="Chế độ Zen (Toàn màn hình)" onClick={() => go("pomodoro")} icon={<EyeSlashIcon className="w-5 h-5 text-slate-200" />} />
           </div>
         </section>
-        <div className="pt-3 pb-2 text-center select-none">
+        <div className="pt-3 pb-2 text-center select-none space-y-1.5">
           <p className="text-[11px] font-mono text-white/40 tracking-tight">
             ZenStudy Space · {APP_VERSION_LABEL}
           </p>
+          <Link
+            href="/privacy/"
+            className="inline-block text-[11px] font-semibold text-white/60 hover:text-white underline underline-offset-2 transition-colors"
+          >
+            Chính sách quyền riêng tư
+          </Link>
+          <span aria-hidden="true" className="text-white/30 px-1">
+            ·
+          </span>
+          <Link
+            href="/account-deletion/"
+            className="inline-block text-[11px] font-semibold text-white/60 hover:text-white underline underline-offset-2 transition-colors"
+          >
+            Xoá tài khoản
+          </Link>
         </div>
         {/* Bóng mờ đáy: báo còn nội dung bên dưới, vuốt lên để xem */}
         <div

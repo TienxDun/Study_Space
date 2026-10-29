@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { SyncStatusBadge } from "@/components/study/sync/SyncStatusBadge";
 import { syncNow } from "@/lib/simple-cloud-sync";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
+import { DeleteAccountDialog } from "./DeleteAccountDialog";
 import { APP_VERSION_LABEL } from "@/lib/version";
 
 /**
@@ -24,6 +25,7 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
   const { user, loading, isSigningIn, isSigningOut, signIn, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+  const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const syncingRef = useRef(false);
   const [avatarError, setAvatarError] = useState(false);
@@ -199,8 +201,19 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
               </button>
             </div>
 
-            {/* Chân thẻ hồ sơ: Phiên bản ứng dụng */}
-            <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px] select-none">
+            {/* Chân thẻ hồ sơ: Xoá tài khoản + Phiên bản ứng dụng */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                setIsDeleteAccountOpen(true);
+              }}
+              className="mt-2 w-full py-1 text-[11px] font-medium text-slate-500 hover:text-rose-300 transition-colors text-center cursor-pointer"
+            >
+              Xoá tài khoản
+            </button>
+
+            <div className="mt-1.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px] select-none">
               <span className="text-slate-400">Phiên bản</span>
               <span className="font-mono text-emerald-300 font-semibold px-2 py-0.5 rounded-md bg-white/[0.06] border border-white/10">
                 {APP_VERSION_LABEL}
@@ -226,6 +239,12 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
         description="Dữ liệu đã đồng bộ vẫn còn trên đám mây, nhưng dữ liệu trên thiết bị này sẽ bị xoá. Nếu đang offline, thay đổi chưa đồng bộ có thể mất."
         confirmText="Đăng xuất"
         cancelText="Ở lại"
+      />
+
+      <DeleteAccountDialog
+        isOpen={isDeleteAccountOpen}
+        onClose={() => setIsDeleteAccountOpen(false)}
+        accountEmail={user.email}
       />
     </div>
   );

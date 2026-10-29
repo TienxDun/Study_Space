@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   XIcon,
   WarningIcon,
@@ -273,6 +274,13 @@ export const StudyAboutModal = ({ isOpen, onClose }: StudyAboutModalProps) => {
           ))}
         </ul>
       </AboutSection>
+
+      <Link
+        href="/privacy/"
+        className="block text-center text-xs font-semibold text-slate-400 hover:text-emerald-300 transition-colors py-1"
+      >
+        Chính sách quyền riêng tư
+      </Link>
     </ModalShell>
   );
 };

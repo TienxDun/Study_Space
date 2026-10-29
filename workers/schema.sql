@@ -1,9 +1,10 @@
 -- ZenStudy — Kho dữ liệu D1 Tinh Gọn (zenspace)
--- Chỉ gồm 4 bảng:
+-- Chỉ gồm 5 bảng:
 -- 1. user_data       : Kho dữ liệu học tập cá nhân (Snapshot Save Game cho data-api)
 -- 2. chat_usage      : Sổ đếm câu chat theo ngày của từng học sinh (30 câu/ngày cho chat-proxy)
 -- 3. admin_audit     : Nhật ký hành động admin (ai, làm gì, lúc nào) cho Worker zenstudy-admin
 -- 4. admin_error_log : Lỗi cuối của chat-proxy và lỗi D1/cấu hình của Worker admin (giữ 14 ngày)
+-- 5. deleted_accounts: UID đã xoá tài khoản — chặn thiết bị còn token cũ đẩy dữ liệu trở lại
 -- Lượt gọi/neurons Workers AI không lưu ở đây; xem số thật trên Cloudflare Dashboard.
 -- Đây là script cài mới: đầu file có DROP TABLE. DB đang chạy thì dán riêng phần bảng cần thêm.
 
@@ -32,6 +33,14 @@ CREATE TABLE IF NOT EXISTS chat_usage (
   PRIMARY KEY (uid, day)
 );
 CREATE INDEX IF NOT EXISTS idx_chat_usage_day_count ON chat_usage (day, count DESC);
+
+-- 3b. UID ĐÃ XOÁ TÀI KHOẢN
+-- DELETE /account ghi vào đây; GET/POST /data trả 403 cho UID nằm trong bảng.
+-- Tài khoản Google đăng nhập lại sẽ nhận UID mới nên không bị chặn nhầm.
+CREATE TABLE IF NOT EXISTS deleted_accounts (
+  uid        TEXT PRIMARY KEY,
+  deleted_at INTEGER NOT NULL
+);
 
 -- 4. NHẬT KÝ HÀNH ĐỘNG ADMIN (Worker zenstudy-admin)
 CREATE TABLE IF NOT EXISTS admin_audit (
