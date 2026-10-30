@@ -214,7 +214,10 @@ function el<T extends HTMLElement>(id: string) {
 }
 
 function rows(id: string): HTMLElement[] {
-  return Array.from(document.querySelectorAll(`#${id} tr`)) as HTMLElement[];
+  // Bảng luôn có sẵn một dòng trạng thái rỗng (hidden) cho trường hợp không có mục.
+  return Array.from(document.querySelectorAll(`#${id} tr`)).filter(
+    (node) => !(node as HTMLElement).hidden,
+  ) as HTMLElement[];
 }
 
 function rowButton(index: number, label: string): HTMLButtonElement {
