@@ -2,6 +2,8 @@
 // Mọi fetch tới noembed / spotify-oembed đi qua đây, component
 // không hardcode URL endpoint.
 
+import { devWarn } from "./logger";
+
 export interface EmbedMetadata {
   title?: string;
   author?: string;
@@ -17,7 +19,7 @@ async function fetchJson(url: string): Promise<Record<string, string> | null> {
     if (!res.ok) return null;
     return (await res.json()) as Record<string, string>;
   } catch (err) {
-    console.warn("[StudyEmbed] Failed to fetch oEmbed:", err);
+    devWarn("[StudyEmbed] Failed to fetch oEmbed:", err);
     return null;
   }
 }

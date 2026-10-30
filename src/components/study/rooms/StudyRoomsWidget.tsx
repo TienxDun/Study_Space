@@ -32,6 +32,9 @@ import {
   type RoomExitNotice as RoomExitNoticeData,
 } from "./utils/room-exit";
 import { buildInviteLink, readInviteRoom } from "@/lib/meet-invite";
+import { configureLiveKitLogging } from "@/lib/livekit-log";
+
+configureLiveKitLogging();
 
 export interface StudyRoomsWidgetProps {
   isOpen: boolean;

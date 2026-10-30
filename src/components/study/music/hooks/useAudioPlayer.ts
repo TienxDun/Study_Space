@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Track, MoodType, STUDY_TRACKS_BY_MOOD, StudyEmbedItem } from "../types";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { devWarn } from "@/lib/logger";
 import { toast } from "sonner";
 import { clampVolume, getNextTrackIndex, getPrevTrackIndex } from "../utils/time-format";
 
@@ -362,7 +363,7 @@ export function useAudioPlayer({
   }, [isPlaying, syncDuration]);
 
   const handleAudioError = useCallback(() => {
-    console.warn(`[StudyMusicPlayer] Gián đoạn bài "${currentTrack?.title}". Tự động chuyển bài...`);
+    devWarn(`[StudyMusicPlayer] Gián đoạn bài "${currentTrack?.title}". Tự động chuyển bài...`);
     setTimeout(() => {
       handleNextTrack();
     }, 1000);

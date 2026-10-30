@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Scene } from "./study-types";
+import { devWarn } from "@/lib/logger";
 
 export interface StudyBackgroundProps {
   scene: Scene;
@@ -77,7 +78,7 @@ export const StudyBackground = ({
               onLoadedData={() => onLoaded?.()}
               onCanPlay={() => onLoaded?.()}
               onError={() => {
-                console.warn(`[StudySpace] Lỗi nạp video bối cảnh "${scene.name}", tự động chuyển sang ảnh thumbnail an toàn.`);
+                devWarn(`[StudySpace] Lỗi nạp video bối cảnh "${scene.name}", tự động chuyển sang ảnh thumbnail an toàn.`);
                 setHasVideoError(true);
                 onLoaded?.();
               }}

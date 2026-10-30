@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Component, type ReactNode } from "react";
+import { logError } from "@/lib/logger";
 
 export interface ErrorBoundaryProps {
   fallback?: ReactNode;
@@ -27,6 +28,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     this.props.onError?.(error, errorInfo);
     if (process.env.NODE_ENV !== "production") {
       console.error("[StudySpace ErrorBoundary caught error]:", error, errorInfo);
+    } else {
+      logError("ErrorBoundary", error);
     }
   }
 

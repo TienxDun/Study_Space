@@ -8,6 +8,7 @@ import {
 } from "@livekit/components-react";
 import { RoomEvent, type Participant } from "livekit-client";
 import { toast } from "sonner";
+import { devWarn } from "@/lib/logger";
 import {
   playPomodoroSound,
   type PomodoroSoundType,
@@ -122,7 +123,7 @@ export function useMeetStudyState(
           await currentLocal.setAttributes(nextDelta);
         }
       } catch (err) {
-        console.warn("Lỗi cập nhật thuộc tính người tham gia:", err);
+        devWarn("Lỗi cập nhật thuộc tính người tham gia:", err);
         setLocalAttrs(previous);
         toast.error("Không thể cập nhật trạng thái");
       }
@@ -454,7 +455,7 @@ export function useMeetStudyState(
           });
         }
       } catch (err) {
-        console.warn("Lỗi gửi dữ liệu reaction qua Data Channel:", err);
+        devWarn("Lỗi gửi dữ liệu reaction qua Data Channel:", err);
       }
 
       // Hiện ngay phản ứng trên màn hình người gửi

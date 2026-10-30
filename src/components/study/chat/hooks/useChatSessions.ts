@@ -16,6 +16,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { firebaseConfigured, getFirebaseDb } from "@/lib/firebase";
+import { devWarn } from "@/lib/logger";
 import {
   SESSION_LIST_MAX,
   PAGE_SIZE,
@@ -216,7 +217,7 @@ export function useChatSessions({ user, open, notify }: SessionsArgs) {
       });
       return true;
     } catch (e) {
-      console.warn("Lỗi đổi tên phiên:", e);
+      devWarn("Lỗi đổi tên phiên:", e);
       if (prevTitle !== undefined) {
         setSessions((prev) => prev.map((s) => (s.id === sid ? { ...s, title: prevTitle } : s)));
       }
@@ -340,7 +341,7 @@ export function useChatSessions({ user, open, notify }: SessionsArgs) {
         { merge: true }
       );
     } catch (e) {
-      console.warn("Lỗi đồng bộ activeSid ngầm:", e);
+      devWarn("Lỗi đồng bộ activeSid ngầm:", e);
     }
   };
 

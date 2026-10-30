@@ -7,6 +7,7 @@ import {
   MediaDeviceMenu,
 } from "@livekit/components-react";
 import type { CreateLocalTracksOptions, LocalAudioTrack, LocalVideoTrack } from "livekit-client";
+import { devWarn } from "@/lib/logger";
 import {
   MicrophoneIcon,
   MicrophoneSlashIcon,
@@ -81,7 +82,7 @@ export function RoomPreJoinView({
 
   // Callback ổn định để không làm useMediaDeviceSelect re-run ở mỗi render
   const handleDeviceError = useCallback((err: Error) => {
-    console.warn("Lỗi thiết bị đầu vào:", err);
+    devWarn("Lỗi thiết bị đầu vào:", err);
   }, []);
 
   // Danh sách thiết bị đầu vào từ LiveKit hook
@@ -115,7 +116,7 @@ export function RoomPreJoinView({
 
   // Callback ổn định để usePreviewTracks không bị gọi lại liên tục gây lặp vô hạn và nhấp nháy camera
   const handlePreviewError = useCallback((err: Error) => {
-    console.warn("Lỗi truy cập mic/cam khi xem trước:", err);
+    devWarn("Lỗi truy cập mic/cam khi xem trước:", err);
     setMediaError(
       "Không thể truy cập camera hoặc microphone. Quyền đã bị từ chối; bạn vẫn có thể vào phòng với mic và camera tắt."
     );

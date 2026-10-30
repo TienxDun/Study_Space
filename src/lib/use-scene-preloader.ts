@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Scene, STUDY_SCENES } from "@/components/study/study-types";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { devWarn } from "@/lib/logger";
 
 export interface UseScenePreloaderOptions {
   initialScene?: Scene;
@@ -98,7 +99,7 @@ export function useScenePreloader({
 
       // Timeout an toàn (12s) phòng trường hợp mạng quá yếu hoặc mất kết nối
       timerId = setTimeout(() => {
-        console.warn(`[ScenePreloader] Quá thời gian nạp trước ${targetScene.name}, tự động kích hoạt chuyển cảnh an toàn.`);
+        devWarn(`[ScenePreloader] Quá thời gian nạp trước ${targetScene.name}, tự động kích hoạt chuyển cảnh an toàn.`);
         finish();
       }, timeoutMs);
 
@@ -120,7 +121,7 @@ export function useScenePreloader({
 
         img.onload = finish;
         img.onerror = () => {
-          console.warn(`[ScenePreloader] Không thể nạp trước ảnh "${targetScene.name}".`);
+          devWarn(`[ScenePreloader] Không thể nạp trước ảnh "${targetScene.name}".`);
           finish();
         };
 
@@ -157,7 +158,7 @@ export function useScenePreloader({
         };
 
         const onError = () => {
-          console.warn(`[ScenePreloader] Không thể nạp trước video "${targetScene.name}".`);
+          devWarn(`[ScenePreloader] Không thể nạp trước video "${targetScene.name}".`);
           cleanupVideo();
           finish();
         };

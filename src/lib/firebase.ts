@@ -4,6 +4,7 @@ import {
   getFirestore,
   initializeFirestore,
   persistentLocalCache,
+  setLogLevel,
   terminate,
   type Firestore,
 } from "firebase/firestore";
@@ -15,6 +16,15 @@ export { firebaseConfigured };
 
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
+let firestoreLogLevelSet = false;
+
+// Firestore mặc định log cảnh báo offline/backoff; production chỉ giữ lỗi để
+// console không lộ đường dẫn tài liệu (chứa UID) từ các log chẩn đoán.
+function configureFirestoreLogging(): void {
+  if (firestoreLogLevelSet || typeof window === "undefined") return;
+  firestoreLogLevelSet = true;
+  setLogLevel(process.env.NODE_ENV === "production" ? "error" : "warn");
+}
 
 export function getFirebaseApp(): FirebaseApp {
   if (app) return app;
@@ -28,6 +38,7 @@ export function getFirebaseAuth(): Auth {
 }
 
 export function getFirebaseDb(): Firestore {
+  configureFirestoreLogging();
   if (db) return db;
   const fbApp = getFirebaseApp();
   try {

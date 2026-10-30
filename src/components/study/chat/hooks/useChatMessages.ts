@@ -15,6 +15,7 @@ import {
   doc,
 } from "firebase/firestore";
 import { firebaseConfigured, getFirebaseDb } from "@/lib/firebase";
+import { logError } from "@/lib/logger";
 import { PAGE_SIZE, type Msg } from "../types";
 import { callChatApi, type ChatHistoryItem } from "../utils/chatApi";
 import { clearChatNotice, notifyChat } from "../utils/chatNotice";
@@ -172,7 +173,7 @@ export function useChatMessages({
         applySnapList(snap.docs);
       },
       (err) => {
-        console.warn("Firestore onSnapshot error:", err);
+        logError("Chat:onSnapshot", err);
         setLoading(false);
         if ((err as { code?: string })?.code === "permission-denied") {
           notifyChat("Chưa mở quyền đọc tin nhắn, báo admin cập nhật Rules nhé.");

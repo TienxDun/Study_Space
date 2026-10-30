@@ -21,6 +21,7 @@ import {
 import { StudySproutMascot } from "./StudySproutMascot";
 import { ImageLightboxModal } from "./ImageLightboxModal";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { logError } from "@/lib/logger";
 import { markdownToHtml } from "@/components/study/notes/utils/note-markdown";
 import type { StudyNote } from "@/components/study/notes/types";
 import { MarkdownText } from "./MarkdownText";
@@ -203,7 +204,7 @@ export function MessageList({
         setSavedNoteId((cur) => (cur === id ? null : cur));
       }, 2500);
     } catch (err) {
-      console.error("Không thể tạo ghi chú:", err);
+      logError("Chat:note", err);
     }
   };
 
