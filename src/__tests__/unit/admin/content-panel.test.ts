@@ -2,14 +2,15 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { loadAdminHtml } from "./load-admin-html";
 
-const html = readFileSync(resolve(__dirname, "../../../../admin-host/index.html"), "utf8");
+const html = loadAdminHtml();
 // Bỏ thẻ script: bài test tự chạy admin-content.js trong happy-dom.
 const bodyHtml = html
   .slice(html.indexOf("<body>") + "<body>".length, html.indexOf("</body>"))
   .replace(/<script[\s\S]*?<\/script>/gi, "");
 const contentScript = readFileSync(
-  resolve(__dirname, "../../../../admin-host/admin-content.js"),
+  resolve(__dirname, "../../../../admin-host/scripts/content.js"),
   "utf8",
 );
 

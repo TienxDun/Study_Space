@@ -1,0 +1,163 @@
+      <!-- Main Panel: Nhật ký lỗi & dịch vụ -->
+      <div class="section-layout">
+        <!-- Lỗi & dự phòng -->
+        <section class="panel-card" id="errors-card" aria-labelledby="errors-title">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <h2 class="panel-title" id="errors-title">Lỗi &amp; dự phòng gần đây</h2>
+              <span class="panel-desc">20 lỗi mới nhất, tự xóa sau 14 ngày</span>
+            </div>
+          </div>
+          <table class="services-table">
+            <thead>
+              <tr>
+                <th>Thời gian</th>
+                <th>Nguồn</th>
+                <th>Mã lỗi</th>
+                <th>Ghi chú</th>
+              </tr>
+            </thead>
+            <tbody id="error-rows">
+              <tr><td colspan="4">Chưa có lỗi nào.</td></tr>
+            </tbody>
+          </table>
+          <div class="panel-footer">
+            <p class="usage-note" id="errors-note">Không có lỗi nào trong 14 ngày gần đây.</p>
+          </div>
+        </section>
+
+        <!-- Dịch vụ thành phần -->
+        <section class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <h2 class="panel-title">Các dịch vụ đang chạy</h2>
+              <span class="panel-desc">Thời gian phản hồi của từng dịch vụ <span class="desc-extra">(tối đa 10 giây)</span></span>
+            </div>
+          </div>
+
+          <table class="services-table">
+            <thead>
+              <tr>
+                <th>Dịch vụ</th>
+                <th>Địa chỉ kiểm tra</th>
+                <th>Quyền truy cập</th>
+                <th class="text-right">Thời gian phản hồi</th>
+                <th class="text-right">Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody id="checks">
+              <tr>
+                <td>
+                  <div class="service-identity">
+                    <div class="service-avatar">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <div>
+                      <div class="service-name">Chat &amp; trợ lý</div>
+                      <div class="service-desc">Trả lời câu hỏi và gợi ý học tập</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="endpoint-pill">
+                    <span>/health</span>
+                  </div>
+                </td>
+                <td><span class="auth-badge">Công khai</span></td>
+                <td class="latency-cell">--</td>
+                <td class="text-right"><span class="badge-wait">Đang kiểm tra</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="service-identity">
+                    <div class="service-avatar">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                    </div>
+                    <div>
+                      <div class="service-name">Lưu dữ liệu</div>
+                      <div class="service-desc">Lưu dữ liệu học tập lên đám mây</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="endpoint-pill">
+                    <span>/health</span>
+                  </div>
+                </td>
+                <td><span class="auth-badge">Công khai</span></td>
+                <td class="latency-cell">--</td>
+                <td class="text-right"><span class="badge-wait">Đang kiểm tra</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="service-identity">
+                    <div class="service-avatar">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                    </div>
+                    <div>
+                      <div class="service-name">Phòng học nhóm</div>
+                      <div class="service-desc">Phòng học video nhóm</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="endpoint-pill">
+                    <span>/usage</span>
+                  </div>
+                </td>
+                <td><span class="auth-badge token">Cần mã quản trị</span></td>
+                <td class="latency-cell">--</td>
+                <td class="text-right"><span class="badge-wait">Đang kiểm tra</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Pipeline Architecture Card -->
+        <section class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <h2 class="panel-title">4 lớp bảo vệ khi đăng nhập</h2>
+              <span class="panel-desc">Mật khẩu và mã truy cập không bao giờ được lưu trên trình duyệt.</span>
+            </div>
+          </div>
+
+          <div class="pipeline-grid">
+            <div class="pipeline-step">
+              <div class="pipeline-step-head">
+                <span class="step-order">01 / GỬI YÊU CẦU</span>
+                <span class="step-icon">💻</span>
+              </div>
+              <span class="step-name">Trình duyệt</span>
+              <p class="step-info">Trình duyệt hỏi số liệu tổng quan, không gửi kèm mật khẩu hay mã truy cập.</p>
+            </div>
+
+            <div class="pipeline-step">
+              <div class="pipeline-step-head">
+                <span class="step-order">02 / KIỂM TRA ĐĂNG NHẬP</span>
+                <span class="step-icon">🛡️</span>
+              </div>
+              <span class="step-name">Cổng đăng nhập Cloudflare</span>
+              <p class="step-info">Kiểm tra email đã được cấp quyền trước khi cho vào.</p>
+            </div>
+
+            <div class="pipeline-step">
+              <div class="pipeline-step-head">
+                <span class="step-order">03 / XÁC THỰC MÁY CHỦ</span>
+                <span class="step-icon">🔑</span>
+              </div>
+              <span class="step-name">Máy chủ quản trị</span>
+              <p class="step-info">Máy chủ kiểm tra chữ ký số; thiếu quyền hoặc sai chữ ký thì từ chối ngay.</p>
+            </div>
+
+            <div class="pipeline-step">
+              <div class="pipeline-step-head">
+                <span class="step-order">04 / TỔNG HỢP SỐ LIỆU</span>
+                <span class="step-icon">⚡</span>
+              </div>
+              <span class="step-name">Các dịch vụ</span>
+              <p class="step-info">Gom tình trạng, chat, dữ liệu và phút học nhóm; mục nào lỗi thì báo đỏ.</p>
+            </div>
+          </div>
+        </section>
+      </div>

@@ -2,15 +2,16 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { loadAdminHtml } from "./load-admin-html";
 
 type Call = { url: string; method: string; body?: Record<string, unknown> };
 
-const html = readFileSync(path.resolve(process.cwd(), "admin-host/index.html"), "utf8");
+const html = loadAdminHtml();
 const bodyHtml = html
   .slice(html.indexOf("<body>") + "<body>".length, html.indexOf("</body>"))
   .replace(/<script[\s\S]*?<\/script>/g, "");
-const chatScript = readFileSync(path.resolve(process.cwd(), "admin-host/admin-chat.js"), "utf8");
-const shellScript = readFileSync(path.resolve(process.cwd(), "admin-host/admin.js"), "utf8");
+const chatScript = readFileSync(path.resolve(process.cwd(), "admin-host/scripts/chat.js"), "utf8");
+const shellScript = readFileSync(path.resolve(process.cwd(), "admin-host/scripts/dashboard.js"), "utf8");
 
 const GROQ_MODELS: Record<string, { id: string; kind: string }[]> = {
   "groq-1": [

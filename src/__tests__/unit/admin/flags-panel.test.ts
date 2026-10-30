@@ -2,13 +2,14 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { loadAdminHtml } from "./load-admin-html";
 
-const html = readFileSync(resolve(__dirname, "../../../../admin-host/index.html"), "utf8");
+const html = loadAdminHtml();
 // Bỏ thẻ script: bài test tự import admin.js, không để happy-dom tải file.
 const bodyHtml = html
   .slice(html.indexOf("<body>") + "<body>".length, html.indexOf("</body>"))
   .replace(/<script[\s\S]*?<\/script>/gi, "");
-const scriptPath = resolve(__dirname, "../../../../admin-host/admin.js");
+const scriptPath = resolve(__dirname, "../../../../admin-host/scripts/dashboard.js");
 
 const overview = (flags: Record<string, unknown>) => ({
   generatedAt: new Date().toISOString(),

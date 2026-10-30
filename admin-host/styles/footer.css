@@ -1,0 +1,145 @@
+/* ================= FOOTER ================= */
+.footer {
+  padding-block: 32px 48px;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.footer-links a:hover {
+  color: var(--text-primary);
+}
+
+@media (max-width: 900px) {
+  .pipeline-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .topbar .brand-badge {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    height: 56px;
+  }
+  .topbar .brand-badge,
+  .topbar .status-pill {
+    display: none;
+  }
+  .action-controls {
+    flex-wrap: wrap;
+  }
+  .btn-ghost,
+  .btn-primary,
+  .auto-refresh-toggle {
+    min-height: 44px;
+  }
+  .services-table th:nth-child(2),
+  .services-table td:nth-child(2),
+  .services-table th:nth-child(3),
+  .services-table td:nth-child(3),
+  .services-table thead {
+    display: none;
+  }
+  .services-table,
+  .services-table tbody,
+  .services-table td {
+    display: block;
+    width: 100%;
+  }
+  .services-table tr {
+    display: block;
+    position: relative;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .services-table tr:last-child {
+    border-bottom: 0;
+  }
+  .services-table td {
+    padding: 0;
+    border-bottom: 0;
+  }
+  .services-table td:nth-child(5) {
+    position: absolute;
+    top: 8px;
+    right: 20px;
+    text-align: right;
+  }
+  .services-table .service-name {
+    padding-right: 118px;
+  }
+  .services-table .service-desc {
+    margin-top: 6px;
+  }
+  .services-table td:nth-child(4) {
+    margin: 6px 0 0 50px;
+    text-align: left;
+  }
+  .services-table .latency-cell::before {
+    content: "Phản hồi ";
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+  .header-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 16px 20px;
+  }
+  .panel-footer {
+    padding: 12px 20px;
+  }
+  .panel-title-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .desc-extra {
+    display: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .services-table tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 6px 12px;
+  }
+  .services-table td:nth-child(1) {
+    grid-column: 1 / -1;
+  }
+  .services-table td:nth-child(4) {
+    grid-column: 1;
+    margin: 0 0 0 50px;
+  }
+  .services-table td:nth-child(5) {
+    position: static;
+    grid-column: 2;
+  }
+  .services-table .service-name {
+    padding-right: 0;
+  }
+}

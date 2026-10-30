@@ -29,6 +29,9 @@ function createMockD1(options: { withMeet?: boolean } = {}) {
     user_data: [],
     chat_usage: [],
     deleted_accounts: [],
+    content_reports: [],
+    user_blocks: [],
+    user_restrictions: [],
   };
   if (options.withMeet) {
     tables.meet_sessions = [];
@@ -98,6 +101,33 @@ function createMockD1(options: { withMeet?: boolean } = {}) {
     if (s.startsWith("CREATE TABLE IF NOT EXISTS deleted_accounts")) {
       table("deleted_accounts");
       return { meta: { changes: 0 } };
+    }
+
+    if (s.startsWith("DELETE FROM content_reports WHERE reporter_uid = ? OR target_uid = ?")) {
+      const [uid] = params;
+      const before = table("content_reports").length;
+      tables.content_reports = table("content_reports").filter(
+        (row) => row.reporter_uid !== uid && row.target_uid !== uid
+      );
+      return { meta: { changes: before - tables.content_reports.length } };
+    }
+
+    if (s.startsWith("DELETE FROM user_blocks WHERE blocker_uid = ? OR blocked_uid = ?")) {
+      const [uid] = params;
+      const before = table("user_blocks").length;
+      tables.user_blocks = table("user_blocks").filter(
+        (row) => row.blocker_uid !== uid && row.blocked_uid !== uid
+      );
+      return { meta: { changes: before - tables.user_blocks.length } };
+    }
+
+    if (s.startsWith("DELETE FROM user_restrictions WHERE uid = ?")) {
+      const [uid] = params;
+      const before = table("user_restrictions").length;
+      tables.user_restrictions = table("user_restrictions").filter(
+        (row) => row.uid !== uid
+      );
+      return { meta: { changes: before - tables.user_restrictions.length } };
     }
 
     if (s.startsWith("INSERT INTO deleted_accounts")) {
@@ -269,6 +299,20 @@ describe("Worker Data-API — Xoá tài khoản", () => {
       { id: "a2", room: "study", actor_uid: "user_bob", target_identity: "user-user_alice" },
       { id: "a3", room: "study", actor_uid: "user_bob", target_identity: "user-user_carol" }
     );
+    mockDb._tables.content_reports.push(
+      { id: "r1", reporter_uid: "user_alice", target_uid: "user_bob" },
+      { id: "r2", reporter_uid: "user_bob", target_uid: "user_alice" },
+      { id: "r3", reporter_uid: "user_bob", target_uid: null }
+    );
+    mockDb._tables.user_blocks.push(
+      { blocker_uid: "user_alice", blocked_uid: "user_bob", created_at: 1 },
+      { blocker_uid: "user_bob", blocked_uid: "user_alice", created_at: 2 },
+      { blocker_uid: "user_bob", blocked_uid: "user_carol", created_at: 3 }
+    );
+    mockDb._tables.user_restrictions.push(
+      { uid: "user_alice", ai_disabled: 1 },
+      { uid: "user_bob", rooms_disabled: 1 }
+    );
   };
 
   const deleteRequest = (token?: string) =>
@@ -324,6 +368,13 @@ describe("Worker Data-API — Xoá tài khoản", () => {
     expect(mockDb._tables.meet_rooms.map((row) => row.name)).toEqual(["phong-cua-bob"]);
     expect(mockDb._tables.meet_rooms[0].co_host_uids).toBe('["user_bob"]');
     expect(mockDb._tables.meet_audit_logs.map((row) => row.id)).toEqual(["a3"]);
+    expect(mockDb._tables.content_reports.map((row) => row.id)).toEqual(["r3"]);
+    expect(
+      mockDb._tables.user_blocks.map((row) => `${row.blocker_uid}->${row.blocked_uid}`)
+    ).toEqual(["user_bob->user_carol"]);
+    expect(mockDb._tables.user_restrictions.map((row) => row.uid)).toEqual([
+      "user_bob",
+    ]);
     expect(mockDb._tables.deleted_accounts.map((row) => row.uid)).toEqual([
       "user_alice",
     ]);
@@ -335,6 +386,9 @@ describe("Worker Data-API — Xoá tài khoản", () => {
       meetRooms: 1,
       meetCohosts: 1,
       meetAudit: 2,
+      reports: 2,
+      blocks: 2,
+      restrictions: 1,
     });
 
     // Gọi OAuth trước, sau đó accounts:delete với localId lấy từ vé.

@@ -5,6 +5,10 @@
  *   GET  /content -> catalog nội dung công khai (cảnh / âm thanh / nhạc), không cần token
  *   GET    /data    -> tải toàn bộ dữ liệu của người dùng
  *   POST   /data    -> lưu toàn bộ dữ liệu của người dùng
+ *   POST   /report  -> báo cáo nội dung AI hoặc hành vi trong phòng học
+ *   GET    /blocks  -> danh sách người dùng đã chặn
+ *   POST   /blocks  -> chặn người dùng
+ *   DELETE /blocks/:uid -> bỏ chặn
  *   DELETE /account -> xoá toàn bộ dữ liệu của tài khoản (kèm dữ liệu phòng học)
  */
 
@@ -41,6 +45,27 @@ function json(data, status = 200, extraHeaders = {}) {
       ...extraHeaders,
     },
   });
+}
+
+// ---------- Báo cáo nội dung & chặn (P0.5) ----------
+const REPORT_REASONS = {
+  ai: new Set(["inaccurate", "inappropriate", "dangerous", "harassment", "other"]),
+  room: new Set(["harassment", "inappropriate", "recording", "spam", "other"]),
+};
+const REPORT_DAILY_LIMIT = 10;
+const REPORT_CONTENT_MAX = 8000;
+const REPORT_DETAIL_MAX = 500;
+const REPORT_ROOM_MAX = 32;
+const REPORT_ID_MAX = 128;
+const BLOCK_LIST_MAX = 500;
+
+function cleanText(value, max) {
+  return String(value ?? "").trim().slice(0, max);
+}
+
+function utcDayStart(now = Date.now()) {
+  const d = new Date(now);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
 
 // ---------- Xác thực Firebase Auth ID Token ----------
@@ -188,6 +213,9 @@ async function deleteAccountData(db, uid) {
     meetRooms: 0,
     meetCohosts: 0,
     meetAudit: 0,
+    reports: 0,
+    blocks: 0,
+    restrictions: 0,
   };
 
   const base = await db.batch([
@@ -244,6 +272,31 @@ async function deleteAccountData(db, uid) {
       .bind(uid, uid, `user-${uid}`)
       .run();
     deleted.meetAudit = Number(res?.meta?.changes || 0);
+  }
+
+  // Bảng P0.5 chỉ có sau khi chạy report-schema.sql
+  if (await tableExists(db, "content_reports")) {
+    const res = await db
+      .prepare("DELETE FROM content_reports WHERE reporter_uid = ? OR target_uid = ?")
+      .bind(uid, uid)
+      .run();
+    deleted.reports = Number(res?.meta?.changes || 0);
+  }
+
+  if (await tableExists(db, "user_blocks")) {
+    const res = await db
+      .prepare("DELETE FROM user_blocks WHERE blocker_uid = ? OR blocked_uid = ?")
+      .bind(uid, uid)
+      .run();
+    deleted.blocks = Number(res?.meta?.changes || 0);
+  }
+
+  if (await tableExists(db, "user_restrictions")) {
+    const res = await db
+      .prepare("DELETE FROM user_restrictions WHERE uid = ?")
+      .bind(uid)
+      .run();
+    deleted.restrictions = Number(res?.meta?.changes || 0);
   }
 
   // Tạo tại chỗ để DB cũ chưa chạy lại schema.sql vẫn dùng được
@@ -508,16 +561,205 @@ const workerHandler = {
       return json({ error: "Lỗi kết nối cơ sở dữ liệu." }, 500, cors);
     }
 
-    // Tài khoản đã xoá: chặn đọc/ghi để thiết bị còn token cũ không đẩy dữ liệu trở lại.
-    if (
-      url.pathname === "/data" &&
-      (req.method === "GET" || req.method === "POST") &&
-      (await isAccountDeleted(db, uid))
-    ) {
+    // Tài khoản đã xoá: chặn mọi đường đọc/ghi để thiết bị còn token cũ không đẩy dữ liệu trở lại.
+    const deletedGuarded =
+      url.pathname === "/data" ||
+      url.pathname === "/report" ||
+      url.pathname === "/blocks" ||
+      url.pathname.startsWith("/blocks/");
+    if (deletedGuarded && (await isAccountDeleted(db, uid))) {
       return json({ error: "Tài khoản này đã bị xoá." }, 403, cors);
     }
 
-    // 3. GET /data — Tải toàn bộ dữ liệu của người dùng
+    // 3. POST /report — báo cáo nội dung AI hoặc hành vi trong phòng học.
+    if (req.method === "POST" && url.pathname === "/report") {
+      let body = null;
+      try {
+        body = await req.json();
+      } catch {
+        body = null;
+      }
+      if (!body || typeof body !== "object") {
+        return json({ error: "Dữ liệu báo cáo không đúng định dạng." }, 400, cors);
+      }
+
+      const source = cleanText(body.source, 16).toLowerCase();
+      const reasons = REPORT_REASONS[source];
+      if (!reasons) {
+        return json({ error: "Loại báo cáo không hợp lệ.", code: "INVALID_SOURCE" }, 400, cors);
+      }
+      const reason = cleanText(body.reason, 32).toLowerCase();
+      if (!reasons.has(reason)) {
+        return json({ error: "Lý do báo cáo không hợp lệ.", code: "INVALID_REASON" }, 400, cors);
+      }
+
+      const content = cleanText(body.content, REPORT_CONTENT_MAX);
+      const detail = cleanText(body.detail, REPORT_DETAIL_MAX);
+      const sessionId = cleanText(body.sessionId, REPORT_ID_MAX);
+      const messageId = cleanText(body.messageId, REPORT_ID_MAX);
+      const room = cleanText(body.room, REPORT_ROOM_MAX);
+      let targetUid = cleanText(body.targetUid, REPORT_ID_MAX);
+
+      if (source === "ai") {
+        if (!content) {
+          return json({ error: "Thiếu nội dung câu trả lời cần báo cáo." }, 400, cors);
+        }
+        targetUid = "";
+      } else if (!room || !targetUid) {
+        return json({ error: "Thiếu phòng hoặc người bị báo cáo." }, 400, cors);
+      }
+      if (targetUid && targetUid === uid) {
+        return json({ error: "Không thể báo cáo chính mình." }, 400, cors);
+      }
+
+      try {
+        const counted = await db
+          .prepare(
+            "SELECT COUNT(*) AS n FROM content_reports WHERE reporter_uid = ? AND created_at >= ?"
+          )
+          .bind(uid, utcDayStart())
+          .first();
+        if (Number(counted?.n || 0) >= REPORT_DAILY_LIMIT) {
+          return json(
+            { error: "Bạn đã gửi quá nhiều báo cáo hôm nay.", code: "RATE_LIMITED" },
+            429,
+            cors
+          );
+        }
+
+        const id = crypto.randomUUID();
+        const now = Date.now();
+        await db
+          .prepare(
+            `INSERT INTO content_reports
+               (id, source, reporter_uid, target_uid, room, session_id, message_id, content, reason, detail, status, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)`
+          )
+          .bind(
+            id,
+            source,
+            uid,
+            targetUid || null,
+            room || null,
+            sessionId || null,
+            messageId || null,
+            content || null,
+            reason,
+            detail || null,
+            now
+          )
+          .run();
+
+        // Giữ báo cáo 180 ngày; dọn ngay khi có ghi mới.
+        await db
+          .prepare("DELETE FROM content_reports WHERE created_at < ?")
+          .bind(now - 180 * 24 * 60 * 60 * 1000)
+          .run();
+
+        return json({ ok: true, id, status: "open", createdAt: now }, 200, cors);
+      } catch (err) {
+        return json(
+          { error: "Không thể gửi báo cáo.", detail: String(err?.message || err) },
+          500,
+          cors
+        );
+      }
+    }
+
+    // 4. GET /blocks — danh sách người dùng đã chặn.
+    if (req.method === "GET" && url.pathname === "/blocks") {
+      try {
+        const res = await db
+          .prepare(
+            `SELECT blocked_uid, created_at FROM user_blocks
+              WHERE blocker_uid = ? ORDER BY created_at DESC LIMIT ${BLOCK_LIST_MAX}`
+          )
+          .bind(uid)
+          .all();
+        const rows = Array.isArray(res?.results) ? res.results : [];
+        return json(
+          {
+            ok: true,
+            blocks: rows.map((row) => ({
+              uid: String(row?.blocked_uid || ""),
+              createdAt: Number(row?.created_at) || 0,
+            })),
+          },
+          200,
+          cors
+        );
+      } catch (err) {
+        return json(
+          { error: "Không thể đọc danh sách chặn.", detail: String(err?.message || err) },
+          500,
+          cors
+        );
+      }
+    }
+
+    // 5. POST /blocks — chặn một người dùng.
+    if (req.method === "POST" && url.pathname === "/blocks") {
+      let body = null;
+      try {
+        body = await req.json();
+      } catch {
+        body = null;
+      }
+      const targetUid = cleanText(body?.targetUid, REPORT_ID_MAX);
+      if (!targetUid) {
+        return json({ error: "Thiếu người dùng cần chặn." }, 400, cors);
+      }
+      if (targetUid === uid) {
+        return json({ error: "Không thể chặn chính mình." }, 400, cors);
+      }
+      try {
+        const now = Date.now();
+        await db
+          .prepare(
+            `INSERT INTO user_blocks (blocker_uid, blocked_uid, created_at)
+             VALUES (?, ?, ?) ON CONFLICT(blocker_uid, blocked_uid) DO NOTHING`
+          )
+          .bind(uid, targetUid, now)
+          .run();
+        return json({ ok: true, uid: targetUid, createdAt: now }, 200, cors);
+      } catch (err) {
+        return json(
+          { error: "Không thể chặn người dùng.", detail: String(err?.message || err) },
+          500,
+          cors
+        );
+      }
+    }
+
+    // 6. DELETE /blocks/:uid — bỏ chặn.
+    const blockPath = url.pathname.match(/^\/blocks\/([^/]+)$/);
+    if (req.method === "DELETE" && blockPath) {
+      let targetUid = "";
+      try {
+        targetUid = decodeURIComponent(blockPath[1]);
+      } catch {
+        targetUid = "";
+      }
+      targetUid = cleanText(targetUid, REPORT_ID_MAX);
+      if (!targetUid) {
+        return json({ error: "Thiếu người dùng cần bỏ chặn." }, 400, cors);
+      }
+      try {
+        const res = await db
+          .prepare("DELETE FROM user_blocks WHERE blocker_uid = ? AND blocked_uid = ?")
+          .bind(uid, targetUid)
+          .run();
+        return json({ ok: true, removed: Number(res?.meta?.changes || 0) > 0 }, 200, cors);
+      } catch (err) {
+        return json(
+          { error: "Không thể bỏ chặn.", detail: String(err?.message || err) },
+          500,
+          cors
+        );
+      }
+    }
+
+    // 7. GET /data — Tải toàn bộ dữ liệu của người dùng
     if (req.method === "GET" && url.pathname === "/data") {
       try {
         const row = await db
@@ -550,7 +792,7 @@ const workerHandler = {
       }
     }
 
-    // 4. POST /data — Lưu toàn bộ dữ liệu của người dùng
+    // 8. POST /data — Lưu toàn bộ dữ liệu của người dùng
     if (req.method === "POST" && url.pathname === "/data") {
       try {
         const body = await req.json().catch(() => null);
@@ -583,7 +825,7 @@ const workerHandler = {
       }
     }
 
-    // 5. DELETE /account — xoá dữ liệu D1 rồi xoá tài khoản Firebase bằng Admin API
+    // 9. DELETE /account — xoá dữ liệu D1 rồi xoá tài khoản Firebase bằng Admin API
     if (req.method === "DELETE" && url.pathname === "/account") {
       // Thiếu secret thì dừng trước khi xoá bất cứ thứ gì, tránh cảnh dữ liệu mất mà tài khoản còn.
       if (!readServiceAccount(env)) {

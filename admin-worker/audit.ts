@@ -95,3 +95,28 @@ export function allowContentWrite(email: string): boolean {
   contentWriteLog.set(email, hits);
   return true;
 }
+
+// P2e: xử lý báo cáo và đặt hạn chế tài khoản là thao tác nhạy cảm nhưng
+// người vận hành có thể xử lý liên tiếp; 30 lần/phút là đủ và chặn bấm lặp.
+const REPORT_WRITE_LIMIT = 30;
+const REPORT_WRITE_WINDOW_MS = 60 * 1000;
+const reportWriteLog = new Map<string, number[]>();
+
+/** Test dùng để xóa bộ đếm giới hạn xử lý báo cáo giữa các ca. */
+export function __resetReportWriteLog(): void {
+  reportWriteLog.clear();
+}
+
+export function allowReportWrite(email: string): boolean {
+  const now = Date.now();
+  const hits = (reportWriteLog.get(email) || []).filter(
+    (at) => now - at < REPORT_WRITE_WINDOW_MS,
+  );
+  if (hits.length >= REPORT_WRITE_LIMIT) {
+    reportWriteLog.set(email, hits);
+    return false;
+  }
+  hits.push(now);
+  reportWriteLog.set(email, hits);
+  return true;
+}

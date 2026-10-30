@@ -1,0 +1,174 @@
+/* ================= P2e — Báo cáo nội dung ================= */
+.reports-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reports-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.reports-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+
+.reports-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.reports-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: var(--surface-nested);
+  border: 1px solid var(--border-subtle);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.reports-count strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.reports-table td {
+  vertical-align: top;
+}
+
+.reports-time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.reports-uid-cell {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.reports-more-wrap {
+  display: flex;
+}
+
+.reports-more-wrap .btn-ghost {
+  margin-left: auto;
+}
+
+.reports-detail {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.reports-detail[hidden] {
+  display: none;
+}
+
+.reports-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 20px;
+}
+
+.reports-meta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.reports-meta-row span {
+  color: var(--text-muted);
+}
+
+.reports-meta-row strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.reports-content {
+  margin: 6px 0 0;
+  padding: 12px;
+  max-height: 240px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.reports-restrict {
+  border-top: 1px dashed var(--border-subtle);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reports-restrict[hidden] {
+  display: none;
+}
+
+.reports-uid {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .reports-body {
+    padding: 16px;
+  }
+  .reports-filter {
+    flex: 1 1 100%;
+  }
+  .reports-meta {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Bảng báo cáo: thu gọn cột để không tràn ngang trong khung admin. */
+.reports-panel .panel-title {
+  white-space: nowrap;
+}
+
+.reports-table th,
+.reports-table td {
+  padding: 10px 12px;
+}
+
+.reports-table .badge-ok,
+.reports-table .badge-bad,
+.reports-table .badge-wait {
+  white-space: nowrap;
+}
+
+.reports-table .reports-uid-cell {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

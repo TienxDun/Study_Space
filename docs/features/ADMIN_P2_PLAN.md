@@ -1,6 +1,6 @@
 # P2 — Quản lý được (kế hoạch triển khai)
 
-Trạng thái (2026-10-28): P2.0 code + deploy xong, còn 2 mục quan sát 24 giờ chưa chốt; P2a đóng 2026-10-27, mở đúng nhánh hạn mức 30 → 35; P2b đóng 2026-10-28; P2c **đợt 1 đã code xong T1–T19** (Bản 14), chỉ còn T20 deploy chờ lệnh; P2d thu hẹp còn dọn mồ côi hàng loạt. Bản 14 — 2026-10-28.
+Trạng thái (2026-10-29): P2.0 code + deploy xong, còn 2 mục quan sát 24 giờ chưa chốt; P2a đóng 2026-10-27, mở đúng nhánh hạn mức 30 → 35; P2b đóng 2026-10-28; P2c **đợt 1 đã code xong T1–T19**, chỉ còn T20 deploy chờ lệnh; **P2e (báo cáo nội dung & chặn) đã có kế hoạch, chưa code**; P2d thu hẹp còn dọn mồ côi hàng loạt. Bản 15 — 2026-10-29.
 Thuộc P2 của `docs/features/ADMIN_CONSOLE_PLAN.md`; P1 đã đóng, xem `docs/archive/ADMIN_P1_PLAN.md`.
 
 Mục tiêu: bảng điều khiển từ chỗ **chỉ xem** chuyển sang **sửa được** — chặn sự cố không cần deploy, đổi cấu hình chat, đẩy nội dung có phiên bản và quay lại, dọn kho — nhưng mọi hành động ghi đều đi qua Access, có audit ghi trước, và không đưa token xuống trình duyệt.
@@ -11,7 +11,7 @@ Mục tiêu: bảng điều khiển từ chỗ **chỉ xem** chuyển sang **s�
 2. Audit trước khi ghi: chèn `admin_audit` xong mới `put`/`DELETE`. Audit lỗi thì trả 500 và không thay đổi gì. Nếu bước ghi sau audit lỗi, dòng audit vẫn ở lại và được hiểu là "đã thử đổi nhưng chưa áp dụng" — endpoint trả lỗi rõ ràng.
 3. Kho cấu hình là KV `CHAT_QUOTA` (`a16e430f9bbe46afa51ffc9d4f9bce9d`): chat-proxy đã bind sẵn, key mới đặt cạnh các `cfg:*` cũ. Chưa tạo namespace thứ hai.
 4. Không thêm dependency, không dashboard framework. UI mới viết trong `admin-host/` (HTML/CSS/JS thuần).
-5. Làm từng phần, deploy và kiểm tra xong mới sang phần sau. Thứ tự: P2.0 → P2a → P2b → P2c → P2d.
+5. Làm từng phần, deploy và kiểm tra xong mới sang phần sau. Thứ tự: P2.0 → P2a → P2b → P2c → **P2e** → P2d.
 6. Mặc định an toàn: thiếu cờ, KV lỗi hoặc JSON hỏng → coi như đang bật bình thường, không tự khóa chat/rooms.
 
 ## Hiện trạng 2026-10-26
@@ -419,6 +419,80 @@ Xong khi: thêm/sửa/xóa một cảnh, một âm, một bài nhạc và file c
 - Đợt 2: ~400 dòng (upload + kho tệp + tiến trình) + ~8 test.
 - Việc còn lại của **P2d** sau P2c: tổng quan dung lượng theo thư mục, dọn mồ côi **hàng loạt**, cảnh báo file thiếu trên toàn kho — phần lẻ đã nằm trong tab Kho tệp.
 
+## P2e — Báo cáo nội dung & chặn người dùng (phục vụ Play P0.5)
+
+Trạng thái: **E1–E3, E5 code xong 2026-10-30**; E4 (hiệu lực khóa AI/phòng) thuộc P0.5 Phase 4/5; chờ deploy D1 + data-api + admin worker.
+Luồng client/backend đầy đủ: [P0_5_REPORTING_PLAN.md](./P0_5_REPORTING_PLAN.md). P2e chỉ làm **phần admin**: đọc, xử lý, hạn chế tài khoản.
+
+Mục tiêu: admin có hộp thư báo cáo AI + phòng học, xử lý được và có công cụ hạn chế tài khoản — đáp ứng AI-Generated Content + UGC của Google Play. Không thay thế "Phản hồi chung" (P3).
+
+**Điều kiện vào:** P0.5 Phase 1 xong (bảng `content_reports`, `user_blocks`, `user_restrictions` + API ghi ở `data-api`). Admin không tự tạo bảng.
+
+### Dữ liệu admin dùng
+
+- `content_reports`: `id, source ('ai'|'room'), reporter_uid, target_uid, room, session_id, message_id, content, reason, detail, status ('open'|'resolved'|'dismissed'), created_at, resolved_at, resolved_by, resolution_note`.
+- `user_restrictions`: `uid, ai_disabled, rooms_disabled, note, updated_at, updated_by`.
+- `admin_audit`: mọi lần resolve hoặc đổi hạn chế.
+- Báo cáo quá **180 ngày**: endpoint list tự xóa trước khi trả kết quả.
+
+### E1. API đọc
+
+- [x] `GET /api/admin/reports?status=&source=&limit=&before=` — mới nhất trước; trả kèm đếm theo trạng thái; tự dọn báo cáo > 180 ngày.
+- [x] `GET /api/admin/reports/:id` — chi tiết.
+- [x] Không trả token/URL nội bộ; nội dung báo cáo trả dạng text.
+
+### E2. API ghi
+
+- [x] `POST /api/admin/reports/:id/resolve` `{ status: 'resolved'|'dismissed', note }` — audit trước ghi.
+- [x] `POST /api/admin/users/:uid/restrictions` `{ aiDisabled?, roomsDisabled?, note }` — upsert, audit trước ghi, trả trạng thái mới.
+- [x] `GET /api/admin/users/:uid/restrictions`.
+- [x] Chỉ nhận UID từ tham số; không nhận email hay chuỗi tự do.
+
+### E3. Shell "Báo cáo"
+
+- [x] Thêm mục "Báo cáo" dưới dạng partial `admin-host/panels/reports.html` + `admin-host/styles/reports.css` + `admin-host/scripts/reports.js` (build admin tự mở rộng include; không sửa `src/app/admin/`).
+- [x] Danh sách: thời gian, nguồn, người báo cáo → đối tượng, lý do, trạng thái; lọc open/resolved/dismissed + nguồn; đếm nhanh.
+- [x] Chi tiết: nội dung báo cáo render **text thuần** (`textContent`, không `innerHTML`); kèm phòng/phiên/tin.
+- [x] Nút "Đã xử lý" / "Bỏ qua" + ghi chú.
+- [x] Khối "Hạn chế tài khoản": công tắc khóa AI, khóa phòng, ghi chú; xác nhận trước khi lưu.
+- [x] Không thêm dependency; giữ style shell hiện tại.
+
+### E4. Hiệu lực hạn chế (phối hợp P0.5)
+
+- [ ] chat-proxy đọc `user_restrictions.ai_disabled` trước khi gọi AI → 403.
+- [ ] livekit-rooms đọc `rooms_disabled` trước khi phát vé → 403.
+- [ ] Admin chỉ ghi dữ liệu; hai worker đọc theo P0.5 Phase 4/5.
+
+### E5. Test
+
+- [x] Worker: 401 Access, validate status, audit đúng 1 dòng, phân trang, dọn báo cáo > 180 ngày, restrictions upsert.
+- [x] DOM: danh sách, escape nội dung, resolve đổi trạng thái, restriction gửi đúng payload.
+- [x] `npm run lint`, `npx tsc --noEmit`, `npm test` sạch (7 ca API + 4 ca DOM; toàn bộ 628 test).
+
+### E6. Deploy (thứ tự)
+
+1. [ ] D1 migration + `data-api` (P0.5 Phase 1).
+2. [ ] `npm run build:admin` + `npx wrangler deploy --config wrangler.admin.jsonc`.
+3. [ ] Seed 1 báo cáo thử → resolve → kiểm `admin_audit`.
+4. [ ] Đặt restriction thử → chat/phòng bị chặn đúng → gỡ restriction.
+
+### DoD P2e
+
+- [ ] Báo cáo AI/phòng hiện trong shell, lọc được, resolve/dismiss có audit.
+- [ ] Hạn chế AI/phòng có hiệu lực thật và gỡ được.
+- [ ] Không lộ token; nội dung báo cáo không chạy HTML.
+- [ ] Báo cáo > 180 ngày được dọn.
+
+### Rủi ro P2e
+
+- **XSS**: nội dung báo cáo là dữ liệu người dùng → chỉ dùng `textContent`, không `innerHTML`.
+- **Sửa sai thư mục**: UI thật nằm ở `admin-host/`; `src/app/admin/` chỉ là bản local, gitignored.
+- **Audit trước ghi**: theo nguyên tắc chung của P2; audit lỗi thì không đổi dữ liệu.
+- **Tải nặng**: phân trang + index `(status, created_at)`.
+- **Xóa tài khoản**: data-api phải xóa luôn reports/blocks/restrictions (đã ghi trong P0.5 plan).
+
+---
+
 ## P2d — Kho R2 (thu hẹp sau P2c, chưa bắt đầu)
 
 Mục tiêu: phần **hàng loạt** của kho — tổng quan dung lượng theo thư mục, dọn file mồ côi một lượt, cảnh báo file thiếu trên toàn kho. Xem/sửa/xóa từng file đã nằm trong tab "Kho tệp" của P2c.
@@ -485,3 +559,9 @@ npx wrangler kv key put --namespace-id=a16e430f9bbe46afa51ffc9d4f9bce9d --remote
 - **Bản 12** (2026-10-28): **đổi hướng P2c** theo yêu cầu — không dán file JSON nữa mà CRUD từng mục (cảnh / âm / nhạc) và quản lý luôn file media trong shell. Port quy tắc từ studio local (50 MB, video phải có ảnh xem trước, không ghi đè, xóa chừa file dùng chung), thêm bảng `content_manifest` giữ mọi lần lưu thành một phiên bản, thêm `hidden` để ẩn thay vì xóa, tab "Kho tệp" xem/xóa file mồ côi, upload có thanh tiến trình. Chia 2 đợt (đợt 1 CRUD mục + web đọc, đợt 2 upload). P2d thu hẹp còn phần hàng loạt. Bốn quyết định chờ duyệt.
 - **Bản 13** (2026-10-28): chốt 4 quyết định P2c — Lưu là lên sóng ngay; có `hidden` (Ẩn/Hiện); **xóa mục tách hẳn khỏi xóa file** (xóa mục chỉ bỏ dòng, file dọn riêng ở tab Kho tệp vì một file có thể được nhiều mục dùng chung); chia 24 task nhỏ T1–T24 theo 4 mốc (dữ liệu/API → web đọc → giao diện → deploy) cộng đợt 2 upload/kho tệp.
 - **Bản 14** (2026-10-28): **code xong đợt 1 P2c (T1–T19)**. Worker: `content.ts` (validate/chuẩn hoá/insert/update/delete/diff) + `_worker.ts` (`GET/POST/PATCH/DELETE /api/admin/content/items`, `versions`, `rollback`, `init`, audit trước ghi, 20 lần ghi/phút, đọc dung lượng R2 cache 60 giây); bảng `content_manifest` trong `workers/schema.sql` + bản dán tay `workers/content-schema.sql`. Web: data-api `GET /content` công khai (60 giây), `content-catalog.ts` thay 3 hằng ở `study-types.ts` (live binding, lọc `hidden`), hook `useContentCatalog` reload 1 lần/phiên. Admin shell: panel "Nội dung" 3 tab + form master/detail + khối Lịch sử + nút nạp bộ nội dung ban đầu, `admin-content.js` ~1.000 dòng, seed JSON được `build:admin` chép vào `dist-admin/admin/seed/`. Test: 82 ca mới, toàn bộ 587 ca xanh. Còn T20 (deploy) và đợt 2 T21–T24.
+- **Bản 15** (2026-10-29): thêm **P2e — Báo cáo nội dung & chặn** (đọc/xử lý báo cáo AI + phòng, hạn chế AI/phòng) phục vụ Play P0.5; đặt trước P2d. Ghi rõ phụ thuộc P0.5 Phase 1, UI ở `admin-host/`, cảnh báo XSS khi render nội dung báo cáo, dọn báo cáo 180 ngày, và việc xóa tài khoản phải xóa reports/blocks/restrictions.
+- **Bản 16** (2026-10-30): **E1–E3, E5 code xong.** `admin-worker/reports-api.ts` (list/detail/resolve/restrictions, audit trước ghi, rate limit 30/phút, dọn 180 ngày); shell `admin-host` thêm panel "Báo cáo" 6 cột + chi tiết text thuần + khóa AI/phòng; 7 ca API + 4 ca DOM, toàn bộ 628 test xanh. Chạy thử local: 2 báo cáo seed → resolve → còn 1 chờ xử lý. Còn E4 (chat-proxy/livekit đọc restrictions) và deploy.
+- **Bản 17** (2026-10-30): tách panel Báo cáo khỏi file khổng lồ — HTML sang `admin-host/panels/reports.html`, CSS sang `admin-host/admin-reports.css`; `prepare-admin-bundle.mjs` mở rộng `<!-- include: ... -->` khi build và không publish thư mục `panels/`; test DOM dùng helper `loadAdminHtml()`. Không đổi hành vi, 628 test vẫn xanh.
+- **Bản 18** (2026-10-30): tách toàn bộ shell — `index.html` còn ~187 dòng; thêm `panels/usage.html`, `panels/flags.html`, `panels/chat.html`, `panels/content.html`, `panels/diagnostics.html`; CSS chia `admin-usage/flags/chat/content/reports.css`; 3 test panel đổi sang `loadAdminHtml()`; bỏ 5 inline style tĩnh. 628 test vẫn xanh, admin local chạy đúng.
+- **Bản 19** (2026-10-30): tách tiếp `admin.css` thành `admin.css` (nền, 147 dòng), `admin-topbar.css` (248), `admin-dashboard.css` (316), `admin-footer.css` (145). Tổng 9 file CSS, không file nào quá 320 dòng; link theo thứ tự base → topbar → dashboard → footer → panel. Build và kiểm local OK.
+- **Bản 20** (2026-10-30): sắp xếp `admin-host/` thành `assets/`, `panels/`, `styles/`, `scripts/` và đổi tên file cho gọn (`styles/base.css`, `styles/chat.css`, `scripts/dashboard.js`, `scripts/chat.js`…). Build copy đúng cấu trúc, không publish `panels/`/`assets/`; vẫn copy favicon ra `/favicon.svg` và `/admin/favicon.svg`. Test DOM cập nhật đường dẫn; 207 test admin + 628 toàn bộ xanh.

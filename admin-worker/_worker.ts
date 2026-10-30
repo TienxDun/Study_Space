@@ -33,6 +33,7 @@ import {
 } from "./chat-config";
 import { handleContentApi } from "./content-api";
 import { FLAGS_KEY, parseFlagsBody, readFlags, type SystemFlags } from "./flags";
+import { handleReportsApi, handleRestrictionsApi } from "./reports-api";
 import { API_PREFIX, json, type AdminEnv } from "./shared";
 import { buildOverview, pingProbes, probeCheck } from "./usage";
 
@@ -47,6 +48,7 @@ export {
   __resetFlagWriteLog,
   __resetChatWriteLog,
   __resetContentWriteLog,
+  __resetReportWriteLog,
 } from "./audit";
 export { mapChatConfig, parseChatCfgBody } from "./chat-config";
 export { __resetContentCaches } from "./content-api";
@@ -68,6 +70,15 @@ async function handleApi(
 
   if (pathname === `${API_PREFIX}/content` || pathname.startsWith(`${API_PREFIX}/content/`)) {
     return handleContentApi(request, env, pathname, identity.email);
+  }
+
+  if (pathname === `${API_PREFIX}/reports` || pathname.startsWith(`${API_PREFIX}/reports/`)) {
+    return handleReportsApi(request, env, pathname, identity.email);
+  }
+
+  const restrictionsMatch = new RegExp(`^${API_PREFIX}/users/([^/]+)/restrictions$`).exec(pathname);
+  if (restrictionsMatch) {
+    return handleRestrictionsApi(request, env, restrictionsMatch[1], identity.email);
   }
 
   if (pathname === `${API_PREFIX}/overview`) {

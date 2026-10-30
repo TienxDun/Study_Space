@@ -1,0 +1,118 @@
+      <!-- P2e: hộp thư báo cáo AI/phòng học -->
+      <section class="panel-card reports-panel" id="reports-panel" aria-labelledby="reports-title">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <h2 class="panel-title" id="reports-title">Báo cáo nội dung</h2>
+            <span class="panel-desc">Báo cáo từ trợ lý AI và phòng học. Xử lý xong thì đánh dấu để lưu vết; có thể tạm khóa AI/phòng của tài khoản bị báo cáo.</span>
+          </div>
+          <span class="usage-tag" id="reports-state">Đang đọc…</span>
+        </div>
+
+        <div class="reports-body">
+          <div class="reports-toolbar">
+            <label class="reports-filter">
+              <span class="chat-label">Trạng thái</span>
+              <select class="flag-input" id="reports-status">
+                <option value="open">Chờ xử lý</option>
+                <option value="resolved">Đã xử lý</option>
+                <option value="dismissed">Đã bỏ qua</option>
+                <option value="all">Tất cả</option>
+              </select>
+            </label>
+            <label class="reports-filter">
+              <span class="chat-label">Nguồn</span>
+              <select class="flag-input" id="reports-source">
+                <option value="all">Tất cả</option>
+                <option value="ai">Trợ lý AI</option>
+                <option value="room">Phòng học</option>
+              </select>
+            </label>
+            <button class="btn-ghost" id="reports-refresh" type="button">Làm mới</button>
+          </div>
+
+          <div class="reports-counts" id="reports-counts">
+            <span class="reports-count">Chờ xử lý <strong id="reports-count-open">0</strong></span>
+            <span class="reports-count">Đã xử lý <strong id="reports-count-resolved">0</strong></span>
+            <span class="reports-count">Đã bỏ qua <strong id="reports-count-dismissed">0</strong></span>
+          </div>
+
+          <div class="content-table-wrap">
+            <table class="services-table content-table reports-table">
+              <thead>
+                <tr>
+                  <th>Thời gian</th>
+                  <th>Nguồn</th>
+                  <th>Người báo cáo → đối tượng</th>
+                  <th>Lý do</th>
+                  <th>Trạng thái</th>
+                  <th class="text-right">Chi tiết</th>
+                </tr>
+              </thead>
+              <tbody id="reports-rows">
+                <tr><td colspan="6">Đang đọc…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="chat-actions reports-more-wrap">
+            <button class="btn-ghost" id="reports-more" type="button" hidden>Xem thêm</button>
+          </div>
+          <p class="chat-feedback" id="reports-note" hidden></p>
+
+          <section class="reports-detail" id="reports-detail" aria-labelledby="reports-detail-title" hidden>
+            <header class="content-form-head">
+              <h3 class="chat-section-title" id="reports-detail-title">Chi tiết báo cáo</h3>
+              <button class="btn-ghost" id="reports-detail-close" type="button">Đóng</button>
+            </header>
+
+            <div class="reports-meta" id="reports-detail-meta"></div>
+
+            <div class="reports-content-wrap">
+              <p class="chat-label">Nội dung bị báo cáo</p>
+              <pre class="reports-content" id="reports-detail-content"></pre>
+            </div>
+
+            <label class="chat-field">
+              <span class="chat-label">Ghi chú xử lý (tối đa 500 ký tự)</span>
+              <textarea class="flag-input" id="reports-resolve-note" rows="2" maxlength="500"></textarea>
+            </label>
+            <p class="chat-feedback" id="reports-detail-note" hidden></p>
+            <div class="chat-actions">
+              <button class="btn-primary" id="reports-resolve" type="button">Đánh dấu đã xử lý</button>
+              <button class="btn-ghost" id="reports-dismiss" type="button">Bỏ qua</button>
+            </div>
+
+            <div class="reports-restrict" id="reports-restrict-block" hidden>
+              <h4 class="chat-section-title">Hạn chế tài khoản <span class="reports-uid" id="reports-restrict-uid"></span></h4>
+              <label class="flag-row" for="reports-restrict-ai">
+                <span class="flag-text">
+                  <span class="flag-name">Khóa trợ lý AI</span>
+                  <span class="flag-desc">Tài khoản này không gửi được câu hỏi mới.</span>
+                </span>
+                <span class="switch">
+                  <input type="checkbox" id="reports-restrict-ai" />
+                  <span class="switch-track" aria-hidden="true"></span>
+                </span>
+              </label>
+              <label class="flag-row" for="reports-restrict-rooms">
+                <span class="flag-text">
+                  <span class="flag-name">Khóa phòng học</span>
+                  <span class="flag-desc">Tài khoản này không tạo/vào phòng được.</span>
+                </span>
+                <span class="switch">
+                  <input type="checkbox" id="reports-restrict-rooms" />
+                  <span class="switch-track" aria-hidden="true"></span>
+                </span>
+              </label>
+              <label class="chat-field">
+                <span class="chat-label">Ghi chú hạn chế (tối đa 500 ký tự)</span>
+                <textarea class="flag-input" id="reports-restrict-note" rows="2" maxlength="500"></textarea>
+              </label>
+              <div class="chat-actions">
+                <button class="btn-ghost" id="reports-restrict-save" type="button">Lưu hạn chế</button>
+                <span class="chat-feedback" id="reports-restrict-state" hidden></span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>

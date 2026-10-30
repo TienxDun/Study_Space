@@ -1,6 +1,6 @@
 # Kế Hoạch Mở Rộng Admin Console
 
-Trạng thái: P0 đã xong 2026-10-25; P1 xong và đã đối chiếu production 2026-10-26; P2 có kế hoạch riêng, đang ở P2a (có thêm chỉnh hạn mức câu/ngày). Bản 12 — 2026-10-27.
+Trạng thái: P0 đã xong 2026-10-25; P1 xong và đã đối chiếu production 2026-10-26; P2 có kế hoạch riêng; P2a/P2b xong, P2c đợt 1 code xong (chờ T20 deploy). P2e — báo cáo nội dung & chặn cho Play P0.5 — **code xong E1–E3/E5 (2026-10-30), chờ deploy**. Bản 14 — 2026-10-30.
 Đã chốt: admin chạy trên Cloudflare Workers + Static Assets sau Cloudflare Access. GitHub Actions đã bỏ; web chính deploy bằng Cloudflare Pages.
 
 Chi tiết từng mục viết khi bắt tay làm. P0 đã đóng, runbook ở `docs/archive/ADMIN_P0_PLAN.md`. P1 đã đóng, hồ sơ ở `docs/archive/ADMIN_P1_PLAN.md`. P2 có kế hoạch riêng ở `docs/features/ADMIN_P2_PLAN.md`. Lịch sử thay đổi ở cuối file.
@@ -28,6 +28,7 @@ Token worker chỉ nằm ở env của Worker admin. Trình duyệt không bao g
 ## Hiện trạng
 
 - Admin đang chạy: shell tĩnh `admin-host/index.html` tại `admin.zenstudy.space/admin/`, gọi `/api/admin/ping`; có sức khỏe và độ trễ 3 worker, chưa có số liệu sử dụng.
+- Shell đã tách theo cấu trúc thư mục (2026-10-30): `index.html` còn ~191 dòng; HTML panel ở `admin-host/panels/`, CSS ở `admin-host/styles/{base,topbar,dashboard,footer,usage,flags,chat,content,reports}.css`, JS ở `admin-host/scripts/{dashboard,chat,content,reports}.js`, favicon ở `admin-host/assets/`. Build `prepare-admin-bundle.mjs` mở rộng `<!-- include: ... -->`, không publish `panels/` và `assets/`.
 - Các trang admin Next (`/admin`, `/dev/studio`) chỉ tồn tại trên máy local; source bị gitignore và bản web đã strip. P0 không publish các trang này. Trang `/admin/chat` local đã xóa 2026-10-27 (thay bằng panel "Trợ lý chat" trong shell).
 - Dữ liệu live hiện có: ping 3 worker. LiveKit `/usage` cần `ADMIN_TOKEN`; trang limits local gọi không token nên nhận 401. Phần còn lại là số hardcode hoặc localStorage.
 - `ADMIN_TOKEN` từng được dán tay và lưu `localStorage` ở trang chat local; trang chat không được publish.
@@ -86,18 +87,19 @@ Kế hoạch chi tiết, chia bước nhỏ và thứ tự deploy ở [`docs/fea
 12. **Chat**: chain, provider, prompt — xây UI mới trên shell hoặc giữ local; dùng lại API hiện có, không bê nguyên trang Next cũ; mọi thay đổi ghi audit.
 13. **Nội dung runtime**: manifest cảnh/âm thanh trong D1 (hoặc KV), media trên R2, có version + rollback. Studio dev chỉ để thử trước khi đẩy; không ghi file trên máy chủ production.
 14. **Kho R2**: manifest cảnh/âm thanh, file mồ côi/thiếu, xóa có xác nhận. P1 chỉ hiển thị dung lượng và số object.
+15. **Báo cáo nội dung & chặn (P2e)**: hộp thư báo cáo AI/phòng học, xử lý, hạn chế tài khoản — phục vụ chính sách AI-Generated Content và UGC của Google Play. Chi tiết ở [`ADMIN_P2_PLAN.md`](./ADMIN_P2_PLAN.md) (P2e) và [`P0_5_REPORTING_PLAN.md`](./P0_5_REPORTING_PLAN.md). **Làm trước P2d vì chặn nộp Play.**
 
 ### P3 — Vận hành lâu dài
 
-15. **Phản hồi người dùng**: nút báo lỗi trong app → D1 → hàng chờ admin.
-16. **Chu kỳ dọn**: log lỗi, audit, feedback theo cửa sổ 30 ngày.
-17. **Rà hạn mức**: mỗi tháng đối chiếu số worker báo với dashboard nhà cung cấp.
+16. **Phản hồi chung** (báo lỗi/góp ý, khác P2e báo cáo nội dung): nút gửi trong app → D1 → hàng chờ admin.
+17. **Chu kỳ dọn**: log lỗi, audit, feedback theo cửa sổ 30 ngày.
+18. **Rà hạn mức**: mỗi tháng đối chiếu số worker báo với dashboard nhà cung cấp.
 
 ## Thứ tự đề nghị
 
-P0 (xong 2026-10-25) → P1a → P1b → P1c → P2.11 → P2.12 → phần còn lại theo nhu cầu thật.
+P0 (xong 2026-10-25) → P1a → P1b → P1c → P2.11 → P2.12 → P2c (xong code, chờ T20) → **P2e** → P2d → phần còn lại theo nhu cầu thật.
 
-Lý do: chặn lộ trước; thấy hệ thống trước khi sửa; cờ là cách chặn sự cố rẻ nhất.
+Lý do: chặn lộ trước; thấy hệ thống trước khi sửa; cờ là cách chặn sự cố rẻ nhất; P2e trước P2d vì là điều kiện nộp Google Play.
 
 ## Không làm
 
@@ -146,3 +148,8 @@ P1 có mục kiểm chứng riêng trong `docs/archive/ADMIN_P1_PLAN.md`.
 - **Bản 10** (2026-10-26): đóng P1 sau đối chiếu production (số R2 khớp byte, Access/network sạch, log lỗi thật); sửa giả định "push là deploy admin"; bổ sung điều kiện kỹ thuật cho P2.11 (KV, điểm giữ cờ, endpoint cờ công khai, audit trước ghi).
 - **Bản 11** (2026-10-26): tách P2 sang `docs/features/ADMIN_P2_PLAN.md`; chốt thứ tự P2.0 → P2a → P2b → P2c → P2d; P1 đã đóng nên hồ sơ chuyển vào `docs/archive/`.
 - **Bản 12** (2026-10-27): gộp chỉnh hạn mức câu/người/ngày vào P2a (trường `chatDailyLimit` 1–200 trong `cfg:flags`, env chỉ còn là dự phòng).
+- **Bản 13** (2026-10-29): thêm **P2e — Báo cáo nội dung & chặn** phục vụ chính sách AI/UGC của Google Play; đặt P2e trước P2d; tách P3.15 cũ thành "Phản hồi chung" để không lẫn với báo cáo nội dung. Ghi rõ UI admin phải sửa trong `admin-host/` (tracked), không phải `src/app/admin/` (gitignored).
+- **Bản 14** (2026-10-30): **P2e code xong E1–E3/E5** — API reports/restrictions + panel "Báo cáo" trong shell; 11 ca test mới, toàn bộ 628 test xanh; chạy thử local với 2 báo cáo seed. Còn E4 (khóa AI/phòng có hiệu lực ở chat-proxy/livekit) và deploy.
+- **Bản 15** (2026-10-30): tách shell theo panel — `index.html` còn ~187 dòng; HTML sang `admin-host/panels/*.html`, CSS sang `admin-*.css` theo panel; build mở rộng include, không publish `panels/`; test DOM dùng `loadAdminHtml()`. Bỏ 5 inline style tĩnh trong thẻ số liệu, giữ 3 style width do JS điều khiển.
+- **Bản 16** (2026-10-30): tách tiếp `admin.css` 859 dòng thành `admin.css` (nền, 147), `admin-topbar.css` (248), `admin-dashboard.css` (316), `admin-footer.css` (145); giữ 5 file CSS panel. Tổng 9 file CSS, mỗi file dưới 320 dòng; build + local kiểm style/metadata OK, không lỗi console.
+- **Bản 17** (2026-10-30): sắp xếp lại `admin-host/` thành `assets/`, `panels/`, `styles/`, `scripts/`; đổi tên `admin.css` → `styles/base.css`, `admin-chat.js` → `scripts/chat.js`…; cập nhật index, build favicon (copy cả `/admin/favicon.svg`), test DOM. Build + local 9 CSS/4 JS tải 200, không lỗi console.

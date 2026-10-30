@@ -3,18 +3,18 @@
 > Cập nhật: 2026-10-29
 > Hướng dẫn kỹ thuật chi tiết (Capacitor, keystore, OTA): [ANDROID_CHPLAY_OTA_GUIDE.md](./ANDROID_CHPLAY_OTA_GUIDE.md)
 
-**Tiến độ tổng:** P0 đã xong phần code + hạ tầng (privacy live, xóa tài khoản chạy được); còn khai báo trong Play Console. P1–P4 chưa bắt đầu.
+**Tiến độ tổng:** P0 đã xong code + hạ tầng + pháp lý (privacy, terms, xóa tài khoản đều live). P0.5 Phase 1–2 code xong (API báo cáo/chặn + admin inbox), chờ deploy; còn Phase 3–7. P1–P4 chưa bắt đầu.
 
 ## Trạng thái hiện tại
 
 | Hạng mục | Trạng thái |
 |---|---|
 | Tài khoản Google Play Developer | **Đã có** (không cần tạo mới, không cần trả lại phí 25 USD) |
-| Trang chính sách quyền riêng tư (web) | Đã live: `/privacy/` (gồm lịch sử chat lưu trên Firestore) |
-| Link policy trong app | Đã làm: About modal (desktop) + sheet "Thêm" (mobile) |
+| Trang chính sách quyền riêng tư (web) | Đã live: `/privacy/` (lịch sử chat Firestore + GoatCounter) |
+| Link policy trong app | Đã làm: About modal (desktop) + sheet "Thêm" (mobile) — cả privacy và terms |
 | Xóa tài khoản trong app + link web | **Đã hoạt động** (xác nhận 2026-10-29); còn khai URL trong Play Console |
 | Trang xóa tài khoản công khai | Đã live: `/account-deletion/` |
-| Trang điều khoản sử dụng | Đã có `/terms/` (chờ deploy web); link trong About modal + sheet "Thêm" |
+| Trang điều khoản sử dụng | **Đã live: `/terms/`** (độ tuổi 16, quyền sử dụng nội dung đã rõ) |
 | Capacitor / thư mục `android/` | Chưa có |
 | Keystore (.jks) | Chưa có |
 | Package name | **Đã chốt: `space.zenstudy.app`** |
@@ -86,8 +86,13 @@ Các mục cần khai thêm:
 
 ### P0.5 Báo cáo nội dung, Terms và an toàn cho 13+ (làm trước khi bọc app)
 
+Kế hoạch chi tiết + thứ tự thực hiện: [P0_5_REPORTING_PLAN.md](../features/P0_5_REPORTING_PLAN.md).
+
 Theo chính sách AI-Generated Content và UGC của Google Play:
-- [x] Trang `/terms` (điều khoản sử dụng) mô tả quy tắc dùng AI và phòng học; link trong app + footer các trang pháp lý. Chờ deploy web.
+- [x] Phase 1 code: bảng `content_reports`/`user_blocks`/`user_restrictions`, API `/report` + `/blocks`, xóa tài khoản xóa kèm, 617 test xanh (2026-10-29).
+- [x] Phase 2 code (P2e): admin xem lọc/chi tiết, resolve/dismiss + ghi chú, khóa AI/phòng; 11 ca test mới; chạy thử local (2026-10-30).
+- [ ] Deploy Phase 1 + 2: chạy `workers/report-schema.sql` trên D1, dán `data-api`, build + deploy admin worker.
+- [x] Trang `/terms` (điều khoản sử dụng) mô tả quy tắc dùng AI và phòng học; link trong app + footer các trang pháp lý. **Đã live**, đã sửa độ tuổi 16 và làm rõ quyền sử dụng nội dung.
 - [ ] Nút **"Báo cáo câu trả lời"** trên từng tin nhắn AI (hiện chỉ có field `rating`, chưa có UI).
 - [ ] Lưu báo cáo AI vào D1 qua Worker: UID, nội dung tin bị báo cáo, lý do, thời gian; xem và xử lý trong admin console.
 - [ ] Nút **báo cáo + chặn người dùng** trong phòng học (hiện chỉ có mute/kick của host).
@@ -164,11 +169,18 @@ Theo chính sách AI-Generated Content và UGC của Google Play:
 | 2026-10-29 | Xóa tài khoản hoạt động end-to-end (Worker + service account + rules) | Xong — P0 kỹ thuật đóng |
 | 2026-10-29 | Rà chính sách Play 2026: đăng ký package name, chọn độ tuổi, yêu cầu báo cáo AI/UGC | Xong |
 | 2026-10-29 | Chốt `space.zenstudy.app` + target 13+; thêm P0.5 (báo cáo AI/phòng học, Terms, an toàn 13+) | Xong |
-| 2026-10-29 | Tạo `/terms`, thêm sitemap, link trong About modal + sheet "Thêm" + footer privacy/account-deletion | Xong (chờ deploy web) |
+| 2026-10-29 | Tạo `/terms`, thêm sitemap, link trong About modal + sheet "Thêm" + footer privacy/account-deletion | Xong |
+| 2026-10-29 | Hoàn thiện nội dung `/terms`: đổi "dưới 18" thành "dưới 16", làm rõ quyền sử dụng nội dung, đồng bộ privacy | Xong |
+| 2026-10-29 | Deploy web + xác minh `/terms/` 200 với nội dung mới; GoatCounter đã vào privacy/Data Safety (commit `f823a7b`) | Xong |
+| 2026-10-29 | Phân tích hệ thống chat/phòng/admin + lập plan P0.5 với thứ tự 7 phase | Xong — chờ chốt quyết định |
+| 2026-10-29 | Cập nhật admin plan: thêm P2e (hộp thư báo cáo + hạn chế tài khoản), đặt trước P2d | Xong |
+| 2026-10-29 | Chốt 6 quyết định P0.5 (chặn 2 chiều, lưu 180 ngày, admin khóa AI/phòng, lý do cố định, không thông báo ngược, bỏ chặn trong Cài đặt) | Xong |
+| 2026-10-29 | P0.5 Phase 1: schema D1 + API `/report`, `/blocks` + xóa tài khoản xóa kèm + test | Code xong; chờ deploy D1/data-api |
+| 2026-10-30 | P0.5 Phase 2 (P2e): API admin reports/restrictions + panel "Báo cáo" trong shell; 11 test mới, 628 test xanh; thử local | Code xong; chờ deploy |
 
 ## Việc tiếp theo (theo thứ tự)
 
-1. P0.5 (tiếp): nút báo cáo AI + báo cáo/chặn trong phòng học + guardrail cho 13+; cập nhật privacy và Data Safety; deploy `/terms/`.
+1. P0.5 (tiếp): deploy Phase 1 + 2 (D1, data-api, admin worker); Phase 3 = nút báo cáo AI; Phase 4 = báo cáo/chặn phòng; Phase 5 = guardrail; Phase 6 = privacy/Data Safety; Phase 7 = QA.
 2. P1: dựng Capacitor shell + script `build:mobile`; chạy trên máy thật (Google Sign-In WebView, LiveKit mic/cam, asset CDN, link `/privacy/`).
 3. P2: tạo keystore, cấu hình ký, build `.aab` và cài thử bản release.
 4. P3: tạo app trên Play Console, khai Privacy URL + Account deletion URL + Data Safety + App content; chuẩn bị store listing và 20 tester.

@@ -1,0 +1,85 @@
+/* ================= ADMIN TABS ================= */
+.admin-tabs {
+  position: sticky;
+  top: 64px;
+  z-index: 45;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(9, 10, 15, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.admin-tabs-inner {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-block: 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.admin-tabs-inner::-webkit-scrollbar {
+  display: none;
+}
+
+/* Gợi ý còn tab bị khuất khi thanh tab phải cuộn ngang. */
+.admin-tabs::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  width: 28px;
+  background: linear-gradient(to right, rgba(9, 10, 15, 0), rgba(9, 10, 15, 0.95));
+  pointer-events: none;
+}
+
+.admin-tab {
+  appearance: none;
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+
+.admin-tab:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-tab.is-active {
+  color: var(--emerald-400);
+  background: var(--emerald-soft);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.admin-tab:focus-visible {
+  outline: 2px solid var(--emerald-400);
+  outline-offset: 2px;
+}
+
+.tab-panel[hidden] {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .admin-tabs {
+    top: 56px;
+  }
+
+  .admin-tabs-inner {
+    padding-block: 6px;
+  }
+
+  .admin-tab {
+    padding: 8px 12px;
+  }
+}

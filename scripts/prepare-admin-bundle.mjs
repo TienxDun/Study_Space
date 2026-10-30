@@ -1,4 +1,12 @@
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
 // Dựng thư mục asset cho Worker `zenstudy-admin` (wrangler.admin.jsonc).
@@ -15,12 +23,50 @@ if (!existsSync(shell)) {
 
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(path.join(dist, "admin"), { recursive: true });
-// Copy cả thư mục: shell tách thành index.html + admin.css + admin.js.
-cpSync(shellDir, path.join(dist, "admin"), { recursive: true });
 
-const favicon = path.join(shellDir, "favicon.svg");
+// Copy shell và mở rộng các `<!-- include: ... -->` trong file HTML.
+// Partial nằm ở admin-host/panels/ chỉ dùng lúc build, không publish.
+const INCLUDE_RE = /<!--\s*include:\s*([^\s]+)\s*-->/g;
+
+function expandIncludes(text, baseDir, seen = new Set()) {
+  return text.replace(INCLUDE_RE, (_match, rel) => {
+    const target = path.resolve(baseDir, rel);
+    if (!target.startsWith(`${shellDir}${path.sep}`)) {
+      throw new Error(`include nằm ngoài admin-host: ${rel}`);
+    }
+    if (seen.has(target)) throw new Error(`include vòng lặp: ${rel}`);
+    const body = readFileSync(target, "utf8");
+    return expandIncludes(body, path.dirname(target), new Set([...seen, target]));
+  });
+}
+
+function copyShellDir(src, dest) {
+  mkdirSync(dest, { recursive: true });
+  for (const entry of readdirSync(src, { withFileTypes: true })) {
+    if (entry.name === "panels" || entry.name === "assets") continue;
+    const from = path.join(src, entry.name);
+    const to = path.join(dest, entry.name);
+    if (entry.isDirectory()) {
+      copyShellDir(from, to);
+    } else if (entry.name.endsWith(".html")) {
+      writeFileSync(
+        to,
+        expandIncludes(readFileSync(from, "utf8"), src, new Set([from])),
+        "utf8"
+      );
+    } else {
+      cpSync(from, to);
+    }
+  }
+}
+
+copyShellDir(shellDir, path.join(dist, "admin"));
+
+const favicon = path.join(shellDir, "assets", "favicon.svg");
 if (existsSync(favicon)) {
   cpSync(favicon, path.join(dist, "favicon.svg"));
+  // Giữ đường dẫn cũ /admin/favicon.svg cho _redirects và bookmark.
+  cpSync(favicon, path.join(dist, "admin", "favicon.svg"));
 }
 
 // P2c: bộ nội dung đóng gói sẵn để nút "Nạp bộ nội dung ban đầu" gửi lên Worker.
@@ -61,4 +107,4 @@ writeFileSync(
   "utf-8"
 );
 
-console.log("Đã dựng dist-admin/: admin/ (index.html, admin.css, admin.js, favicon), _redirects, _headers");
+console.log("Đã dựng dist-admin/: admin/ (index.html đã mở rộng include, CSS/JS, favicon), _redirects, _headers");

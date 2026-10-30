@@ -13,7 +13,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://study-space-shield.leutiendung-hht.workers.dev" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="admin.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/topbar.css" />
+    <link rel="stylesheet" href="styles/tabs.css" />
+    <link rel="stylesheet" href="styles/dashboard.css" />
+    <link rel="stylesheet" href="styles/footer.css" />
+    <link rel="stylesheet" href="styles/usage.css" />
+    <link rel="stylesheet" href="styles/flags.css" />
+    <link rel="stylesheet" href="styles/chat.css" />
+    <link rel="stylesheet" href="styles/content.css" />
+    <link rel="stylesheet" href="styles/reports.css" />
   </head>
   <body>
     <!-- Top Navigation Bar -->
@@ -47,6 +56,17 @@
       </div>
     </header>
 
+    <nav class="admin-tabs" aria-label="Khu vực quản trị">
+      <div class="container admin-tabs-inner" role="tablist" aria-label="Chọn khu vực">
+        <button class="admin-tab is-active" id="tab-btn-overview" type="button" role="tab" aria-selected="true" aria-controls="tab-panel-overview" tabindex="0" data-admin-tab="overview">Tổng quan</button>
+        <button class="admin-tab" id="tab-btn-diagnostics" type="button" role="tab" aria-selected="false" aria-controls="tab-panel-diagnostics" tabindex="-1" data-admin-tab="diagnostics">Chẩn đoán</button>
+        <button class="admin-tab" id="tab-btn-flags" type="button" role="tab" aria-selected="false" aria-controls="tab-panel-flags" tabindex="-1" data-admin-tab="flags">Cờ hệ thống</button>
+        <button class="admin-tab" id="tab-btn-chat" type="button" role="tab" aria-selected="false" aria-controls="tab-panel-chat" tabindex="-1" data-admin-tab="chat">Trợ lý chat</button>
+        <button class="admin-tab" id="tab-btn-content" type="button" role="tab" aria-selected="false" aria-controls="tab-panel-content" tabindex="-1" data-admin-tab="content">Nội dung</button>
+        <button class="admin-tab" id="tab-btn-reports" type="button" role="tab" aria-selected="false" aria-controls="tab-panel-reports" tabindex="-1" data-admin-tab="reports">Báo cáo</button>
+      </div>
+    </nav>
+
     <main class="container">
       <!-- Page Header -->
       <section class="page-header">
@@ -58,7 +78,7 @@
           <div>
             <h1 class="page-title">Bảng điều khiển hệ thống</h1>
             <p class="page-subtitle">
-              Xem nhanh hệ thống có đang chạy ổn không, hôm nay có bao nhiêu lượt chat, dữ liệu đã lưu lên đám mây chưa và tháng này đã dùng bao nhiêu phút học nhóm.
+              Theo dõi tình trạng hệ thống, chỉnh nội dung, cấu hình trợ lý chat và xử lý báo cáo ở một chỗ. Số liệu ở tab Tổng quan tự cập nhật.
             </p>
           </div>
 
@@ -78,6 +98,8 @@
         </div>
       </section>
 
+      <!-- Tab: Tổng quan -->
+      <div class="tab-panel" id="tab-panel-overview" role="tabpanel" aria-labelledby="tab-btn-overview" data-tab-panel="overview">
       <!-- Stats Metric Grid -->
       <section class="stats-grid" id="console">
         <!-- Card 1: Trạng thái Worker -->
@@ -92,7 +114,7 @@
           </div>
           <div class="stat-value emerald">
             <span id="ok-count">…</span>
-            <span id="total-count" style="font-size: 16px; color: var(--text-muted); font-weight: 500;">/3</span>
+            <span id="total-count" class="stat-count-suffix">/3</span>
           </div>
           <div class="stat-sub">
             <span id="figure-label">Dịch vụ đang chạy tốt</span>
@@ -112,7 +134,7 @@
           </div>
           <div class="stat-value">
             <span id="avg-latency">--</span>
-            <span style="font-size: 14px; color: var(--text-muted); font-weight: 500;">ms</span>
+            <span class="stat-unit">ms</span>
           </div>
           <div class="stat-sub">
             <span>Số càng nhỏ, phản hồi càng nhanh</span>
@@ -130,11 +152,11 @@
               </svg>
             </div>
           </div>
-          <div class="stat-value" style="font-size: 16px; font-weight: 600; font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          <div class="stat-value is-email">
             <span id="session-email">Đang xác thực…</span>
           </div>
           <div class="stat-sub">
-            <span>Quyền: <strong style="color: var(--emerald-400)">chỉ xem</strong></span>
+            <span>Quyền: <strong class="stat-role">chỉ xem</strong></span>
           </div>
         </div>
 
@@ -148,7 +170,7 @@
               </svg>
             </div>
           </div>
-          <div class="stat-value" style="font-size: 16px; font-weight: 600; font-family: var(--font-mono);">
+          <div class="stat-value is-compact">
             <span id="api-time">vừa xong</span>
           </div>
           <div class="stat-sub">
@@ -157,912 +179,32 @@
         </div>
       </section>
 
-      <!-- Sử dụng & hạn mức -->
-      <section class="usage-section" aria-labelledby="usage-title">
-        <div class="usage-heading">
-          <div>
-            <h2 class="usage-title" id="usage-title">Sử dụng &amp; giới hạn</h2>
-            <p class="usage-desc">Các số dưới đây tự động cập nhật.</p>
-          </div>
-          <span class="usage-source">Tự động tổng hợp</span>
-        </div>
+      <!-- include: panels/usage.html -->
+      </div>
 
-        <div class="usage-grid">
-          <article class="usage-card" id="chat-card">
-            <div class="usage-card-head">
-              <span class="usage-label">Chat hôm nay (giờ Mỹ)</span>
-              <span class="usage-tag" id="chat-day">--</span>
-            </div>
-            <div class="usage-main">
-              <span id="chat-total">--</span>
-              <span class="usage-unit">câu</span>
-            </div>
-            <div class="usage-meter" aria-hidden="true"><span id="chat-meter" style="width: 0%"></span></div>
-            <dl class="usage-facts">
-              <div><dt>Số người dùng</dt><dd id="chat-users">--</dd></div>
-              <div><dt>Giới hạn mỗi ngày</dt><dd id="chat-limit">--</dd></div>
-            </dl>
-            <p class="usage-note" id="chat-note">Ngày tính theo giờ Mỹ (Thái Bình Dương). Chi phí dùng AI xem trên trang Cloudflare.</p>
-          </article>
+      <!-- Tab: Chẩn đoán -->
+      <div class="tab-panel" id="tab-panel-diagnostics" role="tabpanel" aria-labelledby="tab-btn-diagnostics" data-tab-panel="diagnostics" hidden>
+        <!-- include: panels/diagnostics.html -->
+      </div>
 
-          <article class="usage-card" id="sync-card">
-            <div class="usage-card-head">
-              <span class="usage-label">Đồng bộ đám mây</span>
-              <span class="usage-tag">Tính đến hiện tại</span>
-            </div>
-            <div class="usage-main">
-              <span id="sync-users">--</span>
-              <span class="usage-unit">người dùng đã lưu</span>
-            </div>
-            <div class="usage-meter is-muted" aria-hidden="true"><span style="width: 100%"></span></div>
-            <dl class="usage-facts">
-              <div><dt>Lần lưu gần nhất</dt><dd id="sync-last">--</dd></div>
-              <div><dt>Bản lưu lớn nhất</dt><dd id="sync-max">--</dd></div>
-            </dl>
-            <p class="usage-note" id="sync-note">Dữ liệu học tập tự động lưu lên mây.</p>
-          </article>
+      <!-- Tab: Cờ hệ thống -->
+      <div class="tab-panel" id="tab-panel-flags" role="tabpanel" aria-labelledby="tab-btn-flags" data-tab-panel="flags" hidden>
+        <!-- include: panels/flags.html -->
+      </div>
 
-          <article class="usage-card" id="livekit-card">
-            <div class="usage-card-head">
-              <span class="usage-label">Phút học nhóm tháng này</span>
-              <span class="usage-tag" id="livekit-month">--</span>
-            </div>
-            <div class="usage-main">
-              <span id="livekit-used">--</span>
-              <span class="usage-unit">/ <span id="livekit-limit">--</span> phút</span>
-            </div>
-            <div class="usage-meter" aria-hidden="true"><span id="livekit-meter" style="width: 0%"></span></div>
-            <dl class="usage-facts">
-              <div><dt>Phòng đang học</dt><dd id="livekit-rooms">--</dd></div>
-              <div><dt>Người đang học</dt><dd id="livekit-people">--</dd></div>
-            </dl>
-            <p class="usage-note" id="livekit-note">Tháng tính theo giờ quốc tế (UTC).</p>
-          </article>
+      <!-- Tab: Trợ lý chat -->
+      <div class="tab-panel" id="tab-panel-chat" role="tabpanel" aria-labelledby="tab-btn-chat" data-tab-panel="chat" hidden>
+        <!-- include: panels/chat.html -->
+      </div>
 
-          <article class="usage-card" id="r2-card">
-            <div class="usage-card-head">
-              <span class="usage-label">Kho tệp</span>
-              <span class="usage-tag">Tính đến hiện tại</span>
-            </div>
-            <div class="usage-main">
-              <span id="r2-used">--</span>
-              <span class="usage-unit">/ <span id="r2-limit">--</span></span>
-            </div>
-            <div class="usage-meter" aria-hidden="true"><span id="r2-meter" style="width: 0%"></span></div>
-            <dl class="usage-facts">
-              <div><dt>Số tệp</dt><dd id="r2-objects">--</dd></div>
-              <div><dt>Trạng thái</dt><dd id="r2-state">Đang đọc…</dd></div>
-            </dl>
-            <p class="usage-note" id="r2-note">Tính cả tệp cảnh và âm thanh trên R2. Cập nhật tối đa mỗi 60 giây.</p>
-          </article>
-        </div>
+      <!-- Tab: Nội dung -->
+      <div class="tab-panel" id="tab-panel-content" role="tabpanel" aria-labelledby="tab-btn-content" data-tab-panel="content" hidden>
+        <!-- include: panels/content.html -->
+      </div>
 
-        <div class="limits-strip">
-          <span class="limits-title">Giới hạn gói miễn phí</span>
-          <div class="limits-items">
-            <span>Chat mỗi ngày <strong id="limits-chat">--</strong></span>
-            <span>Mỗi bản lưu tối đa <strong id="limits-snapshot">--</strong></span>
-            <span>Kho tệp <strong id="limits-r2">--</strong></span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Cờ hệ thống -->
-      <section class="panel-card flags-card" id="flags-card" aria-labelledby="flags-title">
-        <div class="panel-header">
-          <div class="panel-title-group">
-            <h2 class="panel-title" id="flags-title">Cờ hệ thống</h2>
-            <span class="panel-desc">Lưu xong có hiệu lực trong khoảng 30 giây, không cần deploy</span>
-          </div>
-          <span class="usage-tag" id="flags-state">Đang đọc…</span>
-        </div>
-
-        <div class="flags-body">
-          <div class="flags-toggles">
-            <label class="flag-row" for="flag-chat">
-              <span class="flag-text">
-                <span class="flag-name">Trợ lý chat</span>
-                <span class="flag-desc">Tắt thì mọi người không gửi được câu hỏi mới.</span>
-              </span>
-              <span class="switch">
-                <input type="checkbox" id="flag-chat" />
-                <span class="switch-track" aria-hidden="true"></span>
-              </span>
-            </label>
-
-            <label class="flag-row" for="flag-rooms">
-              <span class="flag-text">
-                <span class="flag-name">Phòng học nhóm</span>
-                <span class="flag-desc">Tắt thì không tạo phòng mới và không xem danh sách phòng.</span>
-              </span>
-              <span class="switch">
-                <input type="checkbox" id="flag-rooms" />
-                <span class="switch-track" aria-hidden="true"></span>
-              </span>
-            </label>
-
-            <label class="flag-row" for="flag-maintenance">
-              <span class="flag-text">
-                <span class="flag-name">Chế độ bảo trì</span>
-                <span class="flag-desc">Hiện banner nhắc trên web; chat và phòng học vẫn chạy.</span>
-              </span>
-              <span class="switch">
-                <input type="checkbox" id="flag-maintenance" />
-                <span class="switch-track" aria-hidden="true"></span>
-              </span>
-            </label>
-          </div>
-
-          <div class="flags-fields">
-            <div class="flag-field">
-              <label class="flag-name" for="flag-banner">Thông báo trên trang chủ</label>
-              <input
-                class="flag-input"
-                id="flag-banner"
-                type="text"
-                maxlength="140"
-                placeholder="Ví dụ: Tối nay bảo trì từ 22:00 đến 22:30."
-                autocomplete="off"
-              />
-              <span class="flag-hint"><span id="flag-banner-count">0</span>/140 ký tự. Để trống thì không hiện banner.</span>
-            </div>
-
-            <div class="flag-field">
-              <label class="flag-name" for="flag-limit">Câu hỏi mỗi người mỗi ngày</label>
-              <input
-                class="flag-input flag-number"
-                id="flag-limit"
-                type="number"
-                min="1"
-                max="200"
-                step="1"
-                inputmode="numeric"
-              />
-              <span class="flag-hint">Từ 1 đến 200 câu. Đang áp dụng: <strong id="flag-limit-current">--</strong> câu/người/ngày.</span>
-            </div>
-          </div>
-
-          <div class="flags-actions">
-            <p class="usage-note" id="flags-note">Chưa đọc được cờ hệ thống.</p>
-            <button class="btn-primary" id="flags-save" type="button" disabled>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                <polyline points="17 21 17 13 7 13 7 21"/>
-                <polyline points="7 3 7 8 15 8"/>
-              </svg>
-              <span>Lưu thay đổi</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Trợ lý chat -->
-      <section class="panel-card chat-panel" id="chat-panel" aria-labelledby="chat-title">
-        <div class="panel-header">
-          <div class="panel-title-group">
-            <h2 class="panel-title" id="chat-title">Trợ lý chat</h2>
-            <span class="panel-desc">Thử model, thứ tự trả lời, câu lệnh hệ thống và tài khoản hãng. Mỗi mục lưu riêng; thay đổi áp dụng sau khoảng 60 giây.</span>
-          </div>
-          <span class="usage-tag" id="chat-state">Đang đọc…</span>
-        </div>
-
-        <div class="chat-body">
-          <section class="chat-section" aria-labelledby="chat-model-title">
-            <header class="chat-section-head">
-              <span class="chat-step" aria-hidden="true">1</span>
-              <div class="chat-section-titles">
-                <h3 class="chat-section-title" id="chat-model-title">Thử model</h3>
-                <p class="chat-section-desc">Chọn hãng, chọn model của hãng đó rồi bấm Thử. Chỉ thử, không lưu vào cấu hình.</p>
-              </div>
-            </header>
-
-            <div class="chat-try" id="chat-try" hidden>
-              <div class="chat-try-row">
-                <div class="chat-try-field">
-                  <span class="chat-step-label">Hãng</span>
-                  <select
-                    class="flag-input chat-try-provider"
-                    id="chat-try-provider"
-                    aria-label="Hãng để thử"
-                    disabled
-                  ></select>
-                </div>
-                <div class="chat-try-field chat-try-model-field">
-                  <span class="chat-step-label">Model</span>
-                  <div class="chat-try-model-control" id="chat-try-model"></div>
-                </div>
-                <button class="btn-ghost chat-mini-btn" id="chat-try-run" type="button" disabled>Thử</button>
-              </div>
-              <p class="chat-feedback" id="chat-try-result" hidden></p>
-            </div>
-
-            <footer class="chat-section-foot">
-              <p class="chat-hint" id="chat-model-note">Chưa đọc được cấu hình chat.</p>
-            </footer>
-          </section>
-
-          <section class="chat-section" aria-labelledby="chat-chain-title">
-            <header class="chat-section-head">
-              <span class="chat-step" aria-hidden="true">2</span>
-              <div class="chat-section-titles">
-                <h3 class="chat-section-title" id="chat-chain-title">Thứ tự trả lời</h3>
-                <p class="chat-section-desc">Trợ lý chạy bước 1 trước; lỗi mới xuống bước 2, rồi bước 3. Sắp xếp tùy ý.</p>
-              </div>
-              <span class="chat-chip" id="chat-chain-chip">Đã lưu</span>
-            </header>
-
-            <div class="chat-chain" id="chat-chain"></div>
-            <p class="chat-hint" id="chat-chain-hint">Tối đa 5 bước. Bước 1 chạy trước, lỗi mới sang bước sau.</p>
-
-            <footer class="chat-section-foot">
-              <p class="chat-hint" id="chat-chain-note">Chưa đọc được thứ tự dự phòng.</p>
-              <div class="chat-actions">
-                <button class="btn-ghost" id="chat-chain-add" type="button" disabled>Thêm bước</button>
-                <button class="btn-primary" id="chat-chain-save" type="button" data-label="Lưu thứ tự" disabled>
-                  <span>Lưu thứ tự</span>
-                </button>
-              </div>
-            </footer>
-          </section>
-
-          <section class="chat-section" aria-labelledby="chat-prompt-title">
-            <header class="chat-section-head">
-              <span class="chat-step" aria-hidden="true">3</span>
-              <div class="chat-section-titles">
-                <h3 class="chat-section-title" id="chat-prompt-title">Câu lệnh hệ thống</h3>
-                <p class="chat-section-desc">Quy tắc trả lời áp dụng cho mọi câu hỏi của trợ lý.</p>
-              </div>
-              <span class="chat-chip" id="chat-prompt-chip">Đã lưu</span>
-            </header>
-
-            <label class="chat-field" for="chat-prompt">
-              <span class="chat-label">Nội dung câu lệnh</span>
-              <textarea
-                class="flag-input chat-prompt"
-                id="chat-prompt"
-                rows="6"
-                maxlength="4000"
-                spellcheck="false"
-                disabled
-              ></textarea>
-              <span class="chat-help"><span id="chat-prompt-count">0</span>/4000 ký tự. Không được để trống.</span>
-            </label>
-
-            <footer class="chat-section-foot">
-              <p class="chat-hint" id="chat-prompt-note">Chưa đọc được câu lệnh hệ thống.</p>
-              <div class="chat-actions">
-                <button class="btn-primary" id="chat-prompt-save" type="button" data-label="Lưu câu lệnh" disabled>
-                  <span>Lưu câu lệnh</span>
-                </button>
-              </div>
-            </footer>
-          </section>
-
-          <section class="chat-section" aria-labelledby="chat-provider-title">
-            <header class="chat-section-head">
-              <span class="chat-step" aria-hidden="true">4</span>
-              <div class="chat-section-titles">
-                <h3 class="chat-section-title" id="chat-provider-title">Nhà cung cấp</h3>
-                <p class="chat-section-desc">Tài khoản của các hãng dùng trong bước dự phòng. Key đã lưu chỉ hiện dạng che.</p>
-              </div>
-              <span class="chat-chip" id="chat-provider-chip">Đã lưu</span>
-            </header>
-
-            <div class="chat-providers" id="chat-providers"></div>
-
-            <button class="btn-ghost chat-provider-toggle" id="chat-provider-toggle" type="button" disabled>
-              Thêm nhà cung cấp
-            </button>
-
-            <div class="chat-provider-form" id="chat-provider-form" hidden>
-              <div class="chat-fields">
-                <label class="chat-field" for="chat-provider-id">
-                  <span class="chat-label">Mã nhà cung cấp</span>
-                  <input
-                    class="flag-input"
-                    id="chat-provider-id"
-                    type="text"
-                    maxlength="40"
-                    placeholder="Ví dụ: groq-1"
-                    autocomplete="off"
-                    spellcheck="false"
-                    disabled
-                  />
-                  <span class="chat-help">Chữ, số, gạch ngang. Không đổi được sau khi lưu.</span>
-                </label>
-                <label class="chat-field" for="chat-provider-type">
-                  <span class="chat-label">Loại</span>
-                  <select class="flag-input" id="chat-provider-type" disabled></select>
-                  <span class="chat-help">Chọn loại để tự điền địa chỉ gốc.</span>
-                </label>
-                <label class="chat-field" for="chat-provider-label">
-                  <span class="chat-label">Tên hiển thị</span>
-                  <input
-                    class="flag-input"
-                    id="chat-provider-label"
-                    type="text"
-                    maxlength="60"
-                    placeholder="Ví dụ: Groq chính"
-                    autocomplete="off"
-                    disabled
-                  />
-                </label>
-                <label class="chat-field" for="chat-provider-url">
-                  <span class="chat-label">Địa chỉ gốc</span>
-                  <input
-                    class="flag-input"
-                    id="chat-provider-url"
-                    type="url"
-                    maxlength="200"
-                    placeholder="https://api.example.com/v1"
-                    autocomplete="off"
-                    spellcheck="false"
-                    disabled
-                  />
-                </label>
-                <label class="chat-field chat-field-wide" for="chat-provider-key">
-                  <span class="chat-label">API key</span>
-                  <input
-                    class="flag-input"
-                    id="chat-provider-key"
-                    type="password"
-                    maxlength="500"
-                    placeholder="Dán key của hãng"
-                    autocomplete="new-password"
-                    spellcheck="false"
-                    disabled
-                  />
-                  <span class="chat-help" id="chat-provider-key-hint">Key chỉ gửi lên máy chủ, không lưu trong trình duyệt.</span>
-                </label>
-              </div>
-
-              <p class="chat-feedback" id="chat-provider-check-result" hidden></p>
-              <p class="chat-hint" id="chat-provider-note">Điền thông tin rồi thêm vào danh sách nháp.</p>
-
-              <div class="chat-actions">
-                <button class="btn-ghost" id="chat-provider-check" type="button" disabled>Kiểm tra key</button>
-                <button class="btn-ghost" id="chat-provider-reset" type="button" disabled>Hủy</button>
-                <button class="btn-ghost" id="chat-provider-apply" type="button" disabled>Thêm vào danh sách</button>
-              </div>
-            </div>
-
-            <footer class="chat-section-foot">
-              <p class="chat-hint" id="chat-provider-save-note">Sửa danh sách xong bấm “Lưu nhà cung cấp” để áp dụng.</p>
-              <div class="chat-actions">
-                <button class="btn-primary" id="chat-provider-save" type="button" data-label="Lưu nhà cung cấp" disabled>
-                  <span>Lưu nhà cung cấp</span>
-                </button>
-              </div>
-            </footer>
-          </section>
-        </div>
-      </section>
-
-      <!-- Nội dung: cảnh nền, âm thanh, nhạc -->
-      <section class="panel-card content-panel" id="content-panel" aria-labelledby="content-title">
-        <div class="panel-header">
-          <div class="panel-title-group">
-            <h2 class="panel-title" id="content-title">Nội dung</h2>
-            <span class="panel-desc">Thêm, sửa, ẩn và xóa cảnh nền, âm thanh, nhạc. Bấm Lưu là lên sóng ngay; mỗi lần lưu tạo một bản trong Lịch sử để quay lại khi cần.</span>
-          </div>
-          <span class="usage-tag" id="content-state">Đang đọc…</span>
-        </div>
-
-        <div class="content-body">
-          <div class="content-meta" id="content-meta">Chưa đọc được bản phát hành.</div>
-
-          <div class="content-seed" id="content-seed" hidden>
-            <p>
-              Kho nội dung đang trống. Nạp bộ nội dung đang đóng gói trong ứng dụng
-              (cảnh, âm thanh, nhạc) làm bản đầu tiên rồi sửa dần từ đó.
-            </p>
-            <button class="btn-primary" id="content-seed-run" type="button" data-label="Nạp bộ nội dung ban đầu">
-              <span>Nạp bộ nội dung ban đầu</span>
-            </button>
-            <p class="chat-feedback" id="content-seed-note" hidden></p>
-          </div>
-
-          <div class="content-tabs" role="tablist" aria-label="Loại nội dung">
-            <button class="content-tab is-active" id="tab-scenes" type="button" role="tab" aria-selected="true" aria-controls="pane-scenes" data-tab="scenes">Cảnh nền <span class="content-tab-count" id="count-scenes">--</span></button>
-            <button class="content-tab" id="tab-sounds" type="button" role="tab" aria-selected="false" aria-controls="pane-sounds" data-tab="sounds">Âm thanh <span class="content-tab-count" id="count-sounds">--</span></button>
-            <button class="content-tab" id="tab-tracks" type="button" role="tab" aria-selected="false" aria-controls="pane-tracks" data-tab="tracks">Nhạc <span class="content-tab-count" id="count-tracks">--</span></button>
-          </div>
-
-          <!-- Cảnh nền -->
-          <div class="content-pane" id="pane-scenes" role="tabpanel" aria-labelledby="tab-scenes">
-            <form class="content-form" id="scene-form" hidden novalidate>
-              <header class="content-form-head">
-                <h3 class="chat-section-title" id="scene-form-title">Thêm cảnh</h3>
-                <p class="chat-feedback" id="scene-form-note" hidden></p>
-              </header>
-              <div class="chat-fields">
-                <label class="chat-field">
-                  <span class="chat-label">Tên cảnh</span>
-                  <input class="flag-input" id="scene-name" type="text" maxlength="80" placeholder="Ví dụ: Mưa trên phố Nhật" />
-                </label>
-                <label class="chat-field">
-                  <span class="chat-label">Nhóm</span>
-                  <select class="flag-input" id="scene-category">
-                    <option value="chill">Chill</option>
-                    <option value="anime">Anime</option>
-                    <option value="cyberpunk">Cyberpunk</option>
-                    <option value="dark">Tối</option>
-                    <option value="urban">Thành phố</option>
-                    <option value="nature">Thiên nhiên</option>
-                    <option value="cartoon">Hoạt hình</option>
-                    <option value="cute">Dễ thương</option>
-                  </select>
-                </label>
-                <label class="chat-field">
-                  <span class="chat-label">Loại</span>
-                  <select class="flag-input" id="scene-type">
-                    <option value="IMAGE">Ảnh</option>
-                    <option value="VIDEO">Video</option>
-                  </select>
-                </label>
-                <label class="chat-field">
-                  <span class="chat-label">Nhãn (không bắt buộc)</span>
-                  <select class="flag-input" id="scene-badge">
-                    <option value="">Không nhãn</option>
-                    <option value="4K">4K</option>
-                    <option value="HD">HD</option>
-                    <option value="MỚI">MỚI</option>
-                    <option value="HOT">HOT</option>
-                  </select>
-                </label>
-                <label class="chat-field chat-field-wide">
-                  <span class="chat-label">Đường dẫn file (trong kho)</span>
-                  <input class="flag-input" id="scene-media" type="text" maxlength="200" placeholder="scenes/ten-file.webp" />
-                  <span class="chat-help">Tương đối so với gốc kho, ví dụ <strong>scenes/mua-pho.webp</strong>.</span>
-                </label>
-                <label class="chat-field chat-field-wide">
-                  <span class="chat-label">Ảnh xem trước</span>
-                  <input class="flag-input" id="scene-thumb" type="text" maxlength="200" placeholder="thumbnails/mua-pho.webp" />
-                  <span class="chat-help">Video cần ảnh xem trước; ảnh thường dùng lại chính file ảnh.</span>
-                </label>
-                <label class="chat-field chat-field-wide">
-                  <span class="chat-label">Mô tả (không bắt buộc)</span>
-                  <input class="flag-input" id="scene-description" type="text" maxlength="300" placeholder="Một dòng mô tả không khí của cảnh" />
-                </label>
-                <label class="chat-field chat-field-wide">
-                  <span class="chat-label">Thẻ (cách nhau bằng dấu phẩy)</span>
-                  <input class="flag-input" id="scene-tags" type="text" placeholder="chill, mưa, đêm" />
-                </label>
-                <div class="chat-field chat-field-wide">
-                  <span class="chat-label">Ẩn khỏi ứng dụng</span>
-                  <label class="chat-check">
-                    <span class="chat-mini-switch">
-                      <input id="scene-hidden" type="checkbox" />
-                      <span class="switch-track"></span>
-                    </span>
-                    <span class="chat-help">Mục ẩn vẫn nằm trong kho nhưng người học không thấy.</span>
-                  </label>
-                </div>
-              </div>
-              <div class="content-preview" id="scene-preview"></div>
-              <footer class="chat-section-foot">
-                <p class="chat-hint" id="scene-form-hint">Điền tên và đường dẫn file rồi bấm Lưu.</p>
-                <div class="chat-actions">
-                  <button class="btn-ghost" id="scene-cancel" type="button">Hủy</button>
-                  <button class="btn-primary" id="scene-save" type="button" data-label="Lưu cảnh">
-                    <span>Lưu cảnh</span>
-                  </button>
-                </div>
-              </footer>
-            </form>
-
-            <div class="content-toolbar">
-              <input class="flag-input content-search" id="scene-search" type="search" placeholder="Tìm theo tên…" />
-              <select class="flag-input content-filter" id="scene-filter">
-                <option value="">Tất cả nhóm</option>
-                <option value="chill">Chill</option>
-                <option value="anime">Anime</option>
-                <option value="cyberpunk">Cyberpunk</option>
-                <option value="dark">Tối</option>
-                <option value="urban">Thành phố</option>
-                <option value="nature">Thiên nhiên</option>
-                <option value="cartoon">Hoạt hình</option>
-                <option value="cute">Dễ thương</option>
-              </select>
-              <button class="btn-primary" id="scene-add" type="button">Thêm cảnh</button>
-            </div>
-
-            <div class="content-table-wrap">
-              <table class="services-table content-table">
-                <thead>
-                  <tr>
-                    <th>Xem trước</th>
-                    <th>Tên</th>
-                    <th>Nhóm</th>
-                    <th>Loại</th>
-                    <th>File</th>
-                    <th class="text-right">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody id="scene-rows">
-                  <tr><td colspan="6">Đang đọc…</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Âm thanh -->
-          <div class="content-pane" id="pane-sounds" role="tabpanel" aria-labelledby="tab-sounds" hidden>
-            <form class="content-form" id="sound-form" hidden novalidate>
-              <header class="content-form-head">
-                <h3 class="chat-section-title" id="sound-form-title">Thêm âm thanh</h3>
-                <p class="chat-feedback" id="sound-form-note" hidden></p>
-              </header>
-              <div class="chat-fields">
-                <label class="chat-field">
-                  <span class="chat-label">Tên âm thanh</span>
-                  <input class="flag-input" id="sound-name" type="text" maxlength="60" placeholder="Ví dụ: Mưa rào" />
-                </label>
-                <label class="chat-field">
-                  <span class="chat-label">Nhóm</span>
-                  <select class="flag-input" id="sound-category">
-                    <option value="rain">Mưa</option>
-                    <option value="nature">Thiên nhiên</option>
-                    <option value="indoor">Trong nhà</option>
-                  </select>
-                </label>
-                <label class="chat-field">
-                  <span class="chat-label">Icon</span>
-                  <select class="flag-input" id="sound-icon">
-                    <option value="CloudRain">CloudRain — mưa</option>
-                    <option value="Zap">Zap — sấm</option>
-                    <option value="Trees">Trees — cây</option>
-                    <option value="Bird">Bird — chim</option>
-                    <option value="Flame">Flame — lửa</option>
-                    <option value="Waves">Waves — sóng</option>
-                    <option value="Wind">Wind — gió</option>
-                    <option value="Keyboard">Keyboard — bàn phím</option>
-                    <option value="Coffee">Coffee — quán cà phê</option>
-                    <option value="Fan">Fan — quạt</option>
-                    <option value="TrainTrack">TrainTrack — tàu</option>
-                    <option value="Plane">Plane — máy bay</option>
-                    <option value="Car">Car — xe</option>
-                    <option value="Droplets">Droplets — giọt nước</option>
-                    <option value="Orbit">Orbit — không gian</option>
-                  </select>
-                </label>
-                <label class="chat-field">
-                  <span class="chat-label">Đường dẫn file mp3</span>
-                  <input class="flag-input" id="sound-audio" type="text" maxlength="200" placeholder="sounds/mua-rao.mp3" />
-                </label>
-                <div class="chat-field chat-field-wide">
-                  <span class="chat-label">Ẩn khỏi ứng dụng</span>
-                  <label class="chat-check">
-                    <span class="chat-mini-switch">
-                      <input id="sound-hidden" type="checkbox" />
-                      <span class="switch-track"></span>
-                    </span>
-                    <span class="chat-help">Mục ẩn vẫn nằm trong kho nhưng người học không thấy.</span>
-                  </label>
-                </div>
-              </div>
-              <div class="content-preview" id="sound-preview"></div>
-              <footer class="chat-section-foot">
-                <p class="chat-hint" id="sound-form-hint">Điền tên và đường dẫn file rồi bấm Lưu.</p>
-                <div class="chat-actions">
-                  <button class="btn-ghost" id="sound-cancel" type="button">Hủy</button>
-                  <button class="btn-primary" id="sound-save" type="button" data-label="Lưu âm thanh">
-                    <span>Lưu âm thanh</span>
-                  </button>
-                </div>
-              </footer>
-            </form>
-
-            <div class="content-toolbar">
-              <input class="flag-input content-search" id="sound-search" type="search" placeholder="Tìm theo tên…" />
-              <button class="btn-primary" id="sound-add" type="button">Thêm âm thanh</button>
-            </div>
-
-            <div class="content-table-wrap">
-              <table class="services-table content-table">
-                <thead>
-                  <tr>
-                    <th>Icon</th>
-                    <th>Tên</th>
-                    <th>Nhóm</th>
-                    <th>File</th>
-                    <th class="text-right">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody id="sound-rows">
-                  <tr><td colspan="5">Đang đọc…</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Nhạc -->
-          <div class="content-pane" id="pane-tracks" role="tabpanel" aria-labelledby="tab-tracks" hidden>
-            <form class="content-form" id="track-form" hidden novalidate>
-              <header class="content-form-head">
-                <h3 class="chat-section-title" id="track-form-title">Thêm bài nhạc</h3>
-                <p class="chat-feedback" id="track-form-note" hidden></p>
-              </header>
-              <div class="chat-fields">
-                <label class="chat-field">
-                  <span class="chat-label">Tiêu đề</span>
-                  <input class="flag-input" id="track-title" type="text" maxlength="120" placeholder="Ví dụ: Đêm yên" />
-                </label>
-                <label class="chat-field">
-                  <span class="chat-label">Ca sĩ / nghệ sĩ</span>
-                  <input class="flag-input" id="track-artist" type="text" maxlength="80" placeholder="Tên nghệ sĩ" />
-                </label>
-                <label class="chat-field">
-                  <span class="chat-label">Thể loại</span>
-                  <input class="flag-input" id="track-genre" type="text" maxlength="40" placeholder="Ví dụ: Lo-fi" />
-                </label>
-                <label class="chat-field">
-                  <span class="chat-label">Nhóm nhạc</span>
-                  <select class="flag-input" id="track-mood">
-                    <option value="lofi">Lo-fi</option>
-                    <option value="jazz">Jazz</option>
-                    <option value="relax">Thư giãn</option>
-                  </select>
-                </label>
-                <label class="chat-field chat-field-wide">
-                  <span class="chat-label">Đường dẫn file mp3</span>
-                  <input class="flag-input" id="track-audio" type="text" maxlength="200" placeholder="musics/lofi/dem-yen.mp3" />
-                </label>
-                <label class="chat-field chat-field-wide">
-                  <span class="chat-label">Ảnh bìa</span>
-                  <input class="flag-input" id="track-cover" type="text" maxlength="500" placeholder="https://… hoặc covers/dem-yen.webp" />
-                  <span class="chat-help">Dán URL ngoài hoặc đường dẫn tương đối trong kho.</span>
-                </label>
-                <div class="chat-field chat-field-wide">
-                  <span class="chat-label">Ẩn khỏi ứng dụng</span>
-                  <label class="chat-check">
-                    <span class="chat-mini-switch">
-                      <input id="track-hidden" type="checkbox" />
-                      <span class="switch-track"></span>
-                    </span>
-                    <span class="chat-help">Mục ẩn vẫn nằm trong kho nhưng người học không thấy.</span>
-                  </label>
-                </div>
-              </div>
-              <div class="content-preview" id="track-preview"></div>
-              <footer class="chat-section-foot">
-                <p class="chat-hint" id="track-form-hint">Đổi nhóm nhạc là bài chuyển sang nhóm mới khi lưu.</p>
-                <div class="chat-actions">
-                  <button class="btn-ghost" id="track-cancel" type="button">Hủy</button>
-                  <button class="btn-primary" id="track-save" type="button" data-label="Lưu bài nhạc">
-                    <span>Lưu bài nhạc</span>
-                  </button>
-                </div>
-              </footer>
-            </form>
-
-            <div class="content-toolbar">
-              <input class="flag-input content-search" id="track-search" type="search" placeholder="Tìm theo tên bài hoặc ca sĩ…" />
-              <select class="flag-input content-filter" id="track-filter">
-                <option value="">Tất cả nhóm</option>
-                <option value="lofi">Lo-fi</option>
-                <option value="jazz">Jazz</option>
-                <option value="relax">Thư giãn</option>
-              </select>
-              <button class="btn-primary" id="track-add" type="button">Thêm bài nhạc</button>
-            </div>
-
-            <div class="content-table-wrap">
-              <table class="services-table content-table">
-                <thead>
-                  <tr>
-                    <th>Bìa</th>
-                    <th>Bài</th>
-                    <th>Nhóm</th>
-                    <th>File</th>
-                    <th class="text-right">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody id="track-rows">
-                  <tr><td colspan="5">Đang đọc…</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <p class="chat-feedback" id="content-note" hidden></p>
-
-          <section class="content-history" aria-labelledby="content-history-title">
-            <header class="chat-section-head">
-              <span class="chat-step" aria-hidden="true">↺</span>
-              <div class="chat-section-titles">
-                <h3 class="chat-section-title" id="content-history-title">Lịch sử</h3>
-                <p class="chat-section-desc">20 bản gần nhất. Quay lại một bản sẽ tạo bản mới cùng nội dung, không xóa bản cũ.</p>
-              </div>
-            </header>
-            <div class="content-table-wrap">
-              <table class="services-table content-table">
-                <thead>
-                  <tr>
-                    <th>Bản</th>
-                    <th>Thời gian</th>
-                    <th>Người lưu</th>
-                    <th>Số mục</th>
-                    <th class="text-right">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody id="content-version-rows">
-                  <tr><td colspan="5">Đang đọc…</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <footer class="chat-section-foot">
-              <p class="chat-hint" id="content-history-note">Chưa đọc được lịch sử.</p>
-              <div class="chat-actions">
-                <button class="btn-ghost" id="content-download" type="button" disabled>Tải JSON bản mới nhất</button>
-              </div>
-            </footer>
-          </section>
-        </div>
-      </section>
-
-      <!-- Main Panel: Nhật ký lỗi & dịch vụ -->
-      <div class="section-layout">
-        <!-- Lỗi & dự phòng -->
-        <section class="panel-card" id="errors-card" aria-labelledby="errors-title">
-          <div class="panel-header">
-            <div class="panel-title-group">
-              <h2 class="panel-title" id="errors-title">Lỗi &amp; dự phòng gần đây</h2>
-              <span class="panel-desc">20 lỗi mới nhất, tự xóa sau 14 ngày</span>
-            </div>
-          </div>
-          <table class="services-table">
-            <thead>
-              <tr>
-                <th>Thời gian</th>
-                <th>Nguồn</th>
-                <th>Mã lỗi</th>
-                <th>Ghi chú</th>
-              </tr>
-            </thead>
-            <tbody id="error-rows">
-              <tr><td colspan="4">Chưa có lỗi nào.</td></tr>
-            </tbody>
-          </table>
-          <div class="panel-footer">
-            <p class="usage-note" id="errors-note">Không có lỗi nào trong 14 ngày gần đây.</p>
-          </div>
-        </section>
-
-        <!-- Dịch vụ thành phần -->
-        <section class="panel-card">
-          <div class="panel-header">
-            <div class="panel-title-group">
-              <h2 class="panel-title">Các dịch vụ đang chạy</h2>
-              <span class="panel-desc">Thời gian phản hồi của từng dịch vụ <span class="desc-extra">(tối đa 10 giây)</span></span>
-            </div>
-          </div>
-
-          <table class="services-table">
-            <thead>
-              <tr>
-                <th>Dịch vụ</th>
-                <th>Địa chỉ kiểm tra</th>
-                <th>Quyền truy cập</th>
-                <th class="text-right">Thời gian phản hồi</th>
-                <th class="text-right">Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody id="checks">
-              <tr>
-                <td>
-                  <div class="service-identity">
-                    <div class="service-avatar">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    </div>
-                    <div>
-                      <div class="service-name">Chat &amp; trợ lý</div>
-                      <div class="service-desc">Trả lời câu hỏi và gợi ý học tập</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="endpoint-pill">
-                    <span>/health</span>
-                  </div>
-                </td>
-                <td><span class="auth-badge">Công khai</span></td>
-                <td class="latency-cell">--</td>
-                <td class="text-right"><span class="badge-wait">Đang kiểm tra</span></td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="service-identity">
-                    <div class="service-avatar">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-                    </div>
-                    <div>
-                      <div class="service-name">Lưu dữ liệu</div>
-                      <div class="service-desc">Lưu dữ liệu học tập lên đám mây</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="endpoint-pill">
-                    <span>/health</span>
-                  </div>
-                </td>
-                <td><span class="auth-badge">Công khai</span></td>
-                <td class="latency-cell">--</td>
-                <td class="text-right"><span class="badge-wait">Đang kiểm tra</span></td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="service-identity">
-                    <div class="service-avatar">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                    </div>
-                    <div>
-                      <div class="service-name">Phòng học nhóm</div>
-                      <div class="service-desc">Phòng học video nhóm</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="endpoint-pill">
-                    <span>/usage</span>
-                  </div>
-                </td>
-                <td><span class="auth-badge token">Cần mã quản trị</span></td>
-                <td class="latency-cell">--</td>
-                <td class="text-right"><span class="badge-wait">Đang kiểm tra</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-
-        <!-- Pipeline Architecture Card -->
-        <section class="panel-card">
-          <div class="panel-header">
-            <div class="panel-title-group">
-              <h2 class="panel-title">4 lớp bảo vệ khi đăng nhập</h2>
-              <span class="panel-desc">Mật khẩu và mã truy cập không bao giờ được lưu trên trình duyệt.</span>
-            </div>
-          </div>
-
-          <div class="pipeline-grid">
-            <div class="pipeline-step">
-              <div class="pipeline-step-head">
-                <span class="step-order">01 / GỬI YÊU CẦU</span>
-                <span class="step-icon">💻</span>
-              </div>
-              <span class="step-name">Trình duyệt</span>
-              <p class="step-info">Trình duyệt hỏi số liệu tổng quan, không gửi kèm mật khẩu hay mã truy cập.</p>
-            </div>
-
-            <div class="pipeline-step">
-              <div class="pipeline-step-head">
-                <span class="step-order">02 / KIỂM TRA ĐĂNG NHẬP</span>
-                <span class="step-icon">🛡️</span>
-              </div>
-              <span class="step-name">Cổng đăng nhập Cloudflare</span>
-              <p class="step-info">Kiểm tra email đã được cấp quyền trước khi cho vào.</p>
-            </div>
-
-            <div class="pipeline-step">
-              <div class="pipeline-step-head">
-                <span class="step-order">03 / XÁC THỰC MÁY CHỦ</span>
-                <span class="step-icon">🔑</span>
-              </div>
-              <span class="step-name">Máy chủ quản trị</span>
-              <p class="step-info">Máy chủ kiểm tra chữ ký số; thiếu quyền hoặc sai chữ ký thì từ chối ngay.</p>
-            </div>
-
-            <div class="pipeline-step">
-              <div class="pipeline-step-head">
-                <span class="step-order">04 / TỔNG HỢP SỐ LIỆU</span>
-                <span class="step-icon">⚡</span>
-              </div>
-              <span class="step-name">Các dịch vụ</span>
-              <p class="step-info">Gom tình trạng, chat, dữ liệu và phút học nhóm; mục nào lỗi thì báo đỏ.</p>
-            </div>
-          </div>
-        </section>
+      <!-- Tab: Báo cáo -->
+      <div class="tab-panel" id="tab-panel-reports" role="tabpanel" aria-labelledby="tab-btn-reports" data-tab-panel="reports" hidden>
+        <!-- include: panels/reports.html -->
       </div>
     </main>
 
@@ -1079,8 +221,10 @@
     </footer>
 
     <!-- Logic Script -->
-    <script src="admin-content.js" defer></script>
-    <script src="admin-chat.js" defer></script>
-    <script src="admin.js" defer></script>
+    <script src="scripts/tabs.js" defer></script>
+    <script src="scripts/content.js" defer></script>
+    <script src="scripts/reports.js" defer></script>
+    <script src="scripts/chat.js" defer></script>
+    <script src="scripts/dashboard.js" defer></script>
   </body>
 </html>

@@ -76,3 +76,47 @@ CREATE TABLE IF NOT EXISTS content_manifest (
   PRIMARY KEY (version, kind)
 );
 CREATE INDEX IF NOT EXISTS idx_content_manifest_created ON content_manifest (created_at DESC);
+
+-- 7. BÁO CÁO NỘI DUNG & CHẶN NGƯỜI DÙNG (P0.5 — chính sách AI/UGC của Google Play)
+-- Báo cáo AI/phòng học do người dùng gửi qua data-api; admin xử lý qua admin-worker.
+-- Giữ 180 ngày, dọn ở lần đọc/ghi kế tiếp.
+CREATE TABLE IF NOT EXISTS content_reports (
+  id              TEXT PRIMARY KEY,
+  source          TEXT NOT NULL,              -- 'ai' | 'room'
+  reporter_uid    TEXT NOT NULL,
+  target_uid      TEXT,
+  room            TEXT,
+  session_id      TEXT,
+  message_id      TEXT,
+  content         TEXT,
+  reason          TEXT NOT NULL,
+  detail          TEXT,
+  status          TEXT NOT NULL DEFAULT 'open', -- open | resolved | dismissed
+  created_at      INTEGER NOT NULL,
+  resolved_at     INTEGER,
+  resolved_by     TEXT,
+  resolution_note TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_reports_status_created ON content_reports (status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reports_reporter_created ON content_reports (reporter_uid, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reports_target ON content_reports (target_uid, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reports_created ON content_reports (created_at);
+
+-- Chặn 2 chiều: mỗi dòng là một chiều. Server chặn việc vào chung phòng.
+CREATE TABLE IF NOT EXISTS user_blocks (
+  blocker_uid TEXT NOT NULL,
+  blocked_uid TEXT NOT NULL,
+  created_at  INTEGER NOT NULL,
+  PRIMARY KEY (blocker_uid, blocked_uid)
+);
+CREATE INDEX IF NOT EXISTS idx_user_blocks_blocked ON user_blocks (blocked_uid);
+
+-- Hạn chế do admin đặt sau khi xử lý báo cáo.
+CREATE TABLE IF NOT EXISTS user_restrictions (
+  uid            TEXT PRIMARY KEY,
+  ai_disabled    INTEGER NOT NULL DEFAULT 0,
+  rooms_disabled INTEGER NOT NULL DEFAULT 0,
+  note           TEXT,
+  updated_at     INTEGER NOT NULL,
+  updated_by     TEXT
+);
