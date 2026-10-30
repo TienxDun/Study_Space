@@ -293,6 +293,9 @@ export function useChatSessions({ user, open, notify }: SessionsArgs) {
     }
     // Khóa snapshot không cho đè lại phiên cũ trong 3.5s
     switchingSidRef.current = { sid: "", until: Date.now() + 3500 };
+    // Phiên đã chốt là trắng: nếu không, effect "chọn phiên khi mở" (chỉ chạy khi
+    // resolved=false) sẽ nạp lại phiên mới nhất và nuốt luôn cú bấm đầu tiên.
+    setResolved(true);
     setActiveSid(null);
     freshTitleRef.current = true;
     onSwitched();
