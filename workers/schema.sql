@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS content_reports (
   room            TEXT,
   session_id      TEXT,
   message_id      TEXT,
+  question        TEXT,                        -- câu hỏi dẫn tới câu trả lời AI
   content         TEXT,
   reason          TEXT NOT NULL,
   detail          TEXT,

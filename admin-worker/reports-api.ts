@@ -38,6 +38,7 @@ function toReport(row: Row, options: { preview?: boolean } = {}) {
     room: row.room ? String(row.room) : null,
     sessionId: row.session_id ? String(row.session_id) : null,
     messageId: row.message_id ? String(row.message_id) : null,
+    question: row.question ? String(row.question) : "",
     reason: String(row.reason || ""),
     detail: row.detail ? String(row.detail) : "",
     status: String(row.status || "open"),
@@ -121,7 +122,7 @@ async function getReport(env: AdminEnv, id: string): Promise<Response> {
   try {
     const row = await env.DB!.prepare(
       `SELECT id, source, reporter_uid, target_uid, room, session_id, message_id,
-              content, reason, detail, status, created_at, resolved_at, resolved_by,
+              question, content, reason, detail, status, created_at, resolved_at, resolved_by,
               resolution_note
          FROM content_reports WHERE id = ?`,
     )

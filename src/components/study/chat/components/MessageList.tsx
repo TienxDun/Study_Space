@@ -85,7 +85,7 @@ interface MessageListProps {
   onRegenerate: () => void;
   onReuse: (text: string) => void;
   onSuggest: (text: string) => void;
-  onReport?: (msg: { id: string; text: string }) => void;
+  onReport?: (msg: { id: string; text: string; question?: string }) => void;
   reportedIds?: string[];
 }
 
@@ -462,7 +462,14 @@ export function MessageList({
                   {/* Báo cáo câu trả lời (bắt buộc cho chính sách AI content của Play) */}
                   {onReport && (
                     <button
-                      onClick={() => onReport({ id: m.id, text: m.text })}
+                      onClick={() => {
+                        // Câu hỏi gần nhất trước câu trả lời này = ngữ cảnh admin cần.
+                        const prevUser = msgs
+                          .slice(0, i)
+                          .reverse()
+                          .find((x) => x.role === "user");
+                        onReport({ id: m.id, text: m.text, question: prevUser?.text ?? "" });
+                      }}
                       disabled={reported}
                       aria-label={reported ? "Đã báo cáo câu trả lời" : "Báo cáo câu trả lời"}
                       title={reported ? "Đã báo cáo" : "Báo cáo câu trả lời"}

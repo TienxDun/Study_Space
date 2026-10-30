@@ -29,6 +29,7 @@ const SEED_REPORTS: Row[] = [
     session_id: "sid-1",
     message_id: "msg-1",
     content: "Câu trả lời sai kiến thức.",
+    question: "Newton là gì?",
     reason: "inaccurate",
     detail: "",
     status: "open",
@@ -307,6 +308,7 @@ describe("Admin P2e — API báo cáo", () => {
     expect(ok.status).toBe(200);
     const body = await ok.json();
     expect(body.report.content).toBe("Câu trả lời sai kiến thức.");
+    expect(body.report.question).toBe("Newton là gì?");
 
     const missing = await worker.fetch(req("/api/admin/reports/report-9999"), envFor(fake));
     expect(missing.status).toBe(404);

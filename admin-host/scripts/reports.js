@@ -214,12 +214,20 @@
     if (report.sessionId) meta.appendChild(metaRow("Phiên chat", report.sessionId));
     if (report.messageId) meta.appendChild(metaRow("Tin nhắn", report.messageId));
     meta.appendChild(metaRow("Lý do", reasonLabel(report)));
+    if (report.detail) {
+      meta.appendChild(metaRow("Ghi chú của người báo cáo", report.detail));
+    }
     meta.appendChild(metaRow("Thời gian", formatTime(report.createdAt)));
     if (report.resolvedAt) {
       meta.appendChild(metaRow("Xử lý lúc", formatTime(report.resolvedAt)));
       meta.appendChild(metaRow("Người xử lý", report.resolvedBy));
       meta.appendChild(metaRow("Ghi chú xử lý", report.resolutionNote));
     }
+
+    var questionWrap = $("reports-question-wrap");
+    var questionText = report.question || "";
+    $("reports-detail-question").textContent = questionText;
+    questionWrap.hidden = !questionText;
 
     var content = $("reports-detail-content");
     content.textContent = report.content || report.contentPreview || "(không có nội dung)";

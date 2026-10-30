@@ -54,6 +54,7 @@ const REPORT_REASONS = {
 };
 const REPORT_DAILY_LIMIT = 10;
 const REPORT_CONTENT_MAX = 8000;
+const REPORT_QUESTION_MAX = 2000;
 const REPORT_DETAIL_MAX = 500;
 const REPORT_ROOM_MAX = 32;
 const REPORT_ID_MAX = 128;
@@ -594,6 +595,8 @@ const workerHandler = {
       }
 
       const content = cleanText(body.content, REPORT_CONTENT_MAX);
+      // Câu hỏi dẫn tới câu trả lời AI: chỉ có nghĩa với báo cáo AI.
+      const question = source === "ai" ? cleanText(body.question, REPORT_QUESTION_MAX) : "";
       const detail = cleanText(body.detail, REPORT_DETAIL_MAX);
       const sessionId = cleanText(body.sessionId, REPORT_ID_MAX);
       const messageId = cleanText(body.messageId, REPORT_ID_MAX);
@@ -632,8 +635,8 @@ const workerHandler = {
         await db
           .prepare(
             `INSERT INTO content_reports
-               (id, source, reporter_uid, target_uid, room, session_id, message_id, content, reason, detail, status, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)`
+               (id, source, reporter_uid, target_uid, room, session_id, message_id, question, content, reason, detail, status, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)`
           )
           .bind(
             id,
@@ -643,6 +646,7 @@ const workerHandler = {
             room || null,
             sessionId || null,
             messageId || null,
+            question || null,
             content || null,
             reason,
             detail || null,

@@ -76,6 +76,7 @@ CREATE TABLE content_reports (
   room TEXT,
   session_id TEXT,                   -- phiên chat
   message_id TEXT,                   -- tin nhắn AI
+  question TEXT,                     -- câu hỏi dẫn tới câu trả lời AI
   content TEXT,                      -- nội dung bị báo cáo (AI) hoặc mô tả
   reason TEXT NOT NULL,              -- mã lý do
   detail TEXT,                       -- ghi chú thêm
@@ -115,7 +116,7 @@ Thời hạn lưu đề xuất:
 ### data-api
 | Method | Path | Nội dung |
 |---|---|---|
-| POST | `/report` | `{ source, sessionId?, messageId?, content?, targetUid?, room?, reason, detail? }`; giới hạn ~10 báo cáo/ngày/UID |
+| POST | `/report` | `{ source, sessionId?, messageId?, question?, content?, targetUid?, room?, reason, detail? }`; `question` ≤2000 ký tự, chỉ dùng cho `source: "ai"`; giới hạn ~10 báo cáo/ngày/UID |
 | GET | `/blocks` | Danh sách UID đã chặn |
 | POST | `/blocks` | `{ targetUid }` — chặn |
 | DELETE | `/blocks/:uid` | Bỏ chặn |
@@ -186,6 +187,9 @@ Mọi thao tác ghi vào `admin_audit`.
 - [x] Gắn ở cả chat desktop (`StudyChatWidget`) và mobile (`MobileChatSheet`).
 - [x] Test: 8 ca mới (`report-ai-answer.test.tsx`), toàn bộ 640 test xanh, `tsc` sạch, `lint` 0 lỗi.
 - [x] Kiểm giao diện thật ở `/dev/report-check` (trang nháp đã xoá): nút cờ, dialog, trạng thái chọn lý do, toast lỗi.
+- [x] Lưu thêm câu hỏi của người dùng (cột `question`, 2026-10-30): `MessageList` lấy tin người dùng gần nhất trước câu trả lời, data-api lưu ≤2000 ký tự, panel Báo cáo hiện khối “Câu hỏi của người dùng” và dòng “Ghi chú của người báo cáo”.
+  - D1 `zenspace`: đã chạy `ALTER TABLE content_reports ADD COLUMN question TEXT` (2026-10-30), cột tồn tại trên production.
+  - Còn lại: dán `workers/data-api/worker.js` mới trong dashboard; bản cũ bỏ qua trường `question` nên không lỗi, chỉ chưa lưu.
 - [ ] Thử end-to-end bằng tài khoản thật sau khi deploy: gửi 1 báo cáo từ app → thấy trong tab Báo cáo.
 - **Điều kiện xong:** báo cáo từ app xuất hiện trong admin kèm nội dung tin.
 

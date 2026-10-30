@@ -31,6 +31,7 @@ function createMockD1() {
         room,
         session_id,
         message_id,
+        question,
         content,
         reason,
         detail,
@@ -44,6 +45,7 @@ function createMockD1() {
         room,
         session_id,
         message_id,
+        question,
         content,
         reason,
         detail,
@@ -193,6 +195,7 @@ describe("Worker Data-API — Báo cáo nội dung & chặn", () => {
       body: {
         source: "ai",
         reason: "inaccurate",
+        question: "Newton là gì?",
         content: "Câu trả lời này sai kiến thức.",
         sessionId: "sid-1",
         messageId: "msg-1",
@@ -214,6 +217,7 @@ describe("Worker Data-API — Báo cáo nội dung & chặn", () => {
       room: null,
       session_id: "sid-1",
       message_id: "msg-1",
+      question: "Newton là gì?",
       content: "Câu trả lời này sai kiến thức.",
       reason: "inaccurate",
       detail: "Sai công thức.",
@@ -283,6 +287,33 @@ describe("Worker Data-API — Báo cáo nội dung & chặn", () => {
       },
     });
     expect(self.status).toBe(400);
+  });
+
+  it("cắt câu hỏi dài 2000 ký tự, báo cáo phòng không lưu câu hỏi", async () => {
+    await call("/report", {
+      method: "POST",
+      token: "valid-token-alice",
+      body: {
+        source: "ai",
+        reason: "other",
+        content: "câu trả lời",
+        question: "q".repeat(2500),
+      },
+    });
+    expect(mockDb._tables.content_reports[0].question).toHaveLength(2000);
+
+    await call("/report", {
+      method: "POST",
+      token: "valid-token-alice",
+      body: {
+        source: "room",
+        reason: "harassment",
+        room: "phong-hoc-1",
+        targetUid: "user_bob",
+        question: "không dùng cho phòng",
+      },
+    });
+    expect(mockDb._tables.content_reports[1].question).toBeFalsy();
   });
 
   it("giới hạn 10 báo cáo/ngày/UID, không tính báo cáo cũ", async () => {

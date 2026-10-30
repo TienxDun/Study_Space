@@ -22,12 +22,15 @@ const REPORT_API_URL = (
 ).replace(/\/+$/, "");
 
 const CONTENT_MAX = 8000;
+const QUESTION_MAX = 2000;
 const DETAIL_MAX = 500;
 
 export interface AiReportInput {
   getToken: () => Promise<string | null>;
   answer: string;
   reason: AiReportReason;
+  /** Câu hỏi dẫn tới câu trả lời; admin cần để hiểu ngữ cảnh báo cáo. */
+  question?: string;
   detail?: string;
   sessionId?: string | null;
   messageId?: string | null;
@@ -47,6 +50,7 @@ export async function submitAiReport(input: AiReportInput): Promise<AiReportResu
         source: "ai",
         reason: input.reason,
         content: input.answer.slice(0, CONTENT_MAX),
+        question: input.question?.slice(0, QUESTION_MAX) || "",
         detail: input.detail?.trim().slice(0, DETAIL_MAX) || "",
         sessionId: input.sessionId || "",
         messageId: input.messageId || "",

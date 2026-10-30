@@ -86,6 +86,7 @@ describe("Nút báo cáo trong MessageList", () => {
     expect(onReport).toHaveBeenCalledWith({
       id: "a1",
       text: "Định luật 1 nói về quán tính.",
+      question: "Giải thích định luật Newton",
     });
   });
 
@@ -121,7 +122,7 @@ describe("ReportAnswerDialog", () => {
     act(() => {
       root.render(
         <ReportAnswerDialog
-          target={{ id: "a1", text: "Câu trả lời cần kiểm tra" }}
+          target={{ id: "a1", text: "Câu trả lời cần kiểm tra", question: "Newton là gì?" }}
           sessionId="sid-1"
           getToken={async () => "token-abc"}
           onClose={onClose}
@@ -176,6 +177,7 @@ describe("ReportAnswerDialog", () => {
       source: "ai",
       reason: "inaccurate",
       content: "Câu trả lời cần kiểm tra",
+      question: "Newton là gì?",
       detail: "",
       sessionId: "sid-1",
       messageId: "a1",

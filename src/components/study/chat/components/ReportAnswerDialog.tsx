@@ -12,6 +12,7 @@ import {
 export interface ReportAnswerTarget {
   id: string;
   text: string;
+  question?: string;
 }
 
 interface ReportAnswerDialogProps {
@@ -65,6 +66,7 @@ export function ReportAnswerDialog({
     const result = await submitAiReport({
       getToken,
       answer: target.text,
+      question: target.question,
       reason,
       detail,
       sessionId,
@@ -122,7 +124,14 @@ export function ReportAnswerDialog({
           </button>
         </div>
 
-        <blockquote className="mt-3.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs leading-relaxed text-zinc-300 break-words">
+        {target.question ? (
+          <p className="mt-3.5 text-[11px] leading-relaxed text-zinc-400 break-words">
+            <span className="font-semibold text-zinc-300">Bạn đã hỏi: </span>
+            <span className="line-clamp-2">{target.question}</span>
+          </p>
+        ) : null}
+
+        <blockquote className="mt-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs leading-relaxed text-zinc-300 break-words">
           <span className="line-clamp-3">{preview}</span>
         </blockquote>
 

@@ -26,7 +26,9 @@ const LIST: Row[] = [
     sessionId: "sid-1",
     messageId: "msg-1",
     contentPreview: "Câu trả lời sai.",
+    question: "Newton là gì?",
     reason: "inaccurate",
+    detail: "demo",
     status: "open",
     createdAt: 1700000000000,
     resolvedAt: 0,
@@ -170,6 +172,25 @@ describe("panel Báo cáo", () => {
     expect(content.textContent).toContain("<img src=x");
     expect(content.querySelector("img")).toBeNull();
     expect(el("reports-detail-meta").textContent).toContain("Thông tin sai/lạc hậu");
+  });
+
+  it("hiện ghi chú của người báo cáo trong khối chi tiết", async () => {
+    await boot();
+    (rows()[0].querySelector("button") as HTMLButtonElement).click();
+    await flush();
+
+    const meta = el("reports-detail-meta").textContent || "";
+    expect(meta).toContain("Ghi chú của người báo cáo");
+    expect(meta).toContain("demo");
+  });
+
+  it("hiện câu hỏi của người dùng khi báo cáo có lưu", async () => {
+    await boot();
+    (rows()[0].querySelector("button") as HTMLButtonElement).click();
+    await flush();
+
+    expect(el("reports-question-wrap").hidden).toBe(false);
+    expect(el("reports-detail-question").textContent).toBe("Newton là gì?");
   });
 
   it("đánh dấu đã xử lý gửi POST kèm ghi chú và trạng thái", async () => {
