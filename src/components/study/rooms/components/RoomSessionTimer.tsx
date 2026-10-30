@@ -58,6 +58,31 @@ export function RoomSessionTimer({
   const isUrgent = remainingSec <= 60;
   const isWarning = remainingSec <= 300;
 
+  if (compact) {
+    return (
+      <div
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/10 text-[10px] tabular-nums shrink-0 shadow-sm"
+        title={`Đã học ${formatElapsed(elapsedSec)} • Hạn phiên còn ${formatSessionCountdown(remainingSec)}`}
+      >
+        <span className="font-semibold text-emerald-300">
+          {formatElapsed(elapsedSec)}
+        </span>
+        <span className="text-white/20">•</span>
+        <span
+          className={`font-medium ${
+            isUrgent
+              ? "text-rose-300 font-bold animate-pulse"
+              : isWarning
+              ? "text-amber-300 font-semibold"
+              : "text-slate-300"
+          }`}
+        >
+          {formatSessionCountdown(remainingSec)}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="inline-flex items-center gap-1.5 shrink-0">
       {/* Thời lượng đã học */}

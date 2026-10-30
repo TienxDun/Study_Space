@@ -162,7 +162,7 @@ export function RoomStudyBar({
       ? "Nghỉ"
       : local.status === "help"
       ? "Giúp"
-      : "—";
+      : "Trạng thái";
 
   const togglePresetsMenu = () => {
     if (!showPresets && presetsBtnRef.current) {
@@ -216,26 +216,31 @@ export function RoomStudyBar({
   };
 
   return (
-    <div
-      className={`flex items-center gap-1.5 px-3 py-1.5 border-b border-white/10 bg-white/[0.02] text-xs select-none overflow-x-auto custom-study-scroll ${
-        compact ? "py-1 gap-1 text-[11px]" : ""
+    <>
+      <div
+        className={`select-none transition-all ${
+        compact
+          ? "mx-2.5 my-1.5 px-2 py-1.5 rounded-2xl bg-white/[0.04] backdrop-blur-md border border-white/10 shadow-[0_2px_12px_rgba(0,0,0,0.25)] flex items-center justify-between gap-1 text-[11px] overflow-x-auto no-scrollbar"
+          : "flex items-center gap-1.5 px-3 py-1.5 border-b border-white/10 bg-white/[0.02] text-xs overflow-x-auto custom-study-scroll"
       }`}
     >
       {/* 1. KHU VỰC POMODORO ĐỒNG BỘ */}
       <div className="flex items-center gap-1 shrink-0">
         {timer ? (
           <div
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-xl border tabular-nums transition-colors ${
+            className={`flex items-center gap-1.5 rounded-xl border tabular-nums transition-colors shrink-0 ${
+              compact ? "h-7.5 px-2" : "px-2 py-1"
+            } ${
               timer.phase === "focus"
-                ? "bg-emerald-500/15 border-emerald-400/30 text-emerald-300"
-                : "bg-amber-500/15 border-amber-400/30 text-amber-300"
+                ? "bg-emerald-500/15 border-emerald-400/30 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.15)]"
+                : "bg-amber-500/15 border-amber-400/30 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.15)]"
             }`}
             title={`Đồng hồ do ${timer.name} khởi tạo`}
           >
             {timer.phase === "focus" ? (
-              <BrainIcon className="w-3.5 h-3.5 shrink-0" weight="bold" />
+              <BrainIcon className="w-3.5 h-3.5 shrink-0 text-emerald-400" weight="bold" />
             ) : (
-              <CoffeeIcon className="w-3.5 h-3.5 shrink-0" weight="bold" />
+              <CoffeeIcon className="w-3.5 h-3.5 shrink-0 text-amber-400" weight="bold" />
             )}
             <span className="font-bold">
               {`${timer.phase === "focus" ? (compact ? "Học" : "Tập trung") : (compact ? "Nghỉ" : "Nghỉ ngơi")} ${formatMeetCountdown(remainingSec)}`}
@@ -286,18 +291,22 @@ export function RoomStudyBar({
             ref={presetsBtnRef}
             type="button"
             onClick={togglePresetsMenu}
-            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-all cursor-pointer font-medium"
+            className={`flex items-center gap-1 rounded-xl transition-all cursor-pointer font-medium shrink-0 active:scale-95 ${
+              compact
+                ? "h-7.5 px-2 bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-200 hover:text-white"
+                : "px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white"
+            }`}
             title="Khởi tạo đồng hồ Pomodoro cho cả phòng"
             aria-label="Khởi tạo Pomodoro"
           >
             <TimerIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" weight="bold" />
             <span>{compact ? "Pomo" : "Pomodoro"}</span>
-            <CaretDownIcon className="w-3 h-3 text-slate-400" />
+            <CaretDownIcon className="w-2.5 h-2.5 text-slate-400" />
           </button>
         )}
       </div>
 
-      <div className="h-4 w-px bg-white/10 shrink-0" />
+      {!compact && <div className="h-4 w-px bg-white/10 shrink-0" />}
 
       {/* 2. TRẠNG THÁI CÁ NHÂN */}
       <div className="shrink-0">
@@ -305,13 +314,17 @@ export function RoomStudyBar({
           ref={statusBtnRef}
           type="button"
           onClick={toggleStatusMenu}
-          className={`flex items-center gap-1 px-2 py-1 rounded-xl border transition-all cursor-pointer ${
+          className={`flex items-center gap-1 rounded-xl border transition-all cursor-pointer shrink-0 active:scale-95 ${
+            compact ? "h-7.5 px-2" : "px-2 py-1"
+          } ${
             local.status === "focus"
-              ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300 font-semibold"
+              ? "bg-emerald-500/20 border-emerald-400/35 text-emerald-300 font-semibold shadow-[0_0_10px_rgba(16,185,129,0.15)]"
               : local.status === "break"
-              ? "bg-amber-500/20 border-amber-400/30 text-amber-300 font-semibold"
+              ? "bg-amber-500/20 border-amber-400/35 text-amber-300 font-semibold shadow-[0_0_10px_rgba(245,158,11,0.15)]"
               : local.status === "help"
-              ? "bg-rose-500/20 border-rose-400/30 text-rose-300 font-semibold"
+              ? "bg-rose-500/20 border-rose-400/35 text-rose-300 font-semibold shadow-[0_0_10px_rgba(244,63,94,0.15)]"
+              : compact
+              ? "bg-white/[0.06] hover:bg-white/[0.12] border-white/10 text-slate-300 hover:text-white"
               : "bg-white/5 border-white/10 text-slate-300 hover:text-white"
           }`}
           title="Chọn trạng thái học tập của bạn"
@@ -320,11 +333,11 @@ export function RoomStudyBar({
           <span
             className={`w-2 h-2 rounded-full ${
               local.status === "focus"
-                ? "bg-emerald-400"
+                ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"
                 : local.status === "break"
-                ? "bg-amber-400"
+                ? "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.8)]"
                 : local.status === "help"
-                ? "bg-rose-400"
+                ? "bg-rose-400 shadow-[0_0_6px_rgba(251,113,133,0.8)]"
                 : "bg-slate-400"
             }`}
           />
@@ -337,9 +350,13 @@ export function RoomStudyBar({
       <button
         type="button"
         onClick={onToggleHand}
-        className={`flex items-center gap-1 px-2 py-1 rounded-xl border transition-all cursor-pointer shrink-0 ${
+        className={`flex items-center gap-1 rounded-xl border transition-all cursor-pointer shrink-0 active:scale-95 ${
+          compact ? "h-7.5 px-2" : "px-2 py-1"
+        } ${
           local.handRaised
-            ? "bg-amber-500/25 border-amber-400/40 text-amber-200 shadow-sm"
+            ? "bg-amber-500/25 border-amber-400/40 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
+            : compact
+            ? "bg-white/[0.06] hover:bg-white/[0.12] border-white/10 text-slate-300 hover:text-white"
             : "bg-white/5 border-white/10 text-slate-300 hover:text-white"
         }`}
         title={local.handRaised ? "Hạ tay xuống" : "Giơ tay phát biểu"}
@@ -357,18 +374,26 @@ export function RoomStudyBar({
         )}
       </button>
 
-      <div className="h-4 w-px bg-white/10 shrink-0" />
+      {!compact && <div className="h-4 w-px bg-white/10 shrink-0" />}
 
       {/* 4. MỤC TIÊU CÁ NHÂN */}
       <button
         type="button"
         onClick={onEditGoal}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-all cursor-pointer min-w-0 max-w-[180px] sm:max-w-[240px] truncate"
+        className={`flex items-center gap-1.5 rounded-xl border transition-all cursor-pointer shrink-0 active:scale-95 ${
+          compact ? "h-7.5 px-2.5" : "px-2.5 py-1 min-w-0 max-w-[180px] sm:max-w-[240px]"
+        } ${
+          local.goal
+            ? "bg-emerald-500/15 border-emerald-400/30 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.12)]"
+            : compact
+            ? "bg-white/[0.06] hover:bg-white/[0.12] border-white/10 text-slate-300 hover:text-white"
+            : "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white"
+        }`}
         title={local.goal ? `Mục tiêu của bạn: ${local.goal}` : "Đặt mục tiêu học tập cho phiên này"}
         aria-label="Mục tiêu học tập"
       >
         <TargetIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" weight="bold" />
-        <span className="truncate text-[11px] font-medium">
+        <span className={`truncate font-medium ${compact ? "text-[11px] max-w-[85px] xs:max-w-[120px]" : "text-[11px]"}`}>
           {local.goal || (compact ? "Mục tiêu" : "Đặt mục tiêu")}
         </span>
       </button>
@@ -379,13 +404,18 @@ export function RoomStudyBar({
           ref={reactionsBtnRef}
           type="button"
           onClick={toggleReactionsMenu}
-          className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-all cursor-pointer"
+          className={`flex items-center gap-1 rounded-xl border transition-all cursor-pointer active:scale-95 ${
+            compact
+              ? "h-7.5 px-2 bg-white/[0.06] hover:bg-white/[0.12] border-white/10 text-yellow-400"
+              : "px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white"
+          }`}
           title="Thả cảm xúc biểu tượng"
           aria-label="Thả cảm xúc"
         >
           <SmileyIcon className="w-3.5 h-3.5 text-yellow-400 shrink-0" weight="bold" />
           <span>{compact ? "" : "Cảm xúc"}</span>
         </button>
+      </div>
       </div>
 
       {/* PORTALS: Các menu dropdown nổi thoát khỏi scroll container, không bao giờ bị cắt */}
@@ -530,6 +560,6 @@ export function RoomStudyBar({
         confirmText="Bắt đầu"
         cancelText="Hủy"
       />
-    </div>
+    </>
   );
 }

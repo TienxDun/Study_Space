@@ -169,7 +169,11 @@ export function MobileRoomsSheet({
           onBack={onBack}
           backLabel={backLabel}
           sheetId="rooms"
-          title={`Phòng: ${joinedRoom}`}
+          title={
+            <span className="text-sm font-bold text-white tracking-tight truncate">
+              {joinedRoom}
+            </span>
+          }
           heightClassName="h-[84dvh] max-h-[88dvh]"
         >
           <MobileRoomView

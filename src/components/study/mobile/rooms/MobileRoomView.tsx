@@ -27,6 +27,7 @@ import {
   CrownIcon,
   StarIcon,
   ShieldCheckIcon,
+  DotsThreeVerticalIcon,
   ClockCounterClockwiseIcon,
   MicrophoneSlashIcon,
   UserMinusIcon,
@@ -106,7 +107,11 @@ function MobileParticipantTile({
 
   return (
     <div className="relative w-full h-full group/tile">
-      <ParticipantTile trackRef={resolvedTrackRef} className="w-full h-full" {...rest} />
+      <ParticipantTile
+        trackRef={resolvedTrackRef}
+        className="w-full h-full bg-[#0B0F1A] [&_.lk-participant-placeholder]:bg-[#0E1526]"
+        {...rest}
+      />
 
       {/* Huy hiệu vai trò, trạng thái, giơ tay và mục tiêu góc trên trái (mobile nhỏ gọn) */}
       <div className="absolute top-1.5 left-1.5 z-10 pointer-events-none flex items-center gap-1 max-w-[calc(100%-4rem)] flex-wrap">
@@ -253,6 +258,7 @@ export function MobileRoomView({
   const [canShareScreen, setCanShareScreen] = useState(false);
   const [kickTarget, setKickTarget] = useState<{ identity: string; name: string } | null>(null);
   const [isHostControlsOpen, setIsHostControlsOpen] = useState(false);
+  const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isLockedState, setIsLockedState] = useState(initialIsLocked);
   const [hasPasswordState, setHasPasswordState] = useState(initialHasPassword);
@@ -481,7 +487,7 @@ export function MobileRoomView({
   };
 
   return (
-    <div className="relative flex flex-col h-full w-full bg-[#111827] text-white overflow-hidden select-none">
+    <div className="relative flex flex-col h-full w-full bg-[#0B0F1A] text-white overflow-hidden select-none [--lk-bg:#0B0F1A] [--lk-bg2:#0E1526]">
       {/* Phát âm thanh LiveKit */}
       <RoomAudioRenderer />
 
@@ -499,13 +505,18 @@ export function MobileRoomView({
         className="mx-3 mt-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-medium cursor-pointer text-center shrink-0 z-30"
       />
 
-      {/* Thanh trạng thái phụ siêu tinh gọn (chỉ hiện số người, đồng hồ phiên độc lập & nút copy link mời) */}
-      <div className="flex items-center justify-between px-3.5 py-1.5 text-xs border-b border-white/[0.08] shrink-0 bg-white/[0.02] gap-1.5">
+      {/* Thanh trạng thái phụ: số người, timer phiên và tiện ích phòng */}
+      <div className="flex items-center justify-between px-3.5 py-1.5 text-xs border-b border-white/[0.06] shrink-0 bg-[#0B0F1A] gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-          <span className="text-[11px] text-slate-300 font-medium truncate">
-            {room.numParticipants} bạn
-          </span>
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/10 text-slate-200 text-[11px] font-medium shrink-0 shadow-sm"
+            title={`${room.numParticipants} thành viên đang trong phòng`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+            <span className="tabular-nums font-semibold">{room.numParticipants}</span>
+            <span className="text-slate-400 text-[10px]">bạn</span>
+          </div>
+
           {/* Đồng hồ phiên cô lập: tính theo Date.now(), chuyển tab không mất giờ, ngắt 1 lần */}
           <RoomSessionTimer
             sessionMaxMinutes={sessionMaxMinutes}
@@ -513,53 +524,88 @@ export function MobileRoomView({
             compact
           />
           {typeof remainingMinutes === "number" && remainingMinutes < 300 && (
-            <span className="text-[10px] text-amber-300 bg-amber-500/15 border border-amber-400/25 px-1.5 py-0.5 rounded truncate">
-              Còn ~{remainingMinutes}p
+            <span className="text-[10px] text-amber-300 bg-amber-500/15 border border-amber-400/25 px-2 py-0.5 rounded-full shrink-0 font-medium">
+              ~{remainingMinutes}p
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        {/* Cụm 1 nút tiện ích phòng duy nhất */}
+        <div className="relative shrink-0">
           <button
             type="button"
-            onClick={() => setIsHistoryOpen(true)}
-            className="h-6 px-1.5 rounded-lg bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-[10px] font-medium text-slate-300 hover:text-white flex items-center gap-1 transition-all cursor-pointer"
-            title="Lịch sử phòng"
+            onClick={() => setIsRoomMenuOpen((v) => !v)}
+            className={`w-7 h-7 rounded-full border flex items-center justify-center transition-all cursor-pointer shadow-sm shrink-0 active:scale-90 ${
+              isRoomMenuOpen
+                ? "bg-white/15 border-white/30 text-white"
+                : "bg-white/[0.05] hover:bg-white/[0.12] border-white/10 text-slate-200 hover:text-white"
+            }`}
+            title="Tiện ích phòng (Mời, Lịch sử, Quản lý)"
+            aria-label="Tiện ích phòng"
           >
-            <ClockCounterClockwiseIcon className="w-3 h-3 text-emerald-400" />
-            <span>Lịch sử</span>
+            <DotsThreeVerticalIcon className="w-4 h-4 text-emerald-400" weight="bold" />
           </button>
 
-          {(isHost || isCoHost) && (
-            <button
-              type="button"
-              onClick={() => setIsHostControlsOpen(true)}
-              className="h-6 px-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 active:scale-95 border border-amber-400/25 text-[10px] font-bold text-amber-300 flex items-center gap-1 transition-all cursor-pointer"
-              title="Quản lý phòng"
-            >
-              <ShieldCheckIcon className="w-3 h-3 text-amber-400" />
-              <span>Quản lý</span>
-            </button>
+          {isRoomMenuOpen && (
+            <>
+              {/* Backdrop bắt chạm ra ngoài để đóng */}
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setIsRoomMenuOpen(false)}
+              />
+
+              {/* Menu popup kính mờ */}
+              <div className="absolute right-0 top-full mt-1.5 z-50 w-48 py-1.5 rounded-2xl bg-neutral-900/95 backdrop-blur-xl border border-white/15 shadow-[0_12px_32px_rgba(0,0,0,0.6)] select-none">
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/[0.08] mb-1">
+                  Tiện ích phòng
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleCopyInviteLink();
+                    setTimeout(() => setIsRoomMenuOpen(false), 900);
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2 cursor-pointer"
+                >
+                  {copied ? (
+                    <CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" weight="bold" />
+                  ) : (
+                    <LinkSimpleIcon className="w-4 h-4 text-emerald-400 shrink-0" weight="bold" />
+                  )}
+                  <span className={copied ? "text-emerald-300 font-semibold" : ""}>
+                    {copied ? "Đã chép link mời" : "Sao chép link mời"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRoomMenuOpen(false);
+                    setIsHistoryOpen(true);
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2 cursor-pointer"
+                >
+                  <ClockCounterClockwiseIcon className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Lịch sử phòng</span>
+                </button>
+
+                {(isHost || isCoHost) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsRoomMenuOpen(false);
+                      setIsHostControlsOpen(true);
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs text-amber-300 hover:bg-amber-500/15 transition-colors flex items-center gap-2 cursor-pointer border-t border-white/[0.08] mt-1 pt-2"
+                  >
+                    <ShieldCheckIcon className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Quản lý phòng</span>
+                  </button>
+                )}
+              </div>
+            </>
           )}
-
-          <button
-            type="button"
-            onClick={handleCopyInviteLink}
-            className="h-6 px-2 rounded-lg bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-[11px] font-medium text-slate-300 hover:text-white flex items-center gap-1 transition-all cursor-pointer shrink-0"
-            title="Sao chép link mời phòng"
-          >
-            {copied ? (
-              <>
-                <CheckIcon className="w-3 h-3 text-emerald-400" />
-                <span className="text-emerald-400">Đã chép</span>
-              </>
-            ) : (
-              <>
-                <LinkSimpleIcon className="w-3 h-3 text-emerald-400" />
-                <span>Link mời</span>
-              </>
-            )}
-          </button>
         </div>
       </div>
 
@@ -573,7 +619,7 @@ export function MobileRoomView({
             {tracks.map((track) => (
               <div
                 key={getTrackReferenceId(track)}
-                className="rounded-2xl border border-white/15 overflow-hidden bg-slate-900/90 shadow-md aspect-video"
+                className="rounded-2xl border border-white/10 overflow-hidden bg-[#0B0F1A] shadow-md aspect-video"
               >
                 <MobileParticipantTile
                   trackRef={track}
@@ -640,7 +686,7 @@ export function MobileRoomView({
 
       {/* Thanh điều khiển cuộc gọi dưới đáy */}
       <footer className="shrink-0 py-1.5 px-3 flex items-center justify-center z-20">
-        <div className="flex items-center gap-3 px-3.5 py-1.5 rounded-full bg-slate-900/95 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.85)]">
+        <div className="flex items-center gap-3 px-3.5 py-1.5 rounded-full bg-[#0B0F1A]/95 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.85)]">
           {/* Nút Micro */}
           <TrackToggle
             source={Track.Source.Microphone}
@@ -728,7 +774,7 @@ export function MobileRoomView({
 
       {/* Khung chat trượt lên từ đáy (In-Room Mobile Chat Drawer) */}
       {chatOpen && (
-        <div className="absolute inset-x-0 bottom-0 h-[65%] bg-slate-950/95 backdrop-blur-3xl border-t border-white/20 rounded-t-3xl shadow-[0_-16px_50px_rgba(0,0,0,0.85)] flex flex-col z-30 animate-in slide-in-from-bottom duration-250 ease-out">
+        <div className="absolute inset-x-0 bottom-0 h-[65%] bg-[#0B0F1A]/95 backdrop-blur-3xl border-t border-white/20 rounded-t-3xl shadow-[0_-16px_50px_rgba(0,0,0,0.85)] flex flex-col z-30 animate-in slide-in-from-bottom duration-250 ease-out">
           {/* Header Chat */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 shrink-0">
             <div className="flex items-center gap-2">

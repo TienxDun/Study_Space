@@ -228,10 +228,17 @@ Mọi thao tác ghi vào `admin_audit`.
 - [x] Data Safety ([CHPLAY_LAUNCH_PLAN.md](../deployment/CHPLAY_LAUNCH_PLAN.md)): thêm dòng “Báo cáo nội dung & danh sách chặn”, tick 3 mục P0.5 liên quan.
 - **Còn lại:** dán các trang lên production (push web) rồi mở `/privacy/`, `/terms/` kiểm hiển thị; sau đó đối chiếu lại khi khai Data Safety trong Play Console.
 
-### Phase 7 — QA & bằng chứng cho Play (0.5–1 ngày)
-- Test hồi quy chat/phòng/xóa tài khoản.
-- Chụp màn hình nút báo cáo/chặn + admin xử lý để đối chiếu khi Play hỏi.
-- Cập nhật plan CH Play, đánh dấu P0.5 xong.
+### Phase 7 — QA & bằng chứng cho Play (0.5–1 ngày) — đang làm
+**Đã kiểm tự động 2026-10-30:** 684 unit test xanh, `tsc` sạch, `lint` 0 lỗi; 7 endpoint công khai trả 200 (`/`, `/privacy/`, `/terms/`, `/account-deletion/`, `/sitemap.xml`, chat-proxy `/config`, data-api `/content`), `/report` và `/blocks` trả 401 khi không có token; D1: 5 báo cáo (5 đang chờ), 0 chặn, 0 hạn chế; trang `/privacy/` live có 13 mục, “180 ngày” ×2, “13 tuổi”; trang chủ production không có lỗi console; admin Worker version `27cfe13c`.
+
+**Việc tay còn lại (2 tài khoản A/B):**
+- [ ] Chat: câu học tập trả lời bình thường và số câu trong admin tăng; câu tự hại/bạo lực nhận câu an toàn (có 111/115) và số câu **không** tăng; câu văn học có chữ “tự tử” vẫn trả lời bình thường.
+- [ ] Chat: bấm cờ → gửi báo cáo → admin thấy báo cáo AI kèm câu hỏi, ghi chú, tên.
+- [ ] Phòng: B báo cáo A (hiện trong admin, có tên hai bên) → B chặn A (tự rời phòng) → vào lại bị chặn → bỏ chặn trong Cài đặt → vào lại được.
+- [ ] Admin: xử lý báo cáo + khối “Quy tắc an toàn (cố định)” hiện đúng nội dung; thử khóa AI/phòng rồi mở lại.
+- [ ] Xóa tài khoản thử nghiệm; lặp mục chat/báo cáo trên điện thoại.
+- [ ] Chụp ảnh bằng chứng: nút cờ + dialog báo cáo AI, menu ⋮ + dialog phòng, xác nhận chặn, “Người đã chặn”, chi tiết báo cáo trong admin, khối quy tắc an toàn.
+- [ ] Cập nhật plan CH Play, đánh dấu P0.5 xong.
 
 **Tổng ước lượng:** ~7–8 ngày làm việc, chưa tính deploy/chờ duyệt.
 
