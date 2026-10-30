@@ -9,6 +9,7 @@ import {
   FocusSpanInfo,
 } from "../types";
 import { playPomodoroSound } from "../../study-sound";
+import { trackEvent } from "@/lib/analytics";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { computeSpanDelta, getNextBreakType } from "../utils/timer-formatters";
 import { EVENT_START_FOCUS } from "@/lib/use-focus-task";
@@ -301,6 +302,7 @@ export function usePomodoroCountdown({
       setPomoMode("focus");
       setTimeLeft(durations.focus * 60);
       setIsRunning(true);
+      trackEvent("focus-start");
     };
 
     window.addEventListener(EVENT_START_FOCUS, handleStartFocus);
@@ -444,11 +446,13 @@ export function usePomodoroCountdown({
       flushSpan(false); // pause → chốt đoạn vừa chạy, không mất giây nào
       setIsRunning(false);
     } else {
+      const startingNewSession = sessionRef.current === null;
       ensureSession(timeLeftRef.current);
       spanStartRef.current = Date.now();
       setIsRunning(true);
+      if (startingNewSession && pomoMode === "focus") trackEvent("focus-start");
     }
-  }, [ensureSession, flushSpan]);
+  }, [ensureSession, flushSpan, pomoMode]);
 
   const resetPomodoro = useCallback(() => {
     flushSpan(false); // giữ lại số phút đã chạy trước khi reset

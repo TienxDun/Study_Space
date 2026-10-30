@@ -1,19 +1,24 @@
 # Kế hoạch đưa ZenStudy Space lên Google Play (CH Play)
 
-> Cập nhật: 2026-10-28
+> Cập nhật: 2026-10-29
 > Hướng dẫn kỹ thuật chi tiết (Capacitor, keystore, OTA): [ANDROID_CHPLAY_OTA_GUIDE.md](./ANDROID_CHPLAY_OTA_GUIDE.md)
+
+**Tiến độ tổng:** P0 đã xong phần code + hạ tầng (privacy live, xóa tài khoản chạy được); còn khai báo trong Play Console. P1–P4 chưa bắt đầu.
 
 ## Trạng thái hiện tại
 
 | Hạng mục | Trạng thái |
 |---|---|
 | Tài khoản Google Play Developer | **Đã có** (không cần tạo mới, không cần trả lại phí 25 USD) |
-| Trang chính sách quyền riêng tư (web) | Đã làm trong đợt này: `/privacy` (gồm lịch sử chat lưu trên Firestore) |
+| Trang chính sách quyền riêng tư (web) | Đã live: `/privacy/` (gồm lịch sử chat lưu trên Firestore) |
 | Link policy trong app | Đã làm: About modal (desktop) + sheet "Thêm" (mobile) |
-| Xóa tài khoản trong app + link web | Đã làm (chờ deploy Worker + khai URL trong Play Console) |
+| Xóa tài khoản trong app + link web | **Đã hoạt động** (xác nhận 2026-10-29); còn khai URL trong Play Console |
+| Trang xóa tài khoản công khai | Đã live: `/account-deletion/` |
+| Trang điều khoản sử dụng | Đã có `/terms/` (chờ deploy web); link trong About modal + sheet "Thêm" |
 | Capacitor / thư mục `android/` | Chưa có |
 | Keystore (.jks) | Chưa có |
-| Package name | Chưa chốt (mặc định đề xuất: `space.zenstudy.app`) |
+| Package name | **Đã chốt: `space.zenstudy.app`** |
+| Target audience | **Đã chốt: 13+** (chọn dải 13–15, 16–17, 18+) |
 | `.aab` bản release | Chưa có |
 | Store listing (icon 512, feature graphic, screenshot) | Chưa chuẩn bị |
 
@@ -31,13 +36,13 @@ Lý do policy đứng trước: Play Console chặn nộp app khi thiếu Privac
 - [x] Trang `/privacy` (tiếng Việt, tĩnh) — nội dung bám dữ liệu thực tế của app.
 - [x] Thêm vào `sitemap.xml`.
 - [x] Link trong app (desktop About modal, mobile sheet "Thêm").
-- [ ] Kiểm tra URL công khai sau khi deploy web: `https://zenstudy.space/privacy/`
+- [x] Sửa nội dung chat cho đúng: lịch sử lưu Firestore (`conversations/{uid}/sessions/{sid}/messages`), kèm tên tệp + ảnh thu nhỏ; ảnh gốc chỉ lưu trên máy.
+- [x] Kiểm tra cục bộ: `tsc`, `lint`, trang render đúng.
+- [x] Kiểm tra URL công khai sau khi deploy web: `https://zenstudy.space/privacy/` — 200, nội dung đã gồm mục chat lưu Firestore.
 - [ ] Dán URL này vào Play Console → Policy and programs → App content → Privacy policy.
 
 ### P0.2 Xóa tài khoản (bắt buộc với app có tạo tài khoản)
-Google Play yêu cầu **cả hai**: đường dẫn xóa trong app và một URL web mô tả cách xóa. Hiện app chỉ đăng xuất (xóa dữ liệu trên máy), dữ liệu đã đồng bộ trên D1 vẫn còn.
-
-Cần làm trước khi nộp:
+Google Play yêu cầu **cả hai**: đường dẫn xóa trong app và một URL web mô tả cách xóa. Phần code **đã xong và commit `da91273`**; trạng thái từng việc:
 - [x] Endpoint xóa trong `data-api`: `DELETE /account` xóa `user_data`, `chat_usage` và dữ liệu phòng học (`meet_sessions`, `meet_rooms`, `meet_audit_logs`) theo UID, kèm xác thực Firebase ID token.
 - [x] Xóa tài khoản Firebase bằng **service account** (Admin API `accounts:delete`) ngay trong cùng request — không cần reauth, không cần popup Google. Worker lấy UID từ vé đã verify.
 - [x] Chốt `deleted_accounts`: UID đã xóa bị chặn 403 ở `GET/POST /data` để thiết bị còn token cũ không đẩy dữ liệu trở lại.
@@ -46,9 +51,10 @@ Cần làm trước khi nộp:
 - [x] Xóa `chat_usage` (đếm lượt hỏi).
 - [x] Nút "Xoá tài khoản" trong UI (hồ sơ desktop + thẻ tài khoản mobile), xác nhận bằng ô tick.
 - [x] Trang web công khai `/account-deletion/` mô tả luồng xóa và cho đăng nhập Google để xóa ngay; `/privacy` mục 9 trỏ sang trang này, vẫn giữ email dự phòng.
-- [ ] Tạo service account (role Firebase Authentication Admin) và đặt secret `FIREBASE_SERVICE_ACCOUNT` cho Worker `data-api`; kiểm tra `/health` có `authAdmin: true`.
-- [ ] Deploy Worker `data-api` bản mới, kiểm tra `DELETE .../account` không token trả 401.
-- [ ] Publish `firestore.rules` (đã thêm quyền xoá `conversations`): dán vào Firebase Console → Rules → Publish, hoặc `firebase deploy --only firestore:rules`.
+- [x] Tạo service account (role Firebase Authentication Admin) và đặt secret `FIREBASE_SERVICE_ACCOUNT` cho Worker `data-api`; `/health` có `authAdmin: true`.
+- [x] Deploy Worker `data-api` bản mới; `DELETE /account` không token trả 401.
+- [x] Publish `firestore.rules` (đã thêm quyền xoá `conversations`).
+- [x] Test end-to-end: đăng nhập → xóa tài khoản → dữ liệu D1 + Firestore + tài khoản Firebase bị xóa (xác nhận 2026-10-29).
 - [ ] Khai URL xóa tài khoản trong Play Console (Data safety → Account deletion): `https://zenstudy.space/account-deletion/`.
 
 ### P0.3 Data Safety (khai báo trong Play Console)
@@ -58,24 +64,37 @@ Bản nháp — đối chiếu lại với code trước khi bấm gửi:
 |---|---|---|---|---|
 | Email, tên, ảnh đại diện (Google/Firebase Auth) | Có | Không (Firebase là bên xử lý) | Đăng nhập, đồng bộ tài khoản | Bắt buộc nếu muốn đồng bộ |
 | Nội dung người dùng: ghi chú, việc cần làm, cài đặt không gian học | Có (khi đăng nhập) | Không | Tính năng app + đồng bộ | Tùy chọn (chỉ khi đăng nhập) |
-| Nội dung chat AI (text/ảnh/tệp người dùng gửi) | Có (Firestore) | Có — chuyển tới nhà cung cấp AI (Cloudflare Workers AI / Gemini / OpenAI-compatible) để trả lời | Tính năng trợ lý AI | Tùy chọn |
+| Nội dung chat AI: tin nhắn, tên đoạn chat, tên tệp + ảnh thu nhỏ | Có (Firestore) | Có — chuyển tới nhà cung cấp AI (Cloudflare Workers AI / Gemini / OpenAI-compatible) để trả lời | Tính năng trợ lý AI | Tùy chọn |
 | Âm thanh, video phòng học (LiveKit) | Không lưu bản ghi | Có — truyền thời gian thực qua LiveKit | Tính năng phòng học nhóm | Tùy chọn |
 | Metadata phiên học (tên hiển thị, thời lượng, phòng) | Có | Không | Giới hạn sử dụng, vận hành | Có khi vào phòng |
 | Số lượt hỏi AI/ngày (UID + ngày + số câu) | Có | Không | Giới hạn quota | Có khi dùng AI |
 
 Các mục cần khai thêm:
 - [ ] Dữ liệu truyền tải được mã hóa (TLS) — Có.
-- [ ] Người dùng có thể yêu cầu xóa dữ liệu — Có (email + sau này nút trong app).
-- [ ] Không có quảng cáo, không có analytics/tracking bên thứ ba.
+- [ ] Người dùng có thể yêu cầu xóa dữ liệu — Có (nút trong app + trang `/account-deletion/` + email dự phòng).
+- [ ] Không có quảng cáo. Analytics chỉ có GoatCounter (không cookie, không theo dõi xuyên trang, số liệu tổng hợp) — khai mục "App activity / Analytics" nếu Play Console hỏi.
 - [ ] Vị trí, danh bạ, lịch, sức khỏe, tài chính: Không.
 
 ### P0.4 App content khác
 - [ ] **App access**: app dùng được không cần đăng nhập; riêng AI cần đăng nhập Google → cung cấp hướng dẫn test (tester dùng tài khoản Google của họ).
 - [ ] **Ads**: Không có quảng cáo.
 - [ ] **Content rating (IARC)**: ứng dụng học tập/năng suất, không bạo lực/nội dung người lớn.
-- [ ] **Target audience**: 13+ (không hướng tới trẻ em dưới 13).
+- [ ] **Target audience**: 13+ (chọn dải 13–15, 16–17, 18+).
 - [ ] **Data deletion URL** (P0.2).
+- [ ] **Khai báo AI + UGC** trong App content: app có dùng AI tạo nội dung, có nội dung người dùng (phòng học).
 - [ ] **Chính sách OTA**: chỉ cập nhật JS/HTML/CSS, không đổi mục đích app (đã ghi trong guide).
+
+### P0.5 Báo cáo nội dung, Terms và an toàn cho 13+ (làm trước khi bọc app)
+
+Theo chính sách AI-Generated Content và UGC của Google Play:
+- [x] Trang `/terms` (điều khoản sử dụng) mô tả quy tắc dùng AI và phòng học; link trong app + footer các trang pháp lý. Chờ deploy web.
+- [ ] Nút **"Báo cáo câu trả lời"** trên từng tin nhắn AI (hiện chỉ có field `rating`, chưa có UI).
+- [ ] Lưu báo cáo AI vào D1 qua Worker: UID, nội dung tin bị báo cáo, lý do, thời gian; xem và xử lý trong admin console.
+- [ ] Nút **báo cáo + chặn người dùng** trong phòng học (hiện chỉ có mute/kick của host).
+- [ ] Chốt hành vi "chặn": người bị chặn không vào cùng phòng / ẩn video-audio của nhau.
+- [ ] Cập nhật `/privacy` + Data Safety: dữ liệu báo cáo được thu thập, mục đích, thời hạn lưu.
+- [ ] Guardrail AI cho người dùng 13+: prompt an toàn + lọc đầu ra; thử câu hỏi nhạy cảm trước khi nộp.
+- [ ] Thời hạn xử lý báo cáo (mục tiêu 7 ngày) và cách phản hồi người báo cáo.
 
 ---
 
@@ -120,9 +139,36 @@ Các mục cần khai thêm:
 
 ---
 
+## Quyết định đã chốt
+
+- **Xóa tài khoản tự phục vụ**: đã chọn làm ngay và đã implement trong commit `da91273` (bắt buộc để nộp app).
+- **Package name**: `space.zenstudy.app` (chốt 2026-10-29).
+- **Target audience**: 13+ (chốt 2026-10-29).
+
 ## Quyết định cần chốt trước P1
 
-1. **Package name** — vĩnh viễn, không đổi được sau khi phát hành. Đề xuất `space.zenstudy.app`.
-2. **Target audience** — 13+ hay 18+ (ảnh hưởng Data Safety và nội dung store listing).
-3. **Có làm xóa tài khoản ngay đợt này không** — nếu không, không thể nộp app.
-4. **Google Sign-In**: giữ GIS trong WebView hay chuyển native plugin ngay từ đầu (an toàn hơn cho app).
+1. **Google Sign-In**: giữ GIS trong WebView hay chuyển native plugin ngay từ đầu (an toàn hơn cho app).
+
+---
+
+## Nhật ký tiến độ
+
+| Ngày | Việc | Trạng thái |
+|---|---|---|
+| 2026-10-28 | Lập plan, ghi nhận đã có tài khoản Google Play Developer | Xong |
+| 2026-10-28 | Tạo `/privacy`, thêm vào sitemap, gắn link trong About modal (desktop) + sheet "Thêm" (mobile) | Xong |
+| 2026-10-28 | Sửa mục chatbot theo thực tế Firestore; cập nhật bảng Data Safety | Xong |
+| 2026-10-28 | Xóa tài khoản tự phục vụ: `DELETE /account`, Admin API, UI desktop/mobile, `/account-deletion/` | Code + commit `da91273`; đã deploy |
+| 2026-10-29 | Rà soát lại plan, đối chiếu trạng thái repo và cập nhật tiến độ | Xong |
+| 2026-10-29 | Xác minh bản live: `/privacy/` 200 (có mục chat Firestore), `/account-deletion/` 200, sitemap có cả 2 URL | Xong |
+| 2026-10-29 | Xóa tài khoản hoạt động end-to-end (Worker + service account + rules) | Xong — P0 kỹ thuật đóng |
+| 2026-10-29 | Rà chính sách Play 2026: đăng ký package name, chọn độ tuổi, yêu cầu báo cáo AI/UGC | Xong |
+| 2026-10-29 | Chốt `space.zenstudy.app` + target 13+; thêm P0.5 (báo cáo AI/phòng học, Terms, an toàn 13+) | Xong |
+| 2026-10-29 | Tạo `/terms`, thêm sitemap, link trong About modal + sheet "Thêm" + footer privacy/account-deletion | Xong (chờ deploy web) |
+
+## Việc tiếp theo (theo thứ tự)
+
+1. P0.5 (tiếp): nút báo cáo AI + báo cáo/chặn trong phòng học + guardrail cho 13+; cập nhật privacy và Data Safety; deploy `/terms/`.
+2. P1: dựng Capacitor shell + script `build:mobile`; chạy trên máy thật (Google Sign-In WebView, LiveKit mic/cam, asset CDN, link `/privacy/`).
+3. P2: tạo keystore, cấu hình ký, build `.aab` và cài thử bản release.
+4. P3: tạo app trên Play Console, khai Privacy URL + Account deletion URL + Data Safety + App content; chuẩn bị store listing và 20 tester.

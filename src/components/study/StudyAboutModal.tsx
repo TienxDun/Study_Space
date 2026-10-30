@@ -275,12 +275,23 @@ export const StudyAboutModal = ({ isOpen, onClose }: StudyAboutModalProps) => {
         </ul>
       </AboutSection>
 
-      <Link
-        href="/privacy/"
-        className="block text-center text-xs font-semibold text-slate-400 hover:text-emerald-300 transition-colors py-1"
-      >
-        Chính sách quyền riêng tư
-      </Link>
+      <div className="flex items-center justify-center gap-1.5 py-1 text-xs font-semibold">
+        <Link
+          href="/privacy/"
+          className="text-slate-400 hover:text-emerald-300 transition-colors"
+        >
+          Chính sách quyền riêng tư
+        </Link>
+        <span aria-hidden="true" className="text-slate-600">
+          ·
+        </span>
+        <Link
+          href="/terms/"
+          className="text-slate-400 hover:text-emerald-300 transition-colors"
+        >
+          Điều khoản sử dụng
+        </Link>
+      </div>
     </ModalShell>
   );
 };

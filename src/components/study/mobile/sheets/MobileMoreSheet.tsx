@@ -116,21 +116,23 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
           <p className="text-[11px] font-mono text-white/40 tracking-tight">
             ZenStudy Space · {APP_VERSION_LABEL}
           </p>
-          <Link
-            href="/privacy/"
-            className="inline-block text-[11px] font-semibold text-white/60 hover:text-white underline underline-offset-2 transition-colors"
-          >
-            Chính sách quyền riêng tư
-          </Link>
-          <span aria-hidden="true" className="text-white/30 px-1">
-            ·
-          </span>
-          <Link
-            href="/account-deletion/"
-            className="inline-block text-[11px] font-semibold text-white/60 hover:text-white underline underline-offset-2 transition-colors"
-          >
-            Xoá tài khoản
-          </Link>
+          <div className="flex items-center justify-center gap-1.5">
+            <Link
+              href="/privacy/"
+              className="inline-block text-[11px] font-semibold text-white/60 hover:text-white underline underline-offset-2 transition-colors"
+            >
+              Chính sách quyền riêng tư
+            </Link>
+            <span aria-hidden="true" className="text-white/30 text-[11px]">
+              ·
+            </span>
+            <Link
+              href="/terms/"
+              className="inline-block text-[11px] font-semibold text-white/60 hover:text-white underline underline-offset-2 transition-colors"
+            >
+              Điều khoản sử dụng
+            </Link>
+          </div>
         </div>
         {/* Bóng mờ đáy: báo còn nội dung bên dưới, vuốt lên để xem */}
         <div

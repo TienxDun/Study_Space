@@ -194,6 +194,15 @@ export default function AccountDeletionPage() {
             ·
           </span>
           <Link
+            href="/terms/"
+            className="whitespace-nowrap text-slate-300 hover:text-white transition-colors"
+          >
+            Điều khoản sử dụng
+          </Link>
+          <span aria-hidden="true" className="hidden sm:inline">
+            ·
+          </span>
+          <Link
             href="/"
             className="whitespace-nowrap text-slate-300 hover:text-white transition-colors"
           >

@@ -22,6 +22,7 @@ import type { ImageAttachment } from "./useImageAttachments";
 import type { MsgAttachment } from "../types";
 import { loadCache, saveCache, clearCache } from "../utils/chatCache";
 import { saveLocalImage } from "../utils/imageStorage";
+import { trackEvent } from "@/lib/analytics";
 
 interface MessagesArgs {
   user: { uid: string } | null;
@@ -354,6 +355,7 @@ export function useChatMessages({
         { merge: true }
       );
       await noteFirstMessage(sid, text || "Câu hỏi kèm ảnh/file");
+      trackEvent("chat-message");
       return true;
     } catch {
       dropPending();

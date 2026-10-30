@@ -69,7 +69,10 @@ export default function PrivacyPage() {
           <li>Mặc định mọi thứ lưu trên máy bạn; dùng được mà không cần tài khoản.</li>
           <li>Đăng nhập Google là tùy chọn, chỉ dùng để đồng bộ và gọi trợ lý AI.</li>
           <li>Lịch sử trò chuyện AI được lưu trong tài khoản để xem lại trên các thiết bị.</li>
-          <li>Không bán dữ liệu, không quảng cáo, không dùng công cụ theo dõi của bên thứ ba.</li>
+          <li>
+            Không bán dữ liệu, không quảng cáo. Thống kê truy cập dùng
+            GoatCounter — không cookie, không theo dõi bạn sang trang khác.
+          </li>
           <li>Phòng học nhóm không ghi âm, không ghi hình.</li>
         </ul>
       </div>
@@ -214,9 +217,9 @@ export default function PrivacyPage() {
         <Section id="ha-tang" title="7. Máy chủ và nhật ký kỹ thuật">
           <p>
             ZenStudy chạy trên Cloudflare (Pages, Workers, D1, R2), dùng thêm
-            Firebase (Google), LiveKit và dịch vụ AI. Những dịch vụ này có thể ghi
-            lại địa chỉ IP, loại thiết bị/trình duyệt và lỗi phát sinh để bảo mật và
-            giữ hệ thống chạy ổn.
+            Firebase (Google), LiveKit, dịch vụ AI và GoatCounter (thống kê truy
+            cập). Những dịch vụ này có thể ghi lại địa chỉ IP, loại thiết bị/trình
+            duyệt và lỗi phát sinh để bảo mật và giữ hệ thống chạy ổn.
           </p>
           <p>
             Nhật ký lỗi kỹ thuật của ZenStudy được xóa sau khoảng 14 ngày. Dữ liệu
@@ -224,9 +227,16 @@ export default function PrivacyPage() {
             cấp trên.
           </p>
           <p>
-            ZenStudy không dùng cookie quảng cáo và không dùng công cụ phân tích
-            theo dõi của bên thứ ba. Một số dịch vụ đăng nhập có thể dùng cookie
-            hoặc bộ nhớ cục bộ để giữ phiên đăng nhập.
+            ZenStudy dùng GoatCounter để đếm lượt xem trang và một số thao tác
+            chính (bắt đầu phiên tập trung, vào phòng học nhóm, đăng nhập, gửi câu
+            hỏi cho trợ lý). GoatCounter không dùng cookie, không tạo mã nhận diện
+            bạn, không theo dõi bạn sang trang khác và không nhận nội dung bạn gõ;
+            số liệu chỉ ở dạng tổng hợp (trang, nguồn truy cập, quốc gia, thiết
+            bị).
+          </p>
+          <p>
+            ZenStudy không dùng cookie quảng cáo. Một số dịch vụ đăng nhập có thể
+            dùng cookie hoặc bộ nhớ cục bộ để giữ phiên đăng nhập.
           </p>
         </Section>
 
@@ -288,8 +298,9 @@ export default function PrivacyPage() {
 
         <Section id="tre-em" title="10. Trẻ em">
           <p>
-            ZenStudy dành cho người từ 13 tuổi trở lên. Chúng tôi không cố ý thu
-            thập dữ liệu của trẻ dưới 13 tuổi; nếu phát hiện, chúng tôi sẽ xóa.
+            ZenStudy dành cho người từ 13 tuổi trở lên. Nếu bạn dưới 16 tuổi, hãy
+            dùng với sự đồng ý của cha mẹ hoặc người giám hộ. Chúng tôi không cố ý
+            thu thập dữ liệu của trẻ dưới 13 tuổi; nếu phát hiện, chúng tôi sẽ xóa.
           </p>
         </Section>
 
@@ -316,12 +327,29 @@ export default function PrivacyPage() {
       </article>
 
       <footer className="mt-10 border-t border-white/10 pt-5 text-xs text-slate-500">
-        <p>
-          © {new Date().getFullYear()} ZenStudy Space ·{" "}
-          <Link href="/" className="text-slate-300 hover:text-white transition-colors">
+        <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1.5">
+          <span className="whitespace-nowrap">
+            © {new Date().getFullYear()} ZenStudy Space
+          </span>
+          <span aria-hidden="true" className="hidden sm:inline">
+            ·
+          </span>
+          <Link
+            href="/terms/"
+            className="whitespace-nowrap text-slate-300 hover:text-white transition-colors"
+          >
+            Điều khoản sử dụng
+          </Link>
+          <span aria-hidden="true" className="hidden sm:inline">
+            ·
+          </span>
+          <Link
+            href="/"
+            className="whitespace-nowrap text-slate-300 hover:text-white transition-colors"
+          >
             Trang chủ
           </Link>
-        </p>
+        </div>
       </footer>
     </main>
   );

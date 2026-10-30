@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "sonner";
+import { GoatCounter } from "@/components/analytics/GoatCounter";
 import { StudyJsonLd } from "@/components/study/seo/StudyJsonLd";
 import "./globals.css";
 
@@ -132,6 +133,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans overflow-x-hidden bg-[#090d16] text-white">
         <StudyJsonLd siteUrl={siteUrl} />
         {children}
+        <GoatCounter />
         <Toaster
           theme="dark"
           position="top-right"

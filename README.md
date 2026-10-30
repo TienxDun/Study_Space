@@ -209,6 +209,10 @@ NEXT_PUBLIC_DATA_API_URL=https://data-api.your-subdomain.workers.dev
 # URL CDN phân phối asset bối cảnh & âm thanh (Cloudflare R2 / Worker)
 NEXT_PUBLIC_STUDY_CDN_URL=https://study-space-shield.leutiendung-hht.workers.dev
 
+# GoatCounter (thống kê truy cập, không cookie): mã site hoặc URL bản tự host.
+# Để trống thì tắt hoàn toàn.
+NEXT_PUBLIC_GOATCOUNTER_URL=
+
 # Cấu hình đồng bộ Cloudflare R2 (dành cho scripts/sync-r2.mjs)
 R2_ACCESS_KEY_ID=your_r2_access_key_id
 R2_SECRET_ACCESS_KEY=your_r2_secret_access_key

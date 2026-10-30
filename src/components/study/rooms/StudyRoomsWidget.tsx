@@ -17,6 +17,7 @@ import {
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { trackEvent } from "@/lib/analytics";
 import { useFloatingSize } from "@/lib/use-floating-size";
 import { useAuth, GoogleIcon } from "@/components/study/auth";
 import { useIsMobile } from "@/components/study/mobile/hooks/useIsMobile";
@@ -363,6 +364,7 @@ const getLiveKitEndpoints = () => {
       setToken(data.token);
       setServerUrl(data.url);
       setJoinedRoom(data.room);
+      trackEvent("room-join");
       // Vào phòng thành công thì thông báo rời phòng cũ không còn cần thiết
       setExitNotice(null);
       setUserRole(data.role || "member");

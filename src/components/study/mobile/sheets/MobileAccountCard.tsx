@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { ArrowsClockwiseIcon, CircleNotchIcon, SignOutIcon } from "@phosphor-icons/react";
+import {
+  ArrowsClockwiseIcon,
+  CircleNotchIcon,
+  SignOutIcon,
+  TrashIcon,
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/use-auth";
 import { cloudConfigured, syncNow } from "@/lib/simple-cloud-sync";
@@ -144,9 +149,16 @@ export function MobileAccountCard() {
       <button
         type="button"
         onClick={() => setIsDeleteOpen(true)}
-        className="mt-1 w-full py-1 text-[11px] font-medium text-white/40 hover:text-rose-300 transition-colors text-center cursor-pointer"
+        className="group mt-1.5 w-full min-h-[46px] flex items-center gap-3 px-3 py-1 rounded-2xl bg-white/[0.04] hover:bg-rose-500/[0.08] active:scale-[0.98] border border-white/[0.08] hover:border-rose-400/25 transition-all text-left select-none cursor-pointer"
       >
-        Xoá tài khoản
+        <span className="w-9 h-9 rounded-xl bg-white/[0.08] border border-white/[0.15] flex items-center justify-center shrink-0 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] transition-transform group-hover:scale-105">
+          <TrashIcon className="w-5 h-5 text-rose-300" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[13px] font-medium text-rose-200 group-hover:text-rose-100 tracking-tight">
+            Xoá tài khoản
+          </span>
+        </span>
       </button>
 
       <DeleteAccountDialog
