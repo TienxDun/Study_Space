@@ -1,6 +1,6 @@
 # P0.5 — Báo cáo nội dung, chặn người dùng & an toàn AI (plan tổng quát)
 
-> Trạng thái: **Phase 0–2 code xong (2026-10-30); chờ deploy D1 + data-api + admin worker**. Cập nhật: 2026-10-30
+> Trạng thái: **Phase 0–3 code xong; Phase 1–2 đã deploy và kiểm trên production 2026-10-30; Phase 3 chờ deploy rồi thử bằng tài khoản thật**. Cập nhật: 2026-10-30
 > Thuộc P0.5 trong [CHPLAY_LAUNCH_PLAN.md](../deployment/CHPLAY_LAUNCH_PLAN.md)
 > Mục tiêu: đáp ứng chính sách **AI-Generated Content** và **User Generated Content** của Google Play trước khi nộp app.
 
@@ -166,7 +166,8 @@ Mọi thao tác ghi vào `admin_audit`.
 - [x] Thêm `/report`, `/blocks` vào `data-api`: xác thực Firebase token, validate source/reason/room/target, chặn tự báo cáo/chặn mình, giới hạn 10 báo cáo/ngày/UID, dọn báo cáo > 180 ngày.
 - [x] Cập nhật `deleteAccountData()` xóa `content_reports`, `user_blocks`, `user_restrictions`.
 - [x] Test: 7 ca endpoint mới + mở rộng test xóa tài khoản; toàn bộ 617 test xanh, `tsc`/`lint` sạch.
-- [ ] Deploy Phase 1: chạy `report-schema.sql` trên D1 `zenspace`, dán `data-api` mới, gọi thử bằng token thật.
+- [x] Deploy Phase 1: chạy `report-schema.sql` trên D1 `zenspace`, dán `data-api` mới, gọi thử bằng token thật.
+  - Kiểm 2026-10-30: D1 `zenspace` có đủ 3 bảng; `POST /report` và `GET /blocks` trả **401** (route sống, chưa có token) — chưa gọi bằng token thật.
 - **Điều kiện xong:** gọi API bằng token thật tạo được báo cáo/chặn; không token trả 401; xóa tài khoản xóa sạch.
 
 ### Phase 2 — Admin nhận & xử lý báo cáo (1 ngày) — code xong 2026-10-30
@@ -174,11 +175,18 @@ Mọi thao tác ghi vào `admin_audit`.
 - [x] Shell “Báo cáo” trong `admin-host/`: bảng 6 cột, lọc, chi tiết (render text thuần), resolve/dismiss + ghi chú, khối khóa AI/phòng.
 - [x] Test: 6 ca API + 4 ca DOM; toàn bộ 627 test xanh, `tsc`/`lint` sạch.
 - [x] Chạy thử local: 2 báo cáo seed → resolve → danh sách còn 1 chờ xử lý; không lỗi console.
-- [ ] Deploy admin: `npm run build:admin` + wrangler (sau khi D1 + data-api Phase 1 lên).
+- [x] Deploy admin: `npm run build:admin` + wrangler (sau khi D1 + data-api Phase 1 lên).
+  - Kiểm 2026-10-30: worker version `2ff4e780` (2026-10-30T04:33Z) mang `reports-api.ts`; bảng `content_reports` còn 0 dòng.
 - **Điều kiện xong:** báo cáo seed hiện trong admin, xử lý xong đổi trạng thái.
 
-### Phase 3 — Báo cáo AI (1 ngày)
-- Nút + dialog + gọi API + toast + test desktop/mobile.
+### Phase 3 — Báo cáo AI (1 ngày) — code xong 2026-10-30
+- [x] Nút “Báo cáo câu trả lời” trên mọi tin của trợ lý (`MessageList`), đổi sang dấu ✓ khóa sau khi gửi.
+- [x] Dialog `ReportAnswerDialog`: xem trước câu trả lời, 5 lý do cố định khớp `REPORT_REASONS.ai`, ghi chú ≤500, Esc/bấm ngoài để đóng, chặn đóng nhầm khung chat.
+- [x] `src/lib/content-reports.ts` gọi `POST /report` (source `ai`, kèm `sessionId` + `messageId`), xử lý 401/429/mạng bằng toast.
+- [x] Gắn ở cả chat desktop (`StudyChatWidget`) và mobile (`MobileChatSheet`).
+- [x] Test: 8 ca mới (`report-ai-answer.test.tsx`), toàn bộ 640 test xanh, `tsc` sạch, `lint` 0 lỗi.
+- [x] Kiểm giao diện thật ở `/dev/report-check` (trang nháp đã xoá): nút cờ, dialog, trạng thái chọn lý do, toast lỗi.
+- [ ] Thử end-to-end bằng tài khoản thật sau khi deploy: gửi 1 báo cáo từ app → thấy trong tab Báo cáo.
 - **Điều kiện xong:** báo cáo từ app xuất hiện trong admin kèm nội dung tin.
 
 ### Phase 4 — Báo cáo & chặn trong phòng (2 ngày)

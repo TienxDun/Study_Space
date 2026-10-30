@@ -13,6 +13,7 @@ import { ChatFab } from "./components/ChatFab";
 import { ChatHeader } from "./components/ChatHeader";
 import { SessionDrawer } from "./components/SessionDrawer";
 import { MessageList } from "./components/MessageList";
+import { ReportAnswerDialog, type ReportAnswerTarget } from "./components/ReportAnswerDialog";
 import { ChatInput } from "./components/ChatInput";
 
 export interface StudyChatWidgetProps {
@@ -56,6 +57,9 @@ export function StudyChatWidget({
   const [remember, setRemember] = useState(false);
   // Mở rộng kích thước khung chat để đọc câu trả lời dài thuận tiện hơn.
   const [expanded, setExpanded] = useState(false);
+  // Báo cáo câu trả lời AI: dialog mở ngoài panel để không bị cắt; id đã báo để khóa nút.
+  const [reportTarget, setReportTarget] = useState<ReportAnswerTarget | null>(null);
+  const [reportedIds, setReportedIds] = useState<string[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -108,15 +112,16 @@ export function StudyChatWidget({
   });
   const { sending, regenerating } = messagesApi;
 
-  // Bấm ra ngoài khung hoặc phím Esc thì tự đóng.
+  // Bấm ra ngoài khung hoặc phím Esc thì tự đóng (trừ khi dialog báo cáo đang mở).
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (e: PointerEvent) => {
+      if (reportTarget) return;
       const el = panelRef.current;
       if (el && !el.contains(e.target as Node)) setOpen(false);
     };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape" && !reportTarget) setOpen(false);
     };
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
@@ -124,7 +129,7 @@ export function StudyChatWidget({
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open ]);
+  }, [open, reportTarget]);
 
   const send = async () => {
     const text = input;
@@ -284,6 +289,8 @@ export function StudyChatWidget({
                 onRegenerate={() => void messagesApi.regenerate()}
                 onReuse={fillInput}
                 onSuggest={fillInput}
+                onReport={(m) => setReportTarget(m)}
+                reportedIds={reportedIds}
               />
 
               <ChatInput
@@ -302,6 +309,16 @@ export function StudyChatWidget({
         </motion.div>
       )}
     </AnimatePresence>
+
+      <ReportAnswerDialog
+        target={reportTarget}
+        sessionId={activeSid}
+        getToken={getToken}
+        onClose={() => setReportTarget(null)}
+        onSubmitted={(id) =>
+          setReportedIds((cur) => (cur.includes(id) ? cur : [...cur, id]))
+        }
+      />
     </>
   );
 }

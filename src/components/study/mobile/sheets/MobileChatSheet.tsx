@@ -17,6 +17,7 @@ import { useImageAttachments } from "../../chat/hooks/useImageAttachments";
 import { notifyChat } from "../../chat/utils/chatNotice";
 import { SessionDrawer } from "../../chat/components/SessionDrawer";
 import { MessageList } from "../../chat/components/MessageList";
+import { ReportAnswerDialog, type ReportAnswerTarget } from "../../chat/components/ReportAnswerDialog";
 import { ChatInput } from "../../chat/components/ChatInput";
 
 interface MobileChatSheetProps {
@@ -38,6 +39,9 @@ export function MobileChatSheet({
 
   // Nhớ hội thoại
   const [remember, setRemember] = useState(false);
+  // Báo cáo câu trả lời AI: id đã báo để khóa nút sau khi gửi.
+  const [reportTarget, setReportTarget] = useState<ReportAnswerTarget | null>(null);
+  const [reportedIds, setReportedIds] = useState<string[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -139,6 +143,7 @@ export function MobileChatSheet({
   if (!firebaseConfigured) return null;
 
   return (
+    <>
     <MobileSheetShell
       isOpen={isOpen}
       onClose={onClose}
@@ -312,10 +317,23 @@ export function MobileChatSheet({
               onRegenerate={() => void messagesApi.regenerate()}
               onReuse={fillInput}
               onSuggest={fillInput}
+              onReport={(m) => setReportTarget(m)}
+              reportedIds={reportedIds}
             />
           </div>
         )}
       </div>
     </MobileSheetShell>
+
+    <ReportAnswerDialog
+      target={reportTarget}
+      sessionId={activeSid}
+      getToken={getToken}
+      onClose={() => setReportTarget(null)}
+      onSubmitted={(id) =>
+        setReportedIds((cur) => (cur.includes(id) ? cur : [...cur, id]))
+      }
+    />
+    </>
   );
 }

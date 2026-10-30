@@ -11,6 +11,7 @@ import {
   MagnifyingGlassPlusIcon,
   FileTextIcon,
   DownloadSimpleIcon,
+  FlagIcon,
   LightbulbFilamentIcon,
   CalendarCheckIcon,
   TimerIcon,
@@ -84,6 +85,8 @@ interface MessageListProps {
   onRegenerate: () => void;
   onReuse: (text: string) => void;
   onSuggest: (text: string) => void;
+  onReport?: (msg: { id: string; text: string }) => void;
+  reportedIds?: string[];
 }
 
 // Danh sách tin nhắn: gom nhóm, avatar mèo, dòng suy nghĩ tinh gọn, nút tác vụ, nút xuống dưới.
@@ -104,6 +107,8 @@ export function MessageList({
   onRegenerate,
   onReuse,
   onSuggest,
+  onReport,
+  reportedIds,
 }: MessageListProps) {
   const [savedNoteId, setSavedNoteId] = useState<string | null>(null);
   const [downloadedId, setDownloadedId] = useState<string | null>(null);
@@ -369,6 +374,7 @@ export function MessageList({
             );
           }
           const isLast = m.id === lastAssistantId;
+          const reported = reportedIds?.includes(m.id) ?? false;
           return (
             <div
               key={m.id}
@@ -452,6 +458,27 @@ export function MessageList({
                       <DownloadSimpleIcon size={13} weight="bold" aria-hidden="true" />
                     )}
                   </button>
+
+                  {/* Báo cáo câu trả lời (bắt buộc cho chính sách AI content của Play) */}
+                  {onReport && (
+                    <button
+                      onClick={() => onReport({ id: m.id, text: m.text })}
+                      disabled={reported}
+                      aria-label={reported ? "Đã báo cáo câu trả lời" : "Báo cáo câu trả lời"}
+                      title={reported ? "Đã báo cáo" : "Báo cáo câu trả lời"}
+                      className={`h-6 w-6 grid place-items-center rounded-md transition-all cursor-pointer active:scale-90 disabled:cursor-default ${
+                        reported
+                          ? "text-amber-300 bg-amber-500/15"
+                          : "text-zinc-400 hover:text-white hover:bg-white/10"
+                      }`}
+                    >
+                      {reported ? (
+                        <CheckIcon size={13} weight="bold" aria-hidden="true" />
+                      ) : (
+                        <FlagIcon size={13} weight="bold" aria-hidden="true" />
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 {typeof m.thoughtSecs === "number" && m.thoughtSecs > 0 && (
