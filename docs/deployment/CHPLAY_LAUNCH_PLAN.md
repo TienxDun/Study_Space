@@ -68,6 +68,7 @@ Bản nháp — đối chiếu lại với code trước khi bấm gửi:
 | Âm thanh, video phòng học (LiveKit) | Không lưu bản ghi | Có — truyền thời gian thực qua LiveKit | Tính năng phòng học nhóm | Tùy chọn |
 | Metadata phiên học (tên hiển thị, thời lượng, phòng) | Có | Không | Giới hạn sử dụng, vận hành | Có khi vào phòng |
 | Số lượt hỏi AI/ngày (UID + ngày + số câu) | Có | Không | Giới hạn quota | Có khi dùng AI |
+| Báo cáo nội dung & danh sách chặn: UID + tên hiển thị, câu trả lời/câu hỏi bị báo cáo, lý do, ghi chú, tên phòng | Có (khi dùng công cụ báo cáo/chặn trong app) | Không | An toàn cộng đồng, xử lý vi phạm | Tùy chọn |
 
 Các mục cần khai thêm:
 - [ ] Dữ liệu truyền tải được mã hóa (TLS) — Có.
@@ -97,9 +98,9 @@ Theo chính sách AI-Generated Content và UGC của Google Play:
 - [ ] Lưu báo cáo AI vào D1 qua Worker: UID, nội dung tin bị báo cáo, lý do, thời gian; xem và xử lý trong admin console.
 - [ ] Nút **báo cáo + chặn người dùng** trong phòng học (hiện chỉ có mute/kick của host).
 - [ ] Chốt hành vi "chặn": người bị chặn không vào cùng phòng / ẩn video-audio của nhau.
-- [ ] Cập nhật `/privacy` + Data Safety: dữ liệu báo cáo được thu thập, mục đích, thời hạn lưu.
-- [ ] Guardrail AI cho người dùng 13+: prompt an toàn + lọc đầu ra; thử câu hỏi nhạy cảm trước khi nộp.
-- [ ] Thời hạn xử lý báo cáo (mục tiêu 7 ngày) và cách phản hồi người báo cáo.
+- [x] Cập nhật `/privacy` + Data Safety: dữ liệu báo cáo/chặn (tên hiển thị, nội dung, 180 ngày) — privacy mục 7, Data Safety thêm dòng, Terms mục 7 mô tả công cụ trong app (2026-10-30).
+- [x] Guardrail AI 13+: prompt an toàn cố định + lọc đầu vào/ra 5 nhóm; 25 test (`chat-proxy-guardrail.test.ts`); hiện quy tắc trong admin (2026-10-30, chờ dán chat-proxy).
+- [x] Thời hạn xử lý báo cáo: ghi **7 ngày** trong Terms mục 7; MVP **không thông báo ngược** cho người báo cáo (quyết định Phase 0).
 
 ---
 

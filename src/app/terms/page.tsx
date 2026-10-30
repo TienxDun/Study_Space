@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const UPDATED_AT = "29/10/2026";
+const UPDATED_AT = "30/10/2026";
 const CONTACT_EMAIL = "leutiendung.htt@gmail.com";
 
 function Section({
@@ -64,238 +64,237 @@ export default function TermsPage() {
 
       <div className="mt-6 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-4">
         <p className="text-xs font-bold uppercase tracking-wider text-emerald-300">
-          Tóm tắt nhanh
+          Tóm tắt nhanh cho bạn
         </p>
         <ul className="mt-2 space-y-1.5 text-sm text-slate-200 list-disc pl-5 marker:text-emerald-300">
-          <li>Dùng ZenStudy nghĩa là bạn đồng ý với các quy tắc dưới đây.</li>
-          <li>Dành cho người từ 13 tuổi; nếu bạn dưới 16 tuổi, cần sự đồng ý của cha mẹ hoặc người giám hộ.</li>
-          <li>Tôn trọng người khác; không ghi âm, ghi hình khi chưa được đồng ý.</li>
-          <li>AI có thể trả lời sai; không dùng thay tư vấn y tế, pháp lý hoặc tài chính.</li>
-          <li>Ghi chú và tin nhắn vẫn là của bạn. Chúng tôi chỉ lưu, đồng bộ và hiển thị lại cho bạn — không bán, không quảng cáo, không dùng để huấn luyện AI.</li>
+          <li>Khi trải nghiệm ZenStudy, bạn đồng ý với các quy tắc đơn giản và rõ ràng dưới đây.</li>
+          <li>Dành cho người học từ 13 tuổi trở lên; nếu dưới 16 tuổi, bạn cần có sự đồng ý của cha mẹ hoặc người giám hộ.</li>
+          <li>Tôn trọng mọi người xung quanh: tuyệt đối không tự ý ghi âm, quay video hay chụp ảnh người khác khi chưa được cho phép.</li>
+          <li>Trợ lý AI đôi lúc có thể trả lời chưa chính xác; câu trả lời chỉ mang tính tham khảo học tập, không dùng thay lời khuyên y tế, pháp lý hay tài chính.</li>
+          <li>Ghi chú, danh sách việc cần làm và tin nhắn luôn thuộc sở hữu của bạn: ZenStudy không bán, không gắn quảng cáo và không dùng để huấn luyện AI.</li>
+          <li>Bạn có thể chủ động báo cáo nội dung không phù hợp và chặn người làm phiền ngay trong ứng dụng; báo cáo sẽ được xem xét và xử lý trong khoảng 7 ngày.</li>
         </ul>
       </div>
 
       <article className="mt-8 space-y-8">
-        <Section id="gioi-thieu" title="1. Giới thiệu và chấp nhận điều khoản">
+        <Section id="gioi-thieu" title="1. Giới thiệu và sự đồng thuận của bạn">
           <p>
             ZenStudy Space (&ldquo;ZenStudy&rdquo;, &ldquo;chúng tôi&rdquo;) là không
-            gian học tập trực tuyến do Lều Tiến Dũng phát triển, gồm website
-            zenstudy.space và ứng dụng Android. Điều khoản này là thỏa thuận giữa
-            bạn và ZenStudy về việc sử dụng dịch vụ.
+            gian học tập trực tuyến do tác giả Lều Tiến Dũng phát triển, bao gồm website
+            zenstudy.space và ứng dụng di động Android. Điều khoản này là thỏa thuận chung
+            giữa bạn và ZenStudy về quyền lợi cùng trách nhiệm khi sử dụng dịch vụ.
           </p>
           <p>
-            Khi dùng ZenStudy, bạn đồng ý với điều khoản này và{" "}
+            Khi truy cập hoặc sử dụng ZenStudy, bạn xác nhận đã đọc, hiểu và đồng ý với điều khoản này cùng{" "}
             <Link
               className="text-emerald-300 hover:text-emerald-200 underline underline-offset-2"
               href="/privacy/"
             >
               Chính sách quyền riêng tư
             </Link>
-            . Nếu không đồng ý, bạn vui lòng ngừng sử dụng.
+            . Nếu không đồng ý với bất kỳ quy định nào, bạn có thể ngừng sử dụng dịch vụ bất cứ lúc nào.
           </p>
         </Section>
 
-        <Section id="do-tuoi-tai-khoan" title="2. Độ tuổi và tài khoản">
+        <Section id="do-tuoi-tai-khoan" title="2. Độ tuổi phù hợp và quản lý tài khoản">
           <p>
-            ZenStudy dành cho người từ 13 tuổi trở lên. Nếu bạn dưới 16 tuổi, hãy
-            dùng với sự đồng ý của cha mẹ hoặc người giám hộ.
+            ZenStudy được xây dựng dành cho người học từ đủ 13 tuổi trở lên. Nếu bạn trong độ tuổi từ 13 đến dưới 16 tuổi, vui lòng sử dụng khi có sự đồng ý của cha mẹ hoặc người giám hộ hợp pháp.
           </p>
           <ul className="list-disc pl-5 space-y-1 marker:text-slate-500">
             <li>
-              Bạn đăng nhập bằng tài khoản Google thông qua Firebase. Bạn chịu
-              trách nhiệm cho hoạt động diễn ra dưới tài khoản của mình.
-            </li>
-            <li>Không chia sẻ tài khoản cho người khác; báo cho chúng tôi nếu tài khoản bị truy cập trái phép.</li>
-            <li>
-              Một số tính năng dùng được không cần tài khoản; trợ lý AI cần đăng
-              nhập Google.
+              Bạn có thể sử dụng hầu hết các công cụ học tập ngay mà không cần tạo tài khoản.
             </li>
             <li>
-              Chúng tôi có thể tạm khóa hoặc khóa tài khoản vi phạm điều khoản này
-              hoặc quy định pháp luật.
+              Để đồng bộ dữ liệu giữa các thiết bị và trò chuyện với trợ lý AI, bạn đăng nhập bằng tài khoản Google thông qua giao thức an toàn chính thức của Google.
+            </li>
+            <li>
+              Bạn có trách nhiệm bảo quản thiết bị cá nhân và các hoạt động diễn ra từ tài khoản của mình. Vui lòng không chia sẻ tài khoản cho người khác và báo ngay cho chúng tôi nếu nghi ngờ có truy cập bất thường.
+            </li>
+            <li>
+              Chúng tôi có thể tạm ngừng hoặc khóa vĩnh viễn những tài khoản cố tình vi phạm các quy tắc này hoặc vi phạm quy định pháp luật.
             </li>
           </ul>
         </Section>
 
-        <Section id="quy-tac-chung" title="3. Quy tắc sử dụng chung">
-          <p>Khi dùng ZenStudy, bạn không được:</p>
+        <Section id="quy-tac-chung" title="3. Quy tắc ứng xử và sử dụng văn minh">
+          <p>ZenStudy là không gian học tập tích cực và yên tĩnh. Khi tham gia, bạn vui lòng không thực hiện các hành vi sau:</p>
           <ul className="list-disc pl-5 space-y-1 marker:text-slate-500">
             <li>
-              Vi phạm pháp luật; quấy rối, đe dọa, xúc phạm, phân biệt đối xử, thù
-              địch hoặc phát tán nội dung khiêu dâm, bạo lực, xâm hại trẻ em.
+              Vi phạm pháp luật; quấy rối, đe dọa, xúc phạm danh dự, phân biệt đối xử, thù địch hoặc chia sẻ các nội dung khiêu dâm, bạo lực, xâm hại trẻ em.
             </li>
-            <li>Mạo danh người khác; gửi spam hoặc quảng cáo trái phép.</li>
+            <li>Mạo danh người khác; gửi thư rác (spam) hoặc tin nhắn quảng cáo trái phép.</li>
             <li>
-              Dịch ngược, phá hoại, can thiệp hệ thống, vượt giới hạn sử dụng, né
-              cơ chế bảo mật hoặc thu thập dữ liệu tự động.
+              Cố tình phá hoại, can thiệp vào máy chủ, né tránh các cơ chế bảo mật hoặc sử dụng phần mềm tự động (bot, script cào dữ liệu) làm ảnh hưởng đến trải nghiệm của người khác.
             </li>
-            <li>Đăng tải mã độc hoặc nội dung bạn không có quyền sử dụng.</li>
-            <li>Dùng dịch vụ để gây hại người khác hoặc làm quá tải hệ thống.</li>
+            <li>Tải lên tệp chứa mã độc, virus hoặc các nội dung bạn không có bản quyền sử dụng.</li>
+            <li>Sử dụng dịch vụ để gây phiền toái cho người khác hoặc làm quá tải hệ thống học tập chung.</li>
           </ul>
         </Section>
 
-        <Section id="tro-ly-ai" title="4. Trợ lý AI">
+        <Section id="tro-ly-ai" title="4. Trợ lý AI và nguyên tắc an toàn">
           <ul className="list-disc pl-5 space-y-1 marker:text-slate-500">
             <li>
-              Trợ lý AI dùng mô hình của bên thứ ba. Câu trả lời có thể sai, thiếu
-              ý, lỗi thời hoặc thiên lệch; bạn cần kiểm chứng lại với tài liệu
-              chính thống.
+              Trợ lý AI vận hành dựa trên công nghệ trí tuệ nhân tạo hiện đại. Dù vậy, câu trả lời của AI đôi lúc có thể chưa chính xác, thiếu sót hoặc chưa cập nhật; bạn nên chủ động kiểm chứng lại với sách giáo khoa, bài giảng hoặc tài liệu chính thống.
             </li>
             <li>
-              Không dùng câu trả lời của AI thay cho tư vấn y tế, pháp lý, tài chính
-              hoặc quyết định quan trọng.
+              Câu trả lời của AI chỉ dùng để tham khảo trong học tập; tuyệt đối không dùng thay thế cho sự tư vấn chuyên môn từ bác sĩ y khoa, luật sư, chuyên gia tài chính hoặc các quyết định quan trọng ảnh hưởng đến tính mạng, sức khỏe.
             </li>
             <li>
-              Không gửi thông tin nhạy cảm như giấy tờ tùy thân, tài khoản ngân
-              hàng, dữ liệu sức khỏe, bí mật kinh doanh hay dữ liệu của người khác
-              khi chưa được phép.
+              Để bảo vệ sự an toàn của chính mình, vui lòng không gửi cho AI các thông tin bí mật cá nhân như căn cước công dân, tài khoản ngân hàng, thông tin bệnh án hay dữ liệu của người khác khi chưa được họ đồng ý.
             </li>
             <li>
-              Số lượt hỏi mỗi ngày có giới hạn. Chúng tôi có thể đổi nhà cung cấp
-              hoặc mô hình AI, hoặc tạm ngừng tính năng để bảo trì.
+              Số lượt hỏi bài mỗi ngày được giới hạn hợp lý theo tài khoản để bảo đảm dịch vụ hoạt động công bằng cho tất cả mọi người. Chúng tôi có thể nâng cấp mô hình AI hoặc tạm dừng tính năng trong thời gian ngắn để bảo trì.
             </li>
             <li>
-              Chúng tôi có thể lọc hoặc từ chối nội dung không phù hợp. Nếu thấy câu
-              trả lời xấu, hãy báo cáo qua email bên dưới hoặc công cụ báo cáo
-              trong ứng dụng khi có.
+              Hệ thống có bộ lọc an toàn tự động: các yêu cầu có dấu hiệu gây hại (như tự hại, bạo lực, chất cấm, nội dung người lớn, thu thập thông tin người khác) sẽ bị từ chối và nhận phản hồi hướng dẫn an toàn thay vì gửi đến dịch vụ AI.
             </li>
             <li>
-              Lịch sử trò chuyện được lưu như mô tả trong Chính sách quyền riêng tư;
-              bạn có thể xóa từng đoạn chat bất cứ lúc nào.
+              Nếu phát hiện câu trả lời chưa chuẩn xác hay phản cảm, bạn hãy bấm vào biểu tượng lá cờ ngay bên dưới câu trả lời đó để báo cáo cho chúng tôi xem xét.
+            </li>
+            <li>
+              Lịch sử trò chuyện được lưu riêng cho tài khoản của bạn như được giải thích trong Chính sách quyền riêng tư; bạn có thể tự do xóa từng đoạn chat bất kỳ lúc nào.
             </li>
           </ul>
         </Section>
 
-        <Section id="phong-hoc" title="5. Phòng học nhóm">
+        <Section id="phong-hoc" title="5. Phòng học nhóm (Study Room)">
           <ul className="list-disc pl-5 space-y-1 marker:text-slate-500">
             <li>
-              Phòng học truyền âm thanh và video trực tiếp qua LiveKit. ZenStudy
-              không ghi âm, không ghi hình cuộc gọi.
+              Phòng học truyền âm thanh và hình ảnh trực tiếp giữa các thành viên đang có mặt. ZenStudy tuyệt đối không ghi âm, không ghi hình và không lưu lại bất kỳ nội dung nào của cuộc gọi.
             </li>
             <li>
-              Khi bạn bật mic hoặc camera, người trong phòng có thể nghe và thấy bạn.
+              Khi bạn bật micrô hoặc máy ảnh, các bạn học khác trong phòng sẽ nghe và nhìn thấy bạn. Hãy chú ý trang phục và giữ không gian học tập yên tĩnh, văn minh.
             </li>
             <li>
-              Không ghi âm, ghi hình, chụp màn hình người khác khi chưa có sự đồng
-              ý; không phát tán nội dung của người khác.
+              Tôn trọng tuyệt đối hình ảnh cá nhân của bạn học: Nghiêm cấm hành vi tự ý ghi âm, quay màn hình, chụp ảnh các thành viên trong phòng hoặc phát tán hình ảnh/giọng nói của người khác khi chưa được họ đồng ý rõ ràng.
             </li>
             <li>
-              Tôn trọng người cùng phòng. Người tạo phòng có quyền mute, mời ra khỏi
-              phòng, khóa phòng hoặc đặt mật khẩu; bạn cần tuân thủ.
+              Người tạo phòng (chủ phòng) có các quyền điều phối như: tắt mic thành viên ồn ào, mời người gây rối ra khỏi phòng, khóa phòng không nhận thêm người hoặc đặt mật khẩu phòng. Các thành viên trong phòng vui lòng tôn trọng sự điều phối chung này.
             </li>
             <li>
-              Nếu bị quấy rối, hãy báo cáo qua email hoặc công cụ báo cáo trong ứng
-              dụng khi có. Chúng tôi có thể kết thúc phòng, hạn chế hoặc khóa tài
-              khoản vi phạm.
+              Chủ động tự bảo vệ bằng tính năng chặn: Nếu cảm thấy bị làm phiền, bạn có thể bấm trực tiếp vào thẻ của bạn học đó để chọn &ldquo;Chặn&rdquo;. Việc chặn có hiệu lực hai chiều (hai bạn sẽ không bao giờ vào chung phòng với nhau được nữa), bạn sẽ tự động rời khỏi phòng hiện tại và có thể quản lý danh sách chặn trong Cài đặt bất cứ lúc nào.
             </li>
-            <li>Phòng học không dùng cho cấp cứu hoặc tình huống khẩn cấp.</li>
+            <li>
+              Nếu bị quấy rối hoặc nhận thấy hành vi xấu, hãy dùng nút báo cáo ngay trên thẻ thành viên đó hoặc gửi email cho chúng tôi. Chúng tôi sẽ can thiệp để bảo vệ bạn.
+            </li>
+            <li>Phòng học nhóm chỉ dành cho việc tự học; không sử dụng cho các cuộc gọi cấp cứu hoặc tình huống khẩn cấp.</li>
           </ul>
         </Section>
 
-        <Section id="noi-dung-cua-ban" title="6. Nội dung của bạn và quyền sở hữu">
+        <Section id="noi-dung-cua-ban" title="6. Quyền sở hữu nội dung và tài sản trí tuệ">
           <p>
-            Bạn giữ quyền đối với ghi chú, việc cần làm, tin nhắn và tệp bạn tạo
-            hoặc tải lên. Bạn cho ZenStudy quyền giới hạn, không độc quyền và không
-            phải trả tiền để:
+            Bạn luôn là chủ sở hữu duy nhất của các ghi chú, danh sách việc cần làm (to-do list), tin nhắn và tệp bạn tạo ra hoặc tải lên ứng dụng. Bạn chỉ cấp cho ZenStudy quyền sử dụng tối thiểu và miễn phí để:
           </p>
           <ul className="list-disc pl-5 space-y-1 marker:text-slate-500">
-            <li>lưu và đồng bộ nội dung giữa các thiết bị của bạn;</li>
-            <li>hiển thị lại nội dung cho chính bạn;</li>
-            <li>gửi câu hỏi, ảnh hoặc tệp tới nhà cung cấp AI khi bạn dùng trợ lý AI.</li>
+            <li>lưu trữ và đồng bộ nội dung giữa các thiết bị cá nhân của bạn;</li>
+            <li>hiển thị lại nội dung đầy đủ cho chính bạn;</li>
+            <li>chuyển tiếp câu hỏi, hình ảnh hoặc tệp sang dịch vụ AI đối tác khi bạn chọn hỏi bài trợ lý AI.</li>
           </ul>
           <p>
-            Chúng tôi không bán, không dùng nội dung của bạn cho quảng cáo và không
-            dùng nội dung của bạn để huấn luyện mô hình AI.
+            ZenStudy cam kết: Chúng tôi không bán nội dung của bạn, không dùng cho quảng cáo và không sử dụng bất kỳ ghi chú hay tin nhắn nào của bạn để huấn luyện các mô hình AI.
           </p>
           <p>
-            Bạn chịu trách nhiệm về tính hợp pháp của nội dung mình đăng tải. Tên,
-            logo, giao diện, cảnh nền, âm thanh và nhạc của ZenStudy thuộc chúng tôi
-            hoặc bên cấp phép; bạn không được sao chép hoặc phân phối lại.
+            Bạn chịu trách nhiệm về tính hợp pháp của nội dung bạn đưa lên. Ngược lại, tên thương hiệu, biểu tượng (logo), giao diện thiết kế, các cảnh nền học tập, âm thanh môi trường và bản nhạc tích hợp sẵn trong ứng dụng thuộc sở hữu của ZenStudy hoặc các tác giả cấp phép; bạn vui lòng không sao chép, trích xuất hay kinh doanh lại.
           </p>
           <p>
-            Video và nhạc nhúng từ YouTube, Spotify hoặc dịch vụ khác do bên thứ ba
-            cung cấp và tuân theo điều khoản của họ. ZenStudy không kiểm soát nội
-            dung đó.
+            Các video và danh sách bài hát nhúng từ YouTube, Spotify hoặc dịch vụ bên thứ ba do các nền tảng đó cung cấp, tuân theo điều khoản sử dụng của họ. ZenStudy không kiểm soát hay sở hữu các nội dung này.
           </p>
         </Section>
 
-        <Section id="bao-cao" title="7. Báo cáo và xử lý vi phạm">
+        <Section id="bao-cao" title="7. Báo cáo vi phạm, chặn người dùng và quy trình xử lý">
           <p>
-            Khi báo cáo nội dung hoặc hành vi vi phạm, bạn gửi tới{" "}
+            ZenStudy cung cấp các công cụ trực quan ngay trên màn hình để bạn chủ động phản ánh vi phạm:
+          </p>
+          <ul className="list-disc pl-5 space-y-1 marker:text-slate-500">
+            <li>
+              Báo cáo câu trả lời của trợ lý AI: Bấm vào biểu tượng lá cờ ngay bên dưới câu trả lời không phù hợp.
+            </li>
+            <li>
+              Báo cáo hoặc chặn thành viên trong phòng học: Bấm vào biểu tượng dấu ba chấm (&ldquo;⋮&rdquo;) trên thẻ của người đó.
+            </li>
+          </ul>
+          <p>
+            Bạn cũng có thể gửi thư phản ánh trực tiếp tới{" "}
             <a
               className="text-emerald-300 hover:text-emerald-200 underline underline-offset-2"
               href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Báo cáo vi phạm ZenStudy")}`}
             >
               {CONTACT_EMAIL}
             </a>{" "}
-            kèm mô tả, thời gian và người liên quan (nếu biết). Chúng tôi cố gắng
-            xem xét trong vòng 7 ngày.
+            kèm theo mô tả sự việc, thời gian xảy ra và tài khoản liên quan. Đội ngũ quản trị sẽ xem xét và phản hồi trong vòng tối đa 7 ngày làm việc.
           </p>
           <p>
-            Tùy mức độ, chúng tôi có thể xóa nội dung, hạn chế hoặc khóa tài khoản.
-            Thông tin báo cáo được lưu để xử lý và có thể được giữ lại sau khi tài
-            khoản bị xóa nếu pháp luật yêu cầu. Báo cáo sai hoặc ác ý có thể bị xử
-            lý như hành vi vi phạm.
+            Dữ liệu báo cáo được lưu trữ tối đa khoảng 180 ngày để phục vụ việc đối chiếu xử lý, sau đó hệ thống sẽ tự động xóa sạch; các thông tin lưu gồm nội dung bị phản ánh, lý do, ghi chú của bạn và tên hiển thị như được mô tả trong Chính sách quyền riêng tư.
+          </p>
+          <p>
+            Tùy theo mức độ vi phạm, chúng tôi có thể đưa ra lời nhắc nhở, xóa nội dung vi phạm, tạm khóa tính năng AI / phòng học, hoặc khóa tài khoản vĩnh viễn đối với hành vi nghiêm trọng. Chúng tôi nghiêm cấm việc cố ý gửi báo cáo sai sự thật hoặc vu khống người khác.
+          </p>
+          <p>
+            Việc chặn người dùng có hiệu lực từ hai phía (hai bạn sẽ không còn chung phòng được nữa) và bạn có thể gỡ bỏ bất kỳ lúc nào trong phần Cài đặt. Khi bạn chọn xóa tài khoản, tất cả dữ liệu báo cáo và danh sách chặn liên quan của bạn cũng sẽ được xóa sạch hoàn toàn.
           </p>
         </Section>
 
-        <Section id="dich-vu" title="8. Dịch vụ miễn phí, thay đổi và gián đoạn">
+        <Section id="dich-vu" title="8. Dịch vụ miễn phí, nâng cấp và sự gián đoạn">
           <p>
-            ZenStudy hiện miễn phí. Chúng tôi có thể thêm, bớt hoặc thay đổi tính
-            năng và giới hạn sử dụng. Dịch vụ có thể gián đoạn do bảo trì, sự cố
-            mạng hoặc lỗi từ bên thứ ba.
+            ZenStudy hiện được cung cấp hoàn toàn miễn phí cho cộng đồng người học. Chúng tôi luôn nỗ lực phát triển thêm các tính năng hữu ích để nâng cao trải nghiệm học tập của bạn.
           </p>
           <p>
-            Chúng tôi không bảo đảm dịch vụ luôn sẵn sàng, không lỗi hoặc không mất
-            dữ liệu. Ứng dụng có thể tự cập nhật từ xa; điều khoản này áp dụng cho
-            cả các bản cập nhật.
+            Trong quá trình vận hành, dịch vụ có thể được điều chỉnh, nâng cấp hoặc tạm ngưng ngắn hạn để bảo trì hệ thống. Đôi khi dịch vụ có thể bị gián đoạn do sự cố đường truyền mạng internet hoặc lỗi kỹ thuật từ các nhà cung cấp hạ tầng đám mây ngoài ý muốn.
+          </p>
+          <p>
+            Ứng dụng di động có thể nhận các bản cập nhật từ xa; bản Điều khoản sử dụng này tự động áp dụng cho tất cả các bản cập nhật đó.
           </p>
         </Section>
 
         <Section id="trach-nhiem" title="9. Giới hạn trách nhiệm">
           <p>
-            Trong phạm vi pháp luật cho phép, ZenStudy không chịu trách nhiệm cho
-            thiệt hại gián tiếp, mất dữ liệu ngoài khả năng khôi phục hợp lý, nội
-            dung do người dùng đăng tải, câu trả lời của AI hoặc sự cố từ dịch vụ
-            bên thứ ba.
+            Chúng tôi xây dựng ZenStudy với sự cẩn trọng và tận tâm lớn nhất để hỗ trợ việc học của bạn. Tuy nhiên, dịch vụ được cung cấp trên tinh thần &ldquo;như hiện có&rdquo; (as-is).
           </p>
           <p>
-            Điều này không giới hạn các quyền mà pháp luật dành cho bạn với tư cách
-            người tiêu dùng.
+            Trong phạm vi tối đa mà pháp luật cho phép, ZenStudy không chịu trách nhiệm pháp lý đối với những thiệt hại mang tính gián tiếp phát sinh (chẳng hạn như: việc học tập bị gián đoạn do mất kết nối mạng bất ngờ, mất mát dữ liệu do thiết bị cá nhân bị lỗi, việc đưa ra quyết định dựa trên câu trả lời chưa chính xác của AI, hay sự cố kỹ thuật từ các dịch vụ bên thứ ba).
+          </p>
+          <p>
+            Quy định này hoàn toàn không làm giới hạn hay ảnh hưởng đến các quyền lợi cơ bản mà pháp luật bảo vệ người tiêu dùng dành cho bạn.
           </p>
         </Section>
 
-        <Section id="cham-dut" title="10. Chấm dứt">
+        <Section id="cham-dut" title="10. Chấm dứt sử dụng và xóa tài khoản">
           <p>
-            Bạn có thể ngừng sử dụng bất cứ lúc nào và xóa tài khoản tại{" "}
+            Bạn có thể ngừng sử dụng dịch vụ bất cứ lúc nào mà không gặp bất kỳ trở ngại nào.
+          </p>
+          <p>
+            Nếu muốn xóa vĩnh viễn tài khoản cùng toàn bộ dữ liệu học tập đã lưu, bạn có thể tự thao tác ngay trong ứng dụng hoặc truy cập vào{" "}
             <Link
               className="text-emerald-300 hover:text-emerald-200 underline underline-offset-2"
               href="/account-deletion/"
             >
               trang xoá tài khoản
             </Link>
-            . Chúng tôi có thể tạm ngưng hoặc khóa tài khoản nếu bạn vi phạm điều
-            khoản này hoặc khi pháp luật yêu cầu.
+            .
           </p>
           <p>
-            Các điều về quyền sở hữu trí tuệ, giới hạn trách nhiệm và luật áp dụng
-            vẫn có hiệu lực sau khi chấm dứt.
+            ZenStudy cũng có quyền tạm ngừng hoặc khóa tài khoản của bạn nếu bạn cố tình vi phạm các điều khoản này hoặc khi cơ quan pháp luật có yêu cầu.
+          </p>
+          <p>
+            Ngay cả sau khi bạn đã ngừng sử dụng dịch vụ, các quy định liên quan đến bản quyền trí tuệ, giới hạn trách nhiệm và luật điều chỉnh vẫn tiếp tục duy trì hiệu lực.
           </p>
         </Section>
 
         <Section id="thay-doi" title="11. Thay đổi điều khoản">
           <p>
-            Điều khoản có thể được cập nhật khi ZenStudy thay đổi tính năng hoặc quy
-            định. Bản mới luôn nằm trên trang này kèm ngày cập nhật. Thay đổi quan
-            trọng sẽ được thông báo trong ứng dụng hoặc trên website. Việc tiếp tục
-            sử dụng sau khi cập nhật nghĩa là bạn chấp nhận điều khoản mới.
+            Bản Điều khoản này có thể được điều chỉnh khi ZenStudy cập nhật các tính năng mới hoặc để phù hợp hơn với quy định pháp luật. Bản cập nhật mới nhất sẽ luôn được đăng tải công khai trên trang này kèm ngày sửa đổi.
+          </p>
+          <p>
+            Đối với các thay đổi quan trọng ảnh hưởng trực tiếp đến quyền lợi của bạn, chúng tôi sẽ thông báo nổi bật trên trang chủ hoặc trong ứng dụng. Việc bạn tiếp tục sử dụng ZenStudy sau khi điều khoản được cập nhật đồng nghĩa với việc bạn đồng ý với các nội dung mới đó.
           </p>
         </Section>
 
-        <Section id="lien-he" title="12. Luật áp dụng và liên hệ">
+        <Section id="lien-he" title="12. Luật điều chỉnh và thông tin liên hệ">
           <p>
-            Điều khoản này được điều chỉnh bởi pháp luật Việt Nam. Mọi câu hỏi, gửi
-            tới{" "}
+            Điều khoản sử dụng này được điều chỉnh và giải thích theo quy định của pháp luật nước Cộng hòa Xã hội Chủ nghĩa Việt Nam.
+          </p>
+          <p>
+            Mọi thắc mắc, phản hồi hoặc cần hỗ trợ về Điều khoản sử dụng, bạn vui lòng liên hệ trực tiếp với tác giả qua email:{" "}
             <a
               className="text-emerald-300 hover:text-emerald-200 underline underline-offset-2"
               href={`mailto:${CONTACT_EMAIL}`}

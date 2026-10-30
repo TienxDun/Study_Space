@@ -222,10 +222,11 @@ Mọi thao tác ghi vào `admin_audit`.
 - **Giới hạn đã biết:** so khớp mẫu từ khóa (không phải phân loại ngữ nghĩa) nên có thể lọt câu diễn đạt lạ và chặn nhầm câu hiếm; câu **không dấu** (“cach che tao bom”) chưa được phủ để tránh nhầm “tu tu” với “từ từ”.
 - **Điều kiện xong:** các câu thử bị từ chối/làm nhẹ đúng; câu học tập bình thường không bị chặn oan.
 
-### Phase 6 — Đồng bộ pháp lý (0.5 ngày)
-- `/privacy`: dữ liệu báo cáo/chặn, mục đích, thời hạn 180 ngày, chỉ admin truy cập.
-- Data Safety: thêm dòng dữ liệu báo cáo; giữ nhất quán với privacy.
-- Terms: cập nhật câu “công cụ báo cáo trong ứng dụng” (đã có) + mô tả chặn.
+### Phase 6 — Đồng bộ pháp lý (0.5 ngày) — xong 2026-10-30
+- [x] `/privacy`: thêm mục **7. Báo cáo, chặn và hạn chế tài khoản** (dữ liệu lưu gồm UID + tên hiển thị, câu trả lời ≤8.000 và câu hỏi ≤2.000 ký tự, lý do, ghi chú ≤500, phòng, thời gian; giữ ~180 ngày; chỉ admin xem; hạn chế AI/phòng), mục 5 thêm đoạn guardrail; các mục sau dồn số (7→8 … 12→13), tóm tắt nhanh thêm ý báo cáo/chặn; ngày cập nhật 30/10/2026.
+- [x] Terms: mục 4 thêm từ chối câu hỏi nguy hiểm; mục 5 thêm chặn hai chiều + tự rời phòng + bỏ chặn trong Cài đặt; mục 7 viết lại (nút cờ dưới câu trả lời, menu ⋮ trong phòng, 7 ngày, 180 ngày, không thông báo ngược); tóm tắt nhanh + ngày cập nhật.
+- [x] Data Safety ([CHPLAY_LAUNCH_PLAN.md](../deployment/CHPLAY_LAUNCH_PLAN.md)): thêm dòng “Báo cáo nội dung & danh sách chặn”, tick 3 mục P0.5 liên quan.
+- **Còn lại:** dán các trang lên production (push web) rồi mở `/privacy/`, `/terms/` kiểm hiển thị; sau đó đối chiếu lại khi khai Data Safety trong Play Console.
 
 ### Phase 7 — QA & bằng chứng cho Play (0.5–1 ngày)
 - Test hồi quy chat/phòng/xóa tài khoản.
