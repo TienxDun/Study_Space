@@ -23,7 +23,7 @@ vi.mock("sonner", () => {
 vi.mock("@/components/study/auth", () => {
   // Trả cùng một object mỗi lần gọi để getToken ổn định, tránh effect tải lại vô hạn.
   const getToken = async () => "token-abc";
-  const state = { user: { uid: "user_me" }, getToken };
+  const state = { user: { uid: "user_me", displayName: "Người Kiểm Thử" }, getToken };
   return { useAuth: () => state };
 });
 
@@ -157,6 +157,8 @@ describe("MemberSafetyMenu", () => {
       source: "room",
       room: "phong-hoc-1",
       targetUid: "user_bob",
+      targetName: "Bạn Bình",
+      reporterName: "Người Kiểm Thử",
       reason: "harassment",
     });
   });

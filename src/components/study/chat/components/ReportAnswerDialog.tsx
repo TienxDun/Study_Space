@@ -19,6 +19,8 @@ interface ReportAnswerDialogProps {
   target: ReportAnswerTarget | null;
   sessionId: string | null;
   getToken: () => Promise<string | null>;
+  /** Tên hiển thị của người gửi (admin đọc thay vì UID). */
+  reporterName?: string;
   onClose: () => void;
   onSubmitted: (id: string) => void;
 }
@@ -28,6 +30,7 @@ export function ReportAnswerDialog({
   target,
   sessionId,
   getToken,
+  reporterName,
   onClose,
   onSubmitted,
 }: ReportAnswerDialogProps) {
@@ -67,6 +70,7 @@ export function ReportAnswerDialog({
       getToken,
       answer: target.text,
       question: target.question,
+      reporterName,
       reason,
       detail,
       sessionId,

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { DotsThreeVerticalIcon, FlagIcon, ProhibitIcon, XIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { blockUser } from "@/lib/user-blocks";
+import { useAuth } from "@/components/study/auth";
 import { RoomReportDialog } from "./RoomReportDialog";
 
 interface MemberSafetyMenuProps {
@@ -26,6 +27,7 @@ export function MemberSafetyMenu({
   onBlocked,
   variant = "desktop",
 }: MemberSafetyMenuProps) {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [confirmBlock, setConfirmBlock] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -182,6 +184,7 @@ export function MemberSafetyMenu({
         targetUid={targetUid}
         targetName={targetName}
         getToken={getToken ?? (async () => null)}
+        reporterName={user?.displayName || ""}
         onClose={() => setReportOpen(false)}
       />
     </>

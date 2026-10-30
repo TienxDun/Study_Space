@@ -123,6 +123,12 @@
     el.style.color = isError ? "var(--rose-400)" : "";
   }
 
+  // Tên hiển thị lưu lúc gửi báo cáo; dòng cũ chưa có tên thì lùi về UID rút gọn.
+  function personLabel(name, uid) {
+    if (name) return String(name);
+    return uid ? shortUid(uid) : "";
+  }
+
   function appendCell(row, value, className) {
     var td = document.createElement("td");
     if (className) td.className = className;
@@ -154,13 +160,16 @@
         var tr = document.createElement("tr");
         appendCell(tr, formatTime(report.createdAt), "reports-time");
         appendCell(tr, SOURCE_LABEL[report.source] || report.source);
-        appendCell(
+        var targetLabel =
+          report.targetUid || report.targetName
+            ? personLabel(report.targetName, report.targetUid)
+            : "—";
+        var personCell = appendCell(
           tr,
-          shortUid(report.reporterUid) +
-            " → " +
-            (report.targetUid ? shortUid(report.targetUid) : "—"),
+          personLabel(report.reporterName, report.reporterUid) + " → " + targetLabel,
           "reports-uid-cell",
         );
+        personCell.title = [report.reporterUid, report.targetUid].filter(Boolean).join(" → ");
         appendCell(tr, reasonLabel(report));
 
         var statusTd = document.createElement("td");
@@ -189,13 +198,14 @@
     if (more) more.hidden = !state.nextBefore;
   }
 
-  function metaRow(label, value) {
+  function metaRow(label, value, title) {
     var row = document.createElement("div");
     row.className = "reports-meta-row";
     var l = document.createElement("span");
     l.textContent = label;
     var v = document.createElement("strong");
     v.textContent = value == null || value === "" ? "—" : String(value);
+    if (title) v.title = String(title);
     row.appendChild(l);
     row.appendChild(v);
     return row;
@@ -208,8 +218,12 @@
     meta.textContent = "";
     meta.appendChild(metaRow("Nguồn", SOURCE_LABEL[report.source] || report.source));
     meta.appendChild(metaRow("Trạng thái", STATUS_LABEL[report.status] || report.status));
-    meta.appendChild(metaRow("Người báo cáo", report.reporterUid));
-    if (report.targetUid) meta.appendChild(metaRow("Người bị báo cáo", report.targetUid));
+    meta.appendChild(metaRow("Người báo cáo", personLabel(report.reporterName, report.reporterUid), report.reporterUid));
+    if (report.targetUid || report.targetName) {
+      meta.appendChild(
+        metaRow("Người bị báo cáo", personLabel(report.targetName, report.targetUid), report.targetUid),
+      );
+    }
     if (report.room) meta.appendChild(metaRow("Phòng", report.room));
     if (report.sessionId) meta.appendChild(metaRow("Phiên chat", report.sessionId));
     if (report.messageId) meta.appendChild(metaRow("Tin nhắn", report.messageId));

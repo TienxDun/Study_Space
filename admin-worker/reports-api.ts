@@ -34,7 +34,9 @@ function toReport(row: Row, options: { preview?: boolean } = {}) {
     id: String(row.id || ""),
     source: String(row.source || ""),
     reporterUid: String(row.reporter_uid || ""),
+    reporterName: row.reporter_name ? String(row.reporter_name) : "",
     targetUid: row.target_uid ? String(row.target_uid) : null,
+    targetName: row.target_name ? String(row.target_name) : "",
     room: row.room ? String(row.room) : null,
     sessionId: row.session_id ? String(row.session_id) : null,
     messageId: row.message_id ? String(row.message_id) : null,
@@ -95,9 +97,9 @@ async function listReports(url: URL, env: AdminEnv): Promise<Response> {
     }
 
     const rowsRes = await env.DB!.prepare(
-      `SELECT id, source, reporter_uid, target_uid, room, session_id, message_id,
-              substr(content, 1, 300) AS content_preview, reason, detail, status,
-              created_at, resolved_at, resolved_by, resolution_note
+      `SELECT id, source, reporter_uid, reporter_name, target_uid, target_name, room,
+              session_id, message_id, substr(content, 1, 300) AS content_preview,
+              reason, detail, status, created_at, resolved_at, resolved_by, resolution_note
          FROM content_reports
         WHERE (? = 'all' OR status = ?)
           AND (? = 'all' OR source = ?)
@@ -121,9 +123,9 @@ async function listReports(url: URL, env: AdminEnv): Promise<Response> {
 async function getReport(env: AdminEnv, id: string): Promise<Response> {
   try {
     const row = await env.DB!.prepare(
-      `SELECT id, source, reporter_uid, target_uid, room, session_id, message_id,
-              question, content, reason, detail, status, created_at, resolved_at, resolved_by,
-              resolution_note
+      `SELECT id, source, reporter_uid, reporter_name, target_uid, target_name, room,
+              session_id, message_id, question, content, reason, detail, status, created_at,
+              resolved_at, resolved_by, resolution_note
          FROM content_reports WHERE id = ?`,
     )
       .bind(id)

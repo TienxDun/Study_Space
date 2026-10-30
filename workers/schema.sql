@@ -84,7 +84,9 @@ CREATE TABLE IF NOT EXISTS content_reports (
   id              TEXT PRIMARY KEY,
   source          TEXT NOT NULL,              -- 'ai' | 'room'
   reporter_uid    TEXT NOT NULL,
+  reporter_name   TEXT,                        -- tên hiển thị lúc gửi báo cáo
   target_uid      TEXT,
+  target_name     TEXT,
   room            TEXT,
   session_id      TEXT,
   message_id      TEXT,

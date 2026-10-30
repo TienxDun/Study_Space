@@ -21,7 +21,9 @@ const LIST: Row[] = [
     id: "report-0001",
     source: "ai",
     reporterUid: "user_alice",
+    reporterName: "Bạn An",
     targetUid: null,
+    targetName: null,
     room: null,
     sessionId: "sid-1",
     messageId: "msg-1",
@@ -39,7 +41,9 @@ const LIST: Row[] = [
     id: "report-0002",
     source: "room",
     reporterUid: "user_alice",
+    reporterName: "Bạn An",
     targetUid: "user_bob",
+    targetName: "Bạn Bình",
     room: "phong-1",
     sessionId: null,
     messageId: null,
@@ -159,6 +163,8 @@ describe("panel Báo cáo", () => {
     expect(el("reports-state").textContent).toContain("2 chờ xử lý");
     expect(rows()[0].textContent).toContain("Trợ lý AI");
     expect(rows()[1].textContent).toContain("Phòng học");
+    expect(rows()[0].textContent).toContain("Bạn An");
+    expect(rows()[1].textContent).toContain("Bạn An → Bạn Bình");
   });
 
   it("mở chi tiết và render nội dung dạng text, không chạy HTML", async () => {
@@ -172,6 +178,7 @@ describe("panel Báo cáo", () => {
     expect(content.textContent).toContain("<img src=x");
     expect(content.querySelector("img")).toBeNull();
     expect(el("reports-detail-meta").textContent).toContain("Thông tin sai/lạc hậu");
+    expect(el("reports-detail-meta").textContent).toContain("Bạn An");
   });
 
   it("hiện ghi chú của người báo cáo trong khối chi tiết", async () => {

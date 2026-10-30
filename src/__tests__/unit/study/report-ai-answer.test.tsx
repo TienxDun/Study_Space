@@ -125,6 +125,7 @@ describe("ReportAnswerDialog", () => {
           target={{ id: "a1", text: "Câu trả lời cần kiểm tra", question: "Newton là gì?" }}
           sessionId="sid-1"
           getToken={async () => "token-abc"}
+          reporterName="Người Kiểm Thử"
           onClose={onClose}
           onSubmitted={onSubmitted}
           {...overrides}
@@ -178,6 +179,7 @@ describe("ReportAnswerDialog", () => {
       reason: "inaccurate",
       content: "Câu trả lời cần kiểm tra",
       question: "Newton là gì?",
+      reporterName: "Người Kiểm Thử",
       detail: "",
       sessionId: "sid-1",
       messageId: "a1",

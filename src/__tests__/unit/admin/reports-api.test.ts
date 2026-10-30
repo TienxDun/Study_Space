@@ -24,7 +24,9 @@ const SEED_REPORTS: Row[] = [
     id: "report-0001",
     source: "ai",
     reporter_uid: "user_alice",
+    reporter_name: "Bạn An",
     target_uid: null,
+    target_name: null,
     room: null,
     session_id: "sid-1",
     message_id: "msg-1",
@@ -309,6 +311,7 @@ describe("Admin P2e — API báo cáo", () => {
     const body = await ok.json();
     expect(body.report.content).toBe("Câu trả lời sai kiến thức.");
     expect(body.report.question).toBe("Newton là gì?");
+    expect(body.report.reporterName).toBe("Bạn An");
 
     const missing = await worker.fetch(req("/api/admin/reports/report-9999"), envFor(fake));
     expect(missing.status).toBe(404);

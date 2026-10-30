@@ -16,6 +16,8 @@ interface RoomReportDialogProps {
   targetUid: string;
   targetName: string;
   getToken: () => Promise<string | null>;
+  /** Tên hiển thị của người gửi (admin đọc thay vì UID). */
+  reporterName?: string;
   onClose: () => void;
 }
 
@@ -26,6 +28,7 @@ export function RoomReportDialog({
   targetUid,
   targetName,
   getToken,
+  reporterName,
   onClose,
 }: RoomReportDialogProps) {
   const [reason, setReason] = useState<RoomReportReason | "">("");
@@ -54,7 +57,15 @@ export function RoomReportDialog({
   const handleSubmit = async () => {    if (!reason || submitting) return;
     setSubmitting(true);
     try {
-      await submitRoomReport({ getToken, room, targetUid, reason, detail });
+      await submitRoomReport({
+        getToken,
+        room,
+        targetUid,
+        targetName,
+        reporterName,
+        reason,
+        detail,
+      });
       toast.success("Đã gửi báo cáo, cảm ơn bạn đã giúp phòng học an toàn hơn!", {
         id: "report-notice",
         duration: 6000,

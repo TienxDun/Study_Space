@@ -598,6 +598,9 @@ const workerHandler = {
       const content = cleanText(body.content, REPORT_CONTENT_MAX);
       // Câu hỏi dẫn tới câu trả lời AI: chỉ có nghĩa với báo cáo AI.
       const question = source === "ai" ? cleanText(body.question, REPORT_QUESTION_MAX) : "";
+      // Tên hiển thị lưu kèm để admin đọc được thay vì UID.
+      const reporterName = cleanText(body.reporterName, REPORT_NAME_MAX);
+      let targetNameInput = cleanText(body.targetName, REPORT_NAME_MAX);
       const detail = cleanText(body.detail, REPORT_DETAIL_MAX);
       const sessionId = cleanText(body.sessionId, REPORT_ID_MAX);
       const messageId = cleanText(body.messageId, REPORT_ID_MAX);
@@ -609,6 +612,7 @@ const workerHandler = {
           return json({ error: "Thiếu nội dung câu trả lời cần báo cáo." }, 400, cors);
         }
         targetUid = "";
+        targetNameInput = "";
       } else if (!room || !targetUid) {
         return json({ error: "Thiếu phòng hoặc người bị báo cáo." }, 400, cors);
       }
@@ -636,14 +640,16 @@ const workerHandler = {
         await db
           .prepare(
             `INSERT INTO content_reports
-               (id, source, reporter_uid, target_uid, room, session_id, message_id, question, content, reason, detail, status, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)`
+               (id, source, reporter_uid, reporter_name, target_uid, target_name, room, session_id, message_id, question, content, reason, detail, status, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)`
           )
           .bind(
             id,
             source,
             uid,
+            reporterName || null,
             targetUid || null,
+            targetNameInput || null,
             room || null,
             sessionId || null,
             messageId || null,

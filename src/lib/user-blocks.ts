@@ -88,6 +88,9 @@ export interface RoomReportInput {
   room: string;
   targetUid: string;
   reason: RoomReportReason;
+  /** Tên hiển thị lưu kèm để admin đọc thay vì UID. */
+  reporterName?: string;
+  targetName?: string;
   detail?: string;
 }
 
@@ -98,6 +101,8 @@ export async function submitRoomReport(input: RoomReportInput): Promise<void> {
       source: "room",
       room: input.room,
       targetUid: input.targetUid,
+      reporterName: input.reporterName?.slice(0, 30) || "",
+      targetName: input.targetName?.slice(0, 30) || "",
       reason: input.reason,
       detail: input.detail?.trim().slice(0, 500) || "",
     }),

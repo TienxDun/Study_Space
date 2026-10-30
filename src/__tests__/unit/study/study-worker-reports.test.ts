@@ -27,7 +27,9 @@ function createMockD1() {
         id,
         source,
         reporter_uid,
+        reporter_name,
         target_uid,
+        target_name,
         room,
         session_id,
         message_id,
@@ -41,7 +43,9 @@ function createMockD1() {
         id,
         source,
         reporter_uid,
+        reporter_name,
         target_uid,
+        target_name,
         room,
         session_id,
         message_id,
@@ -201,6 +205,7 @@ describe("Worker Data-API — Báo cáo nội dung & chặn", () => {
         source: "ai",
         reason: "inaccurate",
         question: "Newton là gì?",
+        reporterName: "Alice",
         content: "Câu trả lời này sai kiến thức.",
         sessionId: "sid-1",
         messageId: "msg-1",
@@ -218,7 +223,9 @@ describe("Worker Data-API — Báo cáo nội dung & chặn", () => {
     expect(row).toMatchObject({
       source: "ai",
       reporter_uid: "user_alice",
+      reporter_name: "Alice",
       target_uid: null,
+      target_name: null,
       room: null,
       session_id: "sid-1",
       message_id: "msg-1",
@@ -264,6 +271,8 @@ describe("Worker Data-API — Báo cáo nội dung & chặn", () => {
         reason: "harassment",
         room: "phong-hoc-1",
         targetUid: "user_bob",
+        reporterName: "Alice",
+        targetName: "Bob",
       },
     });
     expect(ok.status).toBe(200);
@@ -271,7 +280,9 @@ describe("Worker Data-API — Báo cáo nội dung & chặn", () => {
       source: "room",
       room: "phong-hoc-1",
       target_uid: "user_bob",
+      target_name: "Bob",
       reporter_uid: "user_alice",
+      reporter_name: "Alice",
     });
 
     const missing = await call("/report", {

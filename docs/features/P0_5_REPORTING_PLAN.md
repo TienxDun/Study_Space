@@ -72,7 +72,9 @@ CREATE TABLE content_reports (
   id TEXT PRIMARY KEY,
   source TEXT NOT NULL,              -- 'ai' | 'room'
   reporter_uid TEXT NOT NULL,
+  reporter_name TEXT,                -- tên hiển thị lúc gửi (admin đọc thay UID)
   target_uid TEXT,                   -- người bị báo cáo (phòng) / null (AI)
+  target_name TEXT,
   room TEXT,
   session_id TEXT,                   -- phiên chat
   message_id TEXT,                   -- tin nhắn AI
@@ -199,6 +201,7 @@ Mọi thao tác ghi vào `admin_audit`.
 - [x] Chặn: `POST /blocks` rồi tự rời phòng hiện tại (`room.disconnect()` + `onLeave`), toast giải thích, id toast `block-notice`.
 - [x] Server chặn 2 chiều trong `livekit-rooms /token`: 403 `BLOCKED` khi người vào và host/người đang trong phòng chặn nhau (một trong hai chiều); host/phó phòng bỏ qua kiểm tra để vào phòng của mình. Danh sách người trong phòng lấy từ `ListParticipants` (fail-open nếu Twirp lỗi).
 - [x] Hạn chế từ admin: `livekit-rooms /token` trả 403 `RESTRICTED` khi `user_restrictions.rooms_disabled=1`; `chat-proxy /chat` trả 403 `AI_RESTRICTED` khi `ai_disabled=1`, chặn trước khi trừ lượt.
+- [x] Tên người dùng trong admin: báo cáo lưu `reporter_name` và `target_name` (≤30 ký tự, gửi từ web lúc báo cáo); panel hiện tên ở cả danh sách (“Tên → Tên”) và chi tiết, rê chuột thấy UID. Dữ liệu cũ chưa có tên thì lùi về UID rút gọn. Đã chạy `ALTER TABLE content_reports ADD COLUMN reporter_name TEXT; ... target_name TEXT` trên D1 `zenspace` (2026-10-30).
 - [x] Danh sách chặn: `BlockedUsersSection` trong Cài đặt (desktop + mobile sheet), đọc `GET /blocks`, bỏ chặn `DELETE /blocks/:uid`. Hiện **tên** người bị chặn (cột `user_blocks.blocked_name`, lưu lúc chặn, ≤30 ký tự); dữ liệu cũ không có tên thì hiện UID rút gọn. Đã chạy `ALTER TABLE user_blocks ADD COLUMN blocked_name TEXT` trên D1 `zenspace` (2026-10-30).
 - [x] Helper dùng chung `src/lib/user-blocks.ts` (báo cáo phòng, chặn, bỏ chặn, danh sách).
 - [x] Test: 6 ca `/token` (`meet-block-restrictions.test.ts`), 3 ca chat-proxy (`chat-proxy-restrictions.test.ts`), 4 ca UI (`room-safety.test.tsx`); tổng 659 test xanh, `tsc` sạch, `lint` 0 lỗi. Kiểm giao diện ở `/dev/safety-check` (trang nháp đã xoá).

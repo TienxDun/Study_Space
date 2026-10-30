@@ -29,6 +29,8 @@ export interface AiReportInput {
   getToken: () => Promise<string | null>;
   answer: string;
   reason: AiReportReason;
+  /** Tên hiển thị của người gửi, để admin đọc thay vì UID. */
+  reporterName?: string;
   /** Câu hỏi dẫn tới câu trả lời; admin cần để hiểu ngữ cảnh báo cáo. */
   question?: string;
   detail?: string;
@@ -51,6 +53,7 @@ export async function submitAiReport(input: AiReportInput): Promise<AiReportResu
         reason: input.reason,
         content: input.answer.slice(0, CONTENT_MAX),
         question: input.question?.slice(0, QUESTION_MAX) || "",
+        reporterName: input.reporterName?.slice(0, 30) || "",
         detail: input.detail?.trim().slice(0, DETAIL_MAX) || "",
         sessionId: input.sessionId || "",
         messageId: input.messageId || "",

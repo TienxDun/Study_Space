@@ -329,6 +329,7 @@ export function MobileChatSheet({
       target={reportTarget}
       sessionId={activeSid}
       getToken={getToken}
+      reporterName={user?.displayName || ""}
       onClose={() => setReportTarget(null)}
       onSubmitted={(id) =>
         setReportedIds((cur) => (cur.includes(id) ? cur : [...cur, id]))
