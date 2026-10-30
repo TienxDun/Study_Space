@@ -29,6 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_reports_created ON content_reports (created_at);
 CREATE TABLE IF NOT EXISTS user_blocks (
   blocker_uid TEXT NOT NULL,
   blocked_uid TEXT NOT NULL,
+  blocked_name TEXT,                         -- tên hiển thị lúc chặn
   created_at  INTEGER NOT NULL,
   PRIMARY KEY (blocker_uid, blocked_uid)
 );

@@ -193,9 +193,17 @@ Mọi thao tác ghi vào `admin_audit`.
 - [ ] Thử end-to-end bằng tài khoản thật sau khi deploy: gửi 1 báo cáo từ app → thấy trong tab Báo cáo.
 - **Điều kiện xong:** báo cáo từ app xuất hiện trong admin kèm nội dung tin.
 
-### Phase 4 — Báo cáo & chặn trong phòng (2 ngày)
-- Menu tile, dialog báo cáo, chặn + tự rời phòng.
-- Server chặn vào chung phòng; UI quản lý bỏ chặn.
+### Phase 4 — Báo cáo & chặn trong phòng (2 ngày) — code xong 2026-10-30
+- [x] Menu “⋮” trên tile thành viên khác (desktop `StudyRoomView`, mobile `MobileRoomView`): `MemberSafetyMenu` với hai lựa chọn Báo cáo / Chặn; dialog xác nhận chặn giải thích hậu quả.
+- [x] `RoomReportDialog`: 5 lý do phòng (`harassment|inappropriate|recording|spam|other`), ghi chú ≤500, gửi `POST /report` source `room` kèm `room` + `targetUid`.
+- [x] Chặn: `POST /blocks` rồi tự rời phòng hiện tại (`room.disconnect()` + `onLeave`), toast giải thích, id toast `block-notice`.
+- [x] Server chặn 2 chiều trong `livekit-rooms /token`: 403 `BLOCKED` khi người vào và host/người đang trong phòng chặn nhau (một trong hai chiều); host/phó phòng bỏ qua kiểm tra để vào phòng của mình. Danh sách người trong phòng lấy từ `ListParticipants` (fail-open nếu Twirp lỗi).
+- [x] Hạn chế từ admin: `livekit-rooms /token` trả 403 `RESTRICTED` khi `user_restrictions.rooms_disabled=1`; `chat-proxy /chat` trả 403 `AI_RESTRICTED` khi `ai_disabled=1`, chặn trước khi trừ lượt.
+- [x] Danh sách chặn: `BlockedUsersSection` trong Cài đặt (desktop + mobile sheet), đọc `GET /blocks`, bỏ chặn `DELETE /blocks/:uid`. Hiện **tên** người bị chặn (cột `user_blocks.blocked_name`, lưu lúc chặn, ≤30 ký tự); dữ liệu cũ không có tên thì hiện UID rút gọn. Đã chạy `ALTER TABLE user_blocks ADD COLUMN blocked_name TEXT` trên D1 `zenspace` (2026-10-30).
+- [x] Helper dùng chung `src/lib/user-blocks.ts` (báo cáo phòng, chặn, bỏ chặn, danh sách).
+- [x] Test: 6 ca `/token` (`meet-block-restrictions.test.ts`), 3 ca chat-proxy (`chat-proxy-restrictions.test.ts`), 4 ca UI (`room-safety.test.tsx`); tổng 659 test xanh, `tsc` sạch, `lint` 0 lỗi. Kiểm giao diện ở `/dev/safety-check` (trang nháp đã xoá).
+- [ ] Deploy: push web (Pages) + dán `workers/livekit-rooms/worker.js` và `workers/chat-proxy/worker.js` trong dashboard.
+- [ ] Thử 2 tài khoản A/B trên production: A chặn B → B vào phòng của A bị `BLOCKED`; báo cáo phòng hiện ở tab Báo cáo.
 - **Điều kiện xong:** 2 tài khoản A/B: A chặn B → không vào chung phòng; báo cáo hiện trong admin.
 
 ### Phase 5 — Guardrail AI cho 13+ (1–1.5 ngày)

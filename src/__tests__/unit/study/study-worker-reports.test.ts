@@ -65,12 +65,13 @@ function createMockD1() {
     }
 
     if (s.startsWith("INSERT INTO user_blocks")) {
-      const [blocker_uid, blocked_uid, created_at] = params;
-      const exists = table("user_blocks").some(
+      const [blocker_uid, blocked_uid, blocked_name, created_at] = params;
+      const existing = table("user_blocks").find(
         (row) => row.blocker_uid === blocker_uid && row.blocked_uid === blocked_uid
       );
-      if (!exists) table("user_blocks").push({ blocker_uid, blocked_uid, created_at });
-      return { meta: { changes: exists ? 0 : 1 } };
+      if (existing) existing.blocked_name = blocked_name;
+      else table("user_blocks").push({ blocker_uid, blocked_uid, blocked_name, created_at });
+      return { meta: { changes: existing ? 1 : 1 } };
     }
 
     if (s.startsWith("DELETE FROM user_blocks WHERE blocker_uid = ? AND blocked_uid = ?")) {
@@ -104,12 +105,16 @@ function createMockD1() {
 
   const all = (sql: string, params: any[]) => {
     const s = sql.replace(/\s+/g, " ").trim();
-    if (s.startsWith("SELECT blocked_uid, created_at FROM user_blocks")) {
+    if (s.startsWith("SELECT blocked_uid, blocked_name, created_at FROM user_blocks")) {
       const [uid] = params;
       const results = table("user_blocks")
         .filter((row) => row.blocker_uid === uid)
         .sort((a, b) => Number(b.created_at) - Number(a.created_at))
-        .map((row) => ({ blocked_uid: row.blocked_uid, created_at: row.created_at }));
+        .map((row) => ({
+          blocked_uid: row.blocked_uid,
+          blocked_name: row.blocked_name,
+          created_at: row.created_at,
+        }));
       return { results };
     }
     return { results: [] };
@@ -366,17 +371,19 @@ describe("Worker Data-API — Báo cáo nội dung & chặn", () => {
     const first = await call("/blocks", {
       method: "POST",
       token: "valid-token-alice",
-      body: { targetUid: "user_bob" },
+      body: { targetUid: "user_bob", targetName: "Bạn Bình" },
     });
     expect(first.status).toBe(200);
+    expect(mockDb._tables.user_blocks[0].blocked_name).toBe("Bạn Bình");
 
     const again = await call("/blocks", {
       method: "POST",
       token: "valid-token-alice",
-      body: { targetUid: "user_bob" },
+      body: { targetUid: "user_bob", targetName: "Bình (mới)" },
     });
     expect(again.status).toBe(200);
     expect(mockDb._tables.user_blocks).toHaveLength(1);
+    expect(mockDb._tables.user_blocks[0].blocked_name).toBe("Bình (mới)");
 
     const self = await call("/blocks", {
       method: "POST",
@@ -389,6 +396,7 @@ describe("Worker Data-API — Báo cáo nội dung & chặn", () => {
     const listBody = await list.json();
     expect(listBody.blocks).toHaveLength(1);
     expect(listBody.blocks[0].uid).toBe("user_bob");
+    expect(listBody.blocks[0].name).toBe("Bình (mới)");
 
     const removed = await call("/blocks/user_bob", {
       method: "DELETE",

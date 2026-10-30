@@ -40,6 +40,7 @@ import { RoomStudyLayer } from "../../rooms/components/RoomStudyLayer";
 import { MEET_ATTR } from "../../rooms/utils/meet-protocol";
 import { RoomHostControlsModal } from "../../rooms/components/RoomHostControlsModal";
 import { RoomHistoryModal } from "../../rooms/components/RoomHistoryModal";
+import { MemberSafetyMenu } from "../../rooms/components/MemberSafetyMenu";
 
 interface MobileRoomViewProps {
   roomName: string;
@@ -74,6 +75,7 @@ function MobileParticipantTile({
   onKick,
   onToggleCoHost,
   pendingAction,
+  safetyMenu,
   ...rest
 }: any) {
   const contextTrackRef = useMaybeTrackRefContext();
@@ -223,6 +225,8 @@ function MobileParticipantTile({
           )}
         </div>
       )}
+
+      {safetyMenu}
 
     </div>
   );
@@ -405,6 +409,14 @@ export function MobileRoomView({
 
   const hasExpiredRef = useRef(false);
 
+  // Chặn xong thì rời phòng hiện tại.
+  const handleBlockedMember = useCallback(() => {
+    try {
+      room.disconnect();
+    } catch {}
+    onLeave();
+  }, [room, onLeave]);
+
   const handleSessionExpire = useCallback(() => {
     if (hasExpiredRef.current) return;
     hasExpiredRef.current = true;
@@ -572,6 +584,18 @@ export function MobileRoomView({
                   onKick={(id: string, name: string) => setKickTarget({ identity: id, name })}
                   onToggleCoHost={handleToggleCoHost}
                   pendingAction={pendingAction}
+                  safetyMenu={
+                    track.participant && !track.participant.isLocal ? (
+                      <MemberSafetyMenu
+                        variant="mobile"
+                        getToken={getIdToken}
+                        roomName={roomName}
+                        targetUid={String(track.participant.identity || "").replace(/^user-/, "")}
+                        targetName={track.participant.name || "Thành viên"}
+                        onBlocked={handleBlockedMember}
+                      />
+                    ) : null
+                  }
                 />
               </div>
             ))}

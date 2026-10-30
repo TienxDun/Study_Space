@@ -55,6 +55,7 @@ const REPORT_REASONS = {
 const REPORT_DAILY_LIMIT = 10;
 const REPORT_CONTENT_MAX = 8000;
 const REPORT_QUESTION_MAX = 2000;
+const REPORT_NAME_MAX = 30;
 const REPORT_DETAIL_MAX = 500;
 const REPORT_ROOM_MAX = 32;
 const REPORT_ID_MAX = 128;
@@ -675,7 +676,7 @@ const workerHandler = {
       try {
         const res = await db
           .prepare(
-            `SELECT blocked_uid, created_at FROM user_blocks
+            `SELECT blocked_uid, blocked_name, created_at FROM user_blocks
               WHERE blocker_uid = ? ORDER BY created_at DESC LIMIT ${BLOCK_LIST_MAX}`
           )
           .bind(uid)
@@ -686,6 +687,7 @@ const workerHandler = {
             ok: true,
             blocks: rows.map((row) => ({
               uid: String(row?.blocked_uid || ""),
+              name: String(row?.blocked_name || ""),
               createdAt: Number(row?.created_at) || 0,
             })),
           },
@@ -716,16 +718,19 @@ const workerHandler = {
       if (targetUid === uid) {
         return json({ error: "Không thể chặn chính mình." }, 400, cors);
       }
+      // Tên hiển thị để Cài đặt hiện tên thay vì UID; có thể trống với dữ liệu cũ.
+      const targetName = cleanText(body?.targetName, REPORT_NAME_MAX);
       try {
         const now = Date.now();
         await db
           .prepare(
-            `INSERT INTO user_blocks (blocker_uid, blocked_uid, created_at)
-             VALUES (?, ?, ?) ON CONFLICT(blocker_uid, blocked_uid) DO NOTHING`
+            `INSERT INTO user_blocks (blocker_uid, blocked_uid, blocked_name, created_at)
+             VALUES (?, ?, ?, ?)
+             ON CONFLICT(blocker_uid, blocked_uid) DO UPDATE SET blocked_name = excluded.blocked_name`
           )
-          .bind(uid, targetUid, now)
+          .bind(uid, targetUid, targetName || null, now)
           .run();
-        return json({ ok: true, uid: targetUid, createdAt: now }, 200, cors);
+        return json({ ok: true, uid: targetUid, name: targetName, createdAt: now }, 200, cors);
       } catch (err) {
         return json(
           { error: "Không thể chặn người dùng.", detail: String(err?.message || err) },

@@ -1014,7 +1014,8 @@ const worker = {
       const isAdminTry = !!env.ADMIN_TOKEN && bearer === env.ADMIN_TOKEN && body.strict === true && typeof body.modelId === "string" && body.modelId;
       let uid = "";
       if (!isAdminTry) {
-        const checked = await verifyFirebaseToken(env, bearer);
+        const verifyToken = env._verifyToken || verifyFirebaseToken;
+        const checked = await verifyToken(env, bearer);
         if (!checked.uid) {
           mem.lastAuthError = { time: new Date().toISOString(), code: checked.code };
           // Ghi vào sổ chung để /status thấy dù khác máy (KV), tự xóa sau 1 giờ.
@@ -1024,6 +1025,28 @@ const worker = {
           return json({ error: "Bạn đăng nhập lại để chat nhé." }, 401);
         }
         uid = checked.uid;
+        // Admin khóa trợ lý AI của tài khoản này: chặn trước khi trừ lượt.
+        const conn = d1(env);
+        if (conn) {
+          try {
+            const restrict = await conn
+              .prepare("SELECT ai_disabled FROM user_restrictions WHERE uid = ?")
+              .bind(uid)
+              .first();
+            if (restrict && Number(restrict.ai_disabled) === 1) {
+              return json(
+                {
+                  error: "Tài khoản của bạn đang bị tạm khóa trợ lý AI. Liên hệ quản trị viên ZenStudy nhé.",
+                  code: "AI_RESTRICTED",
+                },
+                403
+              );
+            }
+          } catch (e) {
+            // Lỗi đọc hạn chế không được khóa chat của mọi người.
+            console.error("D1 user_restrictions error in /chat:", e);
+          }
+        }
         const userLimit = await getDailyLimit(env);
         const uCount = await getCount(env, `user:${uid}:${day}`);
         if (uCount >= userLimit) {

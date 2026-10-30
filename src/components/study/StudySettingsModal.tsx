@@ -20,6 +20,7 @@ import {
   playPomodoroSound
 } from "./study-sound";
 import { useRealtimeClock } from "./pomodoro/hooks/useRealtimeClock";
+import { BlockedUsersSection } from "./settings/BlockedUsersSection";
 import { formatStopwatch } from "./pomodoro/utils/timer-formatters";
 
 /** Demo bấm giờ chạy riêng trong cài đặt để thấy ngay .00 khác gì. */
@@ -435,6 +436,9 @@ export const StudySettingsModal = ({
           />
         </div>
       </div>
+
+      {/* Người đã chặn: báo cáo/chặn trong phòng học (P0.5) */}
+      <BlockedUsersSection />
 
       {/* Tour hướng dẫn sử dụng */}
       {onOpenTour && (

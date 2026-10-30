@@ -38,6 +38,7 @@ import { buildInviteLink, getMeetEndpoints } from "@/lib/meet-invite";
 import { RoomStudyLayer } from "./RoomStudyLayer";
 import { MEET_ATTR } from "../utils/meet-protocol";
 import { RoomHostControlsModal } from "./RoomHostControlsModal";
+import { MemberSafetyMenu } from "./MemberSafetyMenu";
 import { RoomHistoryModal } from "./RoomHistoryModal";
 
 interface StudyRoomViewProps {
@@ -82,6 +83,7 @@ function RoomParticipantTile({
   onKick,
   onToggleCoHost,
   pendingAction,
+  safetyMenu,
   ...rest
 }: any) {
   const attrs = trackRef?.participant?.attributes;
@@ -234,6 +236,7 @@ function RoomParticipantTile({
         </div>
       )}
 
+      {safetyMenu}
     </div>
   );
 }
@@ -484,6 +487,14 @@ export const StudyRoomView = ({
     [send]
   );
 
+  // Chặn xong thì rời phòng hiện tại (không ai bị chặn phải ngồi chung).
+  const handleBlockedMember = useCallback(() => {
+    try {
+      room.disconnect();
+    } catch {}
+    onLeave();
+  }, [room, onLeave]);
+
   const handleCopyInviteLink = async () => {
     try {
       await navigator.clipboard.writeText(buildInviteLink(roomName));
@@ -661,6 +672,17 @@ export const StudyRoomView = ({
                   onKick={(id: string, name: string) => setKickTarget({ identity: id, name })}
                   onToggleCoHost={handleToggleCoHost}
                   pendingAction={pendingAction}
+                  safetyMenu={
+                    track.participant && !track.participant.isLocal ? (
+                      <MemberSafetyMenu
+                        getToken={getIdToken}
+                        roomName={roomName}
+                        targetUid={String(track.participant.identity || "").replace(/^user-/, "")}
+                        targetName={track.participant.name || "Thành viên"}
+                        onBlocked={handleBlockedMember}
+                      />
+                    ) : null
+                  }
                 />
               ))}
             </div>

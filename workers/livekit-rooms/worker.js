@@ -841,6 +841,29 @@ const worker = {
       if (!room) return json({ error: "Nhập tên phòng." }, 400);
       if (!displayName) return json({ error: "Nhập tên của bạn." }, 400);
 
+      // Tài khoản bị admin khóa phòng học: chặn trước khi tốn quota/LiveKit.
+      if (env.DB) {
+        try {
+          const restrict = await env.DB.prepare(
+            "SELECT rooms_disabled FROM user_restrictions WHERE uid = ?"
+          )
+            .bind(checked.uid)
+            .first();
+          if (restrict && Number(restrict.rooms_disabled) === 1) {
+            return json(
+              {
+                error: "Tài khoản của bạn đang bị tạm khóa phòng học nhóm.",
+                code: "RESTRICTED",
+              },
+              403
+            );
+          }
+        } catch (e) {
+          // Lỗi đọc hạn chế không được khóa mọi người ra ngoài.
+          console.error("D1 user_restrictions error in /token:", e);
+        }
+      }
+
       // 1. Quota guard check
       const quota = await resolveMonthQuota(env, cfg);
       if (quota.isExceeded) {
@@ -860,6 +883,8 @@ const worker = {
       let isCoHost = false;
       let roomHasPassword = false;
       let roomIsLocked = false;
+      let hostUid = "";
+      const insideIdentities = [];
 
       // 2. Kiểm tra hoặc khởi tạo thông tin phòng trong D1 meet_rooms
       if (env.DB) {
@@ -934,6 +959,7 @@ const worker = {
               );
             }
           }
+          hostUid = String(roomRow.host_uid || "");
         } catch (dbErr) {
           // Lỗi D1 không được biến thành "mọi người là host": bỏ qua phân quyền
           // nhưng cho vào phòng như khách.
@@ -972,9 +998,55 @@ const worker = {
               409
             );
           }
+          insideIdentities.push(
+            ...participants
+              .map((p) => String(p.identity ?? p.Identity ?? ""))
+              .filter(Boolean)
+          );
         }
       } catch (err) {
         console.error("Twirp ListParticipants error (fail-open):", err);
+      }
+
+      // Chặn 2 chiều: không cho vào chung phòng với người đã chặn hoặc bị chặn.
+      // Host/phó phòng vẫn vào phòng của mình; họ tự quản lý người trong phòng.
+      if (env.DB && !isHost && !isCoHost) {
+        try {
+          const rows = await env.DB.prepare(
+            "SELECT blocker_uid, blocked_uid FROM user_blocks WHERE blocker_uid = ? OR blocked_uid = ?"
+          )
+            .bind(checked.uid, checked.uid)
+            .all();
+          const list = Array.isArray(rows?.results) ? rows.results : [];
+          const related = new Set();
+          for (const row of list) {
+            const blocker = String(row.blocker_uid || "");
+            const blocked = String(row.blocked_uid || "");
+            if (blocker === checked.uid && blocked) related.add(blocked);
+            if (blocked === checked.uid && blocker) related.add(blocker);
+          }
+          if (related.size > 0) {
+            const inside = new Set();
+            if (hostUid) inside.add(hostUid);
+            for (const identity of insideIdentities) {
+              inside.add(identity.startsWith("user-") ? identity.slice(5) : identity);
+            }
+            inside.delete(checked.uid);
+            const clash = Array.from(related).find((uid) => inside.has(uid));
+            if (clash) {
+              return json(
+                {
+                  error: "Bạn và người trong phòng này đã chặn nhau. Hãy vào phòng khác nhé.",
+                  code: "BLOCKED",
+                },
+                403
+              );
+            }
+          }
+        } catch (e) {
+          // Lỗi đọc danh sách chặn không được khóa mọi người ra ngoài.
+          console.error("D1 user_blocks error in /token:", e);
+        }
       }
 
       // 4. Fallback: gọi CreateRoom để thiết lập max_participants và empty_timeout

@@ -18,6 +18,7 @@ import {
 } from "../../study-sound";
 import { useRealtimeClock } from "../../pomodoro/hooks/useRealtimeClock";
 import { formatStopwatch } from "../../pomodoro/utils/timer-formatters";
+import { BlockedUsersSection } from "../../settings/BlockedUsersSection";
 import type { StudySettingsProps } from "../../StudySettingsModal";
 
 /** Demo bấm giờ chạy riêng trong cài đặt để thấy ngay .00 khác gì */
@@ -400,6 +401,9 @@ export function MobileSettingsSheet({
             />
           </div>
         </div>
+
+        {/* Người đã chặn: báo cáo/chặn trong phòng học (P0.5) */}
+        <BlockedUsersSection />
 
       </div>
     </MobileSheetShell>
