@@ -261,8 +261,25 @@
       });
   }
 
+  // Nối trang sau, bỏ qua báo cáo đã có (cùng mốc thời gian có thể lặp ở ranh giới trang).
+  function mergeReports(current, incoming) {
+    var seen = Object.create(null);
+    current.forEach(function (report) {
+      seen[report.id] = true;
+    });
+    var merged = current.slice();
+    incoming.forEach(function (report) {
+      if (seen[report.id]) return;
+      seen[report.id] = true;
+      merged.push(report);
+    });
+    return merged;
+  }
+
   function loadList(reset) {
     if (state.loading) return;
+    // Hết trang thì không tải lại trang đầu rồi nối vào danh sách cũ (gây trùng).
+    if (!reset && !state.nextBefore) return;
     state.loading = true;
     setState("Đang đọc…", false);
     showNote($("reports-note"), "");
@@ -275,7 +292,9 @@
 
     apiFetch(API + "?" + params.toString())
       .then(function (data) {
-        state.reports = reset ? data.reports || [] : state.reports.concat(data.reports || []);
+        state.reports = reset
+          ? data.reports || []
+          : mergeReports(state.reports, data.reports || []);
         state.counts = data.counts || state.counts;
         state.nextBefore = data.nextBefore || null;
         renderCounts();

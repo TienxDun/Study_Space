@@ -193,6 +193,48 @@ describe("panel Báo cáo", () => {
     expect(el("reports-detail-question").textContent).toBe("Newton là gì?");
   });
 
+  it("hết trang thì ẩn nút Xem thêm và bấm cũng không tải lại", async () => {
+    const api = fakeApi();
+    await boot();
+
+    expect(el<HTMLButtonElement>("reports-more").hidden).toBe(true);
+    expect(rows()).toHaveLength(2);
+    const listCalls = () =>
+      api.calls.filter((call) => call.url.startsWith("/api/admin/reports?")).length;
+    expect(listCalls()).toBe(1);
+
+    el("reports-more").click();
+    await flush();
+
+    expect(listCalls()).toBe(1);
+    expect(rows()).toHaveLength(2);
+  });
+
+  it("nối trang sau không lặp báo cáo đã có", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: unknown) => {
+        const url = String(input);
+        if (url.startsWith("/api/admin/reports?")) {
+          return json({
+            ok: true,
+            reports: LIST,
+            counts: { open: 2, resolved: 0, dismissed: 0, total: 2 },
+            nextBefore: 123,
+          });
+        }
+        return json({ error: "not_found" }, 404);
+      }),
+    );
+    await boot();
+    expect(rows()).toHaveLength(2);
+
+    el("reports-more").click();
+    await flush();
+
+    expect(rows()).toHaveLength(2);
+  });
+
   it("đánh dấu đã xử lý gửi POST kèm ghi chú và trạng thái", async () => {
     const api = fakeApi();
     await boot();

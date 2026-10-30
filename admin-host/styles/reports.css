@@ -68,6 +68,11 @@
   margin-left: auto;
 }
 
+/* .btn-ghost có display nên thuộc tính hidden bị đè: ép ẩn khi hết trang. */
+.reports-more-wrap .btn-ghost[hidden] {
+  display: none;
+}
+
 .reports-detail {
   border-top: 1px solid var(--border-subtle);
   padding-top: 18px;
