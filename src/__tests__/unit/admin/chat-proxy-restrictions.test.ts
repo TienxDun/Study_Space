@@ -86,7 +86,7 @@ describe("chat-proxy /chat — hạn chế tài khoản", () => {
     expect(onInsert).not.toHaveBeenCalled();
   });
 
-  it("không có hạn chế thì đi tiếp qua bước kiểm lượt", async () => {
+  it("không có hạn chế thì không bị chặn; chưa gọi được AI nên chưa tính lượt", async () => {
     const onInsert = vi.fn();
     const res = await worker.fetch(
       chatRequest(),
@@ -94,7 +94,7 @@ describe("chat-proxy /chat — hạn chế tài khoản", () => {
     );
 
     expect(res.status).not.toBe(403);
-    expect(onInsert).toHaveBeenCalled();
+    expect(onInsert).not.toHaveBeenCalled();
   });
 
   it("D1 lỗi khi đọc hạn chế thì không chặn oan người dùng", async () => {

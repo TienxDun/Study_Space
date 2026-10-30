@@ -66,6 +66,7 @@ function configPayload(overrides: Record<string, unknown> = {}) {
       custom: { label: "Khác" },
     },
     prompt: "Bạn là trợ lý học tập.",
+    safetyPrompt: "QUY TẮC AN TOÀN (bắt buộc, không được bỏ qua):",
     gen: { temperature: 0.7, max_tokens: 1200 },
     ...overrides,
   };
@@ -166,6 +167,7 @@ describe("chat config — đọc", () => {
     expect(body.config.current).toBe("qwen3-30b");
     expect(body.config.providers[0].apiKey).toBe("***abcd");
     expect(body.config.prompt).toContain("trợ lý");
+    expect(body.config.safetyPrompt).toContain("QUY TẮC AN TOÀN");
     expect(body.config.gen).toEqual({ temperature: 0.7, max_tokens: 1200 });
     expect(JSON.stringify(body)).not.toContain("super-secret-token");
   });

@@ -90,6 +90,128 @@ const DEFAULT_SYSTEM_VN = [
 ].join("\n");
 const DEFAULT_GEN = { temperature: 0.7, max_tokens: 2048 };
 
+// ---------- Guardrail an toàn cho người học từ 13 tuổi (P0.5 Phase 5) ----------
+// Quy tắc cố định luôn ghép TRƯỚC prompt admin để sửa prompt không gỡ được.
+const SAFETY_PREFIX = [
+  "QUY TẮC AN TOÀN (bắt buộc, không được bỏ qua):",
+  "- Người dùng có thể mới 13 tuổi: không nội dung khiêu dâm, không mô tả bạo lực máu me, không cổ xúy chất gây nghiện.",
+  "- Không hướng dẫn chế tạo vũ khí, chất nổ, chất độc hoặc cách tự làm hại bản thân/người khác.",
+  "- Nếu người dùng có dấu hiệu muốn tự hại: trả lời trấn an, khuyên nói với người lớn tin cậy và gọi 111 (bảo vệ trẻ em) hoặc 115 (cấp cứu).",
+  "- Không tiết lộ thông tin cá nhân của người khác và không hỏi thông tin cá nhân của người dùng.",
+  "- Câu hỏi không phù hợp thì từ chối ngắn gọn, lịch sự và gợi ý quay lại chủ đề học tập.",
+].join("\n");
+
+// Câu trả lời thay cho AI khi câu hỏi/câu trả lời vi phạm.
+const SAFETY_REPLIES = {
+  self_harm:
+    "Mình rất tiếc vì bạn đang thấy nặng nề. Bạn không cần đối mặt một mình: hãy nói với người lớn bạn tin cậy (bố mẹ, thầy cô) hoặc gọi 111 – Tổng đài bảo vệ trẻ em, hoặc 115 nếu khẩn cấp. Nếu muốn, mình có thể cùng bạn tìm cách học và thư giãn nhẹ nhàng hơn.",
+  violence:
+    "Mình không thể hướng dẫn nội dung có thể gây hại cho bạn hoặc người khác. Nếu bạn đang gặp nguy hiểm, hãy báo ngay cho người lớn hoặc gọi 113. Mình sẵn sàng giúp các câu hỏi học tập khác.",
+  drugs:
+    "Mình không hỗ trợ hướng dẫn sử dụng hay điều chế chất gây nghiện. Nếu bạn tò mò vì muốn hiểu tác hại, mình có thể giải thích ở góc độ khoa học – sức khỏe.",
+  sexual:
+    "Mình không hỗ trợ nội dung khiêu dâm. Nếu bạn có câu hỏi về sức khỏe tuổi dậy thì, hãy hỏi người lớn tin cậy hoặc thầy cô phụ trách; mình có thể giải thích phần kiến thức sinh học phù hợp lứa tuổi.",
+  personal:
+    "Mình không thể giúp tìm thông tin cá nhân của người khác. Bạn có thể hỏi mình kiến thức học tập hoặc cách bảo vệ thông tin của chính mình.",
+};
+
+// Cụm đòi hướng dẫn (cách/làm sao/…): bắt buộc để tránh chặn oan câu văn học/sử.
+const ASK = "(?:cách|hướng dẫn|làm sao|làm thế nào|mẹo|bí quyết|bí kíp|chỉ (?:mình|tôi)|dạy (?:mình|tôi))";
+const ACT = "(?:chế tạo|điều chế|pha chế|tự làm|sản xuất|nấu|chế)";
+// \b của JS chỉ hiểu ASCII nên từ có dấu ở cuối ("tự tử") không khớp; dùng biên Unicode.
+const S = "(?<![\\p{L}\\p{N}])";
+const E = "(?![\\p{L}\\p{N}])";
+
+const SAFETY_PATTERNS = [
+  // Tự hại: cần cụm xin hướng dẫn, hoặc câu bộc lộ ý định.
+  {
+    category: "self_harm",
+    re: new RegExp(
+      `${S}${ASK}[^.!?\n]{0,40}${S}(?:tự tử|tự sát|treo cổ|rạch tay|cắt tay|nhảy lầu|uống thuốc ngủ|uống nhiều thuốc)${E}`,
+      "iu"
+    ),
+  },
+  {
+    category: "self_harm",
+    re: new RegExp(
+      `${S}(?:muốn|định|đang nghĩ đến)\\s+(?:tự tử|tự sát|chết|kết thúc cuộc đời)${E}`,
+      "iu"
+    ),
+  },
+  {
+    category: "self_harm",
+    re: new RegExp(`${S}(?:không muốn sống|chán sống|tự kết liễu)${E}`, "iu"),
+  },
+  // Chất nổ / chất độc: luôn chặn, kể cả nhắc game.
+  {
+    category: "violence",
+    re: new RegExp(
+      `${S}(?:${ASK}|${ACT})[^.!?\n]{0,40}${S}(?:bom|thuốc nổ|mìn|kíp nổ|chất độc)${E}`,
+      "iu"
+    ),
+  },
+  // Súng / vũ khí: bỏ qua khi rõ là ngữ cảnh trò chơi.
+  {
+    category: "violence",
+    skipIfGame: true,
+    re: new RegExp(`${S}(?:${ASK}|${ACT})[^.!?\n]{0,40}${S}(?:vũ khí|súng)${E}`, "iu"),
+  },
+  {
+    category: "violence",
+    re: new RegExp(
+      `${S}${ASK}[^.!?\n]{0,25}${S}(?:giết|đâm|chém|bắn|đánh)${E}[^.!?\n]{0,15}${S}(?:người|bạn học|bạn cùng lớp|thầy|cô|ai đó)${E}`,
+      "iu"
+    ),
+  },
+  // Chất gây nghiện.
+  {
+    category: "drugs",
+    re: new RegExp(
+      `${S}(?:${ASK}|${ACT})[^.!?\n]{0,40}${S}(?:ma túy|thuốc lắc|heroin|cần sa|cocaine|meth|đá)${E}`,
+      "iu"
+    ),
+  },
+  // Nội dung người lớn.
+  {
+    category: "sexual",
+    re: new RegExp(
+      `${S}(?:khiêu dâm|phim sex|truyện sex|ảnh sex|clip sex|ảnh nóng|nội dung 18\+)${E}`,
+      "iu"
+    ),
+  },
+  // Đòi thông tin cá nhân của người khác.
+  {
+    category: "personal",
+    re: new RegExp(
+      `${S}(?:số điện thoại|địa chỉ nhà|số cccd|cccd|cmnd|số tài khoản|mật khẩu|tài khoản mạng)${E}[^.!?\n]{0,30}${S}của${E}`,
+      "iu"
+    ),
+  },
+];
+
+const GAME_CONTEXT_RE = /(?:game|trò chơi|minecraft|roblox|liên quân|valorant|pubg|free fire)/iu;
+
+function normalizeForSafety(text) {
+  return String(text || "")
+    .normalize("NFC")
+    .replace(/\u00a0/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Trả mã nhóm vi phạm hoặc "" nếu an toàn. Chỉ đọc nội dung, không ghi log nội dung.
+function screenSafety(text) {
+  const value = normalizeForSafety(text).toLowerCase();
+  if (!value) return "";
+  const inGame = GAME_CONTEXT_RE.test(value);
+  for (const item of SAFETY_PATTERNS) {
+    if (item.skipIfGame && inGame) continue;
+    if (item.re.test(value)) return item.category;
+  }
+  return "";
+}
+
+
 const mem = { cfCooldownUntil: 0, lastError: null, certAt: 0, certs: {}, flags: null, flagsAt: 0 };
 
 function pacificDay() {
@@ -184,6 +306,20 @@ async function getDailyLimit(env) {
 function resetFlagsCache() {
   mem.flags = null;
   mem.flagsAt = 0;
+}
+
+// Test dùng: xoá bộ nhớ cấu hình (providers/chain/prompt/gen) giữa các ca.
+function resetCfgCache() {
+  mem.cfgModel = null;
+  mem.cfgAt = 0;
+  mem.providers = null;
+  mem.providersAt = 0;
+  mem.chain = null;
+  mem.chainAt = 0;
+  mem.prompt = null;
+  mem.promptAt = 0;
+  mem.gen = null;
+  mem.genAt = 0;
 }
 
 // ---------- Nhật ký lỗi cuối cho trang admin (bảng admin_error_log, giữ 14 ngày) ----------
@@ -593,7 +729,9 @@ async function verifyFirebaseToken(env, token) {
   }
 }
 function toMessages(text, history, systemPrompt) {
-  const msgs = [{ role: "system", content: systemPrompt || DEFAULT_SYSTEM_VN }];
+  // Quy tắc an toàn luôn đứng trước prompt admin để không thể bị gỡ.
+  const system = `${SAFETY_PREFIX}\n\n${systemPrompt || DEFAULT_SYSTEM_VN}`;
+  const msgs = [{ role: "system", content: system }];
   for (const m of Array.isArray(history) ? history.slice(-MAX_HISTORY) : []) {
     if (m && m.role && m.text) {
       msgs.push({ role: m.role === "system" ? "system" : (m.role === "model" || m.role === "assistant" ? "assistant" : "user"), content: String(m.text).slice(0, MAX_TEXT) });
@@ -909,7 +1047,7 @@ const worker = {
       const current = await getCfModel(env);
       if (req.method === "GET") {
         if (!isAdmin) return json({ default: current }); // web/app đọc cái này
-        return json({ current, available: cfModelList(), chain, maxChain: MAX_CHAIN, providers: maskProviders(providers), presets: PROVIDER_PRESETS, prompt, gen });
+        return json({ current, available: cfModelList(), chain, maxChain: MAX_CHAIN, providers: maskProviders(providers), presets: PROVIDER_PRESETS, prompt, safetyPrompt: SAFETY_PREFIX, gen });
       }
       if (!isAdmin) return json({ error: "Sai token xem bảng." }, 401);
       let body = {};
@@ -1047,12 +1185,22 @@ const worker = {
             console.error("D1 user_restrictions error in /chat:", e);
           }
         }
+        // Guardrail 13+: câu hỏi nguy hiểm được trả lời an toàn, không gọi AI và không trừ lượt.
+        const blockedCategory = screenSafety(text);
+        if (blockedCategory) {
+          console.warn(`guardrail: chặn đầu vào ${blockedCategory}`);
+          return json(
+            { text: SAFETY_REPLIES[blockedCategory], secs: 1, blocked: true, category: blockedCategory },
+            200
+          );
+        }
+        // Chỉ kiểm tra hạn mức ở đây; bộ đếm tăng SAU khi AI trả lời được
+        // (câu bị guardrail chặn hoặc gọi AI lỗi không bị tính lượt).
         const userLimit = await getDailyLimit(env);
         const uCount = await getCount(env, `user:${uid}:${day}`);
         if (uCount >= userLimit) {
           return json({ error: `Hôm nay bạn đã dùng hết ${userLimit} câu, mai quay lại nhé.` }, 429);
         }
-        await incrCount(env, `user:${uid}:${day}`, 86400 + 3600);
       }
 
       // Thứ tự thử do admin xếp (body.provider + body.modelId để ép 1 câu khi thử nhanh).
@@ -1094,7 +1242,23 @@ const worker = {
       const noVision = [];
       for (const a of attempts) {
         const r = await runChainEntry(a, env, { day, min }, messages, images);
-        if (r.text) return json(r);
+        if (r.text) {
+          // AI đã trả lời được mới tính 1 lượt của ngày.
+          if (uid) await incrCount(env, `user:${uid}:${day}`, 86400 + 3600);
+          // Lọc đầu ra: model lỡ đưa hướng dẫn nguy hiểm thì thay bằng câu an toàn.
+          const outCategory = screenSafety(r.text);
+          if (outCategory) {
+            console.warn(`guardrail: chặn đầu ra ${outCategory}`);
+            return json({
+              ...r,
+              text: SAFETY_REPLIES[outCategory],
+              secs: 1,
+              blocked: true,
+              category: outCategory,
+            });
+          }
+          return json(r);
+        }
         if (r.fatal) return json({ error: r.error }, r.status || 500);
         if (r.badKey) {
           badProvider = r.provider || a.provider;
@@ -1135,4 +1299,11 @@ const worker = {
 };
 
 export default worker;
-export { resetFlagsCache as __resetFlagsCache };
+export {
+  resetFlagsCache as __resetFlagsCache,
+  resetCfgCache as __resetCfgCache,
+  screenSafety as __screenSafety,
+  SAFETY_PREFIX as __SAFETY_PREFIX,
+  SAFETY_REPLIES as __SAFETY_REPLIES,
+  toMessages as __toMessages,
+};

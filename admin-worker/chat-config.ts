@@ -43,6 +43,8 @@ export type ChatConfig = {
   providers: ChatProvider[];
   presets: Record<string, { label?: string; baseUrl?: string }>;
   prompt: string;
+  /** Quy tắc an toàn cố định của chat-proxy, chỉ để hiển thị (không sửa từ admin). */
+  safetyPrompt: string;
   gen: ChatGen;
 };
 
@@ -117,6 +119,7 @@ export function mapChatConfig(raw: Record<string, unknown>): ChatConfig {
     providers,
     presets,
     prompt: typeof raw.prompt === "string" ? raw.prompt : "",
+    safetyPrompt: typeof raw.safetyPrompt === "string" ? raw.safetyPrompt.slice(0, 4000) : "",
     gen: {
       temperature: typeof genRaw.temperature === "number" ? genRaw.temperature : 0.7,
       max_tokens: typeof genRaw.max_tokens === "number" ? genRaw.max_tokens : 1200,

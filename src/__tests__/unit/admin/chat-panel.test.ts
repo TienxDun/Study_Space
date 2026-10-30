@@ -58,6 +58,7 @@ function baseConfig(overrides: Record<string, unknown> = {}) {
       custom: { label: "Tự nhập địa chỉ", baseUrl: "" },
     },
     prompt: "Bạn là trợ lý học tập.",
+    safetyPrompt: "QUY TẮC AN TOÀN (bắt buộc, không được bỏ qua): không nội dung người lớn.",
     gen: { temperature: 0.7, max_tokens: 1200 },
     ...overrides,
   };
@@ -198,6 +199,7 @@ describe("panel Trợ lý chat", () => {
 
     expect(el("chat-state").textContent).toBe("Đang dùng cấu hình đã lưu");
     expect(el<HTMLTextAreaElement>("chat-prompt").value).toBe("Bạn là trợ lý học tập.");
+    expect(el("chat-safety-prompt").textContent).toContain("QUY TẮC AN TOÀN");
     expect(el("chat-prompt-count").textContent).toBe("22");
 
     const rows = chainRows();

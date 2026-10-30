@@ -39,6 +39,7 @@
   var promptChip = document.getElementById("chat-prompt-chip");
   var promptNote = document.getElementById("chat-prompt-note");
   var promptSave = document.getElementById("chat-prompt-save");
+  var safetyPrompt = document.getElementById("chat-safety-prompt");
 
   var providersEl = document.getElementById("chat-providers");
   var providerChip = document.getElementById("chat-provider-chip");
@@ -1275,6 +1276,10 @@
     promptBase = typeof config.prompt === "string" ? config.prompt : "";
     promptInput.value = promptBase;
     promptCount.textContent = String(promptBase.length);
+    safetyPrompt.textContent =
+      typeof config.safetyPrompt === "string" && config.safetyPrompt
+        ? config.safetyPrompt
+        : "Chưa đọc được quy tắc an toàn.";
 
     closeProviderForm();
     renderChain();
@@ -1295,6 +1300,7 @@
           modelNote.textContent = "Không đọc được cấu hình chat: " + reason + ".";
           chainNote.textContent = "Chưa đọc được thứ tự dự phòng.";
           promptNote.textContent = "Chưa đọc được câu lệnh hệ thống.";
+          safetyPrompt.textContent = "Chưa đọc được quy tắc an toàn.";
           providerSaveNote.textContent = "Chưa đọc được danh sách nhà cung cấp.";
           updateUi();
           return false;
@@ -1314,6 +1320,7 @@
         modelNote.textContent = (err && err.message) || "Không kết nối được máy chủ.";
         chainNote.textContent = "Chưa đọc được thứ tự dự phòng.";
         promptNote.textContent = "Chưa đọc được câu lệnh hệ thống.";
+        safetyPrompt.textContent = "Chưa đọc được quy tắc an toàn.";
         providerSaveNote.textContent = "Chưa đọc được danh sách nhà cung cấp.";
         updateUi();
         return false;

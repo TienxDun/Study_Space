@@ -1,6 +1,6 @@
 # P0.5 — Báo cáo nội dung, chặn người dùng & an toàn AI (plan tổng quát)
 
-> Trạng thái: **Phase 0–3 code xong; Phase 1–2 đã deploy và kiểm trên production 2026-10-30; Phase 3 chờ deploy rồi thử bằng tài khoản thật**. Cập nhật: 2026-10-30
+> Trạng thái: **Phase 0–4 đã kiểm trên production; Phase 5 code xong, chờ dán `chat-proxy`; còn Phase 6–7**. Cập nhật: 2026-10-30
 > Thuộc P0.5 trong [CHPLAY_LAUNCH_PLAN.md](../deployment/CHPLAY_LAUNCH_PLAN.md)
 > Mục tiêu: đáp ứng chính sách **AI-Generated Content** và **User Generated Content** của Google Play trước khi nộp app.
 
@@ -192,7 +192,7 @@ Mọi thao tác ghi vào `admin_audit`.
 - [x] Lưu thêm câu hỏi của người dùng (cột `question`, 2026-10-30): `MessageList` lấy tin người dùng gần nhất trước câu trả lời, data-api lưu ≤2000 ký tự, panel Báo cáo hiện khối “Câu hỏi của người dùng” và dòng “Ghi chú của người báo cáo”.
   - D1 `zenspace`: đã chạy `ALTER TABLE content_reports ADD COLUMN question TEXT` (2026-10-30), cột tồn tại trên production.
   - Còn lại: dán `workers/data-api/worker.js` mới trong dashboard; bản cũ bỏ qua trường `question` nên không lỗi, chỉ chưa lưu.
-- [ ] Thử end-to-end bằng tài khoản thật sau khi deploy: gửi 1 báo cáo từ app → thấy trong tab Báo cáo.
+- [x] Thử end-to-end bằng tài khoản thật: báo cáo AI xuất hiện trong tab Báo cáo kèm câu trả lời, câu hỏi, ghi chú.
 - **Điều kiện xong:** báo cáo từ app xuất hiện trong admin kèm nội dung tin.
 
 ### Phase 4 — Báo cáo & chặn trong phòng (2 ngày) — code xong 2026-10-30
@@ -205,13 +205,21 @@ Mọi thao tác ghi vào `admin_audit`.
 - [x] Danh sách chặn: `BlockedUsersSection` trong Cài đặt (desktop + mobile sheet), đọc `GET /blocks`, bỏ chặn `DELETE /blocks/:uid`. Hiện **tên** người bị chặn (cột `user_blocks.blocked_name`, lưu lúc chặn, ≤30 ký tự); dữ liệu cũ không có tên thì hiện UID rút gọn. Đã chạy `ALTER TABLE user_blocks ADD COLUMN blocked_name TEXT` trên D1 `zenspace` (2026-10-30).
 - [x] Helper dùng chung `src/lib/user-blocks.ts` (báo cáo phòng, chặn, bỏ chặn, danh sách).
 - [x] Test: 6 ca `/token` (`meet-block-restrictions.test.ts`), 3 ca chat-proxy (`chat-proxy-restrictions.test.ts`), 4 ca UI (`room-safety.test.tsx`); tổng 659 test xanh, `tsc` sạch, `lint` 0 lỗi. Kiểm giao diện ở `/dev/safety-check` (trang nháp đã xoá).
-- [ ] Deploy: push web (Pages) + dán `workers/livekit-rooms/worker.js` và `workers/chat-proxy/worker.js` trong dashboard.
-- [ ] Thử 2 tài khoản A/B trên production: A chặn B → B vào phòng của A bị `BLOCKED`; báo cáo phòng hiện ở tab Báo cáo.
+- [x] Deploy `968bce8`: web lên Pages; đã dán `livekit-rooms`, `chat-proxy`, `data-api` trong dashboard.
+- [x] Thử 2 tài khoản A/B trên production: người dùng xác nhận báo cáo/chặn chạy đúng; báo cáo phòng hiện ở tab Báo cáo kèm tên hai bên (dòng `Nhật Duy → leutiendung`).
 - **Điều kiện xong:** 2 tài khoản A/B: A chặn B → không vào chung phòng; báo cáo hiện trong admin.
 
-### Phase 5 — Guardrail AI cho 13+ (1–1.5 ngày)
-- Prompt an toàn + lọc đầu vào/đầu ra (từ khóa/rule); chặn nội dung nguy hiểm.
-- Bộ câu hỏi kiểm thử tiếng Việt (tự hại, bạo lực, nội dung người lớn, thông tin cá nhân).
+### Phase 5 — Guardrail AI cho 13+ (1–1.5 ngày) — code xong 2026-10-30
+- [x] Prompt an toàn cố định (`SAFETY_PREFIX`) luôn ghép **trước** prompt admin trong `toMessages`, nên sửa prompt ở admin không gỡ được quy tắc.
+- [x] Admin đọc được quy tắc: chat-proxy trả `safetyPrompt` trong `/models` (kênh admin), admin-worker chuyển tiếp trong `GET /api/admin/chat/config`, panel "Trợ lý chat" → mục 3 hiện khối **"Quy tắc an toàn (cố định)"** chỉ-đọc ngay trên ô câu lệnh, kèm ghi chú sửa trong mã chat-proxy. Chưa dán chat-proxy bản mới thì khối hiện "Chưa đọc được quy tắc an toàn." là đúng.
+- [x] Lọc đầu vào (`screenSafety`) theo 5 nhóm: `self_harm`, `violence`, `drugs`, `sexual`, `personal`. Câu vi phạm được trả lời an toàn ngay (`blocked: true`), **không gọi AI, không trừ lượt**.
+- [x] Lọc đầu ra: model lỡ sinh hướng dẫn nguy hiểm thì thay bằng câu an toàn cùng nhóm, có `console.warn` mã nhóm (không log nội dung).
+- [x] Cách tính lượt (chốt 2026-10-30): chỉ **kiểm tra** hạn mức trước khi gọi; bộ đếm tăng **sau khi AI trả lời được**. Câu bị guardrail chặn hoặc mọi nhà cung cấp lỗi đều không bị tính. Đổi lại, nhiều tab gửi song song có thể vượt hạn mức ngày vài lượt.
+- [x] Tránh chặn oan: mẫu yêu cầu cụm xin hướng dẫn (“cách/làm sao/hướng dẫn…”), biên Unicode thay `` (từ có dấu), miễn trừ ngữ cảnh trò chơi cho nhóm súng/vũ khí; “từ từ”, “tự tử trong văn học”, “cách mạng công nghiệp” đi qua bình thường.
+- [x] Câu trấn an tự hại có hotline 111 (bảo vệ trẻ em) và 115 (cấp cứu).
+- [x] Test: 23 ca (`src/__tests__/unit/admin/chat-proxy-guardrail.test.ts`) gồm bộ câu thử 4 nhóm, câu học tập không bị chặn oan, prompt an toàn, chặn đầu vào ở `/chat` không trừ lượt; tổng 682 test xanh, `tsc` sạch, `lint` 0 lỗi.
+- [ ] Deploy: dán `workers/chat-proxy/worker.js` (Worker dán tay) rồi thử vài câu trong bộ test trên production.
+- **Giới hạn đã biết:** so khớp mẫu từ khóa (không phải phân loại ngữ nghĩa) nên có thể lọt câu diễn đạt lạ và chặn nhầm câu hiếm; câu **không dấu** (“cach che tao bom”) chưa được phủ để tránh nhầm “tu tu” với “từ từ”.
 - **Điều kiện xong:** các câu thử bị từ chối/làm nhẹ đúng; câu học tập bình thường không bị chặn oan.
 
 ### Phase 6 — Đồng bộ pháp lý (0.5 ngày)
