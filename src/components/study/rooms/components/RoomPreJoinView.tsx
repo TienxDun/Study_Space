@@ -8,6 +8,7 @@ import {
 } from "@livekit/components-react";
 import type { CreateLocalTracksOptions, LocalAudioTrack, LocalVideoTrack } from "livekit-client";
 import { devWarn } from "@/lib/logger";
+import { isConcreteDeviceId } from "../utils/room-devices";
 import {
   MicrophoneIcon,
   MicrophoneSlashIcon,
@@ -33,6 +34,13 @@ export interface PreJoinChoices {
   videoDeviceId?: string;
   password?: string;
 }
+
+// "default" là id ảo của trình duyệt. Nếu chuyển tiếp xuống phòng, switchActiveDevice()
+// sẽ lưu constraint { exact: "default" } và mọi lần bật lại camera sau đó đều ném
+// OverconstrainedError (Chrome không cho ghim exact vào id ảo của video).
+// Bỏ qua để LiveKit tự dùng thiết bị mặc định.
+const toConcreteDeviceId = (id?: string) =>
+  isConcreteDeviceId(id) ? id : undefined;
 
 interface RoomPreJoinViewProps {
   roomName: string;
@@ -209,8 +217,8 @@ export function RoomPreJoinView({
     onJoin({
       audioEnabled,
       videoEnabled,
-      audioDeviceId: currentAudioId,
-      videoDeviceId: currentVideoId,
+      audioDeviceId: toConcreteDeviceId(currentAudioId),
+      videoDeviceId: toConcreteDeviceId(currentVideoId),
       password: effectivePassword,
     });
   };

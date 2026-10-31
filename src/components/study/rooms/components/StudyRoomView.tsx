@@ -37,6 +37,7 @@ import { RoomSessionTimer } from "./RoomSessionTimer";
 import { buildInviteLink, getMeetEndpoints } from "@/lib/meet-invite";
 import { RoomStudyLayer } from "./RoomStudyLayer";
 import { MEET_ATTR } from "../utils/meet-protocol";
+import { applyChosenDevices } from "../utils/room-devices";
 import { RoomHostControlsModal } from "./RoomHostControlsModal";
 import { MemberSafetyMenu } from "./MemberSafetyMenu";
 import { RoomHistoryModal } from "./RoomHistoryModal";
@@ -422,12 +423,7 @@ export const StudyRoomView = ({
   // Kích hoạt đúng microphone và camera mà người dùng đã chọn từ bước xem trước (Pre-join)
   useEffect(() => {
     if (!room) return;
-    if (audioDeviceId) {
-      room.switchActiveDevice("audioinput", audioDeviceId).catch(() => {});
-    }
-    if (videoDeviceId) {
-      room.switchActiveDevice("videoinput", videoDeviceId).catch(() => {});
-    }
+    applyChosenDevices(room, { audioDeviceId, videoDeviceId });
   }, [room, audioDeviceId, videoDeviceId]);
 
   // Lắng nghe trạng thái tái kết nối (Reconnect)
