@@ -3,16 +3,23 @@
         <div class="usage-heading">
           <div>
             <h2 class="usage-title" id="usage-title">Sử dụng &amp; giới hạn</h2>
-            <p class="usage-desc">Các số dưới đây tự động cập nhật.</p>
+            <p class="usage-desc">Các số dưới đây tự động cập nhật theo thời gian thực.</p>
           </div>
           <span class="usage-source">Tự động tổng hợp</span>
         </div>
 
         <div class="usage-grid">
           <article class="usage-card" id="chat-card">
-            <div class="usage-card-head">
-              <span class="usage-label">Chat hôm nay (giờ Mỹ)</span>
+            <div class="usage-card-top">
+              <div class="usage-icon-box is-sky" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+              </div>
               <span class="usage-tag" id="chat-day">--</span>
+            </div>
+            <div class="usage-card-title-group">
+              <h3 class="usage-label">Chat hôm nay <span class="usage-sublabel">(giờ Mỹ)</span></h3>
             </div>
             <div class="usage-main">
               <span id="chat-total">--</span>
@@ -20,16 +27,25 @@
             </div>
             <div class="usage-meter" aria-hidden="true"><span id="chat-meter" style="width: 0%"></span></div>
             <dl class="usage-facts">
-              <div><dt>Số người dùng</dt><dd id="chat-users">--</dd></div>
-              <div><dt>Giới hạn mỗi ngày</dt><dd id="chat-limit">--</dd></div>
+              <div class="usage-fact-item"><dt>Số người dùng</dt><dd id="chat-users">--</dd></div>
+              <div class="usage-fact-item"><dt>Giới hạn mỗi ngày</dt><dd id="chat-limit">--</dd></div>
             </dl>
             <p class="usage-note" id="chat-note">Ngày tính theo giờ Mỹ (Thái Bình Dương). Chi phí dùng AI xem trên trang Cloudflare.</p>
           </article>
 
           <article class="usage-card" id="sync-card">
-            <div class="usage-card-head">
-              <span class="usage-label">Đồng bộ đám mây</span>
-              <span class="usage-tag">Tính đến hiện tại</span>
+            <div class="usage-card-top">
+              <div class="usage-icon-box is-emerald" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                  <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                  <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                </svg>
+              </div>
+              <span class="usage-tag is-live"><span class="pulse-dot"></span>Trực tiếp</span>
+            </div>
+            <div class="usage-card-title-group">
+              <h3 class="usage-label">Đồng bộ đám mây</h3>
             </div>
             <div class="usage-main">
               <span id="sync-users">--</span>
@@ -37,16 +53,24 @@
             </div>
             <div class="usage-meter is-muted" aria-hidden="true"><span></span></div>
             <dl class="usage-facts">
-              <div><dt>Lần lưu gần nhất</dt><dd id="sync-last">--</dd></div>
-              <div><dt>Bản lưu lớn nhất</dt><dd id="sync-max">--</dd></div>
+              <div class="usage-fact-item"><dt>Lần lưu gần nhất</dt><dd id="sync-last">--</dd></div>
+              <div class="usage-fact-item"><dt>Bản lưu lớn nhất</dt><dd id="sync-max">--</dd></div>
             </dl>
             <p class="usage-note" id="sync-note">Dữ liệu học tập tự động lưu lên mây.</p>
           </article>
 
           <article class="usage-card" id="livekit-card">
-            <div class="usage-card-head">
-              <span class="usage-label">Phút học nhóm tháng này</span>
+            <div class="usage-card-top">
+              <div class="usage-icon-box is-indigo" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <polygon points="23 7 16 12 23 17 23 7"/>
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                </svg>
+              </div>
               <span class="usage-tag" id="livekit-month">--</span>
+            </div>
+            <div class="usage-card-title-group">
+              <h3 class="usage-label">Phút học nhóm <span class="usage-sublabel">tháng này</span></h3>
             </div>
             <div class="usage-main">
               <span id="livekit-used">--</span>
@@ -54,16 +78,26 @@
             </div>
             <div class="usage-meter" aria-hidden="true"><span id="livekit-meter" style="width: 0%"></span></div>
             <dl class="usage-facts">
-              <div><dt>Phòng đang học</dt><dd id="livekit-rooms">--</dd></div>
-              <div><dt>Người đang học</dt><dd id="livekit-people">--</dd></div>
+              <div class="usage-fact-item"><dt>Phòng đang học</dt><dd id="livekit-rooms">--</dd></div>
+              <div class="usage-fact-item"><dt>Người đang học</dt><dd id="livekit-people">--</dd></div>
             </dl>
             <p class="usage-note" id="livekit-note">Tháng tính theo giờ quốc tế (UTC).</p>
           </article>
 
           <article class="usage-card" id="r2-card">
-            <div class="usage-card-head">
-              <span class="usage-label">Kho tệp</span>
-              <span class="usage-tag">Tính đến hiện tại</span>
+            <div class="usage-card-top">
+              <div class="usage-icon-box is-amber" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+                  <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+                  <line x1="6" y1="6" x2="6.01" y2="6"/>
+                  <line x1="6" y1="18" x2="6.01" y2="18"/>
+                </svg>
+              </div>
+              <span class="usage-tag">Cloudflare R2</span>
+            </div>
+            <div class="usage-card-title-group">
+              <h3 class="usage-label">Kho tệp lưu trữ</h3>
             </div>
             <div class="usage-main">
               <span id="r2-used">--</span>
@@ -71,15 +105,22 @@
             </div>
             <div class="usage-meter" aria-hidden="true"><span id="r2-meter" style="width: 0%"></span></div>
             <dl class="usage-facts">
-              <div><dt>Số tệp</dt><dd id="r2-objects">--</dd></div>
-              <div><dt>Trạng thái</dt><dd id="r2-state">Đang đọc…</dd></div>
+              <div class="usage-fact-item"><dt>Số tệp</dt><dd id="r2-objects">--</dd></div>
+              <div class="usage-fact-item"><dt>Trạng thái</dt><dd id="r2-state">Đang đọc…</dd></div>
             </dl>
             <p class="usage-note" id="r2-note">Tính cả tệp cảnh và âm thanh trên R2. Cập nhật tối đa mỗi 60 giây.</p>
           </article>
         </div>
 
         <div class="limits-strip">
-          <span class="limits-title">Giới hạn gói miễn phí</span>
+          <div class="limits-title-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" class="limits-title-icon" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <span class="limits-title">Giới hạn gói miễn phí</span>
+          </div>
           <div class="limits-items">
             <span>Chat mỗi ngày <strong id="limits-chat">--</strong></span>
             <span>Mỗi bản lưu tối đa <strong id="limits-snapshot">--</strong></span>
