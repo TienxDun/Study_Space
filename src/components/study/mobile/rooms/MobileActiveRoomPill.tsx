@@ -57,16 +57,14 @@ export function MobileActiveRoomPill({
           <UsersIcon className="w-4 h-4 text-emerald-400 shrink-0" />
 
           <div className="min-w-0 flex-1 flex items-center gap-1">
-            <span className="text-xs font-bold text-white truncate max-w-[80px] min-[390px]:max-w-[110px]">
+            <span className="text-xs font-bold text-white truncate min-w-0 flex-1">
               {roomName}
             </span>
-            <span className="text-[10px] text-emerald-300/80 font-medium whitespace-nowrap hidden min-[370px]:inline">
-              (Đang học)
-            </span>
+            <span className="sr-only">(Đang học)</span>
           </div>
 
-          <span className="lg-pill relative h-7 px-2.5 rounded-full flex items-center gap-1 text-[11px] font-semibold text-emerald-300 shrink-0 cursor-pointer">
-            <span>Mở lại</span>
+          <span className="lg-pill relative h-7 w-7 min-[400px]:w-auto min-[400px]:px-2.5 rounded-full flex items-center justify-center min-[400px]:gap-1 text-[11px] font-semibold text-emerald-300 shrink-0 cursor-pointer">
+            <span className="hidden min-[400px]:inline">Mở lại</span>
             <CaretUpIcon className="w-3 h-3" />
           </span>
         </button>
