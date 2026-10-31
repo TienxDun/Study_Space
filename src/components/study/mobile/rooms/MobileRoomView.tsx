@@ -499,6 +499,10 @@ function MobileRoomViewBase({
     { onlySubscribed: false }
   );
 
+  // Lưới thích ứng: 1–2 người xếp dọc, từ 3 người chia 2 cột để tile không bị đè/cắt
+  const videoColumns = tracks.length <= 2 ? 1 : 2;
+  const videoRows = Math.max(1, Math.ceil(tracks.length / videoColumns));
+
   const { chatMessages, send } = useChat();
   const [chatOpen, setChatOpen] = useState(false);
   const [draft, setDraft] = useState("");
@@ -582,7 +586,7 @@ function MobileRoomViewBase({
   };
 
   return (
-    <div className="relative flex flex-col h-full w-full bg-[#0B0F1A] text-white overflow-hidden select-none [--lk-bg:#0B0F1A] [--lk-bg2:#0E1526]">
+    <div className="mobile-room-shell relative flex flex-col h-full w-full bg-[#0B0F1A] text-white overflow-hidden select-none [--lk-bg:#0B0F1A] [--lk-bg2:#0E1526]">
       {/* Phát âm thanh LiveKit */}
       <RoomAudioRenderer />
 
@@ -594,7 +598,9 @@ function MobileRoomViewBase({
         </div>
       )}
 
-      {/* Thông báo nếu trình duyệt chặn tự phát âm thanh */}
+      {/* Thông báo nếu trình duyệt chặn tự phát âm thanh.
+          LiveKit mặc định ghim nút này giữa màn hình (position:fixed), đè lên video;
+          selector ở khung ngoài đưa nó về dòng banner để không che tile/tên thành viên. */}
       <StartAudio
         label="🔊 Chạm vào đây để nghe tiếng bạn bè"
         className="mx-3 mt-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-medium cursor-pointer text-center shrink-0 z-30"
@@ -710,11 +716,21 @@ function MobileRoomViewBase({
       {/* Vùng hiển thị Video các thành viên (Mở rộng tối đa không gian) */}
       <main className="flex-1 min-h-0 relative p-2 overflow-hidden flex flex-col justify-center">
         {tracks.length > 0 ? (
-          <div className="w-full h-full overflow-y-auto custom-study-scroll rounded-2xl grid gap-2 grid-cols-1 p-2 content-start">
+          <div
+            className={`w-full h-full overflow-y-auto custom-study-scroll rounded-2xl grid gap-2 p-2 ${
+              videoColumns === 2 && tracks.length % 2 === 1
+                ? "[&>*:last-child]:col-span-2"
+                : ""
+            }`}
+            style={{
+              gridTemplateColumns: `repeat(${videoColumns}, minmax(0, 1fr))`,
+              gridTemplateRows: `repeat(${videoRows}, minmax(0, 1fr))`,
+            }}
+          >
             {tracks.map((track) => (
               <div
                 key={getTrackReferenceId(track)}
-                className="rounded-2xl border border-white/10 overflow-hidden bg-[#0B0F1A] shadow-md aspect-video"
+                className="min-h-0 min-w-0 rounded-2xl border border-white/10 overflow-hidden bg-[#0B0F1A] shadow-md"
               >
                 <MobileParticipantTile
                   trackRef={track}

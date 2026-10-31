@@ -119,6 +119,13 @@
 }
 /* IMPORTANT-ALLOWED-END */
 
+/* LiveKit ghim nút "bật âm thanh" giữa màn hình trên máy nhỏ; trong phòng học mobile
+   đưa về dòng banner để không chồng lên tile video và tên thành viên. */
+.mobile-room-shell .lk-start-audio-button {
+  position: static;
+  transform: none;
+}
+
 /* =========================================================================
    ANIMATION MỞ BẢNG & SẮP XẾP THỨ TỰ RENDER (STAGGERED CASCADE)
    Tối ưu máy yếu không bị giựt khung hình, trải nghiệm thị giác êm ái
