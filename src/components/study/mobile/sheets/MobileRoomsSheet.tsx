@@ -84,7 +84,7 @@ export interface MobileRoomsSheetProps {
   getIdToken?: () => Promise<string | null>;
 }
 
-export function MobileRoomsSheet({
+function MobileRoomsSheetBase({
   isOpen,
   onClose,
   onOpen,
@@ -550,3 +550,5 @@ export function MobileRoomsSheet({
     </MobileSheetShell>
   );
 }
+
+export const MobileRoomsSheet = React.memo(MobileRoomsSheetBase);

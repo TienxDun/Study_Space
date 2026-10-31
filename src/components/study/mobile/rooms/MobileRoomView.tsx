@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, memo } from "react";
 import {
   ParticipantTile,
   TrackToggle,
@@ -10,6 +10,8 @@ import {
   RoomAudioRenderer,
   StartAudio,
   useMaybeTrackRefContext,
+  type ReceivedChatMessage,
+  type TrackReferenceOrPlaceholder,
 } from "@livekit/components-react";
 import { Track, RoomEvent } from "livekit-client";
 import { getTrackReferenceId } from "@livekit/components-core";
@@ -39,6 +41,7 @@ import { RoomSessionTimer } from "../../rooms/components/RoomSessionTimer";
 import { buildInviteLink, getMeetEndpoints } from "@/lib/meet-invite";
 import { RoomStudyLayer } from "../../rooms/components/RoomStudyLayer";
 import { MEET_ATTR } from "../../rooms/utils/meet-protocol";
+import { applyChosenDevices } from "../../rooms/utils/room-devices";
 import { RoomHostControlsModal } from "../../rooms/components/RoomHostControlsModal";
 import { RoomHistoryModal } from "../../rooms/components/RoomHistoryModal";
 import { MemberSafetyMenu } from "../../rooms/components/MemberSafetyMenu";
@@ -67,7 +70,54 @@ const formatTime = (ts: number) =>
     hour12: false,
   });
 
-function MobileParticipantTile({
+// Tin nhắn cũ giữ nguyên tham chiếu nên chỉ dòng mới được vẽ lại khi có tin đến
+const MobileChatMessageRow = memo(function MobileChatMessageRow({
+  message,
+  isMe,
+}: {
+  message: ReceivedChatMessage;
+  isMe: boolean;
+}) {
+  return (
+    <div className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+      <div className="flex items-baseline gap-1.5 mb-0.5 px-1">
+        <span className="text-[11px] font-bold text-slate-300">
+          {isMe ? "Bạn" : message.from?.name || message.from?.identity || "Thành viên"}
+        </span>
+        <span className="text-[9px] text-slate-500">
+          {formatTime(message.timestamp)}
+        </span>
+      </div>
+      <div
+        className={`max-w-[82%] px-3 py-1.5 rounded-2xl text-xs leading-relaxed break-words ${
+          isMe
+            ? "bg-emerald-500/25 border border-emerald-400/30 text-emerald-100 rounded-tr-sm"
+            : "bg-white/10 border border-white/10 text-slate-100 rounded-tl-sm"
+        }`}
+      >
+        {message.message}
+      </div>
+    </div>
+  );
+});
+
+type PendingActionType = "mute" | "kick" | "co-host";
+
+interface MobileParticipantTileProps {
+  trackRef?: TrackReferenceOrPlaceholder | null;
+  localRole: "host" | "co-host" | "member";
+  canModerate: boolean;
+  isLocalHost: boolean;
+  pendingType: PendingActionType | null;
+  getToken?: () => Promise<string | null>;
+  roomName: string;
+  onMute: (identity: string) => void;
+  onKick: (identity: string, name: string) => void;
+  onToggleCoHost: (identity: string) => void;
+  onBlocked: () => void;
+}
+
+function MobileParticipantTileBase({
   trackRef,
   localRole,
   canModerate,
@@ -75,21 +125,21 @@ function MobileParticipantTile({
   onMute,
   onKick,
   onToggleCoHost,
-  pendingAction,
-  safetyMenu,
-  ...rest
-}: any) {
+  pendingType,
+  getToken,
+  roomName,
+  onBlocked,
+}: MobileParticipantTileProps) {
   const contextTrackRef = useMaybeTrackRefContext();
   const resolvedTrackRef = trackRef ?? contextTrackRef;
-  const attrs = resolvedTrackRef?.participant?.attributes;
+  const participant = resolvedTrackRef?.participant;
+  const identity = participant?.identity;
+  const targetUid = identity ? String(identity).replace(/^user-/, "") : "";
+  const attrs = participant?.attributes;
   const status = attrs?.[MEET_ATTR.status];
   const isHandRaised = attrs?.[MEET_ATTR.hand] === "1";
   const goal = (attrs?.[MEET_ATTR.goal] || "").trim();
-  const isLocal = resolvedTrackRef?.participant?.isLocal;
-  const pendingType =
-    pendingAction?.identity === resolvedTrackRef?.participant?.identity
-      ? pendingAction.type
-      : null;
+  const isLocal = participant?.isLocal;
   const isActionPending = pendingType !== null;
 
   const roleAttr = attrs?.["zen.role"];
@@ -110,7 +160,6 @@ function MobileParticipantTile({
       <ParticipantTile
         trackRef={resolvedTrackRef}
         className="w-full h-full bg-[#0B0F1A] [&_.lk-participant-placeholder]:bg-[#0E1526]"
-        {...rest}
       />
 
       {/* Huy hiệu vai trò, trạng thái, giơ tay và mục tiêu góc trên trái (mobile nhỏ gọn) */}
@@ -176,7 +225,7 @@ function MobileParticipantTile({
         <div className="absolute top-1.5 right-1.5 z-20 flex items-center gap-1">
           <button
             type="button"
-            onClick={() => onMute?.(resolvedTrackRef?.participant?.identity)}
+            onClick={() => identity && onMute(identity)}
             disabled={isActionPending}
             aria-busy={pendingType === "mute" || undefined}
             className="p-1 rounded bg-black/70 active:bg-rose-500/80 text-white border border-white/20 transition-colors shadow-sm disabled:opacity-60"
@@ -192,10 +241,8 @@ function MobileParticipantTile({
           <button
             type="button"
             onClick={() =>
-              onKick?.(
-                resolvedTrackRef?.participant?.identity,
-                resolvedTrackRef?.participant?.name || "Học viên"
-              )
+              identity &&
+              onKick(identity, participant?.name || "Học viên")
             }
             disabled={isActionPending}
             aria-busy={pendingType === "kick" || undefined}
@@ -212,7 +259,7 @@ function MobileParticipantTile({
           {isLocalHost && (
             <button
               type="button"
-              onClick={() => onToggleCoHost?.(resolvedTrackRef?.participant?.identity)}
+              onClick={() => identity && onToggleCoHost(identity)}
               disabled={isActionPending}
               aria-busy={pendingType === "co-host" || undefined}
               className={`p-1 rounded bg-black/70 text-white border border-white/20 transition-colors shadow-sm disabled:opacity-60 ${
@@ -231,13 +278,53 @@ function MobileParticipantTile({
         </div>
       )}
 
-      {safetyMenu}
-
+      {/* Menu an toàn (báo cáo/chặn) chỉ dành cho thành viên khác */}
+      {!isLocal && targetUid ? (
+        <MemberSafetyMenu
+          variant="mobile"
+          getToken={getToken}
+          roomName={roomName}
+          targetUid={targetUid}
+          targetName={participant?.name || "Thành viên"}
+          onBlocked={onBlocked}
+        />
+      ) : null}
     </div>
   );
 }
 
-export function MobileRoomView({
+// Không so sánh object trackRef (LiveKit tạo lại mỗi lần phát event) mà so phần thực sự ảnh hưởng giao diện.
+function areParticipantTilePropsEqual(
+  prev: MobileParticipantTileProps,
+  next: MobileParticipantTileProps
+) {
+  const prevRef = prev.trackRef;
+  const nextRef = next.trackRef;
+  return (
+    prevRef?.participant === nextRef?.participant &&
+    prevRef?.publication === nextRef?.publication &&
+    prevRef?.source === nextRef?.source &&
+    prevRef?.participant?.attributes === nextRef?.participant?.attributes &&
+    prevRef?.participant?.name === nextRef?.participant?.name &&
+    prev.localRole === next.localRole &&
+    prev.canModerate === next.canModerate &&
+    prev.isLocalHost === next.isLocalHost &&
+    prev.pendingType === next.pendingType &&
+    prev.getToken === next.getToken &&
+    prev.roomName === next.roomName &&
+    prev.onMute === next.onMute &&
+    prev.onKick === next.onKick &&
+    prev.onToggleCoHost === next.onToggleCoHost &&
+    prev.onBlocked === next.onBlocked
+  );
+}
+
+const MobileParticipantTile = memo(
+  MobileParticipantTileBase,
+  areParticipantTilePropsEqual
+);
+
+function MobileRoomViewBase({
   roomName,
   onLeave,
   remainingMinutes,
@@ -263,109 +350,117 @@ export function MobileRoomView({
   const [isLockedState, setIsLockedState] = useState(initialIsLocked);
   const [hasPasswordState, setHasPasswordState] = useState(initialHasPassword);
   const [pendingAction, setPendingAction] = useState<
-    { type: "mute" | "kick" | "co-host"; identity: string } | null
+    { type: PendingActionType; identity: string } | null
   >(null);
   const pendingActionRef = useRef(false);
 
-  const beginMemberAction = (type: "mute" | "kick" | "co-host", identity?: string) => {
+  const beginMemberAction = useCallback((type: PendingActionType, identity?: string) => {
     if (!identity || pendingActionRef.current) return false;
     pendingActionRef.current = true;
     setPendingAction({ type, identity });
     return true;
-  };
+  }, []);
 
-  const endMemberAction = () => {
+  const endMemberAction = useCallback(() => {
     pendingActionRef.current = false;
     setPendingAction(null);
-  };
+  }, []);
 
-  const handleMuteParticipant = async (identity: string) => {
-    const { baseUrl } = getMeetEndpoints();
-    if (!baseUrl || !getIdToken || !beginMemberAction("mute", identity)) return;
-    try {
-      const token = await getIdToken();
-      if (!token) throw new Error("Chưa đăng nhập.");
-      const res = await fetch(`${baseUrl}/rooms/${encodeURIComponent(roomName)}/mute`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ identity }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "Không thể tắt micro.");
-      toast.success("Đã gửi yêu cầu tắt micro");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
-    } finally {
-      endMemberAction();
-    }
-  };
+  const handleMuteParticipant = useCallback(
+    async (identity: string) => {
+      const { baseUrl } = getMeetEndpoints();
+      if (!baseUrl || !getIdToken || !beginMemberAction("mute", identity)) return;
+      try {
+        const token = await getIdToken();
+        if (!token) throw new Error("Chưa đăng nhập.");
+        const res = await fetch(`${baseUrl}/rooms/${encodeURIComponent(roomName)}/mute`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ identity }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || "Không thể tắt micro.");
+        toast.success("Đã gửi yêu cầu tắt micro");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
+      } finally {
+        endMemberAction();
+      }
+    },
+    [getIdToken, roomName, beginMemberAction, endMemberAction]
+  );
 
-  const handleKickParticipant = async (identity: string) => {
-    const { baseUrl } = getMeetEndpoints();
-    if (!baseUrl || !getIdToken || !beginMemberAction("kick", identity)) return;
-    try {
-      const token = await getIdToken();
-      if (!token) throw new Error("Chưa đăng nhập.");
-      const res = await fetch(`${baseUrl}/rooms/${encodeURIComponent(roomName)}/kick`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ identity }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "Không thể mời rời phòng.");
-      toast.success("Đã mời học viên rời khỏi phòng");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
-    } finally {
-      setKickTarget(null);
-      endMemberAction();
-    }
-  };
+  const handleKickParticipant = useCallback(
+    async (identity: string) => {
+      const { baseUrl } = getMeetEndpoints();
+      if (!baseUrl || !getIdToken || !beginMemberAction("kick", identity)) return;
+      try {
+        const token = await getIdToken();
+        if (!token) throw new Error("Chưa đăng nhập.");
+        const res = await fetch(`${baseUrl}/rooms/${encodeURIComponent(roomName)}/kick`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ identity }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || "Không thể mời rời phòng.");
+        toast.success("Đã mời học viên rời khỏi phòng");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
+      } finally {
+        setKickTarget(null);
+        endMemberAction();
+      }
+    },
+    [getIdToken, roomName, beginMemberAction, endMemberAction]
+  );
 
-  const handleToggleCoHost = async (targetIdentity: string) => {
-    const { baseUrl } = getMeetEndpoints();
-    if (!baseUrl || !getIdToken || !beginMemberAction("co-host", targetIdentity)) return;
-    const targetUid = targetIdentity.replace(/^user-/, "");
-    const targetPart = room.getParticipantByIdentity(targetIdentity);
-    const isCurrentlyCoHost = targetPart?.attributes?.["zen.role"] === "co-host";
-    const method = isCurrentlyCoHost ? "DELETE" : "POST";
+  const handleToggleCoHost = useCallback(
+    async (targetIdentity: string) => {
+      const { baseUrl } = getMeetEndpoints();
+      if (!baseUrl || !getIdToken || !beginMemberAction("co-host", targetIdentity)) return;
+      const targetUid = targetIdentity.replace(/^user-/, "");
+      const targetPart = room.getParticipantByIdentity(targetIdentity);
+      const isCurrentlyCoHost = targetPart?.attributes?.["zen.role"] === "co-host";
+      const method = isCurrentlyCoHost ? "DELETE" : "POST";
 
-    try {
-      const token = await getIdToken();
-      if (!token) throw new Error("Chưa đăng nhập.");
-      const res = await fetch(`${baseUrl}/rooms/${encodeURIComponent(roomName)}/co-host`, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ targetUid, targetIdentity }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "Không thể cập nhật quyền Phó phòng.");
-      toast.success(isCurrentlyCoHost ? "Đã hủy quyền Phó phòng" : "Đã bổ nhiệm làm Phó phòng ⭐");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
-    } finally {
-      endMemberAction();
-    }
-  };
+      try {
+        const token = await getIdToken();
+        if (!token) throw new Error("Chưa đăng nhập.");
+        const res = await fetch(`${baseUrl}/rooms/${encodeURIComponent(roomName)}/co-host`, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ targetUid, targetIdentity }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || "Không thể cập nhật quyền Phó phòng.");
+        toast.success(isCurrentlyCoHost ? "Đã hủy quyền Phó phòng" : "Đã bổ nhiệm làm Phó phòng ⭐");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
+      } finally {
+        endMemberAction();
+      }
+    },
+    [room, getIdToken, roomName, beginMemberAction, endMemberAction]
+  );
+
+  const handleSelectKickTarget = useCallback((identity: string, name: string) => {
+    setKickTarget({ identity, name });
+  }, []);
 
   // Kích hoạt đúng microphone và camera mà người dùng đã chọn từ bước xem trước (Pre-join)
   useEffect(() => {
     if (!room) return;
-    if (audioDeviceId) {
-      room.switchActiveDevice("audioinput", audioDeviceId).catch(() => {});
-    }
-    if (videoDeviceId) {
-      room.switchActiveDevice("videoinput", videoDeviceId).catch(() => {});
-    }
+    applyChosenDevices(room, { audioDeviceId, videoDeviceId });
   }, [room, audioDeviceId, videoDeviceId]);
 
   // Kiểm tra hỗ trợ chia sẻ màn hình trên thiết bị mobile (iOS Safari không hỗ trợ getDisplayMedia)
@@ -626,22 +721,17 @@ export function MobileRoomView({
                   localRole={userRole}
                   canModerate={isHost || isCoHost}
                   isLocalHost={isHost}
-                  onMute={handleMuteParticipant}
-                  onKick={(id: string, name: string) => setKickTarget({ identity: id, name })}
-                  onToggleCoHost={handleToggleCoHost}
-                  pendingAction={pendingAction}
-                  safetyMenu={
-                    track.participant && !track.participant.isLocal ? (
-                      <MemberSafetyMenu
-                        variant="mobile"
-                        getToken={getIdToken}
-                        roomName={roomName}
-                        targetUid={String(track.participant.identity || "").replace(/^user-/, "")}
-                        targetName={track.participant.name || "Thành viên"}
-                        onBlocked={handleBlockedMember}
-                      />
-                    ) : null
+                  pendingType={
+                    pendingAction?.identity === track.participant?.identity
+                      ? pendingAction.type
+                      : null
                   }
+                  getToken={getIdToken}
+                  roomName={roomName}
+                  onMute={handleMuteParticipant}
+                  onKick={handleSelectKickTarget}
+                  onToggleCoHost={handleToggleCoHost}
+                  onBlocked={handleBlockedMember}
                 />
               </div>
             ))}
@@ -804,33 +894,13 @@ export function MobileRoomView({
                 </p>
               </div>
             ) : (
-              chatMessages.map((m, idx) => {
-                const isMe = m.from?.identity === room.localParticipant.identity;
-                return (
-                  <div
-                    key={`${m.timestamp}-${idx}`}
-                    className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
-                  >
-                    <div className="flex items-baseline gap-1.5 mb-0.5 px-1">
-                      <span className="text-[11px] font-bold text-slate-300">
-                        {isMe ? "Bạn" : m.from?.name || m.from?.identity || "Thành viên"}
-                      </span>
-                      <span className="text-[9px] text-slate-500">
-                        {formatTime(m.timestamp)}
-                      </span>
-                    </div>
-                    <div
-                      className={`max-w-[82%] px-3 py-1.5 rounded-2xl text-xs leading-relaxed break-words ${
-                        isMe
-                          ? "bg-emerald-500/25 border border-emerald-400/30 text-emerald-100 rounded-tr-sm"
-                          : "bg-white/10 border border-white/10 text-slate-100 rounded-tl-sm"
-                      }`}
-                    >
-                      {m.message}
-                    </div>
-                  </div>
-                );
-              })
+              chatMessages.map((m) => (
+                <MobileChatMessageRow
+                  key={m.id}
+                  message={m}
+                  isMe={m.from?.identity === room.localParticipant.identity}
+                />
+              ))
             )}
             <div ref={messagesEndRef} />
           </div>
@@ -921,3 +991,5 @@ export function MobileRoomView({
     </div>
   );
 }
+
+export const MobileRoomView = memo(MobileRoomViewBase);

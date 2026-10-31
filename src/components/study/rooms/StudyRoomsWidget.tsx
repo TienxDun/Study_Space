@@ -98,6 +98,17 @@ export const StudyRoomsWidget = ({
 
   const isMobile = useIsMobile();
 
+  // Page truyền onClose/onOpen dạng closure mới mỗi lần render; giữ bản ổn định
+  // để React.memo của MobileRoomsSheet không bị vô hiệu.
+  const onCloseRef = useRef(onClose);
+  const onOpenRef = useRef(onOpen);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    onOpenRef.current = onOpen;
+  }, [onClose, onOpen]);
+  const stableOnClose = useCallback(() => onCloseRef.current(), []);
+  const stableOnOpen = useCallback(() => onOpenRef.current?.(), []);
+
   const [displayName, setDisplayName] = useState(
     () => user?.displayName || user?.email?.split("@")[0] || ""
   );
@@ -153,9 +164,9 @@ export const StudyRoomsWidget = ({
     const inviteRoom = readInviteRoom(window.location.search);
     if (inviteRoom) {
       setRoomName(inviteRoom);
-      onOpen?.();
+      stableOnOpen();
     }
-  }, [onOpen]);
+  }, [stableOnOpen]);
 
   const toggleFullscreen = useCallback(() => {
     const next = !isFullscreenRef.current;
@@ -287,12 +298,12 @@ export const StudyRoomsWidget = ({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose();
+        stableOnClose();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen, token, onClose]);
+  }, [isOpen, token, stableOnClose]);
 
 const getLiveKitEndpoints = () => {
   const raw = (process.env.NEXT_PUBLIC_LIVEKIT_TOKEN_URL || "").trim().replace(/\/+$/, "");
@@ -457,18 +468,21 @@ const getLiveKitEndpoints = () => {
     handleStartJoin(roomName.trim(), resolvedDisplayName);
   }, [resolvedDisplayName, roomName, joining, handleStartJoin]);
 
-  const handleJoinListed = (roomItem: { name: string; hasPassword?: boolean }) => {
-    if (!resolvedDisplayName) {
-      setError("Nhập tên hiển thị của bạn ở dưới trước rồi bấm Vào.");
-      return;
-    }
-    setRoomName(roomItem.name);
-    handleStartJoin(
-      roomItem.name,
-      resolvedDisplayName,
-      roomItem.hasPassword ? "required" : "none"
-    );
-  };
+  const handleJoinListed = useCallback(
+    (roomItem: { name: string; hasPassword?: boolean }) => {
+      if (!resolvedDisplayName) {
+        setError("Nhập tên hiển thị của bạn ở dưới trước rồi bấm Vào.");
+        return;
+      }
+      setRoomName(roomItem.name);
+      handleStartJoin(
+        roomItem.name,
+        resolvedDisplayName,
+        roomItem.hasPassword ? "required" : "none"
+      );
+    },
+    [resolvedDisplayName, handleStartJoin]
+  );
 
   const handlePreJoinSubmit = useCallback(
     async (choices: PreJoinChoices) => {
@@ -526,9 +540,11 @@ const getLiveKitEndpoints = () => {
 
   const handleRejoinFromNotice = useCallback(() => {
     if (!exitRoomName || joining) return;
-    onOpen?.();
+    stableOnOpen();
     handleStartJoin(exitRoomName, resolvedDisplayName);
-  }, [exitRoomName, joining, onOpen, resolvedDisplayName, handleStartJoin]);
+  }, [exitRoomName, joining, stableOnOpen, resolvedDisplayName, handleStartJoin]);
+
+  const handleDismissExitNotice = useCallback(() => setExitNotice(null), []);
 
   const handleLeave = useCallback(
     function handleLeave(reason?: number) {
@@ -577,12 +593,12 @@ const getLiveKitEndpoints = () => {
       setError(null);
       setPreJoinConfig(null);
       setInitialMedia({ audio: false, video: false });
-      onClose();
+      stableOnClose();
       setTimeout(() => {
         leavingRef.current = false;
       }, 300);
     },
-    [onClose, joinedRoom]
+    [stableOnClose, joinedRoom]
   );
 
   // Kéo to/nhỏ ở góc dưới phải (logic gom trong hook chung, đây chỉ kẹp lại chỗ đứng)
@@ -607,8 +623,8 @@ const getLiveKitEndpoints = () => {
     return (
       <MobileRoomsSheet
         isOpen={isOpen}
-        onClose={onClose}
-        onOpen={onOpen}
+        onClose={stableOnClose}
+        onOpen={stableOnOpen}
         onBack={onBack}
         backLabel={backLabel}
         soundEnabled={soundEnabled}
@@ -635,7 +651,7 @@ const getLiveKitEndpoints = () => {
         joinedRoom={joinedRoom}
         handleLeave={handleLeave}
         exitNotice={exitNotice}
-        onDismissExitNotice={() => setExitNotice(null)}
+        onDismissExitNotice={handleDismissExitNotice}
         onRejoinExitNotice={handleRejoinFromNotice}
         isAvailable={getLiveKitEndpoints().isAvailable}
         maxParticipants={maxParticipants}
