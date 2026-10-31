@@ -146,12 +146,12 @@ function MobileParticipantTile({
 
         {statusLabel && (
           <div
-            className={`px-1.5 py-0.5 rounded text-[9px] font-bold border backdrop-blur-md shadow-sm truncate ${
+            className={`px-1.5 py-0.5 rounded text-[9px] font-bold border shadow-sm truncate ${
               status === "focus"
-                ? "bg-emerald-500/80 text-slate-950 border-emerald-400/50"
+                ? "bg-emerald-500/85 text-slate-950 border-emerald-400/50"
                 : status === "break"
-                ? "bg-amber-500/80 text-slate-950 border-amber-400/50"
-                : "bg-rose-500/80 text-white border-rose-400/50"
+                ? "bg-amber-500/85 text-slate-950 border-amber-400/50"
+                : "bg-rose-500/85 text-white border-rose-400/50"
             }`}
             title={goal ? `Mục tiêu: ${goal}` : undefined}
           >
@@ -159,10 +159,10 @@ function MobileParticipantTile({
           </div>
         )}
 
-        {/* Mục tiêu học tập cá nhân hiển thị thực sự trên mobile */}
+        {/* Mục tiêu học tập cá nhân hiển thị thực sự trên mobile (tối ưu nền không blur trên video WebRTC) */}
         {goal && (
           <div
-            className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-black/70 backdrop-blur-md border border-emerald-400/40 text-emerald-200 shadow-sm flex items-center gap-1 max-w-[100px] truncate pointer-events-auto"
+            className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-black/85 border border-emerald-400/40 text-emerald-200 shadow-sm flex items-center gap-1 max-w-[100px] truncate pointer-events-auto"
             title={`Mục tiêu: ${goal}`}
           >
             <TargetIcon className="w-2.5 h-2.5 text-emerald-400 shrink-0" weight="bold" />
@@ -554,8 +554,8 @@ export function MobileRoomView({
                 onClick={() => setIsRoomMenuOpen(false)}
               />
 
-              {/* Menu popup kính mờ */}
-              <div className="absolute right-0 top-full mt-1.5 z-50 w-48 py-1.5 rounded-2xl bg-neutral-900/95 backdrop-blur-xl border border-white/15 shadow-[0_12px_32px_rgba(0,0,0,0.6)] select-none">
+              {/* Menu popup tiện ích (tối ưu nền phẳng không tốn GPU blur) */}
+              <div className="absolute right-0 top-full mt-1.5 z-50 w-48 py-1.5 rounded-2xl bg-[#0B0F1A] border border-white/15 shadow-[0_12px_32px_rgba(0,0,0,0.85)] select-none">
                 <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/[0.08] mb-1">
                   Tiện ích phòng
                 </div>
@@ -684,9 +684,9 @@ export function MobileRoomView({
         )}
       </main>
 
-      {/* Thanh điều khiển cuộc gọi dưới đáy */}
+      {/* Thanh điều khiển cuộc gọi dưới đáy (tối ưu nền phẳng không blur thừa) */}
       <footer className="shrink-0 py-1.5 px-3 flex items-center justify-center z-20">
-        <div className="flex items-center gap-3 px-3.5 py-1.5 rounded-full bg-[#0B0F1A]/95 backdrop-blur-2xl border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.85)]">
+        <div className="flex items-center gap-3 px-3.5 py-1.5 rounded-full bg-[#0B0F1A] border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.85)]">
           {/* Nút Micro */}
           <TrackToggle
             source={Track.Source.Microphone}
@@ -772,9 +772,9 @@ export function MobileRoomView({
         </div>
       </footer>
 
-      {/* Khung chat trượt lên từ đáy (In-Room Mobile Chat Drawer) */}
+      {/* Khung chat trượt lên từ đáy (In-Room Mobile Chat Drawer - tối ưu không blur khi bật phím ảo) */}
       {chatOpen && (
-        <div className="absolute inset-x-0 bottom-0 h-[65%] bg-[#0B0F1A]/95 backdrop-blur-3xl border-t border-white/20 rounded-t-3xl shadow-[0_-16px_50px_rgba(0,0,0,0.85)] flex flex-col z-30 animate-in slide-in-from-bottom duration-250 ease-out">
+        <div className="absolute inset-x-0 bottom-0 h-[65%] bg-[#0B0F1A] border-t border-white/20 rounded-t-3xl shadow-[0_-16px_50px_rgba(0,0,0,0.85)] flex flex-col z-30 animate-in slide-in-from-bottom duration-250 ease-out">
           {/* Header Chat */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 shrink-0">
             <div className="flex items-center gap-2">
