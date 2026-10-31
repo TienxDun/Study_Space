@@ -34,9 +34,11 @@ export const MobileTimerTabBar = memo(function MobileTimerTabBar({ currentTab, o
       aria-hidden={!visible}
       className={cn(
         "w-full mb-1 z-20 items-center gap-2.5 transition-all duration-300 flex sm:hidden",
+        // Tự ẩn sau 4 giây: ẩn hẳn bằng visibility để thanh kính (blur 24px) không
+        // chạy backdrop-filter ngầm trên nền video trong suốt phần còn lại của phiên.
         visible
-          ? "opacity-100 translate-y-0 pointer-events-auto"
-          : "opacity-0 -translate-y-1.5 pointer-events-none"
+          ? "opacity-100 visible translate-y-0 pointer-events-auto"
+          : "opacity-0 invisible -translate-y-1.5 pointer-events-none"
       )}
     >
       <div

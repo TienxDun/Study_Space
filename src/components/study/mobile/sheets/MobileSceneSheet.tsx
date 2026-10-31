@@ -259,7 +259,7 @@ export const MobileSceneSheet = React.memo(function MobileSceneSheet({
                 key={cat.key}
                 type="button"
                 onClick={() => setSelectedCategory(cat.key)}
-                className={`h-8 px-3.5 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer backdrop-blur-md border ${
+                className={`h-8 px-3.5 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer border ${
                   isActive
                     ? "bg-white/20 border-white/30 text-white font-medium shadow-sm"
                     : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white"

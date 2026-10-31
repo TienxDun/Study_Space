@@ -197,12 +197,13 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
 
   return (
     <>
-      {/* Backdrop mờ nền khi mở quạt - Thường trực DOM, fade bằng opacity GPU */}
+      {/* Backdrop mờ nền khi mở quạt - Thường trực DOM, fade bằng opacity GPU.
+          Đóng thì ẩn hẳn bằng visibility để backdrop-filter không chạy ngầm trên toàn màn hình. */}
       <div
         aria-hidden="true"
         onClick={closeMenu}
-        className={`fixed inset-0 z-[55] bg-black/40 backdrop-blur-[2px] sm:hidden transition-opacity duration-200 ease-out ${
-          isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        className={`fixed inset-0 z-[55] bg-black/40 backdrop-blur-[2px] sm:hidden transition-all duration-200 ease-out ${
+          isOpen ? "opacity-100 visible pointer-events-auto" : "opacity-0 invisible pointer-events-none"
         }`}
       />
 
@@ -241,12 +242,16 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
                     ? `translate3d(${item.x}px, ${item.y}px, 0) scale(1)`
                     : `translate3d(0, 0, 0) scale(0.2)`,
                   opacity: isOpen ? 1 : 0,
+                  // Ẩn hẳn sau khi fade xong: các bong bóng kính không còn chạy backdrop-filter ngầm
+                  visibility: isOpen ? "visible" : "hidden",
                   pointerEvents: isOpen ? "auto" : "none",
                   transition: `transform ${
                     isOpen
                       ? "0.34s cubic-bezier(0.34, 1.56, 0.64, 1)"
                       : "0.2s cubic-bezier(0.4, 0, 0.2, 1)"
                   } ${transitionDelay}, opacity ${
+                    isOpen ? "0.22s" : "0.15s"
+                  } ease ${transitionDelay}, visibility ${
                     isOpen ? "0.22s" : "0.15s"
                   } ease ${transitionDelay}`,
                 }}
@@ -338,6 +343,8 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
               className="absolute inset-0 rounded-full lg-bubble pointer-events-none transition-all duration-200 ease-out"
               style={{
                 opacity: isOpen ? 1 : 0,
+                // Khi đóng, đĩa kính ẩn hẳn để không blur nền video phía sau
+                visibility: isOpen ? "visible" : "hidden",
                 transform: isOpen ? "scale(1)" : "scale(0.5)",
               }}
             />

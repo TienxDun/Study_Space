@@ -402,7 +402,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
             <div className="flex-1 min-h-0 flex flex-col overflow-hidden text-white">
               {/* THANH CÔNG CỤ SOẠN THẢO TINH GỌN (CHỈ 1 HÀNG DUY NHẤT) */}
               {isToolbarOpen ? (
-                <div className="relative z-30 shrink-0 px-3 py-1.5 border-b border-white/[0.08] bg-neutral-950/70 backdrop-blur-md flex items-center justify-between gap-1.5 select-none animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="relative z-30 shrink-0 px-3 py-1.5 border-b border-white/[0.08] bg-neutral-950/70 flex items-center justify-between gap-1.5 select-none animate-in fade-in slide-in-from-top-1 duration-150">
                   {/* Cụm 6 nút định dạng: B, I, S, Todo, Highlight, Undo */}
                   <div className="flex items-center gap-1 flex-1 overflow-x-auto no-scrollbar py-0.5">
                     <button
@@ -488,7 +488,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                         ref={aiPromptTriggerRef}
                         type="button"
                         onClick={() => setShowAiPromptMenu((prev) => !prev)}
-                        className={`flex items-center gap-1 h-8 px-2.5 rounded-xl text-[11px] font-medium transition-all border active:scale-95 cursor-pointer backdrop-blur-md ${
+                        className={`flex items-center gap-1 h-8 px-2.5 rounded-xl text-[11px] font-medium transition-all border active:scale-95 cursor-pointer ${
                           showAiPromptMenu
                             ? "bg-white/15 border-white/25 text-emerald-300 shadow-sm"
                             : "bg-white/5 hover:bg-white/10 border-white/10 text-emerald-400 hover:text-emerald-300"
@@ -525,7 +525,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                 </div>
               ) : (
                 /* Thanh thông báo nhỏ khi thanh công cụ bị ẩn: chạm vào để mở lại */
-                <div className="relative z-30 shrink-0 px-3 py-1 flex items-center justify-between border-b border-white/[0.06] bg-neutral-950/30 backdrop-blur-sm select-none">
+                <div className="relative z-30 shrink-0 px-3 py-1 flex items-center justify-between border-b border-white/[0.06] bg-neutral-950/30 select-none">
                   <span className="text-white/40 italic text-[11px]">Chế độ đọc tập trung</span>
                   <button
                     type="button"

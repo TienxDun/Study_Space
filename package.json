@@ -12,6 +12,7 @@
     "lint:css": "node scripts/check-important.mjs",
     "test": "vitest run src/",
     "test:load": "node scripts/load-test.mjs",
+    "encode:mobile": "node scripts/encode-mobile-scenes.mjs",
     "gen:limits": "node scripts/gen-limits-docs.mjs",
     "sync:r2": "node scripts/sync-r2.mjs"
   },

@@ -83,6 +83,7 @@ export default function StudySpacePage() {
       <StudyBackground
         scene={state.currentScene}
         isBlurActive={state.isAnyModalOpen}
+        isMobile={state.isMobile}
         onLoaded={() => setIsBackgroundReady(true)}
       />
 

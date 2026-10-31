@@ -4,11 +4,14 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { Scene, STUDY_SCENES } from "@/components/study/study-types";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { devWarn } from "@/lib/logger";
+import { getSceneSourceUrl } from "@/lib/asset-resolver";
 
 export interface UseScenePreloaderOptions {
   initialScene?: Scene;
   timeoutMs?: number;
   onSceneChange?: (scene: Scene) => void;
+  /** Điện thoại: nạp trước bản video 720p để không tải 4K chỉ nhằm đệm cảnh. */
+  preferMobileSource?: boolean;
 }
 
 export interface UseScenePreloaderReturn {
@@ -29,6 +32,7 @@ export function useScenePreloader({
   initialScene = STUDY_SCENES[0],
   timeoutMs = 12000,
   onSceneChange,
+  preferMobileSource = false,
 }: UseScenePreloaderOptions = {}): UseScenePreloaderReturn {
   const [currentScene, setCurrentScene] = useState<Scene>(initialScene);
   const [pendingScene, setPendingScene] = useState<Scene | null>(null);
@@ -103,6 +107,9 @@ export function useScenePreloader({
         finish();
       }, timeoutMs);
 
+      // Nạp trước đúng file mà lúc hiển thị sẽ dùng (mobile: bản 720p nếu có)
+      const preloadUrl = getSceneSourceUrl(targetScene, preferMobileSource);
+
       // Nạp trước tùy theo định dạng Media (Ảnh hoặc Video)
       if (targetScene.type === "IMAGE") {
         if (typeof window === "undefined") {
@@ -111,7 +118,7 @@ export function useScenePreloader({
         }
 
         const img = new Image();
-        img.src = targetScene.bgUrl;
+        img.src = preloadUrl;
 
         // Nếu ảnh đã nằm sẵn trong bộ nhớ đệm trình duyệt
         if (img.complete) {
@@ -142,7 +149,7 @@ export function useScenePreloader({
         video.preload = "auto";
         video.muted = true;
         video.playsInline = true;
-        video.src = targetScene.bgUrl;
+        video.src = preloadUrl;
 
         const cleanupVideo = () => {
           video.removeEventListener("canplaythrough", onReady);
@@ -178,7 +185,7 @@ export function useScenePreloader({
         };
       }
     },
-    [currentScene.id, pendingScene, timeoutMs, applyScene]
+    [currentScene.id, pendingScene, timeoutMs, applyScene, preferMobileSource]
   );
 
   const setCurrentSceneDirectly = useCallback(

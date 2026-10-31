@@ -27,6 +27,8 @@ import {
 } from "@/lib/system-flags";
 
 export function useStudySpaceState() {
+  const isMobile = useIsMobile();
+
   const {
     currentScene,
     pendingScene,
@@ -35,12 +37,12 @@ export function useStudySpaceState() {
     setCurrentSceneDirectly,
   } = useScenePreloader({
     initialScene: STUDY_SCENES[0],
+    preferMobileSource: isMobile,
   });
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isGlobalMuted, setIsGlobalMuted] = useState(false);
   const [isZenMode, setIsZenMode] = useState(false);
-  const isMobile = useIsMobile();
 
   // Widget States
   const [isPomodoroVisible, setIsPomodoroVisible] = useState(false);

@@ -109,7 +109,16 @@ async function main() {
     return files;
   }
 
-  const allKeys = await walkDir(localBase);
+  // Lọc theo chuỗi trong đường dẫn để chỉ đẩy một nhóm file, ví dụ:
+  //   npm run sync:r2 -- 1280x720
+  const filters = process.argv.slice(2).filter((arg) => !arg.startsWith("-"));
+  const allKeys = (
+    await walkDir(localBase)
+  ).filter((key) => filters.length === 0 || filters.some((f) => key.includes(f)));
+
+  if (filters.length > 0) {
+    console.log(`🎯 Chỉ đồng bộ file khớp: ${filters.join(", ")}`);
+  }
   console.log(`🔍 Tìm thấy tổng cộng ${allKeys.length} file asset trong thư mục public/study/ để đồng bộ.\n`);
 
   let uploadedCount = 0;

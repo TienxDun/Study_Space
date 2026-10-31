@@ -27,12 +27,17 @@ export function resolveAssetUrl(path: string | undefined | null): string {
   return `${baseUrl}/${cleanPath}`;
 }
 
+/** Hậu tố file video nhẹ cho điện thoại, do `npm run encode:mobile` tạo ra. */
+export const MOBILE_VIDEO_SUFFIX = ".1280x720.mp4";
+
 export interface LegacyScene {
   id: string;
   name: string;
   category: string;
   type: "VIDEO" | "IMAGE";
   bgUrl: string;
+  /** Bản 720p cùng nội dung cho mobile; có thể chưa tồn tại (UI tự lùi về bgUrl). */
+  bgUrlMobile?: string;
   thumbnailUrl: string;
   tags?: string[];
   description?: string;
@@ -58,14 +63,37 @@ export interface LegacyAmbientSound {
   category: "rain" | "nature" | "indoor";
 }
 
+/**
+ * Đường dẫn video nhẹ suy ra từ mediaPath (không cần khai báo trong JSON):
+ * "scenes/a.3840x2160.mp4" → "scenes/a.3840x2160.1280x720.mp4".
+ * Suy ra thay vì thêm field để catalog do admin phát hành cũ vẫn dùng được ngay.
+ */
+export function resolveMobileMediaPath(mediaPath: string): string | undefined {
+  return /\.mp4$/i.test(mediaPath)
+    ? mediaPath.replace(/\.mp4$/i, MOBILE_VIDEO_SUFFIX)
+    : undefined;
+}
+
+/** Chọn nguồn video nền theo thiết bị; luôn có URL gốc để lùi về khi bản nhẹ lỗi. */
+export function getSceneSourceUrl(
+  scene: Pick<LegacyScene, "bgUrl" | "bgUrlMobile">,
+  preferMobile: boolean
+): string {
+  return preferMobile && scene.bgUrlMobile ? scene.bgUrlMobile : scene.bgUrl;
+}
+
 /** Chuyển đổi SceneAsset sang định dạng Scene tương thích ngược cho UI */
 export function resolveScene(asset: SceneAsset): LegacyScene {
+  const mobilePath =
+    asset.type === "VIDEO" ? resolveMobileMediaPath(asset.mediaPath) : undefined;
+
   return {
     id: asset.id,
     name: asset.name,
     category: asset.category,
     type: asset.type,
     bgUrl: resolveAssetUrl(asset.mediaPath),
+    bgUrlMobile: mobilePath ? resolveAssetUrl(mobilePath) : undefined,
     thumbnailUrl: resolveAssetUrl(asset.thumbnailPath),
     tags: asset.tags,
     description: asset.description,

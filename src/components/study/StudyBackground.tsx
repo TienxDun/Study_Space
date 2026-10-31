@@ -4,10 +4,13 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Scene } from "./study-types";
 import { devWarn } from "@/lib/logger";
+import { getSceneSourceUrl } from "@/lib/asset-resolver";
 
 export interface StudyBackgroundProps {
   scene: Scene;
   isBlurActive?: boolean;
+  /** Điện thoại: dùng bản video 720p cho nhẹ, bản gốc vẫn để dự phòng. */
+  isMobile?: boolean;
   onLoaded?: () => void;
 }
 
@@ -15,13 +18,41 @@ export interface StudyBackgroundProps {
 export const StudyBackground = ({
   scene,
   isBlurActive = false,
+  isMobile = false,
   onLoaded,
 }: StudyBackgroundProps) => {
   const [hasVideoError, setHasVideoError] = useState(false);
+  // Bản 720p có thể chưa được encode/upload: lỗi lần đầu thì dùng bản gốc.
+  const [hasMobileSourceError, setHasMobileSourceError] = useState(false);
 
   useEffect(() => {
     setHasVideoError(false);
+    setHasMobileSourceError(false);
   }, [scene.id]);
+
+  const videoSrc = getSceneSourceUrl(scene, isMobile && !hasMobileSourceError);
+
+  // Tab/app bị ẩn (chuyển app, khoá màn hình) thì dừng decode video nền.
+  // Nhiều máy vẫn giải mã tiếp khi ẩn tab, đốt pin/GPU mà chẳng ai xem.
+  //
+  // Tìm video theo data-scene-id thay vì giữ ref: AnimatePresence giữ video cảnh cũ
+  // thêm 0.5s để crossfade, và khi nó unmount React sẽ gán ref = null cho video phần tử.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const syncPlayback = () => {
+      const video = Array.from(
+        document.querySelectorAll<HTMLVideoElement>("video[data-scene-id]")
+      ).find((el) => el.dataset.sceneId === scene.id);
+      if (!video) return;
+      if (document.hidden) {
+        video.pause();
+      } else {
+        void video.play().catch(() => {});
+      }
+    };
+    document.addEventListener("visibilitychange", syncPlayback);
+    return () => document.removeEventListener("visibilitychange", syncPlayback);
+  }, [scene.id, hasVideoError]);
 
   // Thông báo sẵn sàng khi bối cảnh đã có hình ảnh hiển thị (Ảnh gốc hoặc Thumbnail Poster của Video)
   useEffect(() => {
@@ -69,7 +100,8 @@ export const StudyBackground = ({
         >
           {scene.type === "VIDEO" && !hasVideoError ? (
             <video
-              src={scene.bgUrl}
+              data-scene-id={scene.id}
+              src={videoSrc}
               poster={scene.thumbnailUrl}
               autoPlay
               loop
@@ -78,6 +110,11 @@ export const StudyBackground = ({
               onLoadedData={() => onLoaded?.()}
               onCanPlay={() => onLoaded?.()}
               onError={() => {
+                if (isMobile && scene.bgUrlMobile && !hasMobileSourceError) {
+                  devWarn(`[StudySpace] Không nạp được bản nhẹ của "${scene.name}", chuyển sang bản gốc.`);
+                  setHasMobileSourceError(true);
+                  return;
+                }
                 devWarn(`[StudySpace] Lỗi nạp video bối cảnh "${scene.name}", tự động chuyển sang ảnh thumbnail an toàn.`);
                 setHasVideoError(true);
                 onLoaded?.();
