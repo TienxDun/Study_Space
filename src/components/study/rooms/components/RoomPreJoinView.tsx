@@ -243,7 +243,9 @@ export function RoomPreJoinView({
       )}
 
       {/* Thân Pre-join */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-4 custom-study-scroll">
+      {/* overflow-x-hidden: MediaDeviceMenu luôn mount menu thiết bị ẩn (visibility:hidden) với
+          width:max-content, nhãn thiết bị dài làm khung này tràn ngang dù menu chưa mở. */}
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-5 space-y-4 custom-study-scroll">
         {/* Thông tin phòng & Tên */}
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/10 flex items-center gap-2 min-w-0">
