@@ -1,9 +1,9 @@
 # Kế hoạch đưa ZenStudy Space lên Google Play (CH Play)
 
-> Cập nhật: 2026-11-03 — P0.6 xong: code/copy 16+ đã push web và `chat-proxy` bản 16+ đã dán production. Còn khai Play Console (tay) và P1–P4. Mốc 16+ chốt 2026-11-01.
+> Cập nhật: 2026-11-03 — P0.5 xong hoàn toàn (Phase 7 QA tay pass toàn bộ trên production). P0.6 xong: code/copy 16+ đã push web và `chat-proxy` bản 16+ đã dán production. Còn khai Play Console (tay) và P1–P4. Mốc 16+ chốt 2026-11-01.
 > Hướng dẫn kỹ thuật chi tiết (Capacitor, keystore, OTA): [ANDROID_CHPLAY_OTA_GUIDE.md](./ANDROID_CHPLAY_OTA_GUIDE.md)
 
-**Tiến độ tổng:** P0 đã xong code + hạ tầng + pháp lý (privacy, terms, xóa tài khoản đều live). P0.5 Phase 1–6 đã lên production; còn Phase 7 (QA tay, bằng chứng cho Play). P0.6 (16+) **đóng 2026-11-03**: terms/privacy live mốc 16+, `chat-proxy` production chạy guardrail 16+. Việc còn lại của P0 là khai tay trên Play Console. P1–P4 chưa bắt đầu.
+**Tiến độ tổng:** P0 đã xong code + hạ tầng + pháp lý (privacy, terms, xóa tài khoản đều live). P0.5 **xong hoàn toàn 2026-11-03**: Phase 1–6 lên production, Phase 7 QA tay 2 tài khoản A/B pass toàn bộ (guardrail 16+, báo cáo AI + phòng, chặn 2 chiều, khóa/mở AI, xóa tài khoản thử, mobile spot-check). P0.6 (16+) **đóng 2026-11-03**: terms/privacy live mốc 16+, `chat-proxy` production chạy guardrail 16+. Việc còn lại của P0 là khai tay trên Play Console. P1–P4 chưa bắt đầu.
 
 ## Trạng thái hiện tại
 
@@ -196,11 +196,11 @@ Chốt 2026-11-01: sản phẩm chính thức hướng tới **16+**, không ph�
 | 2026-11-03 | Dán `chat-proxy` bản mới lên Cloudflare (Phase 5 guardrail + bỏ cấu hình gen temperature/max_tokens); `/health`, `/config` trả 200 | Deploy xong; QA tay để Phase 7 |
 | 2026-11-03 | P0.6: nâng `SAFETY_PREFIX` + test guardrail (26 test) + `/terms` + `/privacy` sang mốc 16+; 684 test xanh, `tsc` + `lint` sạch, đã kiểm hiển thị local | Code xong; chờ dán lại `chat-proxy` + push web |
 | 2026-11-03 | Dán `chat-proxy` bản 16+ lên Cloudflare + push `main` (Pages build web 16+) | Xong — P0.6 đóng |
+| 2026-11-03 | Phase 7 QA tay 2 tài khoản (Jim + Dinh) pass toàn bộ: guardrail 16+, không chặn oan, báo cáo AI + phòng, chặn 2 chiều, khóa/mở AI, xóa tài khoản, mobile spot-check; khối quy tắc an toàn trong admin hiện đúng 16+ | Xong — P0.5 đóng |
 
 ## Việc tiếp theo (theo thứ tự)
 
-1. P0.5 Phase 7: QA tay bằng 2 tài khoản A/B (chat/báo cáo/phòng/admin) + chụp bằng chứng cho Play — Phase 1–6 đã live.
-2. Khai báo Play Console theo P0.6: Target audience 16–17 + 18+ (lúc tạo app).
-3. P1: dựng Capacitor shell + script `build:mobile`; chạy trên máy thật (Google Sign-In WebView, LiveKit mic/cam, asset CDN, link `/privacy/`).
-4. P2: tạo keystore, cấu hình ký, build `.aab` và cài thử bản release.
-5. P3: tạo app trên Play Console, khai Privacy URL + Account deletion URL + Data Safety + App content; chuẩn bị store listing và 20 tester.
+1. Khai báo Play Console theo P0.6: Target audience 16–17 + 18+ (lúc tạo app), Data Safety, đánh giá AI-law.
+2. P1: dựng Capacitor shell + script `build:mobile`; chạy trên máy thật (Google Sign-In WebView, LiveKit mic/cam, asset CDN, link `/privacy/`).
+3. P2: tạo keystore, cấu hình ký, build `.aab` và cài thử bản release.
+4. P3: tạo app trên Play Console, khai Privacy URL + Account deletion URL + Data Safety + App content; chuẩn bị store listing và 20 tester.

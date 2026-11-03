@@ -1,6 +1,6 @@
 # P0.5 — Báo cáo nội dung, chặn người dùng & an toàn AI (plan tổng quát)
 
-> Trạng thái: **Phase 0–6 và Phase 8 xong, đã lên production (web + `chat-proxy` 16+ dán 2026-11-03)**; còn Phase 7 (QA tay, bằng chứng cho Play). Cập nhật: 2026-11-03
+> Trạng thái: **Phase 0–8 xong, đã lên production và QA tay Phase 7 pass toàn bộ (2026-11-03)**; còn khai báo tay trên Play Console (target audience, Data Safety, đánh giá AI-law). Cập nhật: 2026-11-03
 > **Cập nhật 2026-11-01:** mốc mục tiêu đổi từ **13+ sang 16+**. Các mục "13+" bên dưới là lịch sử triển khai; Phase 8 đã nâng prompt/copy/test lên 16+ và **đã push web + dán `chat-proxy` production 2026-11-03**.
 > Thuộc P0.5 trong [CHPLAY_LAUNCH_PLAN.md](../deployment/CHPLAY_LAUNCH_PLAN.md)
 > Mục tiêu: đáp ứng chính sách **AI-Generated Content** và **User Generated Content** của Google Play trước khi nộp app.
@@ -229,17 +229,19 @@ Mọi thao tác ghi vào `admin_audit`.
 - [x] Data Safety ([CHPLAY_LAUNCH_PLAN.md](../deployment/CHPLAY_LAUNCH_PLAN.md)): thêm dòng “Báo cáo nội dung & danh sách chặn”, tick 3 mục P0.5 liên quan.
 - [x] Đã push web lên Pages và mở `/privacy/`, `/terms/` kiểm hiển thị (2026-10-30). Khi khai Data Safety trong Play Console đối chiếu lại bảng trong [CHPLAY_LAUNCH_PLAN.md](../deployment/CHPLAY_LAUNCH_PLAN.md).
 
-### Phase 7 — QA & bằng chứng cho Play (0.5–1 ngày) — đang làm
+### Phase 7 — QA & bằng chứng cho Play (0.5–1 ngày) — xong 2026-11-03
 **Đã kiểm tự động 2026-10-30:** 684 unit test xanh, `tsc` sạch, `lint` 0 lỗi; 7 endpoint công khai trả 200 (`/`, `/privacy/`, `/terms/`, `/account-deletion/`, `/sitemap.xml`, chat-proxy `/config`, data-api `/content`), `/report` và `/blocks` trả 401 khi không có token; D1: 5 báo cáo (5 đang chờ), 0 chặn, 0 hạn chế; trang `/privacy/` live có 13 mục, “180 ngày” ×2, “13 tuổi”; trang chủ production không có lỗi console; admin Worker version `27cfe13c`.
 
-**Việc tay còn lại (2 tài khoản A/B):**
-- [ ] Chat: câu học tập trả lời bình thường và số câu trong admin tăng; câu tự hại/bạo lực nhận câu an toàn (có 111/115) và số câu **không** tăng; câu văn học có chữ “tự tử” vẫn trả lời bình thường.
-- [ ] Chat: bấm cờ → gửi báo cáo → admin thấy báo cáo AI kèm câu hỏi, ghi chú, tên.
-- [ ] Phòng: B báo cáo A (hiện trong admin, có tên hai bên) → B chặn A (tự rời phòng) → vào lại bị chặn → bỏ chặn trong Cài đặt → vào lại được.
-- [ ] Admin: xử lý báo cáo + khối “Quy tắc an toàn (cố định)” hiện đúng nội dung; thử khóa AI/phòng rồi mở lại.
-- [ ] Xóa tài khoản thử nghiệm; lặp mục chat/báo cáo trên điện thoại.
-- [ ] Chụp ảnh bằng chứng: nút cờ + dialog báo cáo AI, menu ⋮ + dialog phòng, xác nhận chặn, “Người đã chặn”, chi tiết báo cáo trong admin, khối quy tắc an toàn.
-- [ ] Cập nhật plan CH Play, đánh dấu P0.5 xong.
+**QA tay 2 tài khoản A/B (Jim + Dinh) — pass toàn bộ 2026-11-03:**
+- [x] Chat: câu học tập (Newton) trả lời bình thường; câu tự hại nhận câu trấn an có 111/115; câu văn học có chữ "tự tử" không bị chặn oan. Ghi chú nhỏ: model thỉnh thoảng lẫn chữ Trung trong câu trả lời (lỗi chất lượng, không liên quan guardrail).
+- [x] Chat: bấm cờ → gửi báo cáo → admin thấy báo cáo AI kèm câu hỏi, ghi chú, tên.
+- [x] Phòng: Dinh báo cáo Jim (admin thấy tên hai bên) → Jim chặn Dinh (Jim tự out, vào lại được vì là host — chủ ý thiết kế) → Dinh out rồi vào lại bị chặn đúng thông báo 403 → bỏ chặn trong Cài đặt → vào lại được.
+- [x] Admin: đánh dấu xử lý các báo cáo; khối "Quy tắc an toàn (cố định)" hiển thị đúng nội dung 16+ ("mới 16 tuổi (16–17 vẫn là người chưa thành niên)") = bằng chứng bản chat-proxy 16+ chạy production.
+- [x] Admin: khóa AI của Dinh qua chi tiết báo cáo phòng (mục "Hạn chế tài khoản") → Dinh không chat được → mở khóa → chat lại bình thường.
+- [x] Xóa tài khoản thử nghiệm Dinh: admin mất hết báo cáo liên quan, Firebase Auth mất user.
+- [x] Mobile spot-check: câu tự hại trả về trấn an; menu ⋮ trong phòng hiện đúng Báo cáo/Chặn.
+- [ ] Chụp ảnh bằng chứng nếu Play yêu cầu khi review: nút cờ + dialog báo cáo AI, menu ⋮ + dialog phòng, xác nhận chặn, "Người đã chặn", chi tiết báo cáo trong admin, khối quy tắc an toàn. *(Làm lại khi cần — báo cáo của tài khoản thử đã xóa cùng tài khoản.)*
+- [x] Cập nhật plan CH Play, đánh dấu P0.5 xong (2026-11-03).
 
 ### Phase 8 — Nâng mốc an toàn lên 16+ (code xong 2026-11-03)
 
