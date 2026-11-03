@@ -28,7 +28,7 @@
 
 ### 2.3. Backend & admin
 - `workers/data-api/worker.js` — D1, xác thực Firebase token, đã có `DELETE /account`. **Chưa có endpoint báo cáo/chặn.**
-- `admin-worker/` + `admin-host/` — admin console chạy sau Cloudflare Access; `admin-host/scripts/dashboard.js` (tracked) là UI thật đang deploy. `src/app/admin/` là bản local, **bị gitignore**, không dùng để build bản deploy.
+- `admin-worker/` + `admin-host/` — admin console chạy sau Cloudflare Access; `admin-host/scripts/dashboard.js` (tracked) là UI thật đang deploy. (Bản local `src/app/admin/` đã xóa 2026-11-03.)
 - D1 dùng chung: `user_data`, `chat_usage`, `meet_*`, `admin_audit`, `admin_error_log`, `content_manifest`.
 - Xóa tài khoản: `deleteAccountData()` trong data-api hiện xóa `user_data`, `chat_usage`, `meet_*` — **sẽ phải xóa thêm báo cáo/chặn**.
 
@@ -274,7 +274,7 @@ Vì sao thứ tự này:
 
 ## 9. Rủi ro & lưu ý
 
-- **Admin deploy:** sửa `admin-host/` (tracked), không sửa `src/app/admin/` (gitignored). Deploy bằng `npm run build:admin` + wrangler.
+- **Admin deploy:** sửa `admin-host/` (tracked). Deploy bằng `npm run build:admin` + wrangler.
 - **Worker deploy thủ công:** data-api/livekit/chat-proxy đang được dán code trên dashboard; cần thứ tự: schema → data-api → livekit → admin.
 - **Xóa tài khoản:** quên cập nhật `deleteAccountData` sẽ để lại báo cáo/chặn → vi phạm chính sách xóa dữ liệu.
 - **Chặn khi đang chung phòng:** server chỉ chặn lần vào sau; cần client tự rời + có thể host kick.

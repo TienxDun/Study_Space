@@ -47,7 +47,7 @@ flowchart TD
    ```
    *Đảm bảo thư mục `out/` được tạo ra thành công ở thư mục gốc dự án.*
 
-> **Lưu ý với repo hiện tại:** [next.config.ts](../../next.config.ts) chỉ bật `output: "export"` khi có biến `CF_PAGES`, và máy local có `src/app/admin` + `src/app/api` (gitignored) nên `next build` thường sẽ từ chối export. Dùng script `build:mobile` (tạm ẩn 2 thư mục đó khi build) thay vì `npm run build` trần — xem P1 trong [CHPLAY_LAUNCH_PLAN.md](./CHPLAY_LAUNCH_PLAN.md).
+> **Lưu ý với repo hiện tại:** [next.config.ts](../../next.config.ts) chỉ bật `output: "export"` khi có biến `CF_PAGES`, và máy local có `src/app/api` (gitignored) nên `next build` thường sẽ từ chối export. Dùng script `build:mobile` (tạm ẩn thư mục đó khi build) thay vì `npm run build` trần — xem P1 trong [CHPLAY_LAUNCH_PLAN.md](./CHPLAY_LAUNCH_PLAN.md).
 
 ---
 

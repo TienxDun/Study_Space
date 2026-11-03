@@ -123,7 +123,7 @@ Chốt 2026-11-01: sản phẩm chính thức hướng tới **16+**, không ph�
 Điều kiện tiên quyết: Android Studio + JDK (bản Android Studio mới đã kèm JDK), một điện thoại Android thật để thử LiveKit.
 
 - [ ] Cài `@capacitor/core`, `@capacitor/android`; `@capacitor/cli` (dev).
-- [ ] Script `build:mobile` xuất `out/` (tạm ẩn `src/app/admin`, `src/app/api` vì máy local có 2 thư mục gitignored này; `next build` thường sẽ từ chối export).
+- [ ] Script `build:mobile` xuất `out/` (tạm ẩn `src/app/api` vì máy local có thư mục gitignored này; `next build` thường sẽ từ chối export).
 - [ ] `npx cap init "ZenStudy Space" "space.zenstudy.app" --web-dir out` (chốt package name trước khi tạo project).
 - [ ] `npx cap add android` + `npx cap sync`.
 - [ ] `AndroidManifest.xml`: INTERNET, ACCESS_NETWORK_STATE, CAMERA, RECORD_AUDIO, MODIFY_AUDIO_SETTINGS + `uses-feature` không bắt buộc.
