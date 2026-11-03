@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const UPDATED_AT = "30/10/2026";
+const UPDATED_AT = "03/11/2026";
 const CONTACT_EMAIL = "leutiendung.htt@gmail.com";
 
 function Section({
@@ -68,7 +68,7 @@ export default function TermsPage() {
         </p>
         <ul className="mt-2 space-y-1.5 text-sm text-slate-200 list-disc pl-5 marker:text-emerald-300">
           <li>Khi trải nghiệm ZenStudy, bạn đồng ý với các quy tắc đơn giản và rõ ràng dưới đây.</li>
-          <li>Dành cho người học từ 13 tuổi trở lên; nếu dưới 16 tuổi, bạn cần có sự đồng ý của cha mẹ hoặc người giám hộ.</li>
+          <li>Dành cho người học từ đủ 16 tuổi trở lên; người 16–17 tuổi vẫn là người chưa thành niên nên vẫn được áp dụng giới hạn nội dung vì an toàn.</li>
           <li>Tôn trọng mọi người xung quanh: tuyệt đối không tự ý ghi âm, quay video hay chụp ảnh người khác khi chưa được cho phép.</li>
           <li>Trợ lý AI đôi lúc có thể trả lời chưa chính xác; câu trả lời chỉ mang tính tham khảo học tập, không dùng thay lời khuyên y tế, pháp lý hay tài chính.</li>
           <li>Ghi chú, danh sách việc cần làm và tin nhắn luôn thuộc sở hữu của bạn: ZenStudy không bán, không gắn quảng cáo và không dùng để huấn luyện AI.</li>
@@ -98,7 +98,7 @@ export default function TermsPage() {
 
         <Section id="do-tuoi-tai-khoan" title="2. Độ tuổi phù hợp và quản lý tài khoản">
           <p>
-            ZenStudy được xây dựng dành cho người học từ đủ 13 tuổi trở lên. Nếu bạn trong độ tuổi từ 13 đến dưới 16 tuổi, vui lòng sử dụng khi có sự đồng ý của cha mẹ hoặc người giám hộ hợp pháp.
+            ZenStudy được xây dựng dành cho người học từ đủ 16 tuổi trở lên. Người dùng từ 16 đến dưới 18 tuổi vẫn là người chưa thành niên, nên một số nội dung có thể bị giới hạn vì mục đích an toàn, nhưng không cần thêm sự đồng ý của cha mẹ hay người giám hộ. Nếu bạn dưới 16 tuổi, vui lòng không sử dụng ZenStudy; hãy quay lại khi đủ tuổi hoặc nhờ phụ huynh tìm công cụ học tập phù hợp hơn.
           </p>
           <ul className="list-disc pl-5 space-y-1 marker:text-slate-500">
             <li>

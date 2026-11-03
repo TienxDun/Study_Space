@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const UPDATED_AT = "30/10/2026";
+const UPDATED_AT = "03/11/2026";
 const CONTACT_EMAIL = "leutiendung.htt@gmail.com";
 
 function Section({
@@ -174,7 +174,7 @@ export default function PrivacyPage() {
             <li>Các dịch vụ AI đối tác có thể xử lý nội dung theo quy định bảo mật riêng của họ; vì vậy, bạn vui lòng không gửi các thông tin bí mật cá nhân hay thông tin nhạy cảm.</li>
           </ul>
           <p>
-            Bộ lọc an toàn tự động: Nhằm xây dựng không gian học tập an toàn cho các bạn học sinh từ 13 tuổi trở lên, những câu hỏi có nguy cơ gây hại (như tự hại, bạo lực, chất cấm, nội dung người lớn) sẽ được hệ thống tự động ngăn chặn và gửi lời hướng dẫn an toàn thay vì gửi đến dịch vụ AI.
+            Bộ lọc an toàn tự động: Nhằm xây dựng không gian học tập an toàn cho các bạn học sinh từ đủ 16 tuổi trở lên, những câu hỏi có nguy cơ gây hại (như tự hại, bạo lực, chất cấm, nội dung người lớn) sẽ được hệ thống tự động ngăn chặn và gửi lời hướng dẫn an toàn thay vì gửi đến dịch vụ AI.
           </p>
           <p>Nếu bạn không mở tính năng trợ lý AI, sẽ không có bất kỳ tin nhắn nào được gửi đi.</p>
         </Section>
@@ -296,12 +296,12 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
-        <Section id="tre-em" title="11. Dành cho người học từ 13 tuổi trở lên">
+        <Section id="tre-em" title="11. Dành cho người học từ đủ 16 tuổi trở lên">
           <p>
-            ZenStudy được xây dựng nhằm hỗ trợ việc tự học cho học sinh, sinh viên và người đi làm từ đủ 13 tuổi trở lên. Nếu bạn trong độ tuổi từ 13 đến dưới 16 tuổi, vui lòng sử dụng với sự hướng dẫn hoặc đồng ý của cha mẹ hay người giám hộ hợp pháp.
+            ZenStudy được xây dựng nhằm hỗ trợ việc tự học cho học sinh, sinh viên và người đi làm từ đủ 16 tuổi trở lên. Người dùng từ 16 đến dưới 18 tuổi vẫn là người chưa thành niên; một số nội dung có thể bị giới hạn vì mục đích an toàn, nhưng không cần thêm sự đồng ý của cha mẹ hay người giám hộ hợp pháp.
           </p>
           <p>
-            Chúng tôi không cố ý thu thập thông tin của các em nhỏ dưới 13 tuổi; nếu phát hiện, hệ thống sẽ tiến hành xóa tài khoản và dữ liệu liên quan ngay lập tức.
+            Chúng tôi không cố ý thu thập thông tin của các em nhỏ dưới 16 tuổi; nếu phát hiện, hệ thống sẽ tiến hành xóa tài khoản và dữ liệu liên quan ngay lập tức.
           </p>
         </Section>
 

@@ -89,11 +89,11 @@ const DEFAULT_SYSTEM_VN = [
   "4. Câu nào không chắc thì nói rõ là chưa chắc, đừng khẳng định.",
 ].join("\n");
 
-// ---------- Guardrail an toàn cho người học từ 13 tuổi (P0.5 Phase 5) ----------
+// ---------- Guardrail an toàn cho người học từ đủ 16 tuổi (P0.5 Phase 5; nâng mốc 16+ theo P0.6) ----------
 // Quy tắc cố định luôn ghép TRƯỚC prompt admin để sửa prompt không gỡ được.
 const SAFETY_PREFIX = [
   "QUY TẮC AN TOÀN (bắt buộc, không được bỏ qua):",
-  "- Người dùng có thể mới 13 tuổi: không nội dung khiêu dâm, không mô tả bạo lực máu me, không cổ xúy chất gây nghiện.",
+  "- Người dùng có thể mới 16 tuổi (16–17 vẫn là người chưa thành niên): không nội dung khiêu dâm, không mô tả bạo lực máu me, không cổ xúy chất gây nghiện.",
   "- Không hướng dẫn chế tạo vũ khí, chất nổ, chất độc hoặc cách tự làm hại bản thân/người khác.",
   "- Nếu người dùng có dấu hiệu muốn tự hại: trả lời trấn an, khuyên nói với người lớn tin cậy và gọi 111 (bảo vệ trẻ em) hoặc 115 (cấp cứu).",
   "- Không tiết lộ thông tin cá nhân của người khác và không hỏi thông tin cá nhân của người dùng.",
@@ -1151,7 +1151,7 @@ const worker = {
             console.error("D1 user_restrictions error in /chat:", e);
           }
         }
-        // Guardrail 13+: câu hỏi nguy hiểm được trả lời an toàn, không gọi AI và không trừ lượt.
+        // Guardrail 16+: câu hỏi nguy hiểm được trả lời an toàn, không gọi AI và không trừ lượt.
         const blockedCategory = screenSafety(text);
         if (blockedCategory) {
           console.warn(`guardrail: chặn đầu vào ${blockedCategory}`);
