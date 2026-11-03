@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "zenstudy-chat-v2",
+  "main": "./workers/chat-v2/worker.js",
+  "compatibility_date": "2026-10-24",
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": {
+    "enabled": true
+  }
+}

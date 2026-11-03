@@ -3,6 +3,8 @@ import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "sonner";
 import { GoatCounter } from "@/components/analytics/GoatCounter";
 import { StudyJsonLd } from "@/components/study/seo/StudyJsonLd";
+import { Locator } from "@/components/dev/Locator";
+import { APP_THEME_COLOR, buildChatV2BootScript } from "@/features/chat-v2/lib/theme";
 import "./globals.css";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -12,7 +14,7 @@ const beVietnamPro = Be_Vietnam_Pro({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#090d16",
+  themeColor: APP_THEME_COLOR,
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -130,10 +132,15 @@ export default function RootLayout({
       className={`${beVietnamPro.variable} font-sans h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        {/* Chạy trước paint để Chat v2 không lóe theme/trạng thái panel mặc định khi F5. */}
+        <script dangerouslySetInnerHTML={{ __html: buildChatV2BootScript() }} />
+      </head>
       <body className="min-h-full flex flex-col font-sans overflow-x-hidden bg-[#090d16] text-white">
         <StudyJsonLd siteUrl={siteUrl} />
         {children}
         <GoatCounter />
+        <Locator />
         <Toaster
           theme="dark"
           position="top-right"

@@ -74,6 +74,12 @@ export const STORAGE_KEYS = {
   mobileWelcomeCompleted: "zenstudy_mobile_welcome_completed",
   // Bản catalog nội dung mới nhất tải từ data-api (cache để mở app là có ngay)
   contentCatalog: "study_space_content_catalog_v1",
+  // Chat v2 (dev): phiên chat + tuỳ chọn giao diện
+  chatV2Sessions: "chat_v2_sessions_v1",
+  chatV2Theme: "chat-v2-theme",
+  chatV2KeyTier: "chat-v2-key-tier",
+  chatV2SidebarOpen: "chat-v2-sidebar-open",
+  chatV2RailOpen: "chat-v2-rail-open",
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
