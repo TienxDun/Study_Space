@@ -1,6 +1,6 @@
 # Kế hoạch đưa ZenStudy Space lên Google Play (CH Play)
 
-> Cập nhật: 2026-10-29
+> Cập nhật: 2026-11-01 — chốt lại target audience **16+** (trước đó tạm chốt 13+).
 > Hướng dẫn kỹ thuật chi tiết (Capacitor, keystore, OTA): [ANDROID_CHPLAY_OTA_GUIDE.md](./ANDROID_CHPLAY_OTA_GUIDE.md)
 
 **Tiến độ tổng:** P0 đã xong code + hạ tầng + pháp lý (privacy, terms, xóa tài khoản đều live). P0.5 Phase 1–2 code xong (API báo cáo/chặn + admin inbox), chờ deploy; còn Phase 3–7. P1–P4 chưa bắt đầu.
@@ -18,7 +18,7 @@
 | Capacitor / thư mục `android/` | Chưa có |
 | Keystore (.jks) | Chưa có |
 | Package name | **Đã chốt: `space.zenstudy.app`** |
-| Target audience | **Đã chốt: 13+** (chọn dải 13–15, 16–17, 18+) |
+| Target audience | **Đã chốt lại: 16+** (chọn 16–17, 18+; không chọn 13–15). Trước 2026-11-01 tạm chốt 13+. |
 | `.aab` bản release | Chưa có |
 | Store listing (icon 512, feature graphic, screenshot) | Chưa chuẩn bị |
 
@@ -80,12 +80,12 @@ Các mục cần khai thêm:
 - [ ] **App access**: app dùng được không cần đăng nhập; riêng AI cần đăng nhập Google → cung cấp hướng dẫn test (tester dùng tài khoản Google của họ).
 - [ ] **Ads**: Không có quảng cáo.
 - [ ] **Content rating (IARC)**: ứng dụng học tập/năng suất, không bạo lực/nội dung người lớn.
-- [ ] **Target audience**: 13+ (chọn dải 13–15, 16–17, 18+).
+- [ ] **Target audience**: **16+** (chọn 16–17, 18+; không chọn 13–15).
 - [ ] **Data deletion URL** (P0.2).
 - [ ] **Khai báo AI + UGC** trong App content: app có dùng AI tạo nội dung, có nội dung người dùng (phòng học).
 - [ ] **Chính sách OTA**: chỉ cập nhật JS/HTML/CSS, không đổi mục đích app (đã ghi trong guide).
 
-### P0.5 Báo cáo nội dung, Terms và an toàn cho 13+ (làm trước khi bọc app)
+### P0.5 Báo cáo nội dung, Terms và an toàn cho 16+ (làm trước khi bọc app)
 
 Kế hoạch chi tiết + thứ tự thực hiện: [P0_5_REPORTING_PLAN.md](../features/P0_5_REPORTING_PLAN.md).
 
@@ -99,8 +99,22 @@ Theo chính sách AI-Generated Content và UGC của Google Play:
 - [ ] Nút **báo cáo + chặn người dùng** trong phòng học (hiện chỉ có mute/kick của host).
 - [ ] Chốt hành vi "chặn": người bị chặn không vào cùng phòng / ẩn video-audio của nhau.
 - [x] Cập nhật `/privacy` + Data Safety: dữ liệu báo cáo/chặn (tên hiển thị, nội dung, 180 ngày) — privacy mục 7, Data Safety thêm dòng, Terms mục 7 mô tả công cụ trong app (2026-10-30).
-- [x] Guardrail AI 13+: prompt an toàn cố định + lọc đầu vào/ra 5 nhóm; 25 test (`chat-proxy-guardrail.test.ts`); hiện quy tắc trong admin (2026-10-30, chờ dán chat-proxy).
+- [x] Guardrail AI (bản đầu build cho 13+): prompt an toàn cố định + lọc đầu vào/ra 5 nhóm; 25 test (`chat-proxy-guardrail.test.ts`); hiện quy tắc trong admin (2026-10-30, chờ dán chat-proxy). **Khi triển khai 16+ phải nâng prompt/copy và bộ test lên mốc 16+.**
 - [x] Thời hạn xử lý báo cáo: ghi **7 ngày** trong Terms mục 7; MVP **không thông báo ngược** cho người báo cáo (quyết định Phase 0).
+
+### P0.6 Chuyển mốc mục tiêu sang 16+ (triển khai sau)
+
+Chốt 2026-11-01: sản phẩm chính thức hướng tới **16+**, không phục vụ 13–15 trong giai đoạn này. Đây là plan; chưa sửa code/copy trong lần cập nhật này.
+
+- [ ] **Play Console → Target audience**: chỉ chọn **16–17** và **18+**; bỏ 13–15.
+- [ ] **`/terms` + `/privacy`**: đổi mốc "từ 13 tuổi" thành "từ 16 tuổi"; bỏ đoạn đồng ý phụ huynh cho 13–15; ghi rõ 16–17 vẫn là người chưa thành niên và vẫn bị giới hạn nội dung.
+- [ ] **Guardrail chat-proxy**: nâng `SAFETY_PREFIX` từ mốc 13+ lên 16+, cập nhật bộ test `chat-proxy-guardrail.test.ts` và câu mẫu.
+- [ ] **Chat v2**: thêm system prompt server-side cho 16+ (Safety core + age band `16-17`/`18+`), minh bạch AI, nút báo cáo.
+- [ ] **Phòng học nhóm**: giữ báo cáo/chặn/UGC; không cần quy định tài khoản dưới 16, nhưng vẫn cần kiểm duyệt nội dung.
+- [ ] **Dữ liệu**: cập nhật Data Safety/privacy; 16+ không còn nghĩa vụ đồng ý cha mẹ theo luật dữ liệu trẻ, nhưng vẫn cần đánh giá tác động và hồ sơ chuyển dữ liệu ra nước ngoài.
+- [ ] **Luật AI**: minh bạch "đang tương tác với AI", nhãn nội dung AI, tự phân loại rủi ro; nếu chatbot tự chấm điểm/xếp loại học sinh thì xử lý như rủi ro cao.
+- [ ] **Store listing**: nội dung, ảnh, mô tả không hướng tới học sinh 13–15.
+- [ ] **Không mở lại 13–15** cho tới khi có plan "chế độ phụ huynh" riêng (tài khoản phụ huynh, đồng ý kép, tắt phòng nhóm, giới hạn ảnh).
 
 ---
 
@@ -149,7 +163,7 @@ Theo chính sách AI-Generated Content và UGC của Google Play:
 
 - **Xóa tài khoản tự phục vụ**: đã chọn làm ngay và đã implement trong commit `da91273` (bắt buộc để nộp app).
 - **Package name**: `space.zenstudy.app` (chốt 2026-10-29).
-- **Target audience**: 13+ (chốt 2026-10-29).
+- **Target audience**: **16+** (chốt lại 2026-11-01; trước đó tạm chốt 13+).
 
 ## Quyết định cần chốt trước P1
 
@@ -178,10 +192,12 @@ Theo chính sách AI-Generated Content và UGC của Google Play:
 | 2026-10-29 | Chốt 6 quyết định P0.5 (chặn 2 chiều, lưu 180 ngày, admin khóa AI/phòng, lý do cố định, không thông báo ngược, bỏ chặn trong Cài đặt) | Xong |
 | 2026-10-29 | P0.5 Phase 1: schema D1 + API `/report`, `/blocks` + xóa tài khoản xóa kèm + test | Code xong; chờ deploy D1/data-api |
 | 2026-10-30 | P0.5 Phase 2 (P2e): API admin reports/restrictions + panel "Báo cáo" trong shell; 11 test mới, 628 test xanh; thử local | Code xong; chờ deploy |
+| 2026-11-01 | Chốt lại target **16+** (bỏ 13–15); thêm P0.6 checklist chuyển mốc terms/privacy/guardrail/chat v2/store | Plan xong; code để sau |
 
 ## Việc tiếp theo (theo thứ tự)
 
 1. P0.5 (tiếp): deploy Phase 1 + 2 (D1, data-api, admin worker); Phase 3 = nút báo cáo AI; Phase 4 = báo cáo/chặn phòng; Phase 5 = guardrail; Phase 6 = privacy/Data Safety; Phase 7 = QA.
-2. P1: dựng Capacitor shell + script `build:mobile`; chạy trên máy thật (Google Sign-In WebView, LiveKit mic/cam, asset CDN, link `/privacy/`).
-3. P2: tạo keystore, cấu hình ký, build `.aab` và cài thử bản release.
-4. P3: tạo app trên Play Console, khai Privacy URL + Account deletion URL + Data Safety + App content; chuẩn bị store listing và 20 tester.
+2. P0.6: chuyển mốc 16+ (target audience, terms/privacy, guardrail, chat v2, store listing) — xem checklist P0.6.
+3. P1: dựng Capacitor shell + script `build:mobile`; chạy trên máy thật (Google Sign-In WebView, LiveKit mic/cam, asset CDN, link `/privacy/`).
+4. P2: tạo keystore, cấu hình ký, build `.aab` và cài thử bản release.
+5. P3: tạo app trên Play Console, khai Privacy URL + Account deletion URL + Data Safety + App content; chuẩn bị store listing và 20 tester.

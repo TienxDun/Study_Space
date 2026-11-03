@@ -1,6 +1,7 @@
 # P0.5 — Báo cáo nội dung, chặn người dùng & an toàn AI (plan tổng quát)
 
 > Trạng thái: **Phase 0–4 đã kiểm trên production; Phase 5 code xong, chờ dán `chat-proxy`; còn Phase 6–7**. Cập nhật: 2026-10-30
+> **Cập nhật 2026-11-01:** mốc mục tiêu đổi từ **13+ sang 16+**. Các mục "13+" bên dưới là lịch sử triển khai; khi làm 16+ phải nâng prompt/copy/test theo Phase 8.
 > Thuộc P0.5 trong [CHPLAY_LAUNCH_PLAN.md](../deployment/CHPLAY_LAUNCH_PLAN.md)
 > Mục tiêu: đáp ứng chính sách **AI-Generated Content** và **User Generated Content** của Google Play trước khi nộp app.
 
@@ -10,7 +11,7 @@
 |---|---|---|
 | AI-Generated Content | Người dùng báo cáo/gắn cờ được nội dung AI xúc phạm; nhà phát triển phải xử lý | Nút báo cáo trên tin nhắn AI + nơi nhận/xử lý |
 | User Generated Content | Có điều khoản rõ ràng, công cụ báo cáo nội dung, chức năng chặn người khác | Terms (đã có) + báo cáo/chặn trong phòng học |
-| Target 13+ | Biện pháp an toàn phù hợp người chưa thành niên | Guardrail AI + xử lý báo cáo |
+| Target **16+** | Biện pháp an toàn phù hợp người chưa thành niên 16–17 | Guardrail AI + xử lý báo cáo |
 
 ## 2. Phân tích hiện trạng
 
@@ -42,7 +43,7 @@
 3. Chưa có báo cáo/chặn trong phòng.
 4. Chưa có nơi admin xem và xử lý báo cáo.
 5. Chưa có biện pháp chặn hiệu lực ở server.
-6. Chưa có guardrail AI cho 13+.
+6. Chưa có guardrail AI cho mốc 16+ (bản hiện tại build cho 13+).
 7. Privacy/Data Safety chưa cập nhật.
 
 ## 3. Kiến trúc đề xuất
@@ -209,7 +210,7 @@ Mọi thao tác ghi vào `admin_audit`.
 - [x] Thử 2 tài khoản A/B trên production: người dùng xác nhận báo cáo/chặn chạy đúng; báo cáo phòng hiện ở tab Báo cáo kèm tên hai bên (dòng `Nhật Duy → leutiendung`).
 - **Điều kiện xong:** 2 tài khoản A/B: A chặn B → không vào chung phòng; báo cáo hiện trong admin.
 
-### Phase 5 — Guardrail AI cho 13+ (1–1.5 ngày) — code xong 2026-10-30
+### Phase 5 — Guardrail AI (bản đầu cho 13+, cần nâng lên 16+) — code xong 2026-10-30
 - [x] Prompt an toàn cố định (`SAFETY_PREFIX`) luôn ghép **trước** prompt admin trong `toMessages`, nên sửa prompt ở admin không gỡ được quy tắc.
 - [x] Admin đọc được quy tắc: chat-proxy trả `safetyPrompt` trong `/models` (kênh admin), admin-worker chuyển tiếp trong `GET /api/admin/chat/config`, panel "Trợ lý chat" → mục 3 hiện khối **"Quy tắc an toàn (cố định)"** chỉ-đọc ngay trên ô câu lệnh, kèm ghi chú sửa trong mã chat-proxy. Chưa dán chat-proxy bản mới thì khối hiện "Chưa đọc được quy tắc an toàn." là đúng.
 - [x] Lọc đầu vào (`screenSafety`) theo 5 nhóm: `self_harm`, `violence`, `drugs`, `sexual`, `personal`. Câu vi phạm được trả lời an toàn ngay (`blocked: true`), **không gọi AI, không trừ lượt**.
@@ -240,12 +241,24 @@ Mọi thao tác ghi vào `admin_audit`.
 - [ ] Chụp ảnh bằng chứng: nút cờ + dialog báo cáo AI, menu ⋮ + dialog phòng, xác nhận chặn, “Người đã chặn”, chi tiết báo cáo trong admin, khối quy tắc an toàn.
 - [ ] Cập nhật plan CH Play, đánh dấu P0.5 xong.
 
+### Phase 8 — Nâng mốc an toàn lên 16+ (triển khai sau)
+
+Chốt 2026-11-01: sản phẩm chính thức hướng tới 16+, không phục vụ 13–15 trong giai đoạn này.
+
+- [ ] Đổi `SAFETY_PREFIX` từ "người dùng có thể mới 13 tuổi" sang mốc 16+; giữ nguyên các nhóm chặn và hotline 111/115/113.
+- [ ] Cập nhật bộ test `chat-proxy-guardrail.test.ts` và câu mẫu sang 16+.
+- [ ] Đổi `/terms` + `/privacy` sang mốc 16+; bỏ đoạn đồng ý phụ huynh cho 13–15.
+- [ ] Play Console: target audience chỉ 16–17 + 18+.
+- [ ] Chat v2: thêm system prompt server-side 16+ (Safety core + age band `16-17`/`18+`), minh bạch AI, nút báo cáo.
+- [ ] Rà Data Safety/privacy: 16+ không còn dữ liệu trẻ em theo luật dữ liệu trẻ, nhưng vẫn cần đánh giá tác động + chuyển dữ liệu ra nước ngoài.
+- [ ] Không mở lại 13–15 cho tới khi có plan "chế độ phụ huynh" riêng.
+
 **Tổng ước lượng:** ~7–8 ngày làm việc, chưa tính deploy/chờ duyệt.
 
 Vì sao thứ tự này:
 - Admin có trước nút báo cáo → tránh “báo cáo xong không ai xử lý” (Play đánh giá cả quy trình).
 - AI trước phòng → luồng nhỏ, xác nhận toàn tuyến; phòng chạm LiveKit + test 2 tài khoản nên để sau.
-- Guardrail sau báo cáo → độc lập, nhưng phải xong trước khi khai “an toàn cho 13+”.
+- Guardrail sau báo cáo → độc lập, nhưng phải xong trước khi khai “an toàn cho 16+”.
 - Pháp lý sau cùng → chốt đúng dữ liệu/thời hạn thực tế, tránh sửa privacy 2 lần.
 
 ## 8. Kiểm thử

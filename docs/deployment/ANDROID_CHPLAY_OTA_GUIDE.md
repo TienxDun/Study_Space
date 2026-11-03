@@ -210,7 +210,7 @@ Vào mục **Policy and programs** > **App content**:
 3. **Data Safety Form:**
    - Thu thập: User ID, Email (Firebase).
    - Audio/Video: Streaming thời gian thực (LiveKit), không lưu trữ vĩnh viễn trên máy chủ bên thứ ba trái phép.
-4. **Target Audience:** Chọn nhóm tuổi phù hợp (thường là 13+ hoặc 18+).
+4. **Target Audience:** Chọn **16+** (16–17 và 18+; không chọn 13–15) — chốt 2026-11-01.
 
 ---
 
