@@ -67,7 +67,6 @@ function configPayload(overrides: Record<string, unknown> = {}) {
     },
     prompt: "Bạn là trợ lý học tập.",
     safetyPrompt: "QUY TẮC AN TOÀN (bắt buộc, không được bỏ qua):",
-    gen: { temperature: 0.7, max_tokens: 1200 },
     ...overrides,
   };
 }
@@ -168,7 +167,6 @@ describe("chat config — đọc", () => {
     expect(body.config.providers[0].apiKey).toBe("***abcd");
     expect(body.config.prompt).toContain("trợ lý");
     expect(body.config.safetyPrompt).toContain("QUY TẮC AN TOÀN");
-    expect(body.config.gen).toEqual({ temperature: 0.7, max_tokens: 1200 });
     expect(JSON.stringify(body)).not.toContain("super-secret-token");
   });
 
@@ -302,8 +300,6 @@ describe("chat config — ghi", () => {
 
   it.each([
     ["model không có trong danh sách", { kind: "model", cfModel: "khong-co" }],
-    ["nhiệt độ quá cao", { kind: "gen", temperature: 3, max_tokens: 1200 }],
-    ["token quá thấp", { kind: "gen", temperature: 0.5, max_tokens: 100 }],
     ["prompt rỗng", { kind: "prompt", prompt: "   " }],
     ["prompt quá dài", { kind: "prompt", prompt: "x".repeat(4001) }],
     ["chain rỗng", { kind: "chain", chain: [] }],

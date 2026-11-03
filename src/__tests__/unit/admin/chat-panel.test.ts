@@ -59,7 +59,6 @@ function baseConfig(overrides: Record<string, unknown> = {}) {
     },
     prompt: "Bạn là trợ lý học tập.",
     safetyPrompt: "QUY TẮC AN TOÀN (bắt buộc, không được bỏ qua): không nội dung người lớn.",
-    gen: { temperature: 0.7, max_tokens: 1200 },
     ...overrides,
   };
 }

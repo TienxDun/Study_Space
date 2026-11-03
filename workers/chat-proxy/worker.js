@@ -23,7 +23,7 @@
  *  GET  /config -> cờ công khai cho web tĩnh { chatEnabled, roomsEnabled, maintenance, banner, updatedAt }
  *  GET  /status -> lượt dùng + chain (Bearer ADMIN_TOKEN; ?token= chỉ nhận trên localhost)
  *  GET  /models?token=... -> list CF + hãng ngoài + chain + câu hướng dẫn
- *  POST /models?token=... -> lưu chain, câu hướng dẫn, nhiệt độ, hãng
+ *  POST /models?token=... -> lưu chain, câu hướng dẫn, hãng
  *  POST /providers/check?token=... { type, baseUrl, apiKey } -> thử key, trả list model
  *  GET  /health -> { ok:true }
  *
@@ -88,7 +88,6 @@ const DEFAULT_SYSTEM_VN = [
   "3. Trả lời có cấu trúc: định nghĩa gọn 1-2 câu trước, rồi mới liệt kê, cuối có câu chốt hoặc gợi ý bước tiếp theo.",
   "4. Câu nào không chắc thì nói rõ là chưa chắc, đừng khẳng định.",
 ].join("\n");
-const DEFAULT_GEN = { temperature: 0.7, max_tokens: 2048 };
 
 // ---------- Guardrail an toàn cho người học từ 13 tuổi (P0.5 Phase 5) ----------
 // Quy tắc cố định luôn ghép TRƯỚC prompt admin để sửa prompt không gỡ được.
@@ -308,7 +307,7 @@ function resetFlagsCache() {
   mem.flagsAt = 0;
 }
 
-// Test dùng: xoá bộ nhớ cấu hình (providers/chain/prompt/gen) giữa các ca.
+// Test dùng: xoá bộ nhớ cấu hình (providers/chain/prompt) giữa các ca.
 function resetCfgCache() {
   mem.cfgModel = null;
   mem.cfgAt = 0;
@@ -318,8 +317,6 @@ function resetCfgCache() {
   mem.chainAt = 0;
   mem.prompt = null;
   mem.promptAt = 0;
-  mem.gen = null;
-  mem.genAt = 0;
 }
 
 // ---------- Nhật ký lỗi cuối cho trang admin (bảng admin_error_log, giữ 14 ngày) ----------
@@ -417,28 +414,9 @@ async function getPrompt(env) {
   mem.promptAt = now;
   return mem.prompt;
 }
-async function getGen(env) {
-  const now = Date.now();
-  if (mem.gen && now - (mem.genAt || 0) < CFG_TTL_MS) return mem.gen;
-  let saved = null;
-  if (kv(env)) {
-    try {
-      const raw = await kv(env).get("cfg:gen").catch(() => null);
-      saved = raw ? JSON.parse(raw) : null;
-    } catch { saved = null; }
-  }
-  const t = Number(saved && saved.temperature);
-  const m = Number(saved && saved.max_tokens);
-  mem.gen = {
-    temperature: Number.isFinite(t) ? Math.min(2, Math.max(0, t)) : DEFAULT_GEN.temperature,
-    max_tokens: Number.isFinite(m) ? Math.min(8000, Math.max(256, Math.floor(m))) : DEFAULT_GEN.max_tokens,
-  };
-  mem.genAt = now;
-  return mem.gen;
-}
 // Gọi Gemini AI Studio: dịch messages kiểu OpenAI sang contents kiểu Google.
 // messages: [{ role: system/user/assistant, content }] -> { systemInstruction, contents }.
-async function callGemini(baseUrl, apiKey, modelId, messages, gen, images) {
+async function callGemini(baseUrl, apiKey, modelId, messages, images) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 60000);
   try {
@@ -467,7 +445,7 @@ async function callGemini(baseUrl, apiKey, modelId, messages, gen, images) {
       }
     }
     if (contents.length === 0) return { ok: false, error: "Thiếu câu hỏi." };
-    const body = { contents, generationConfig: { temperature: gen.temperature, maxOutputTokens: gen.max_tokens } };
+    const body = { contents };
     if (systemTexts.length) body.systemInstruction = { parts: [{ text: systemTexts.join("\n") }] };
     const r = await fetch(`${base}/models/${encodeURIComponent(mid)}:generateContent`, {
       method: "POST",
@@ -490,8 +468,8 @@ async function callGemini(baseUrl, apiKey, modelId, messages, gen, images) {
   }
 }
 // Gọi hãng kiểu OpenAI: Groq/OpenRouter/OpenAI chung 1 cách.
-async function callOpenAICompatible(baseUrl, apiKey, modelId, messages, gen, images) {
-  if (isGeminiBase(baseUrl)) return callGemini(baseUrl, apiKey, modelId, messages, gen, images);
+async function callOpenAICompatible(baseUrl, apiKey, modelId, messages, images) {
+  if (isGeminiBase(baseUrl)) return callGemini(baseUrl, apiKey, modelId, messages, images);
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 60000);
   try {
@@ -513,7 +491,7 @@ async function callOpenAICompatible(baseUrl, apiKey, modelId, messages, gen, ima
       method: "POST",
       signal: ctrl.signal,
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: modelId, messages: outMessages, temperature: gen.temperature, max_tokens: gen.max_tokens }),
+      body: JSON.stringify({ model: modelId, messages: outMessages }),
     });
     const bodyText = await r.text().catch(() => "");
     if (!r.ok) return { ok: false, status: r.status, error: bodyText.slice(0, 300) };
@@ -862,11 +840,10 @@ const PROVIDERS = {
       const list = await getProviders(env);
       const p = list.find((x) => x.id === providerId);
       if (!p) return { ok: false, error: "Hãng đã bị xóa." };
-      const gen = await getGen(env);
-      let r = await callOpenAICompatible(p.baseUrl, p.apiKey, modelId, messages, gen, images);
+      let r = await callOpenAICompatible(p.baseUrl, p.apiKey, modelId, messages, images);
       if (!r.ok && r.status === 429) {
         await new Promise((res) => setTimeout(res, 2000));
-        r = await callOpenAICompatible(p.baseUrl, p.apiKey, modelId, messages, gen, images);
+        r = await callOpenAICompatible(p.baseUrl, p.apiKey, modelId, messages, images);
       }
       return r;
     },
@@ -1043,11 +1020,11 @@ const worker = {
     // Quản lý model (cần ADMIN_TOKEN cho POST; GET công khai phần cho người dùng).
     if (url.pathname === "/models" && (req.method === "GET" || req.method === "POST")) {
       const isAdmin = !!env.ADMIN_TOKEN && url.searchParams.get("token") === env.ADMIN_TOKEN;
-      const [chain, providers, prompt, gen] = await Promise.all([getChain(env), getProviders(env), getPrompt(env), getGen(env)]);
+      const [chain, providers, prompt] = await Promise.all([getChain(env), getProviders(env), getPrompt(env)]);
       const current = await getCfModel(env);
       if (req.method === "GET") {
         if (!isAdmin) return json({ default: current }); // web/app đọc cái này
-        return json({ current, available: cfModelList(), chain, maxChain: MAX_CHAIN, providers: maskProviders(providers), presets: PROVIDER_PRESETS, prompt, safetyPrompt: SAFETY_PREFIX, gen });
+        return json({ current, available: cfModelList(), chain, maxChain: MAX_CHAIN, providers: maskProviders(providers), presets: PROVIDER_PRESETS, prompt, safetyPrompt: SAFETY_PREFIX });
       }
       if (!isAdmin) return json({ error: "Sai token xem bảng." }, 401);
       let body = {};
@@ -1065,17 +1042,6 @@ const worker = {
         if (kv(env)) await kv(env).put("cfg:prompt", p).catch(() => {});
         mem.prompt = p;
         mem.promptAt = Date.now();
-      }
-      if (body.gen !== undefined) {
-        const t = Number(body.gen && body.gen.temperature);
-        const m = Number(body.gen && body.gen.max_tokens);
-        const clean = {
-          temperature: Number.isFinite(t) ? Math.min(2, Math.max(0, t)) : DEFAULT_GEN.temperature,
-          max_tokens: Number.isFinite(m) ? Math.min(8000, Math.max(256, Math.floor(m))) : DEFAULT_GEN.max_tokens,
-        };
-        if (kv(env)) await kv(env).put("cfg:gen", JSON.stringify(clean)).catch(() => {});
-        mem.gen = clean;
-        mem.genAt = Date.now();
       }
       if (body.providers !== undefined) {
         if (!Array.isArray(body.providers) || body.providers.length > MAX_PROVIDERS) {
@@ -1122,8 +1088,8 @@ const worker = {
         mem.chain = clean;
         mem.chainAt = Date.now();
       }
-      const [p2, g2] = await Promise.all([getProviders(env), getGen(env)]);
-      return json({ current: await getCfModel(env), chain: await getChain(env), providers: maskProviders(p2), prompt: await getPrompt(env), gen: g2 });
+      const p2 = await getProviders(env);
+      return json({ current: await getCfModel(env), chain: await getChain(env), providers: maskProviders(p2), prompt: await getPrompt(env) });
     }
 
     if (url.pathname === "/chat" && req.method === "POST") {

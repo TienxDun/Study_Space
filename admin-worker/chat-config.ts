@@ -5,10 +5,9 @@
 
 import { trimUrl, type AdminEnv } from "./shared";
 
-export type ChatCfgKind = "model" | "gen" | "prompt" | "chain" | "providers";
+export type ChatCfgKind = "model" | "prompt" | "chain" | "providers";
 export const CHAT_CFG_TARGETS: Record<ChatCfgKind, string> = {
   model: "cfg:cfModel",
-  gen: "cfg:gen",
   prompt: "cfg:prompt",
   chain: "cfg:chain",
   providers: "cfg:providers",
@@ -18,9 +17,6 @@ const CHAT_CFG_TIMEOUT_MS = 12 * 1000;
 const CHAT_PROMPT_MAX = 4000;
 const CHAT_CHAIN_MAX = 5;
 const CHAT_PROVIDERS_MAX = 10;
-const CHAT_TEMP_MAX = 2;
-const CHAT_TOKENS_MIN = 256;
-const CHAT_TOKENS_MAX = 8000;
 export const CHAT_PROVIDER_ID_RE = /^[a-z0-9][a-z0-9-_]{0,39}$/i;
 
 export type ChatProvider = {
@@ -33,7 +29,6 @@ export type ChatProvider = {
 };
 
 export type ChatChainEntry = { provider: string; modelId: string };
-export type ChatGen = { temperature: number; max_tokens: number };
 
 export type ChatConfig = {
   current: string;
@@ -45,7 +40,6 @@ export type ChatConfig = {
   prompt: string;
   /** Quy tắc an toàn cố định của chat-proxy, chỉ để hiển thị (không sửa từ admin). */
   safetyPrompt: string;
-  gen: ChatGen;
 };
 
 export type ChatCfgChange = {
@@ -108,7 +102,6 @@ export function mapChatConfig(raw: Record<string, unknown>): ChatConfig {
     }
   }
 
-  const genRaw = raw.gen && typeof raw.gen === "object" ? (raw.gen as Record<string, unknown>) : {};
   const maxChain = typeof raw.maxChain === "number" && raw.maxChain > 0 ? raw.maxChain : CHAT_CHAIN_MAX;
 
   return {
@@ -120,10 +113,6 @@ export function mapChatConfig(raw: Record<string, unknown>): ChatConfig {
     presets,
     prompt: typeof raw.prompt === "string" ? raw.prompt : "",
     safetyPrompt: typeof raw.safetyPrompt === "string" ? raw.safetyPrompt.slice(0, 4000) : "",
-    gen: {
-      temperature: typeof genRaw.temperature === "number" ? genRaw.temperature : 0.7,
-      max_tokens: typeof genRaw.max_tokens === "number" ? genRaw.max_tokens : 1200,
-    },
   };
 }
 
@@ -204,33 +193,6 @@ export function parseChatCfgBody(body: unknown, cfg: ChatConfig): ChatCfgChange 
       kind: "model",
       payload: { cfModel: pick },
       auditDetail: { before: cfg.current, after: pick },
-    };
-  }
-
-  if (raw.kind === "gen") {
-    const temperature = raw.temperature;
-    const maxTokens = raw.max_tokens;
-    if (
-      typeof temperature !== "number" ||
-      !Number.isFinite(temperature) ||
-      temperature < 0 ||
-      temperature > CHAT_TEMP_MAX
-    ) {
-      return null;
-    }
-    if (
-      typeof maxTokens !== "number" ||
-      !Number.isInteger(maxTokens) ||
-      maxTokens < CHAT_TOKENS_MIN ||
-      maxTokens > CHAT_TOKENS_MAX
-    ) {
-      return null;
-    }
-    const next = { temperature, max_tokens: maxTokens };
-    return {
-      kind: "gen",
-      payload: { gen: next },
-      auditDetail: { before: cfg.gen, after: next },
     };
   }
 
