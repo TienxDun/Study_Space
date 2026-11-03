@@ -1,9 +1,9 @@
 # Kế hoạch đưa ZenStudy Space lên Google Play (CH Play)
 
-> Cập nhật: 2026-11-01 — chốt lại target audience **16+** (trước đó tạm chốt 13+).
+> Cập nhật: 2026-11-03 — P0.6 xong: code/copy 16+ đã push web và `chat-proxy` bản 16+ đã dán production. Còn khai Play Console (tay) và P1–P4. Mốc 16+ chốt 2026-11-01.
 > Hướng dẫn kỹ thuật chi tiết (Capacitor, keystore, OTA): [ANDROID_CHPLAY_OTA_GUIDE.md](./ANDROID_CHPLAY_OTA_GUIDE.md)
 
-**Tiến độ tổng:** P0 đã xong code + hạ tầng + pháp lý (privacy, terms, xóa tài khoản đều live). P0.5 Phase 1–2 code xong (API báo cáo/chặn + admin inbox), chờ deploy; còn Phase 3–7. P1–P4 chưa bắt đầu.
+**Tiến độ tổng:** P0 đã xong code + hạ tầng + pháp lý (privacy, terms, xóa tài khoản đều live). P0.5 Phase 1–6 đã lên production; còn Phase 7 (QA tay, bằng chứng cho Play). P0.6 (16+) **đóng 2026-11-03**: terms/privacy live mốc 16+, `chat-proxy` production chạy guardrail 16+. Việc còn lại của P0 là khai tay trên Play Console. P1–P4 chưa bắt đầu.
 
 ## Trạng thái hiện tại
 
@@ -94,25 +94,25 @@ Theo chính sách AI-Generated Content và UGC của Google Play:
 - [x] Phase 2 code (P2e): admin xem lọc/chi tiết, resolve/dismiss + ghi chú, khóa AI/phòng; 11 ca test mới; chạy thử local (2026-10-30).
 - [ ] Deploy Phase 1 + 2: chạy `workers/report-schema.sql` trên D1, dán `data-api`, build + deploy admin worker.
 - [x] Trang `/terms` (điều khoản sử dụng) mô tả quy tắc dùng AI và phòng học; link trong app + footer các trang pháp lý. **Đã live**, đã sửa độ tuổi 16 và làm rõ quyền sử dụng nội dung.
-- [ ] Nút **"Báo cáo câu trả lời"** trên từng tin nhắn AI (hiện chỉ có field `rating`, chưa có UI).
-- [ ] Lưu báo cáo AI vào D1 qua Worker: UID, nội dung tin bị báo cáo, lý do, thời gian; xem và xử lý trong admin console.
-- [ ] Nút **báo cáo + chặn người dùng** trong phòng học (hiện chỉ có mute/kick của host).
-- [ ] Chốt hành vi "chặn": người bị chặn không vào cùng phòng / ẩn video-audio của nhau.
+- [x] Nút **"Báo cáo câu trả lời"** trên từng tin nhắn AI (Phase 3, 2026-10-30).
+- [x] Lưu báo cáo AI vào D1 qua Worker: UID, nội dung tin bị báo cáo, lý do, thời gian; xem và xử lý trong admin console (Phase 2–3, đã kiểm trên production 2026-10-30).
+- [x] Nút **báo cáo + chặn người dùng** trong phòng học — menu ⋮ trên tile (Phase 4, 2026-10-30).
+- [x] Chốt hành vi "chặn": chặn 2 chiều việc vào chung phòng; đang chung thì tự rời (Phase 4, đã kiểm A/B trên production).
 - [x] Cập nhật `/privacy` + Data Safety: dữ liệu báo cáo/chặn (tên hiển thị, nội dung, 180 ngày) — privacy mục 7, Data Safety thêm dòng, Terms mục 7 mô tả công cụ trong app (2026-10-30).
-- [x] Guardrail AI (bản đầu build cho 13+): prompt an toàn cố định + lọc đầu vào/ra 5 nhóm; 25 test (`chat-proxy-guardrail.test.ts`); hiện quy tắc trong admin (2026-10-30, chờ dán chat-proxy). **Khi triển khai 16+ phải nâng prompt/copy và bộ test lên mốc 16+.**
+- [x] Guardrail AI (bản đầu build cho 13+): prompt an toàn cố định + lọc đầu vào/ra 5 nhóm; 25 test (`chat-proxy-guardrail.test.ts`); hiện quy tắc trong admin. **Đã dán `chat-proxy` lên production 2026-11-03** (cùng lần dán bỏ cấu hình gen temperature/max_tokens; `/health`, `/config` trả 200). **Khi triển khai 16+ phải nâng prompt/copy và bộ test lên mốc 16+ (P0.6).**
 - [x] Thời hạn xử lý báo cáo: ghi **7 ngày** trong Terms mục 7; MVP **không thông báo ngược** cho người báo cáo (quyết định Phase 0).
 
-### P0.6 Chuyển mốc mục tiêu sang 16+ (triển khai sau)
+### P0.6 Chuyển mốc mục tiêu sang 16+ (code xong 2026-11-03)
 
-Chốt 2026-11-01: sản phẩm chính thức hướng tới **16+**, không phục vụ 13–15 trong giai đoạn này. Đây là plan; chưa sửa code/copy trong lần cập nhật này.
+Chốt 2026-11-01: sản phẩm chính thức hướng tới **16+**, không phục vụ 13–15 trong giai đoạn này.
 
-- [ ] **Play Console → Target audience**: chỉ chọn **16–17** và **18+**; bỏ 13–15.
-- [ ] **`/terms` + `/privacy`**: đổi mốc "từ 13 tuổi" thành "từ 16 tuổi"; bỏ đoạn đồng ý phụ huynh cho 13–15; ghi rõ 16–17 vẫn là người chưa thành niên và vẫn bị giới hạn nội dung.
-- [ ] **Guardrail chat-proxy**: nâng `SAFETY_PREFIX` từ mốc 13+ lên 16+, cập nhật bộ test `chat-proxy-guardrail.test.ts` và câu mẫu.
-- [ ] **Chat v2**: thêm system prompt server-side cho 16+ (Safety core + age band `16-17`/`18+`), minh bạch AI, nút báo cáo.
-- [ ] **Phòng học nhóm**: giữ báo cáo/chặn/UGC; không cần quy định tài khoản dưới 16, nhưng vẫn cần kiểm duyệt nội dung.
-- [ ] **Dữ liệu**: cập nhật Data Safety/privacy; 16+ không còn nghĩa vụ đồng ý cha mẹ theo luật dữ liệu trẻ, nhưng vẫn cần đánh giá tác động và hồ sơ chuyển dữ liệu ra nước ngoài.
-- [ ] **Luật AI**: minh bạch "đang tương tác với AI", nhãn nội dung AI, tự phân loại rủi ro; nếu chatbot tự chấm điểm/xếp loại học sinh thì xử lý như rủi ro cao.
+- [ ] **Play Console → Target audience**: chỉ chọn **16–17** và **18+**; bỏ 13–15. *(khai báo tay, làm lúc tạo app trên Console)*
+- [x] **`/terms` + `/privacy`**: đổi mốc "từ 13 tuổi" thành "từ 16 tuổi"; bỏ đoạn đồng ý phụ huynh cho 13–15; ghi rõ 16–17 vẫn là người chưa thành niên và vẫn bị giới hạn nội dung (2026-11-03; ngày cập nhật trang: 03/11/2026; **đã push web, Pages deploy từ `main`**).
+- [x] **Guardrail chat-proxy**: nâng `SAFETY_PREFIX` từ mốc 13+ lên 16+, cập nhật bộ test `chat-proxy-guardrail.test.ts` (26 test) và câu mẫu (2026-11-03; **đã dán `chat-proxy` bản 16+ lên Cloudflare production**).
+- [x] **Chat v2**: system prompt server-side 16+ (Safety core + age band `16-17`/`18+`), minh bạch AI — đã có ngay từ S1 (2026-11-01); nút báo cáo sẽ thêm ở S5.
+- [x] **Phòng học nhóm**: giữ nguyên báo cáo/chặn/UGC; không thêm quy định tài khoản dưới 16 (không cần đổi code).
+- [ ] **Dữ liệu**: cập nhật Data Safety/privacy; 16+ không còn nghĩa vụ đồng ý cha mẹ theo luật dữ liệu trẻ, nhưng vẫn cần đánh giá tác động và hồ sơ chuyển dữ liệu ra nước ngoài. *(khai báo tay trên Play Console)*
+- [ ] **Luật AI**: minh bạch "đang tương tác với AI", nhãn nội dung AI, tự phân loại rủi ro; nếu chatbot tự chấm điểm/xếp loại học sinh thì xử lý như rủi ro cao. *(đánh giá khi khai Console)*
 - [ ] **Store listing**: nội dung, ảnh, mô tả không hướng tới học sinh 13–15.
 - [ ] **Không mở lại 13–15** cho tới khi có plan "chế độ phụ huynh" riêng (tài khoản phụ huynh, đồng ý kép, tắt phòng nhóm, giới hạn ảnh).
 
@@ -193,11 +193,14 @@ Chốt 2026-11-01: sản phẩm chính thức hướng tới **16+**, không ph�
 | 2026-10-29 | P0.5 Phase 1: schema D1 + API `/report`, `/blocks` + xóa tài khoản xóa kèm + test | Code xong; chờ deploy D1/data-api |
 | 2026-10-30 | P0.5 Phase 2 (P2e): API admin reports/restrictions + panel "Báo cáo" trong shell; 11 test mới, 628 test xanh; thử local | Code xong; chờ deploy |
 | 2026-11-01 | Chốt lại target **16+** (bỏ 13–15); thêm P0.6 checklist chuyển mốc terms/privacy/guardrail/chat v2/store | Plan xong; code để sau |
+| 2026-11-03 | Dán `chat-proxy` bản mới lên Cloudflare (Phase 5 guardrail + bỏ cấu hình gen temperature/max_tokens); `/health`, `/config` trả 200 | Deploy xong; QA tay để Phase 7 |
+| 2026-11-03 | P0.6: nâng `SAFETY_PREFIX` + test guardrail (26 test) + `/terms` + `/privacy` sang mốc 16+; 684 test xanh, `tsc` + `lint` sạch, đã kiểm hiển thị local | Code xong; chờ dán lại `chat-proxy` + push web |
+| 2026-11-03 | Dán `chat-proxy` bản 16+ lên Cloudflare + push `main` (Pages build web 16+) | Xong — P0.6 đóng |
 
 ## Việc tiếp theo (theo thứ tự)
 
-1. P0.5 (tiếp): deploy Phase 1 + 2 (D1, data-api, admin worker); Phase 3 = nút báo cáo AI; Phase 4 = báo cáo/chặn phòng; Phase 5 = guardrail; Phase 6 = privacy/Data Safety; Phase 7 = QA.
-2. P0.6: chuyển mốc 16+ (target audience, terms/privacy, guardrail, chat v2, store listing) — xem checklist P0.6.
+1. P0.5 Phase 7: QA tay bằng 2 tài khoản A/B (chat/báo cáo/phòng/admin) + chụp bằng chứng cho Play — Phase 1–6 đã live.
+2. Khai báo Play Console theo P0.6: Target audience 16–17 + 18+ (lúc tạo app).
 3. P1: dựng Capacitor shell + script `build:mobile`; chạy trên máy thật (Google Sign-In WebView, LiveKit mic/cam, asset CDN, link `/privacy/`).
 4. P2: tạo keystore, cấu hình ký, build `.aab` và cài thử bản release.
 5. P3: tạo app trên Play Console, khai Privacy URL + Account deletion URL + Data Safety + App content; chuẩn bị store listing và 20 tester.

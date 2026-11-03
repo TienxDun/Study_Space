@@ -1,7 +1,7 @@
 # P0.5 — Báo cáo nội dung, chặn người dùng & an toàn AI (plan tổng quát)
 
-> Trạng thái: **Phase 0–4 đã kiểm trên production; Phase 5 code xong, chờ dán `chat-proxy`; còn Phase 6–7**. Cập nhật: 2026-10-30
-> **Cập nhật 2026-11-01:** mốc mục tiêu đổi từ **13+ sang 16+**. Các mục "13+" bên dưới là lịch sử triển khai; khi làm 16+ phải nâng prompt/copy/test theo Phase 8.
+> Trạng thái: **Phase 0–6 và Phase 8 xong, đã lên production (web + `chat-proxy` 16+ dán 2026-11-03)**; còn Phase 7 (QA tay, bằng chứng cho Play). Cập nhật: 2026-11-03
+> **Cập nhật 2026-11-01:** mốc mục tiêu đổi từ **13+ sang 16+**. Các mục "13+" bên dưới là lịch sử triển khai; Phase 8 đã nâng prompt/copy/test lên 16+ và **đã push web + dán `chat-proxy` production 2026-11-03**.
 > Thuộc P0.5 trong [CHPLAY_LAUNCH_PLAN.md](../deployment/CHPLAY_LAUNCH_PLAN.md)
 > Mục tiêu: đáp ứng chính sách **AI-Generated Content** và **User Generated Content** của Google Play trước khi nộp app.
 
@@ -219,7 +219,7 @@ Mọi thao tác ghi vào `admin_audit`.
 - [x] Tránh chặn oan: mẫu yêu cầu cụm xin hướng dẫn (“cách/làm sao/hướng dẫn…”), biên Unicode thay `` (từ có dấu), miễn trừ ngữ cảnh trò chơi cho nhóm súng/vũ khí; “từ từ”, “tự tử trong văn học”, “cách mạng công nghiệp” đi qua bình thường.
 - [x] Câu trấn an tự hại có hotline 111 (bảo vệ trẻ em) và 115 (cấp cứu).
 - [x] Test: 23 ca (`src/__tests__/unit/admin/chat-proxy-guardrail.test.ts`) gồm bộ câu thử 4 nhóm, câu học tập không bị chặn oan, prompt an toàn, chặn đầu vào ở `/chat` không trừ lượt; tổng 682 test xanh, `tsc` sạch, `lint` 0 lỗi.
-- [ ] Deploy: dán `workers/chat-proxy/worker.js` (Worker dán tay) rồi thử vài câu trong bộ test trên production.
+- [x] Deploy: dán `workers/chat-proxy/worker.js` (Worker dán tay) lên Cloudflare **2026-11-03** — `/health` trả `{ok:true}` đủ bindings (aiBinding/kv/db/schema), `/config` trả 200. Lần dán này cũng đưa lên bỏ cấu hình gen temperature/max_tokens (dùng mặc định provider). Việc thử bộ câu trên production nằm trong Phase 7.
 - **Giới hạn đã biết:** so khớp mẫu từ khóa (không phải phân loại ngữ nghĩa) nên có thể lọt câu diễn đạt lạ và chặn nhầm câu hiếm; câu **không dấu** (“cach che tao bom”) chưa được phủ để tránh nhầm “tu tu” với “từ từ”.
 - **Điều kiện xong:** các câu thử bị từ chối/làm nhẹ đúng; câu học tập bình thường không bị chặn oan.
 
@@ -227,7 +227,7 @@ Mọi thao tác ghi vào `admin_audit`.
 - [x] `/privacy`: thêm mục **7. Báo cáo, chặn và hạn chế tài khoản** (dữ liệu lưu gồm UID + tên hiển thị, câu trả lời ≤8.000 và câu hỏi ≤2.000 ký tự, lý do, ghi chú ≤500, phòng, thời gian; giữ ~180 ngày; chỉ admin xem; hạn chế AI/phòng), mục 5 thêm đoạn guardrail; các mục sau dồn số (7→8 … 12→13), tóm tắt nhanh thêm ý báo cáo/chặn; ngày cập nhật 30/10/2026.
 - [x] Terms: mục 4 thêm từ chối câu hỏi nguy hiểm; mục 5 thêm chặn hai chiều + tự rời phòng + bỏ chặn trong Cài đặt; mục 7 viết lại (nút cờ dưới câu trả lời, menu ⋮ trong phòng, 7 ngày, 180 ngày, không thông báo ngược); tóm tắt nhanh + ngày cập nhật.
 - [x] Data Safety ([CHPLAY_LAUNCH_PLAN.md](../deployment/CHPLAY_LAUNCH_PLAN.md)): thêm dòng “Báo cáo nội dung & danh sách chặn”, tick 3 mục P0.5 liên quan.
-- **Còn lại:** dán các trang lên production (push web) rồi mở `/privacy/`, `/terms/` kiểm hiển thị; sau đó đối chiếu lại khi khai Data Safety trong Play Console.
+- [x] Đã push web lên Pages và mở `/privacy/`, `/terms/` kiểm hiển thị (2026-10-30). Khi khai Data Safety trong Play Console đối chiếu lại bảng trong [CHPLAY_LAUNCH_PLAN.md](../deployment/CHPLAY_LAUNCH_PLAN.md).
 
 ### Phase 7 — QA & bằng chứng cho Play (0.5–1 ngày) — đang làm
 **Đã kiểm tự động 2026-10-30:** 684 unit test xanh, `tsc` sạch, `lint` 0 lỗi; 7 endpoint công khai trả 200 (`/`, `/privacy/`, `/terms/`, `/account-deletion/`, `/sitemap.xml`, chat-proxy `/config`, data-api `/content`), `/report` và `/blocks` trả 401 khi không có token; D1: 5 báo cáo (5 đang chờ), 0 chặn, 0 hạn chế; trang `/privacy/` live có 13 mục, “180 ngày” ×2, “13 tuổi”; trang chủ production không có lỗi console; admin Worker version `27cfe13c`.
@@ -241,16 +241,16 @@ Mọi thao tác ghi vào `admin_audit`.
 - [ ] Chụp ảnh bằng chứng: nút cờ + dialog báo cáo AI, menu ⋮ + dialog phòng, xác nhận chặn, “Người đã chặn”, chi tiết báo cáo trong admin, khối quy tắc an toàn.
 - [ ] Cập nhật plan CH Play, đánh dấu P0.5 xong.
 
-### Phase 8 — Nâng mốc an toàn lên 16+ (triển khai sau)
+### Phase 8 — Nâng mốc an toàn lên 16+ (code xong 2026-11-03)
 
 Chốt 2026-11-01: sản phẩm chính thức hướng tới 16+, không phục vụ 13–15 trong giai đoạn này.
 
-- [ ] Đổi `SAFETY_PREFIX` từ "người dùng có thể mới 13 tuổi" sang mốc 16+; giữ nguyên các nhóm chặn và hotline 111/115/113.
-- [ ] Cập nhật bộ test `chat-proxy-guardrail.test.ts` và câu mẫu sang 16+.
-- [ ] Đổi `/terms` + `/privacy` sang mốc 16+; bỏ đoạn đồng ý phụ huynh cho 13–15.
-- [ ] Play Console: target audience chỉ 16–17 + 18+.
-- [ ] Chat v2: thêm system prompt server-side 16+ (Safety core + age band `16-17`/`18+`), minh bạch AI, nút báo cáo.
-- [ ] Rà Data Safety/privacy: 16+ không còn dữ liệu trẻ em theo luật dữ liệu trẻ, nhưng vẫn cần đánh giá tác động + chuyển dữ liệu ra nước ngoài.
+- [x] Đổi `SAFETY_PREFIX` từ "người dùng có thể mới 13 tuổi" sang "mới 16 tuổi (16–17 vẫn là người chưa thành niên)"; giữ nguyên các nhóm chặn và hotline 111/115/113 (2026-11-03).
+- [x] Cập nhật bộ test `chat-proxy-guardrail.test.ts` và câu mẫu sang 16+ — đổi tên describe, thêm test "không còn nhắc 13 tuổi"; 26 test xanh (2026-11-03).
+- [x] Đổi `/terms` + `/privacy` sang mốc 16+; bỏ đoạn đồng ý phụ huynh cho 13–15; giữ ghi chú 16–17 vẫn bị giới hạn nội dung; ngày cập nhật 03/11/2026 (2026-11-03).
+- [ ] Play Console: target audience chỉ 16–17 + 18+ *(khai báo tay, lúc tạo app)*.
+- [x] Chat v2: system prompt server-side 16+ (Safety core + age band `16-17`/`18+`) + minh bạch AI đã có từ S1 (2026-11-01); nút báo cáo để S5.
+- [ ] Rà Data Safety/privacy: 16+ không còn dữ liệu trẻ em theo luật dữ liệu trẻ, nhưng vẫn cần đánh giá tác động + chuyển dữ liệu ra nước ngoài *(khai báo tay)*.
 - [ ] Không mở lại 13–15 cho tới khi có plan "chế độ phụ huynh" riêng.
 
 **Tổng ước lượng:** ~7–8 ngày làm việc, chưa tính deploy/chờ duyệt.
