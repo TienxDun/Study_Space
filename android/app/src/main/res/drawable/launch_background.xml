@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nền cửa sổ lúc khởi động: chỉ một màu tối trùng nền app. Không vẽ logo ở lớp
+     native vì splash web vẽ logo nhỏ hơn ở vị trí khác, gây nhảy logo khi bàn giao. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#05070D" />
+</shape>

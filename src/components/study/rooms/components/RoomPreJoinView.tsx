@@ -76,9 +76,9 @@ export function RoomPreJoinView({
   passwordMode = "optional-create",
   hideHeader = false,
 }: RoomPreJoinViewProps) {
+  // Mặc định tắt mic/cam khi mở màn kiểm tra thiết bị
   const [audioEnabled, setAudioEnabled] = useState(false);
-  // Mở lên thấy camera ngay để người dùng xem trước theo đúng yêu cầu
-  const [videoEnabled, setVideoEnabled] = useState(true);
+  const [videoEnabled, setVideoEnabled] = useState(false);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSettingPassword, setIsSettingPassword] = useState(false);
@@ -231,9 +231,6 @@ export function RoomPreJoinView({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-bold text-white">Kiểm tra thiết bị</h2>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-400/30 shrink-0">
-              Bước xem trước
-            </span>
           </div>
           <p className="text-xs text-slate-400 truncate">
             Xem lại camera và micro trước khi tham gia

@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CircleNotchIcon } from "@phosphor-icons/react";
+import { CircleNotchIcon, GoogleLogoIcon } from "@phosphor-icons/react";
 import { firebaseConfigured } from "@/lib/firebase-config";
+import { isNativeApp } from "@/lib/google-sign-in";
+import { useAuth } from "../hooks/use-auth";
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
@@ -40,6 +42,27 @@ type GisWindow = Window & {
   };
 };
 
+/** Nút đăng nhập trên app Android: mở hộp chọn tài khoản gốc của máy. */
+function NativeGoogleButton() {
+  const { user, isSigningIn, signIn } = useAuth();
+  if (user) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => void signIn()}
+      disabled={isSigningIn}
+      className="h-10 px-4 rounded-lg border border-white/15 bg-white/10 hover:bg-white/15 text-xs font-semibold text-slate-100 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-60"
+    >
+      {isSigningIn ? (
+        <CircleNotchIcon className="w-4 h-4 animate-spin text-emerald-300" weight="bold" />
+      ) : (
+        <GoogleLogoIcon className="w-4 h-4" weight="bold" />
+      )}
+      Đăng nhập bằng Google
+    </button>
+  );
+}
+
 /** Nút "Sign in with Google" thật của Google. Chưa có CLIENT_ID thì ẩn. */
 export function GoogleSignInButton() {
   const divRef = useRef<HTMLDivElement>(null);
@@ -47,6 +70,8 @@ export function GoogleSignInButton() {
   const [isExchanging, setIsExchanging] = useState(false);
 
   useEffect(() => {
+    // App Android: khuôn chờ sẵn; nút bấm được vẽ ở dưới (theo dõi useAuth).
+    if (isNativeApp()) return;
     if (!CLIENT_ID || !firebaseConfigured) return;
     let cancelled = false;
     loadGis()
@@ -99,6 +124,7 @@ export function GoogleSignInButton() {
     };
   }, []);
 
+  if (isNativeApp()) return <NativeGoogleButton />;
   if (!CLIENT_ID) return null;
   return (
     <div className="flex flex-col items-center gap-2">

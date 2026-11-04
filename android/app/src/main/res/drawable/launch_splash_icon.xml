@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash hệ thống (Android 12+) không vẽ icon: nếu vẽ, icon cỡ lớn ở tâm màn hình
+     sẽ "nhảy" thành logo nhỏ của splash web ngay sau đó. Logo chỉ do lớp web vẽ. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@android:color/transparent" />
+</shape>

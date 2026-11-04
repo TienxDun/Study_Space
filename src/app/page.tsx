@@ -16,12 +16,14 @@ import { StudyDesktopLayout } from "@/components/study/layout/StudyDesktopLayout
 import { StudyMobileLayout } from "@/components/study/layout/StudyMobileLayout";
 import { MobileWelcomeScreen } from "@/components/study/mobile/welcome/MobileWelcomeScreen";
 import { MobileSplashScreen } from "@/components/study/mobile/splash/MobileSplashScreen";
+import { MOBILE_SPLASH_ENABLED } from "@/lib/mobile-splash-flag";
 import { MobileLandscapeGuard } from "@/components/study/mobile/MobileLandscapeGuard";
 import { useStudySpaceState } from "@/components/study/hooks/useStudySpaceState";
 import { useContentCatalog } from "@/components/study/hooks/useContentCatalog";
 import { useAuth } from "@/lib/use-auth";
 import { useCloudSync } from "@/lib/use-cloud-sync";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { initNativeStatusBar } from "@/lib/native-status-bar";
 
 // Dynamic imports cho các widget đa phương tiện dùng chung
 const StudyEmbedPlayerWidget = dynamic(
@@ -47,6 +49,7 @@ export default function StudySpacePage() {
   const [isSplashPreview, setIsSplashPreview] = useState(false);
 
   useEffect(() => {
+    initNativeStatusBar();
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const splash = params.get("splash");
@@ -65,9 +68,9 @@ export default function StudySpacePage() {
         localStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted) ||
         sessionStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted)
       );
-      const isSplashDone = Boolean(
-        sessionStorage.getItem("zenstudy_mobile_splash_completed")
-      );
+      const isSplashDone = MOBILE_SPLASH_ENABLED
+        ? Boolean(sessionStorage.getItem("zenstudy_mobile_splash_completed"))
+        : true;
       return isWelcomeDone && isSplashDone;
     } catch {
       return true;
@@ -116,23 +119,25 @@ export default function StudySpacePage() {
       {state.isMobile && <StudyMobileLayout state={state} hasEntered={hasEntered} />}
 
       {/* Màn hình khởi động Splash Screen chuẩn nhận diện thương hiệu cho Mobile (tự ẩn trên Desktop bằng CSS sm:hidden, hỗ trợ xem thử qua ?splash=preview) */}
-      <MobileSplashScreen
-        preview={isSplashPreview}
-        isReady={isBackgroundReady && !state.isPreloadingScene}
-        onFinish={() => {
-          try {
-            const isWelcomeDone = Boolean(
-              localStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted) ||
-              sessionStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted)
-            );
-            if (isWelcomeDone) {
+      {MOBILE_SPLASH_ENABLED && (
+        <MobileSplashScreen
+          preview={isSplashPreview}
+          isReady={isBackgroundReady && !state.isPreloadingScene}
+          onFinish={() => {
+            try {
+              const isWelcomeDone = Boolean(
+                localStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted) ||
+                sessionStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted)
+              );
+              if (isWelcomeDone) {
+                setHasEntered(true);
+              }
+            } catch {
               setHasEntered(true);
             }
-          } catch {
-            setHasEntered(true);
-          }
-        }}
-      />
+          }}
+        />
+      )}
 
       {/* Màn hình chào mừng Welcome / Onboarding Screen chuyên nghiệp cho Mobile */}
       {state.isMobile && !isSplashPreview && (

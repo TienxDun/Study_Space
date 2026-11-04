@@ -7,8 +7,8 @@ import {
   UsersIcon,
   RadioIcon,
   XIcon,
+  PlusIcon,
 } from "@phosphor-icons/react";
-import { StudySproutMascot } from "@/components/study/chat/components/StudySproutMascot";
 import { GlassIcon } from "@/components/ui/GlassIcon";
 
 interface MobileRadialBubbleMenuProps {
@@ -349,16 +349,16 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
               }}
             />
 
-            {/* Mascot: Giữ thường trực trong DOM, không mount/unmount để tránh giật lag render */}
+            {/* Dấu cộng: Đóng là +, mở menu xoay 45° hóa thành x (khớp icon X bên dưới) */}
             <div
               className="absolute inset-0 flex items-center justify-center transition-all duration-200 ease-out drop-shadow-[0_4px_14px_rgba(0,0,0,0.85)]"
               style={{
                 opacity: isOpen ? 0 : 1,
-                transform: isOpen ? "scale(0.5) rotate(-30deg)" : "scale(1) rotate(0deg)",
+                transform: isOpen ? "scale(0.5) rotate(45deg)" : "scale(1) rotate(0deg)",
                 pointerEvents: isOpen ? "none" : "auto",
               }}
             >
-              <StudySproutMascot size={46} />
+              <PlusIcon className="w-6 h-6 text-white/95 filter drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.65)]" weight="bold" />
             </div>
 
             {/* Icon X Đóng: Giữ thường trực trong DOM, xoay và phóng to đồng thời */}

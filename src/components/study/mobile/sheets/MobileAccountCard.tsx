@@ -24,7 +24,7 @@ export function MobileAccountCard() {
 
   useEffect(() => {
     setAvatarError(false);
-  }, [user?.photoURL]);
+  }, [user?.photoURL, user?.uid]);
 
   const handleSync = async () => {
     if (isSyncing || loading) return;
@@ -88,21 +88,24 @@ export function MobileAccountCard() {
   return (
     <div>
       <div className="min-h-[48px] flex items-center gap-3 px-3">
-        {user.photoURL && !avatarError ? (
-          <Image
-            src={user.photoURL}
-            alt={user.displayName || "Avatar"}
-            width={44}
-            height={44}
-            unoptimized
-            className="w-11 h-11 rounded-2xl object-cover border border-white/20 shrink-0"
-            onError={() => setAvatarError(true)}
-          />
-        ) : (
-          <span className="w-11 h-11 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-base font-bold flex items-center justify-center shrink-0">
+        <div className="relative w-11 h-11 shrink-0">
+          <span className="absolute inset-0 w-full h-full rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-base font-bold flex items-center justify-center">
             {(user.displayName || user.email || "U")[0].toUpperCase()}
           </span>
-        )}
+          {user.photoURL && !avatarError && (
+            <Image
+              src={user.photoURL}
+              alt={user.displayName || "Avatar"}
+              width={44}
+              height={44}
+              unoptimized
+              priority
+              referrerPolicy="no-referrer"
+              className="absolute inset-0 w-full h-full rounded-2xl object-cover border border-white/20"
+              onError={() => setAvatarError(true)}
+            />
+          )}
+        </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-white truncate" title={user.displayName || undefined}>
             {user.displayName || "Học viên ZenStudy"}

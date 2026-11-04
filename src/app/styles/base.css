@@ -5,7 +5,9 @@
   html {
     @apply font-sans;
     min-height: 100%;
-    background: var(--background);
+    /* Màu tối cố định, trùng nền splash: --background đang là trắng ở theme sáng,
+       lộ dải trắng ở đáy khi WebView đổi kích thước lúc khởi động */
+    background: #05070D;
     overscroll-behavior: none;
     overscroll-behavior-y: none;
   }

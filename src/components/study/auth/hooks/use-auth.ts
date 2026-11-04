@@ -5,6 +5,7 @@ import { firebaseConfigured } from "@/lib/firebase-config";
 import { cloudConfigured, syncNow, clearLocalUserData } from "@/lib/simple-cloud-sync";
 import { broadcastWipe, hasStoredUserData } from "@/lib/local-data";
 import { trackEvent } from "@/lib/analytics";
+import { isNativeApp, signInWithGoogleNative, signOutGoogleNative } from "@/lib/google-sign-in";
 import type { UseAuthReturn } from "../types";
 import type { User } from "firebase/auth";
 
@@ -88,6 +89,18 @@ export function useAuth(): UseAuthReturn {
     }
     setIsSigningIn(true);
     setAuthError("");
+    // App Android: hộp chọn tài khoản gốc của máy, không dùng popup/redirect.
+    if (isNativeApp()) {
+      try {
+        const { cancelled } = await signInWithGoogleNative();
+        if (!cancelled) trackEvent("auth-login");
+      } catch {
+        setAuthError("Đăng nhập Google thất bại, bạn thử lại nhé.");
+      } finally {
+        setIsSigningIn(false);
+      }
+      return;
+    }
     const {
       GoogleAuthProvider,
       signInWithPopup,
@@ -160,6 +173,7 @@ export function useAuth(): UseAuthReturn {
       } catch {
         /* vẫn xóa dữ liệu cục bộ */
       }
+      if (isNativeApp()) await signOutGoogleNative();
       broadcastWipe();
       clearLocalUserData();
       setUser(null);

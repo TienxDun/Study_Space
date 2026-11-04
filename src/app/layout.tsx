@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "sonner";
 import { GoatCounter } from "@/components/analytics/GoatCounter";
 import { StudyJsonLd } from "@/components/study/seo/StudyJsonLd";
+import { MOBILE_SPLASH_ENABLED } from "@/lib/mobile-splash-flag";
 import "./globals.css";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -119,6 +121,18 @@ export const metadata: Metadata = {
   },
 };
 
+// Khung phải khớp từng pixel với MobileSplashScreen: logo 80px + lề 20px + chữ 24px
+// + lề 8px + phụ đề 11px = 143px. Lệch khung là logo nhảy khi hai lớp bàn giao nhau.
+const PRE_SPLASH_CSS = `#pre-splash{position:fixed;inset:0;z-index:99998;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#05070D;color:#fff;pointer-events:none;font-family:var(--font-be-vietnam),system-ui,-apple-system,"Segoe UI",sans-serif}
+#pre-splash .ps-body{display:flex;flex-direction:column;align-items:center;opacity:0;transition:opacity .2s ease-out}
+#pre-splash .ps-logo{width:80px;height:80px;margin-bottom:20px;display:flex;align-items:center;justify-content:center}
+#pre-splash .ps-logo img{width:72px;height:72px;object-fit:contain}
+#pre-splash .ps-title{margin:0;font-size:24px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;line-height:1}
+#pre-splash .ps-zen{color:#fff}
+#pre-splash .ps-study{color:#38bdf8}
+#pre-splash .ps-sub{margin:8px 0 0;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;line-height:1}
+@media (min-width:640px){#pre-splash{display:none}}`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -131,6 +145,32 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans overflow-x-hidden bg-[#090d16] text-white">
+        {/* Lớp Splash tĩnh: vẽ ngay từ HTML, không chờ JavaScript, để khỏi chớp màn hình
+            trong khoảng splash Android tắt cho tới khi Splash React xuất hiện */}
+        {MOBILE_SPLASH_ENABLED && (
+          <>
+            <style dangerouslySetInnerHTML={{ __html: PRE_SPLASH_CSS }} />
+            <Script src={`${basePath}/pre-splash-gate.js`} strategy="beforeInteractive" />
+            <div id="pre-splash" aria-hidden="true">
+              <div className="ps-body">
+                <div className="ps-logo">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`${basePath}/brand/zenstudy-logo-icon.svg`}
+                    alt=""
+                    width={72}
+                    height={72}
+                  />
+                </div>
+                <p className="ps-title">
+                  <span className="ps-zen">ZEN</span>
+                  <span className="ps-study">STUDY</span>
+                </p>
+                <p className="ps-sub">Không gian học tập &amp; làm việc sâu</p>
+              </div>
+            </div>
+          </>
+        )}
         <StudyJsonLd siteUrl={siteUrl} />
         {children}
         <GoatCounter />

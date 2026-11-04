@@ -5,10 +5,15 @@ import { useEffect, useState } from "react";
 // Biết khi nào là màn nhỏ (điện thoại). Mặc định 640px theo sm: của Tailwind.
 // Dùng matchMedia + sự kiện "change" thay cho resize: callback chỉ chạy đúng
 // lúc vượt qua breakpoint, không phải mỗi pixel kéo cửa sổ.
+// Bản shell mobile (Capacitor) build với NEXT_PUBLIC_MOBILE_SHELL=1 luôn coi là màn nhỏ,
+// để HTML tĩnh xuất ra đúng giao diện mobile ngay từ khung hình đầu, khỏi đổi layout nháy màn hình.
+const MOBILE_SHELL_BUILD = process.env.NEXT_PUBLIC_MOBILE_SHELL === "1";
+
 export function useIsMobile(breakpoint = 640) {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(MOBILE_SHELL_BUILD);
 
   useEffect(() => {
+    if (MOBILE_SHELL_BUILD) return;
     // Hỗ trợ cả trường hợp điện thoại xoay ngang (chiều cao <= 500px trên thiết bị cảm ứng)
     // để tránh bị giật hoặc unmount xáo trộn toàn bộ giao diện mobile khi xoay màn hình
     const mql = window.matchMedia(

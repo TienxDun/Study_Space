@@ -54,9 +54,9 @@ describe("MobileSplashScreen Component", () => {
     // Lúc ban đầu chưa gọi finish
     expect(handleFinish).not.toHaveBeenCalled();
 
-    // Chạy hết duration + delay kết thúc
+    // Chạy hết reveal + delay kết thúc
     act(() => {
-      vi.advanceTimersByTime(1100);
+      vi.advanceTimersByTime(2000);
     });
 
     expect(handleFinish).toHaveBeenCalledTimes(1);
@@ -165,9 +165,9 @@ describe("MobileSplashScreen Component", () => {
       );
     });
 
-    // Chạy thêm 750ms để hoàn tất delay thoát
+    // Chạy thêm đủ cho reveal + delay thoát
     act(() => {
-      vi.advanceTimersByTime(750);
+      vi.advanceTimersByTime(1500);
     });
 
     expect(handleFinish).toHaveBeenCalledTimes(1);

@@ -216,12 +216,7 @@ function MobileRoomsSheetBase({
           backLabel={backLabel}
           sheetId="rooms"
           title={
-            <span className="flex items-center gap-2">
-              <span>Kiểm tra thiết bị</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-400/30 shrink-0">
-                Bước xem trước
-              </span>
-            </span>
+            <span>Kiểm tra thiết bị</span>
           }
           maxHeightClassName="h-auto max-h-[88dvh]"
         >

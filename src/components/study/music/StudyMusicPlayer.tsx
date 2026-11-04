@@ -13,6 +13,7 @@ import { SoundMixerWidget } from "../mixer/SoundMixerWidget";
 import { MixerTab } from "../mixer/types";
 import { useAudioPlayer } from "./hooks/useAudioPlayer";
 import { useYouTubeRemote, sendYouTubeCommand } from "@/lib/youtube-remote";
+import { resolveAssetUrl } from "@/lib/asset-resolver";
 import { WaveformScrubber } from "./components/WaveformScrubber";
 import { PlayerControls } from "./components/PlayerControls";
 import { ExternalStreamBanner } from "./components/ExternalStreamBanner";
@@ -255,7 +256,7 @@ export const StudyMusicPlayer = memo(function StudyMusicPlayer({
                 }`}
               >
                 <Image
-                  src={currentTrack?.cover || "/study/thumbnails/coffee-shop.PNG"}
+                  src={currentTrack?.cover || resolveAssetUrl("thumbnails/coffee-shop.PNG")}
                   alt={currentTrack?.title || "Track Cover"}
                   fill
                   unoptimized

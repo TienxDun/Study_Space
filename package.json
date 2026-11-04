@@ -7,6 +7,8 @@
     "build": "next build",
     "build:web": "next build && node scripts/strip-admin-export.mjs",
     "build:admin": "node scripts/prepare-admin-bundle.mjs",
+    "build:mobile": "node scripts/build-mobile.mjs",
+    "sync:android": "npx cap sync android",
     "start": "next start -p 3001",
     "lint": "eslint && npm run lint:css",
     "lint:css": "node scripts/check-important.mjs",
@@ -17,6 +19,10 @@
     "sync:r2": "node scripts/sync-r2.mjs"
   },
   "dependencies": {
+    "@capacitor-firebase/authentication": "^8.6.0",
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/status-bar": "^8.0.4",
     "@livekit/components-react": "^2.9.24",
     "@livekit/components-styles": "^1.2.0",
     "@phosphor-icons/react": "^2.1.10",
@@ -36,6 +42,8 @@
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.1148.0",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.6.0",
     "@tailwindcss/postcss": "^4",
     "@types/dom-mediacapture-record": "^1.0.22",
     "@types/node": "^20",

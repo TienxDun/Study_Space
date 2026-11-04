@@ -34,7 +34,7 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
 
   useEffect(() => {
     setAvatarError(false);
-  }, [user?.photoURL]);
+  }, [user?.photoURL, user?.uid]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -94,21 +94,24 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
         aria-label={`${user.displayName || user.email}, bấm để xem hồ sơ`}
         aria-expanded={isOpen}
       >
-        {user.photoURL && !avatarError ? (
-          <Image
-            src={user.photoURL}
-            alt={user.displayName || "Avatar"}
-            width={24}
-            height={24}
-            unoptimized
-            className="w-6 h-6 rounded-lg object-cover border border-white/20"
-            onError={() => setAvatarError(true)}
-          />
-        ) : (
-          <span className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold flex items-center justify-center">
+        <div className="relative w-6 h-6 shrink-0">
+          <span className="absolute inset-0 w-full h-full rounded-lg bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold flex items-center justify-center">
             {(user.displayName || user.email || "U")[0].toUpperCase()}
           </span>
-        )}
+          {user.photoURL && !avatarError && (
+            <Image
+              src={user.photoURL}
+              alt={user.displayName || "Avatar"}
+              width={24}
+              height={24}
+              unoptimized
+              priority
+              referrerPolicy="no-referrer"
+              className="absolute inset-0 w-full h-full rounded-lg object-cover border border-white/20"
+              onError={() => setAvatarError(true)}
+            />
+          )}
+        </div>
         <span className="hidden sm:inline-block text-xs font-semibold text-white/90 max-w-[85px] truncate">
           {user.displayName?.split(" ").slice(-1)[0] || user.displayName || user.email?.split("@")[0]}
         </span>
@@ -125,21 +128,23 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
             className="absolute right-0 top-full mt-2 z-50 w-72 glass-panel hover:bg-black/45 p-4 text-left select-none text-white shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
           >
             <div className="flex items-center gap-3 pb-3 border-b border-white/10">
-              {user.photoURL && !avatarError ? (
-                <Image
-                  src={user.photoURL}
-                  alt={user.displayName || "Avatar"}
-                  width={40}
-                  height={40}
-                  unoptimized
-                  className="w-10 h-10 rounded-xl object-cover border border-white/20"
-                  onError={() => setAvatarError(true)}
-                />
-              ) : (
-                <span className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-sm font-bold flex items-center justify-center">
+              <div className="relative w-10 h-10 shrink-0">
+                <span className="absolute inset-0 w-full h-full rounded-xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-sm font-bold flex items-center justify-center">
                   {(user.displayName || user.email || "U")[0].toUpperCase()}
                 </span>
-              )}
+                {user.photoURL && !avatarError && (
+                  <Image
+                    src={user.photoURL}
+                    alt={user.displayName || "Avatar"}
+                    width={40}
+                    height={40}
+                    unoptimized
+                    referrerPolicy="no-referrer"
+                    className="absolute inset-0 w-full h-full rounded-xl object-cover border border-white/20"
+                    onError={() => setAvatarError(true)}
+                  />
+                )}
+              </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold text-white truncate">
                   {user.displayName || "Học viên ZenStudy"}
