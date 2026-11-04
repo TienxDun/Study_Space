@@ -44,14 +44,14 @@ const checkPrefersReducedMotion = (): boolean => {
  * - Không dùng filter drop-shadow trên logo (rất nặng trên WebView), thay bằng lớp glow mờ phía sau.
  * - Hỗ trợ prefers-reduced-motion (bỏ qua reveal, thoát ngay) và xem thử qua ?splash=preview.
  */
-export const MobileSplashScreen: React.FC<MobileSplashScreenProps> = ({
+export const MobileSplashScreen = React.memo(function MobileSplashScreen({
   duration = 1600,
   isReady = true,
   maxDuration = 5000,
   onFinish,
   forceShow = false,
   preview = false,
-}) => {
+}: MobileSplashScreenProps) {
   const [hasMounted, setHasMounted] = useState(false);
   const [isVisible, setIsVisible] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -429,4 +429,4 @@ export const MobileSplashScreen: React.FC<MobileSplashScreenProps> = ({
   );
 
   return typeof document !== "undefined" ? createPortal(content, document.body) : null;
-};
+});

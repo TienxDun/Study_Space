@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { LiveKitRoom } from "@livekit/components-react";
 import "@livekit/components-styles";
@@ -78,7 +78,7 @@ const getCenter = (w: number, h: number) => {
 
 // Phòng học nhóm dạng thẻ bay: kéo đi được, đổi cỡ được,
 // nhớ chỗ y như thẻ ghi chú.
-export const StudyRoomsWidget = ({
+export const StudyRoomsWidget = memo(function StudyRoomsWidget({
   isOpen,
   onClose,
   onOpen,
@@ -86,7 +86,7 @@ export const StudyRoomsWidget = ({
   backLabel,
   soundEnabled,
   soundType,
-}: StudyRoomsWidgetProps) => {
+}: StudyRoomsWidgetProps) {
   const {
     user,
     loading: authLoading,
@@ -1091,4 +1091,4 @@ const getLiveKitEndpoints = () => {
       )}
     </AnimatePresence>
   );
-};
+});

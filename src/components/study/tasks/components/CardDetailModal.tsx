@@ -66,37 +66,6 @@ export const CardDetailModal = React.memo(function CardDetailModal({
   const [isPriorityPopoverOpen, setIsPriorityPopoverOpen] = useState(false);
   const [isDueDatePopoverOpen, setIsDueDatePopoverOpen] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const modalPanelRef = useRef<HTMLDivElement | null>(null);
-  const touchStartY = useRef<number | null>(null);
-  const isDraggingDown = useRef(false);
-  const [isClosingByDrag, setIsClosingByDrag] = useState(false);
-  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    if (selectedCard) {
-      setIsClosingByDrag(false);
-      if (closeTimerRef.current) {
-        clearTimeout(closeTimerRef.current);
-        closeTimerRef.current = null;
-      }
-      if (modalPanelRef.current) {
-        modalPanelRef.current.style.removeProperty("display");
-        modalPanelRef.current.style.removeProperty("visibility");
-        modalPanelRef.current.style.removeProperty("opacity");
-        modalPanelRef.current.style.removeProperty("transform");
-        modalPanelRef.current.style.removeProperty("transition");
-      }
-    }
-  }, [selectedCard]);
-
-  useEffect(() => {
-    return () => {
-      if (closeTimerRef.current) {
-        clearTimeout(closeTimerRef.current);
-        closeTimerRef.current = null;
-      }
-    };
-  }, []);
 
   const closeAllPopovers = useCallback(() => {
     setIsStatusDropdownOpen(false);
@@ -106,89 +75,9 @@ export const CardDetailModal = React.memo(function CardDetailModal({
 
   // Giữ nút đóng ổn định: khung ngoài chỉ chạy lại khi mở/tắt, gõ chữ không bị giật mất chỗ gõ
   const handleCloseDetail = useCallback(() => {
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current);
-      closeTimerRef.current = null;
-    }
     setSelectedCard(null);
     closeAllPopovers();
   }, [setSelectedCard, closeAllPopovers]);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const target = e.target as Node | null;
-    const targetEl = target instanceof Element ? target : target?.parentElement;
-    if (targetEl?.closest("button") || targetEl?.closest("input") || targetEl?.closest("a")) return;
-
-    const touch = e.touches[0];
-    if (!touch) return;
-
-    touchStartY.current = touch.clientY;
-    isDraggingDown.current = true;
-    if (modalPanelRef.current) {
-      modalPanelRef.current.style.transition = "none";
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDraggingDown.current || touchStartY.current === null) return;
-    const touch = e.touches[0];
-    if (!touch) return;
-
-    const diff = touch.clientY - touchStartY.current;
-    if (diff > 0) {
-      if (modalPanelRef.current) {
-        modalPanelRef.current.style.transform = `translateY(${diff}px)`;
-        modalPanelRef.current.style.opacity = `${Math.max(0.3, 1 - diff / (window.innerHeight || 800))}`;
-      }
-    }
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!isDraggingDown.current || touchStartY.current === null) return;
-    const touch = e.changedTouches[0] || e.touches[0];
-    const diff = touch ? touch.clientY - touchStartY.current : 0;
-    isDraggingDown.current = false;
-    touchStartY.current = null;
-
-    if (diff >= 55) {
-      setIsClosingByDrag(true);
-      if (modalPanelRef.current) {
-        modalPanelRef.current.style.transition =
-          "transform 0.18s cubic-bezier(0.32, 0, 0.67, 0), opacity 0.16s ease-out";
-        modalPanelRef.current.style.transform = "translateY(100vh)";
-        modalPanelRef.current.style.opacity = "0";
-      }
-      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-      closeTimerRef.current = setTimeout(() => {
-        if (modalPanelRef.current) {
-          modalPanelRef.current.style.setProperty("display", "none", "important");
-          modalPanelRef.current.style.setProperty("visibility", "hidden", "important");
-          modalPanelRef.current.style.setProperty("opacity", "0", "important");
-          modalPanelRef.current.style.setProperty("transform", "translateY(100vh)", "important");
-        }
-        handleCloseDetail();
-      }, 180);
-      return;
-    }
-
-    if (modalPanelRef.current) {
-      modalPanelRef.current.style.transition =
-        "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease-out";
-      modalPanelRef.current.style.transform = "translateY(0px)";
-      modalPanelRef.current.style.opacity = "1";
-    }
-  };
-
-  const handleTouchCancel = () => {
-    isDraggingDown.current = false;
-    touchStartY.current = null;
-    if (modalPanelRef.current) {
-      modalPanelRef.current.style.transition =
-        "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease-out";
-      modalPanelRef.current.style.transform = "translateY(0px)";
-      modalPanelRef.current.style.opacity = "1";
-    }
-  };
 
   // Bấm + Giờ xong tự mở bảng chọn giờ luôn, khỏi bấm lần 2
   const timeInputRef = useRef<HTMLInputElement>(null);
@@ -248,14 +137,9 @@ export const CardDetailModal = React.memo(function CardDetailModal({
       exit={{ opacity: 0 }}
     >
       <motion.div
-        ref={modalPanelRef}
         initial={{ scale: 0.96, y: 12, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
-        exit={
-          isClosingByDrag
-            ? { opacity: 0, transition: { duration: 0 } }
-            : { scale: 0.96, y: 12, opacity: 0 }
-        }
+        exit={{ scale: 0.96, y: 12, opacity: 0 }}
         transition={{ type: "spring", stiffness: 360, damping: 28 }}
         onClick={(e) => e.stopPropagation()}
         className="relative pointer-events-auto w-full max-w-[660px] max-h-[92dvh] sm:max-h-[88vh] flex flex-col rounded-3xl bg-neutral-950/95 backdrop-blur-2xl border border-white/20 shadow-[0_24px_60px_rgba(0,0,0,0.85)] text-white overflow-hidden"
@@ -263,20 +147,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
           <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
 
           {/* Header: Title, Board Info & Action Bar */}
-          <div className="px-4 sm:px-6 pt-2.5 sm:pt-5 pb-3.5 border-b border-white/10 space-y-3 bg-white/[0.01]">
-            {/* Thanh nắm tay kéo (Pill Handle) cho Mobile - tích hợp liền mạch vào đỉnh thẻ */}
-            <div
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchCancel}
-              className="pb-1.5 flex items-center justify-center sm:hidden select-none cursor-grab active:cursor-grabbing touch-none shrink-0"
-            >
-              <span
-                aria-hidden="true"
-                className="h-1.5 w-12 rounded-full bg-white/30 hover:bg-white/50 active:bg-white/60 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.4)]"
-              />
-            </div>
+          <div className="px-4 sm:px-6 pt-3.5 sm:pt-5 pb-3.5 border-b border-white/10 space-y-3 bg-white/[0.01]">
             <div className="flex items-center justify-between gap-2.5 sm:gap-3">
               {/* Nút Quay lại cho Mobile / Stack Navigation */}
               {onBack && (
@@ -340,8 +211,9 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                 <button
                   type="button"
                   onClick={() => promptDeleteCard(selectedCard)}
-                  className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                  className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-rose-500/20 active:scale-90 border border-white/15 hover:border-rose-500/30 flex items-center justify-center text-slate-300 hover:text-rose-400 transition-all shadow-sm cursor-pointer"
                   title="Xóa thẻ này"
+                  aria-label="Xóa thẻ này"
                 >
                   <TrashIcon className="w-4 h-4" />
                 </button>
@@ -351,8 +223,9 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                     setSelectedCard(null);
                     closeAllPopovers();
                   }}
-                  className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.18] active:scale-90 border border-white/15 flex items-center justify-center text-slate-300 hover:text-white transition-all shadow-sm cursor-pointer"
                   title="Đóng (Esc)"
+                  aria-label="Đóng chi tiết nhiệm vụ"
                 >
                   <XIcon className="w-4 h-4" />
                 </button>
@@ -946,12 +819,6 @@ export const CardDetailModal = React.memo(function CardDetailModal({
           <div className="shrink-0 px-4 sm:px-6 py-2.5 border-t border-white/10 bg-neutral-950/80 backdrop-blur-md flex items-center justify-between text-xs select-none">
             <div className="flex items-center gap-2 text-[11px] text-slate-400 truncate">
               <span className="font-medium text-slate-300 truncate">{currentBoard.title}</span>
-              {currentColumn && (
-                <>
-                  <span className="opacity-40">•</span>
-                  <span className="truncate">{currentColumn.title}</span>
-                </>
-              )}
             </div>
             <SyncStatusBadge variant="text" className="text-[11px] font-medium" />
           </div>

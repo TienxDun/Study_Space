@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   KeyboardIcon,
@@ -17,11 +17,11 @@ export interface StudyShortcutsModalProps {
 }
 
 /** Modal tra cuu phim tat. */
-export const StudyShortcutsModal = ({
+export const StudyShortcutsModal = memo(function StudyShortcutsModal({
   isOpen,
   onClose,
   onOpenTour,
-}: StudyShortcutsModalProps) => {
+}: StudyShortcutsModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const prevFocusRef = useRef<HTMLElement | null>(null);
 
@@ -238,4 +238,4 @@ export const StudyShortcutsModal = ({
   )}
 </AnimatePresence>
   );
-};
+});

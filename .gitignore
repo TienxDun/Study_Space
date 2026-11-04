@@ -155,6 +155,7 @@ venv/
 .vscode/
 .cursor/
 .zed/
+.qoder/
 *.sublime-project
 *.sublime-workspace
 *.suo

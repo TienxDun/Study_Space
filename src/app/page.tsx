@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { CircleNotchIcon } from "@phosphor-icons/react";
@@ -80,6 +80,39 @@ export default function StudySpacePage() {
   // Theo dõi trạng thái nạp bối cảnh ban đầu để đồng bộ đóng Splash Screen chuẩn xác
   const [isBackgroundReady, setIsBackgroundReady] = useState(false);
 
+  // Callback ổn định: tránh tạo closure mới mỗi lần state đổi (React.memo của con sẽ vô hiệu)
+  const handleBackgroundLoaded = useCallback(() => setIsBackgroundReady(true), []);
+  const handleWelcomeStart = useCallback(() => setHasEntered(true), []);
+  const handleSplashFinish = useCallback(() => {
+    try {
+      const isWelcomeDone = Boolean(
+        localStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted) ||
+          sessionStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted)
+      );
+      if (isWelcomeDone) setHasEntered(true);
+    } catch {
+      setHasEntered(true);
+    }
+  }, []);
+
+  const handleCloseRooms = useCallback(() => {
+    if (state.isMobile) state.handleMobileCloseAllSheets();
+    else state.setIsRoomsOpen(false);
+  }, [state.isMobile, state.handleMobileCloseAllSheets, state.setIsRoomsOpen]);
+
+  const handleOpenRooms = useCallback(() => {
+    if (!state.systemFlags.roomsEnabled) return;
+    if (state.isMobile) state.mobileOpenRoot("rooms", "Phòng học nhóm");
+    else state.setIsRoomsOpen(true);
+  }, [state.systemFlags.roomsEnabled, state.isMobile, state.mobileOpenRoot, state.setIsRoomsOpen]);
+
+  const handleCloseShortcuts = useCallback(
+    () => state.setIsShortcutsHelpOpen(false),
+    [state.setIsShortcutsHelpOpen]
+  );
+  const handleCloseTour = useCallback(() => state.setIsTourOpen(false), [state.setIsTourOpen]);
+  const handleOpenTour = useCallback(() => state.setIsTourOpen(true), [state.setIsTourOpen]);
+
   return (
     <div className="fixed inset-0 sm:relative sm:w-screen sm:h-dvh overflow-hidden bg-slate-950 text-white select-none font-sans">
       {/* Nền bối cảnh chung */}
@@ -87,7 +120,7 @@ export default function StudySpacePage() {
         scene={state.currentScene}
         isBlurActive={state.isAnyModalOpen}
         isMobile={state.isMobile}
-        onLoaded={() => setIsBackgroundReady(true)}
+        onLoaded={handleBackgroundLoaded}
       />
 
       {/* Thông báo bảo trì / banner chung từ cờ hệ thống */}
@@ -123,19 +156,7 @@ export default function StudySpacePage() {
         <MobileSplashScreen
           preview={isSplashPreview}
           isReady={isBackgroundReady && !state.isPreloadingScene}
-          onFinish={() => {
-            try {
-              const isWelcomeDone = Boolean(
-                localStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted) ||
-                sessionStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted)
-              );
-              if (isWelcomeDone) {
-                setHasEntered(true);
-              }
-            } catch {
-              setHasEntered(true);
-            }
-          }}
+          onFinish={handleSplashFinish}
         />
       )}
 
@@ -144,7 +165,7 @@ export default function StudySpacePage() {
         <MobileWelcomeScreen
           sceneName={state.currentScene?.name}
           onSelectScene={state.setCurrentSceneDirectly}
-          onStart={() => setHasEntered(true)}
+          onStart={handleWelcomeStart}
         />
       )}
 
@@ -219,15 +240,8 @@ export default function StudySpacePage() {
       {/* Phòng học nhóm LiveKit WebRTC (Dùng chung) */}
       <StudyRoomsWidget
         isOpen={state.isRoomsOpen}
-        onClose={state.isMobile ? state.handleMobileCloseAllSheets : () => state.setIsRoomsOpen(false)}
-        onOpen={() => {
-          if (!state.systemFlags.roomsEnabled) return;
-          if (state.isMobile) {
-            state.mobileOpenRoot("rooms", "Phòng học nhóm");
-          } else {
-            state.setIsRoomsOpen(true);
-          }
-        }}
+        onClose={handleCloseRooms}
+        onOpen={handleOpenRooms}
         onBack={state.isMobile && state.mobileCanGoBack ? state.handleMobileBack : undefined}
         backLabel={state.isMobile && state.mobileCanGoBack ? state.mobilePrevScreen?.title : undefined}
         soundEnabled={state.soundEnabled}
@@ -237,14 +251,14 @@ export default function StudySpacePage() {
       {/* Bảng phím tắt bàn phím */}
       <StudyShortcutsModal
         isOpen={state.isShortcutsHelpOpen}
-        onClose={() => state.setIsShortcutsHelpOpen(false)}
-        onOpenTour={() => state.setIsTourOpen(true)}
+        onClose={handleCloseShortcuts}
+        onOpenTour={handleOpenTour}
       />
 
       {/* Tour giới thiệu tính năng */}
       <StudyOnboardingTour
         isOpen={state.isTourOpen ? true : undefined}
-        onClose={() => state.setIsTourOpen(false)}
+        onClose={handleCloseTour}
         onOpenScenes={() => state.setIsScenesOpen(true)}
         onOpenMixer={() => state.setIsMixerOpen(true)}
         onTogglePomodoro={() => state.setIsPomodoroVisible((v) => !v)}

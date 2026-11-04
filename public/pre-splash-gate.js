@@ -7,6 +7,18 @@ try {
     cap.Plugins.StatusBar.setOverlaysWebView({ overlay: true });
   }
 
+  var addRule = function (css) {
+    var sheets = document.styleSheets;
+    for (var i = 0; i < sheets.length; i++) {
+      try {
+        var rules = sheets[i].cssRules;
+        sheets[i].insertRule(css, rules.length);
+        return true;
+      } catch (e) {}
+    }
+    return false;
+  };
+
   var KEY = "zenstudy_mobile_splash_completed";
   var q = new URLSearchParams(window.location.search);
   var preview =
@@ -17,6 +29,7 @@ try {
   var shown = !window.sessionStorage.getItem(KEY) || preview;
   if (!shown) {
     var hide = function () {
+      if (addRule("#pre-splash{display:none}")) return true;
       var el = document.getElementById("pre-splash");
       if (!el) return false;
       el.style.display = "none";
@@ -39,17 +52,6 @@ try {
       // Không thêm/sửa nút DOM (kể cả thuộc tính <html> hay thẻ <style>) vì React so
       // khớp với HTML máy chủ và sẽ lỗi hydrate (#418), dựng lại cả cây. Chèn thẳng
       // quy tắc vào stylesheet đã có bằng CSSOM.
-      var addRule = function (css) {
-        var sheets = document.styleSheets;
-        for (var i = 0; i < sheets.length; i++) {
-          try {
-            var rules = sheets[i].cssRules;
-            sheets[i].insertRule(css, rules.length);
-            return true;
-          } catch (e) {}
-        }
-        return false;
-      };
       if (!addRule("#pre-splash .ps-body{opacity:1}")) {
         var body = document.querySelector("#pre-splash .ps-body");
         if (body) body.style.opacity = "1";

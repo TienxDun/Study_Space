@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Scene } from "./study-types";
 import { devWarn } from "@/lib/logger";
@@ -15,12 +15,12 @@ export interface StudyBackgroundProps {
 }
 
 /** Nền nhập vai: crossfade video/ảnh + fallback thumbnail + Spatial Vignette & GPU-accelerated Depth Blur. */
-export const StudyBackground = ({
+export const StudyBackground = memo(function StudyBackground({
   scene,
   isBlurActive = false,
   isMobile = false,
   onLoaded,
-}: StudyBackgroundProps) => {
+}: StudyBackgroundProps) {
   const [hasVideoError, setHasVideoError] = useState(false);
   // Bản 720p có thể chưa được encode/upload: lỗi lần đầu thì dùng bản gốc.
   const [hasMobileSourceError, setHasMobileSourceError] = useState(false);
@@ -158,4 +158,4 @@ export const StudyBackground = ({
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(2,6,23,0.55)_100%)] pointer-events-none" />
     </div>
   );
-};
+});

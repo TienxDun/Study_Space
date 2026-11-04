@@ -3,7 +3,9 @@
  * Cung cấp cấu trúc Heading H1-H3 chuẩn, nội dung phong phú và dễ trích dẫn
  * mà không ảnh hưởng tới trải nghiệm giao diện người dùng (ẩn qua sr-only).
  */
-export function StudySeoSemanticContent() {
+import { memo } from "react";
+
+export const StudySeoSemanticContent = memo(function StudySeoSemanticContent() {
   return (
     <div className="sr-only" aria-hidden="false">
       <header>
@@ -104,4 +106,4 @@ export function StudySeoSemanticContent() {
       </footer>
     </div>
   );
-}
+});

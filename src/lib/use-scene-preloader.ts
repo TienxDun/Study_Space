@@ -138,8 +138,38 @@ export function useScenePreloader({
           img.onload = null;
           img.onerror = null;
         };
+      } else if (preferMobileSource) {
+        // Điện thoại: bản 720p chỉ ~1-2MB và CDN trả cache immutable 1 năm,
+        // nên tải bằng fetch là đủ để lần phát thật lấy từ cache.
+        // Không tạo <video> ẩn: máy yếu phải mở thêm bộ giải mã trong lúc
+        // video cũ đang crossfade -> khựng đúng lúc chuyển cảnh.
+        if (typeof window === "undefined" || typeof fetch !== "function") {
+          finish();
+          return;
+        }
+
+        const controller = new AbortController();
+
+        fetch(preloadUrl, { signal: controller.signal })
+          .then((res) => {
+            if (!res.ok) throw new Error(String(res.status));
+            // Đọc hết để trình duyệt ghi trọn file vào cache.
+            return res.arrayBuffer();
+          })
+          .then(() => finish())
+          .catch((err) => {
+            if (controller.signal.aborted) return;
+            devWarn(`[ScenePreloader] Không thể nạp trước video "${targetScene.name}".`, err);
+            finish();
+          });
+
+        cancelPreviousPreloadRef.current = () => {
+          isFinished = true;
+          if (timerId) clearTimeout(timerId);
+          controller.abort();
+        };
       } else {
-        // VIDEO 4K/1080p: Tạo Video element ngầm để đệm trước
+        // Video 4K/1080p trên máy tính: tạo Video element ngầm để đệm trước
         if (typeof window === "undefined" || !document.createElement) {
           finish();
           return;

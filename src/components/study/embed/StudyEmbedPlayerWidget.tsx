@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { StudyEmbedPlayerWidgetProps } from "./types";
 import { usePipMode } from "./hooks/usePipMode";
@@ -25,7 +25,7 @@ import { useIsMobile } from "@/components/study/mobile/hooks/useIsMobile";
 import { RadioIcon, XIcon, ArrowsInSimpleIcon, ArrowsOutSimpleIcon, CaretLeftIcon } from "@phosphor-icons/react";
 import { saveStorage } from "@/lib/safe-storage";
 
-export const StudyEmbedPlayerWidget = ({
+export const StudyEmbedPlayerWidget = memo(function StudyEmbedPlayerWidget({
   isOpen,
   onClose,
   onOpen,
@@ -35,7 +35,7 @@ export const StudyEmbedPlayerWidget = ({
   onActiveItemChange,
   onBack,
   backLabel,
-}: StudyEmbedPlayerWidgetProps) => {
+}: StudyEmbedPlayerWidgetProps) {
   const isMobile = useIsMobile();
   const {
     isPipMode,
@@ -621,4 +621,4 @@ export const StudyEmbedPlayerWidget = ({
       />
     </>
   );
-};
+});

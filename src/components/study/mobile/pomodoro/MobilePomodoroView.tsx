@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-// Bọc đồng hồ giữa cho mobile: giữ chỗ thoáng, đẩy lên cao để không đè cụm nhạc.
+// Bọc đồng hồ giữa cho mobile: giữ chữ thoáng, đẩy lên cao để không đè cụm nhạc.
 export function MobilePomodoroView({
   children,
   className,

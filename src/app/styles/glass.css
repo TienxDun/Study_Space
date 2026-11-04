@@ -352,3 +352,64 @@
   transform: scale(1.05, 0.92);
   transition-duration: 0.08s;
 }
+
+/* Máy cảm ứng (điện thoại/tablet): bỏ hẳn backdrop-filter.
+   Nền là video đang phát, nên mỗi khung hình trình duyệt phải làm mờ lại
+   vùng kính phía sau -> tụt frame, giật khi cuộn/mở bảng.
+   Thay bằng nền đặc hơn, chữ vẫn đọc rõ. Máy tính (chuột) giữ nguyên kính mờ. */
+@media (pointer: coarse) {
+  .glass-panel,
+  .glass-popover,
+  .glass-hover:hover,
+  .lg-bar,
+  .lg-pill,
+  .lg-bubble,
+  .lg-input,
+  .lg-btn-action,
+  .lg-seg-active {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .glass-panel {
+    background: rgba(0, 0, 0, 0.82);
+  }
+
+  .glass-popover {
+    background: rgba(0, 0, 0, 0.88);
+  }
+
+  .lg-bar {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.09),
+        rgba(255, 255, 255, 0.03) 45%,
+        rgba(255, 255, 255, 0.01)
+      ),
+      rgba(10, 12, 18, 0.88);
+  }
+
+  .lg-bubble {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.18),
+        rgba(255, 255, 255, 0.07) 50%,
+        rgba(255, 255, 255, 0.02)
+      ),
+      rgba(10, 12, 18, 0.9);
+  }
+
+  .lg-input,
+  .lg-btn-action {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.09),
+        rgba(255, 255, 255, 0.03) 45%,
+        rgba(255, 255, 255, 0.01)
+      ),
+      rgba(10, 12, 18, 0.88);
+  }
+}

@@ -151,7 +151,7 @@ export default function RootLayout({
           <>
             <style dangerouslySetInnerHTML={{ __html: PRE_SPLASH_CSS }} />
             <Script src={`${basePath}/pre-splash-gate.js`} strategy="beforeInteractive" />
-            <div id="pre-splash" aria-hidden="true">
+            <div id="pre-splash" aria-hidden="true" suppressHydrationWarning>
               <div className="ps-body">
                 <div className="ps-logo">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
