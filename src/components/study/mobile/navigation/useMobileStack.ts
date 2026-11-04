@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { isNativeApp } from "@/lib/google-sign-in";
+import { exitNativeApp, registerNativeBackHandler } from "@/lib/native-back";
 import type { MobilePanelId } from "../types";
 
 export interface MobileStackItem {
@@ -212,93 +214,110 @@ function getCurrentUrl(): string {
     }
   }, []);
 
-  // Lắng nghe sự kiện popstate của trình duyệt (Hardware Back Button / Safari Edge Swipe)
-  useEffect(() => {
-    const handlePopState = () => {
-      // 1. Bỏ qua các sự kiện popstate do code chủ động lùi (closeAll hoặc chuyển root)
-      if (suppressPopstateCountRef.current > 0) {
-        suppressPopstateCountRef.current -= 1;
-        return;
+  // Một đường xử lý Back duy nhất cho cả popstate (web) và nút Back hệ thống (Android)
+  const handleBackNavigation = useCallback(() => {
+    // 1. Bỏ qua các sự kiện popstate do code chủ động lùi (closeAll hoặc chuyển root)
+    if (suppressPopstateCountRef.current > 0) {
+      suppressPopstateCountRef.current -= 1;
+      return;
+    }
+
+    // 2. Nếu đang trong quá trình thoát app (lần back thứ 2) thì cho trình duyệt back tự nhiên
+    if (isAllowingExitRef.current) return;
+
+    const currentStack = stackRef.current;
+
+    // 3. Nếu đang mở Sheet/Modal trong ngăn xếp:
+    if (currentStack.length > 0) {
+      if (historyEntriesCountRef.current > 0) {
+        historyEntriesCountRef.current -= 1;
       }
 
-      // 2. Nếu đang trong quá trình thoát app (lần back thứ 2) thì cho trình duyệt back tự nhiên
-      if (isAllowingExitRef.current) return;
-
-      const currentStack = stackRef.current;
-
-      // 3. Nếu đang mở Sheet/Modal trong ngăn xếp:
-      if (currentStack.length > 0) {
-        if (historyEntriesCountRef.current > 0) {
-          historyEntriesCountRef.current -= 1;
-        }
-
-        if (currentStack.length <= 1) {
-          // Đã lùi về màn hình chính (đóng sheet gốc)
-          setStack([]);
-          onStackChangeRef.current?.(null, []);
-        } else {
-          // Lùi về màn hình trước trong stack
-          const nextStack = currentStack.slice(0, currentStack.length - 1);
-          setStack(nextStack);
-          onStackChangeRef.current?.(nextStack[nextStack.length - 1], nextStack);
-        }
-        return;
+      if (currentStack.length <= 1) {
+        // Đã lùi về màn hình chính (đóng sheet gốc)
+        setStack([]);
+        onStackChangeRef.current?.(null, []);
+      } else {
+        // Lùi về màn hình trước trong stack
+        const nextStack = currentStack.slice(0, currentStack.length - 1);
+        setStack(nextStack);
+        onStackChangeRef.current?.(nextStack[nextStack.length - 1], nextStack);
       }
+      return;
+    }
 
-      // 4. Nếu đang ở chế độ Zen Mode:
-      // Bấm Back 2 lần trong vòng 2 giây để thoát Zen Mode (lần 1 nhắc nhở, lần 2 thoát Zen)
-      if (isZenModeRef.current) {
-        const now = Date.now();
-        const timeDiff = now - lastZenBackTimeRef.current;
-
-        if (timeDiff <= 2000) {
-          // Lần back thứ 2 trong 2s -> thoát Zen Mode
-          lastZenBackTimeRef.current = 0;
-          toast.dismiss("back-to-exit-zen-toast");
-          ensureRootHistoryGuard();
-          onExitZenRef.current?.();
-        } else {
-          // Lần back đầu tiên -> Chặn thoát, hiện toast nhắc nhở và khôi phục guard state
-          lastZenBackTimeRef.current = now;
-          ensureRootHistoryGuard();
-          toast("Nhấn Back lần nữa để thoát chế độ Zen", {
-            id: "back-to-exit-zen-toast",
-            duration: 2000,
-            position: "bottom-center",
-          });
-        }
-        return;
-      }
-
-      // 5. Nếu đang ở màn hình chính (không có sheet nào mở và không ở Zen Mode):
-      // Áp dụng cơ chế "Bấm Back 2 lần trong vòng 2 giây để thoát"
+    // 4. Nếu đang ở chế độ Zen Mode:
+    // Bấm Back 2 lần trong vòng 2 giây để thoát Zen Mode (lần 1 nhắc nhở, lần 2 thoát Zen)
+    if (isZenModeRef.current) {
       const now = Date.now();
-      const timeDiff = now - lastRootBackTimeRef.current;
+      const timeDiff = now - lastZenBackTimeRef.current;
 
       if (timeDiff <= 2000) {
-        // Lần back thứ 2 trong 2 giây -> cho phép thoát
-        isAllowingExitRef.current = true;
-        toast.dismiss("back-to-exit-toast");
-        if (typeof window !== "undefined") {
-          window.history.back();
-        }
-      } else {
-        // Lần back đầu tiên -> Chặn thoát, hiện toast cảnh báo và khôi phục guard state
-        lastRootBackTimeRef.current = now;
+        // Lần back thứ 2 trong 2s -> thoát Zen Mode
+        lastZenBackTimeRef.current = 0;
+        toast.dismiss("back-to-exit-zen-toast");
         ensureRootHistoryGuard();
-        toast("Nhấn một lần nữa để thoát", {
-          id: "back-to-exit-toast",
+        onExitZenRef.current?.();
+      } else {
+        // Lần back đầu tiên -> Chặn thoát, hiện toast nhắc nhở và khôi phục guard state
+        lastZenBackTimeRef.current = now;
+        ensureRootHistoryGuard();
+        toast("Nhấn Back lần nữa để thoát chế độ Zen", {
+          id: "back-to-exit-zen-toast",
           duration: 2000,
           position: "bottom-center",
         });
       }
-    };
+      return;
+    }
 
-    window.addEventListener("popstate", handlePopState);
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
+    // 5. Nếu đang ở màn hình chính (không có sheet nào mở và không ở Zen Mode):
+    // Áp dụng cơ chế "Bấm Back 2 lần trong vòng 2 giây để thoát"
+    const now = Date.now();
+    const timeDiff = now - lastRootBackTimeRef.current;
+
+    if (timeDiff <= 2000) {
+      // Lần back thứ 2 trong 2 giây -> cho phép thoát
+      isAllowingExitRef.current = true;
+      toast.dismiss("back-to-exit-toast");
+      if (isNativeApp()) {
+        void exitNativeApp();
+      } else if (typeof window !== "undefined") {
+        window.history.back();
+      }
+    } else {
+      // Lần back đầu tiên -> Chặn thoát, hiện toast cảnh báo và khôi phục guard state
+      lastRootBackTimeRef.current = now;
+      ensureRootHistoryGuard();
+      toast("Nhấn một lần nữa để thoát", {
+        id: "back-to-exit-toast",
+        duration: 2000,
+        position: "bottom-center",
+      });
+    }
   }, [ensureRootHistoryGuard]);
+
+  useEffect(() => {
+    window.addEventListener("popstate", handleBackNavigation);
+    return () => {
+      window.removeEventListener("popstate", handleBackNavigation);
+    };
+  }, [handleBackNavigation]);
+
+  // WebView Android không tự biến Back hệ thống thành popstate: listener này lùi
+  // history của WebView để dùng chung đường xử lý với web. Nếu chưa có entry nào
+  // (pushState thất bại) thì xử lý trực tiếp; lần Back thứ 2 ở màn hình chính do
+  // handleBackNavigation gọi exitNativeApp().
+  useEffect(() => {
+    if (!isNativeApp()) return;
+    return registerNativeBackHandler(() => {
+      if (stackRef.current.length > 0 && historyEntriesCountRef.current <= 0) {
+        handleBackNavigation();
+        return;
+      }
+      window.history.back();
+    });
+  }, [handleBackNavigation]);
 
   return {
     stack,
