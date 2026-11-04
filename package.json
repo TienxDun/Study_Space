@@ -62,6 +62,9 @@
   },
   "overrides": {
     "braces": "^3.0.3",
-    "@grpc/grpc-js": "^1.14.0"
+    "@grpc/grpc-js": "^1.14.0",
+    "@capacitor-firebase/authentication": {
+      "firebase": "$firebase"
+    }
   }
 }
