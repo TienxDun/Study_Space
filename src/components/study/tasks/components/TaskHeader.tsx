@@ -67,9 +67,9 @@ export const TaskHeader = React.memo(function TaskHeader({
   return (
     <div className="flex items-center justify-between px-6 py-3.5 border-b border-white/10 z-20 bg-white/[0.02]">
       {/* Left: Board Selector Pill & Management */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 min-w-0">
         {isEditingBoardTitle ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <input
               type="text"
               value={editingBoardTitleText}
@@ -84,16 +84,16 @@ export const TaskHeader = React.memo(function TaskHeader({
                 }
                 setIsEditingBoardTitle(false);
               }}
-              className="px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 cursor-pointer whitespace-nowrap"
             >
               Lưu
             </button>
           </div>
         ) : (
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <button
               onClick={() => setIsBoardDropdownOpen(!isBoardDropdownOpen)}
-              className="px-3.5 py-1.5 rounded-2xl bg-white/10 hover:bg-white/20 text-sm sm:text-base font-black text-white flex items-center gap-2 transition-all cursor-pointer border border-white/10 shadow-sm max-w-[200px] sm:max-w-xs"
+              className="px-3.5 py-1.5 rounded-2xl bg-white/10 hover:bg-white/20 text-sm sm:text-base font-black text-white flex items-center gap-2 transition-all cursor-pointer border border-white/10 shadow-sm max-w-[200px] sm:max-w-xs whitespace-nowrap"
             >
               <span className="truncate max-w-[110px] sm:max-w-[180px]" title={currentBoard.title}>
                 {currentBoard.title}
@@ -156,7 +156,7 @@ export const TaskHeader = React.memo(function TaskHeader({
             setEditingBoardTitleText(currentBoard.title);
             setIsEditingBoardTitle(true);
           }}
-          className="p-1.5 rounded-xl hover:bg-white/10 text-white/50 hover:text-white transition-colors cursor-pointer"
+          className="p-1.5 rounded-xl hover:bg-white/10 text-white/50 hover:text-white transition-colors cursor-pointer flex-shrink-0"
           title="Sửa tên bảng"
         >
           <PencilLineIcon className="w-3.5 h-3.5" />
@@ -166,7 +166,7 @@ export const TaskHeader = React.memo(function TaskHeader({
         {boards.length > 1 && (
           <button
             onClick={() => promptDeleteBoard(currentBoard)}
-            className="p-1.5 rounded-xl hover:bg-rose-500/20 text-rose-400 transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl hover:bg-rose-500/20 text-rose-400 transition-colors cursor-pointer flex-shrink-0"
             title="Xóa bảng này"
           >
             <TrashIcon className="w-3.5 h-3.5" />
@@ -175,7 +175,7 @@ export const TaskHeader = React.memo(function TaskHeader({
 
         {/* Create Board Button in Header */}
         {isCreatingBoard ? (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <input
               type="text"
               value={newBoardTitle}
@@ -198,7 +198,7 @@ export const TaskHeader = React.memo(function TaskHeader({
               type="button"
               onClick={submitNewBoard}
               disabled={!newBoardTitle.trim()}
-              className="px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 disabled:opacity-40 cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 disabled:opacity-40 cursor-pointer whitespace-nowrap"
             >
               Tạo
             </button>
@@ -208,7 +208,7 @@ export const TaskHeader = React.memo(function TaskHeader({
                 setIsCreatingBoard(false);
                 setNewBoardTitle("");
               }}
-              className="p-1.5 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              className="p-1.5 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-colors cursor-pointer flex-shrink-0"
               title="Hủy"
             >
               <XIcon className="w-3.5 h-3.5" />
@@ -220,19 +220,19 @@ export const TaskHeader = React.memo(function TaskHeader({
               setNewBoardTitle("");
               setIsCreatingBoard(true);
             }}
-            className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center gap-1.5 border border-emerald-400/30 transition-all cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center gap-1.5 border border-emerald-400/30 transition-all cursor-pointer whitespace-nowrap flex-shrink-0"
             title="Tạo bảng mới"
           >
-            <PlusIcon className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Tạo bảng</span>
+            <PlusIcon className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="hidden sm:inline whitespace-nowrap">Tạo bảng</span>
           </button>
         )}
       </div>
 
       {/* Right: Search, Views, Close */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
         {/* Search Bar */}
-        <div className="relative w-44 sm:w-56">
+        <div className="relative w-36 sm:w-44 md:w-56 shrink">
           <MagnifyingGlassIcon className="w-3.5 h-3.5 text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
@@ -252,37 +252,37 @@ export const TaskHeader = React.memo(function TaskHeader({
         </div>
 
         {/* View Switcher */}
-        <div className="flex items-center gap-1 p-1 rounded-full bg-black/40 border border-white/15 backdrop-blur-md">
+        <div className="flex items-center gap-1 p-1 rounded-full bg-black/40 border border-white/15 backdrop-blur-md flex-shrink-0">
           <button
             onClick={() => setViewMode("board")}
-            className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
               viewMode === "board"
                 ? "bg-white/20 text-white shadow-sm font-bold"
                 : "text-white/60 hover:text-white"
             }`}
             title="Chế độ bảng Kanban"
           >
-            <SquaresFourIcon className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Bảng</span>
+            <SquaresFourIcon className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="hidden sm:inline whitespace-nowrap">Bảng</span>
           </button>
           <button
             onClick={() => setViewMode("list")}
-            className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
               viewMode === "list"
                 ? "bg-white/20 text-white shadow-sm font-bold"
                 : "text-white/60 hover:text-white"
             }`}
             title="Chế độ danh sách"
           >
-            <ListIcon className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Danh sách</span>
+            <ListIcon className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="hidden sm:inline whitespace-nowrap">Danh sách</span>
           </button>
         </div>
 
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all cursor-pointer"
+          className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all cursor-pointer flex-shrink-0"
           title="Đóng (Esc)"
         >
           <XIcon className="w-4 h-4" />

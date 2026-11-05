@@ -151,7 +151,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
           handleCardDrop(e, column.id);
         }
       }}
-      className={`w-72 sm:w-80 flex-shrink-0 flex flex-col rounded-3xl backdrop-blur-md border shadow-lg p-3.5 h-fit max-h-[calc(100vh-210px)] transition-all ${
+      className={`w-72 md:w-[290px] xl:w-80 flex-shrink-0 flex flex-col rounded-3xl backdrop-blur-md border shadow-lg p-3.5 min-h-[380px] max-h-[calc(100vh-210px)] transition-all ${
         isColumnDragging
           ? "opacity-25 scale-95 border-dashed border-white/20 bg-white/[0.02] shadow-none"
           : isColCardDragOver
@@ -231,7 +231,7 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
       <div
         onDragOver={(e) => handleCardDragOverCol(e, column.id)}
         onDrop={(e) => handleCardDrop(e, column.id)}
-        className="overflow-y-auto overflow-x-hidden py-2 space-y-2 pr-1 custom-study-scroll"
+        className="flex-1 min-h-[220px] overflow-y-auto overflow-x-hidden py-2 space-y-2 pr-1 custom-study-scroll flex flex-col"
       >
         {(() => {
           // Tính displayCards theo thời gian thực (Live in-place reorder)
@@ -303,6 +303,13 @@ export const KanbanColumnItem = React.memo(function KanbanColumnItem({
             );
           });
         })()}
+
+        {colCards.length === 0 && addingCardColId !== column.id && (!draggingCard || dragOverColId !== column.id) && (
+          <div className="flex-1 min-h-[140px] flex flex-col items-center justify-center p-4 rounded-2xl border border-dashed border-white/5 text-center select-none pointer-events-none">
+            <p className="text-xs text-white/30 font-medium">Chưa có nhiệm vụ</p>
+            <p className="text-[10px] text-white/20 mt-1">Kéo thả thẻ vào đây hoặc nhấn Thêm</p>
+          </div>
+        )}
 
         {/* Modern Inline Quick Add Card */}
         {addingCardColId === column.id && (

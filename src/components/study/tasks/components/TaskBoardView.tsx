@@ -205,7 +205,7 @@ export const TaskBoardView = React.memo(function TaskBoardView({
       <motion.div
         layout
         transition={{ type: "spring", stiffness: 500, damping: 42 }}
-        className="w-72 sm:w-80 flex-shrink-0"
+        className="w-72 md:w-[290px] xl:w-80 flex-shrink-0"
       >
         {isAddingColumn ? (
           <div className="p-3.5 rounded-3xl bg-black/40 border border-white/20 shadow-xl backdrop-blur-xl space-y-3">
