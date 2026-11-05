@@ -7,6 +7,9 @@
   --color-panel-softer: #1e293b; /* ex slate-800 */
   --color-panel-edge: #334155; /* ex slate-700 */
   --color-panel-deep: #0d121f; /* custom scene panel */
+  /* Graphite: chất liệu surface bản cảm ứng, thay nền đen đặc trông như vết đen */
+  --color-graphite-top: #1b2130;
+  --color-graphite-bottom: #141821;
   --color-line: #ffffff; /* viền kính: border-line/10 */
   --color-wash: #ffffff; /* phủ hover: bg-wash/10 */
 

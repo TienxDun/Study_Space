@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Scene } from "./study-types";
 import { devWarn } from "@/lib/logger";
 import { getSceneSourceUrl } from "@/lib/asset-resolver";
+import { useRenderTrace } from "@/components/study/mobile/perf/useRenderTrace";
 
 export interface StudyBackgroundProps {
   scene: Scene;
@@ -21,6 +22,7 @@ export const StudyBackground = memo(function StudyBackground({
   isMobile = false,
   onLoaded,
 }: StudyBackgroundProps) {
+  useRenderTrace("background props", { scene, isBlurActive, isMobile, onLoaded });
   const [hasVideoError, setHasVideoError] = useState(false);
   // Bản 720p có thể chưa được encode/upload: lỗi lần đầu thì dùng bản gốc.
   const [hasMobileSourceError, setHasMobileSourceError] = useState(false);
@@ -34,6 +36,8 @@ export const StudyBackground = memo(function StudyBackground({
 
   // Tab/app bị ẩn (chuyển app, khoá màn hình) thì dừng decode video nền.
   // Nhiều máy vẫn giải mã tiếp khi ẩn tab, đốt pin/GPU mà chẳng ai xem.
+  // Trên điện thoại, khi sheet che gần hết màn hình thì cũng dừng luôn: lớp
+  // kính tĩnh bên dưới đã phủ kín video nên không ai thấy khung hình dừng.
   //
   // Tìm video theo data-scene-id thay vì giữ ref: AnimatePresence giữ video cảnh cũ
   // thêm 0.5s để crossfade, và khi nó unmount React sẽ gán ref = null cho video phần tử.
@@ -44,15 +48,16 @@ export const StudyBackground = memo(function StudyBackground({
         document.querySelectorAll<HTMLVideoElement>("video[data-scene-id]")
       ).find((el) => el.dataset.sceneId === scene.id);
       if (!video) return;
-      if (document.hidden) {
+      if (document.hidden || (isMobile && isBlurActive)) {
         video.pause();
       } else {
         void video.play().catch(() => {});
       }
     };
     document.addEventListener("visibilitychange", syncPlayback);
+    syncPlayback();
     return () => document.removeEventListener("visibilitychange", syncPlayback);
-  }, [scene.id, hasVideoError]);
+  }, [scene.id, hasVideoError, isMobile, isBlurActive]);
 
   // Thông báo sẵn sàng khi bối cảnh đã có hình ảnh hiển thị (Ảnh gốc hoặc Thumbnail Poster của Video)
   useEffect(() => {
@@ -96,7 +101,7 @@ export const StudyBackground = memo(function StudyBackground({
           exit={{ opacity: 0 }}
           // Đổi cảnh nhanh tay (0.5s): 2 video cùng giải mã càng ngắn càng đỡ giật
           transition={{ duration: 0.5, ease: "easeInOut" }}
-          className="absolute inset-0 w-full h-full will-change-[opacity]"
+          className="absolute inset-0 w-full h-full will-change-[opacity] transform-gpu"
         >
           {scene.type === "VIDEO" && !hasVideoError ? (
             <video
@@ -119,11 +124,11 @@ export const StudyBackground = memo(function StudyBackground({
                 setHasVideoError(true);
                 onLoaded?.();
               }}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transform-gpu"
             />
           ) : (
             <div
-              className="w-full h-full bg-cover bg-center"
+              className="w-full h-full bg-cover bg-center transform-gpu"
               style={{
                 backgroundImage: `url('${hasVideoError ? scene.thumbnailUrl : scene.bgUrl}')`,
               }}
@@ -132,27 +137,29 @@ export const StudyBackground = memo(function StudyBackground({
         </motion.div>
       </AnimatePresence>
 
-      {/* GPU-Accelerated Spatial Depth Blur Overlay (Sử dụng Opacity để 60fps mượt mà, không giật lag video) */}
-      {/* Tắt hẳn (visibility) khi mờ về 0 để trình duyệt khỏi chạy backdrop-filter ngầm */}
+      {/* Lớp phủ khi có bảng che nền. Desktop: mờ kính động (backdrop-filter).
+          Điện thoại: lớp phủ tối tĩnh nhẹ nhàng (bg-black/60) để bảo vệ tương phản mà không bắt GPU tính toán blur 26px */}
       <motion.div
         initial={false}
         animate={isBlurActive ? "on" : "off"}
         variants={{
-          on: { opacity: 1, visibility: "visible", transition: { duration: 0.35, ease: "easeOut" } },
+          on: { opacity: 1, visibility: "visible", transition: { duration: 0.25, ease: "easeOut" } },
           off: {
             opacity: 0,
-            transition: { duration: 0.35, ease: "easeOut" },
+            transition: { duration: 0.25, ease: "easeOut" },
             transitionEnd: { visibility: "hidden" },
           },
         }}
-        className="absolute inset-0 bg-slate-950/45 backdrop-blur-md [@media(pointer:coarse)]:backdrop-blur-[2px] [@media(pointer:coarse)]:bg-slate-950/55 pointer-events-none will-change-[opacity]"
+        className={`absolute inset-0 study-bg-overlay pointer-events-none will-change-[opacity] ${
+          isMobile ? "bg-black/60" : "bg-slate-950/45 backdrop-blur-md"
+        }`}
       />
 
-      {/* Cinematic Contrast Shield: Top Scrim Gradient (bảo vệ thanh TopBar) */}
-      <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/75 via-black/30 to-transparent pointer-events-none" />
+      {/* Cinematic Contrast Shield: Top Scrim Gradient (bảo vệ thanh TopBar; mobile thu gọn để không đè nền đen xuống menu chế độ) */}
+      <div className="absolute inset-x-0 top-0 h-16 sm:h-36 bg-gradient-to-b from-black/60 sm:from-black/75 via-black/20 sm:via-black/30 to-transparent pointer-events-none" />
 
-      {/* Cinematic Contrast Shield: Bottom Scrim Gradient (bảo vệ MusicPlayer) */}
-      <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/80 via-black/35 to-transparent pointer-events-none" />
+      {/* Cinematic Contrast Shield: Bottom Scrim Gradient (bảo vệ MusicPlayer; mobile vừa phải để kính lỏng sáng tự nhiên) */}
+      <div className="absolute inset-x-0 bottom-0 h-32 sm:h-44 bg-gradient-to-t from-black/55 sm:from-black/80 via-black/20 sm:via-black/35 to-transparent pointer-events-none" />
 
       {/* Spatial Radial Vignette (làm tối dịu 4 góc màn hình để tập trung vào trung tâm) */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(2,6,23,0.55)_100%)] pointer-events-none" />

@@ -37,7 +37,7 @@ function writePersistedStopwatchState(state: PersistedStopwatchState | null) {
   } catch {}
 }
 
-export function useStopwatchTimer(showMilliseconds = true) {
+export function useStopwatchTimer(showMilliseconds = true, enabled = true) {
   const [stopwatchTime, setStopwatchTime] = useState<number>(() => {
     const saved = readPersistedStopwatchState();
     if (!saved) return 0;
@@ -76,20 +76,31 @@ export function useStopwatchTimer(showMilliseconds = true) {
     isLapsOpenRef.current = isLapsOpen;
   }, [stopwatchTime, isStopwatchRunning, laps, isLapsOpen]);
 
-  // Vòng lặp đếm giờ dựa trên timestamp thực tế để không bị chậm khi máy ngủ
+  const startTimeRef = useRef<number | null>(null);
+
+  // Vòng lặp đếm giờ dựa trên timestamp thực tế để không bị chậm khi máy ngủ (chỉ tick khi enabled)
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (isStopwatchRunning) {
-      const startTime = Date.now() - stopwatchTime;
-      // Chỉ tick 30ms khi thật sự hiển thị ms, còn lại 200ms là đủ mượt cho giây
-      interval = setInterval(() => {
-        setStopwatchTime(Date.now() - startTime);
-      }, showMilliseconds ? 30 : 200);
+      if (startTimeRef.current === null) {
+        startTimeRef.current = Date.now() - stopwatchTimeRef.current;
+      }
+      if (enabled) {
+        const update = () => {
+          if (startTimeRef.current !== null) {
+            setStopwatchTime(Date.now() - startTimeRef.current);
+          }
+        };
+        update();
+        interval = setInterval(update, showMilliseconds ? 30 : 200);
+      }
+    } else {
+      startTimeRef.current = null;
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isStopwatchRunning, showMilliseconds]);
+  }, [isStopwatchRunning, showMilliseconds, enabled]);
 
   // Lưu trạng thái mỗi khi ẩn tab hoặc rời trang
   useEffect(() => {
@@ -122,6 +133,11 @@ export function useStopwatchTimer(showMilliseconds = true) {
   const toggleStopwatch = useCallback(() => {
     setIsStopwatchRunning((prev) => {
       const next = !prev;
+      if (!next) {
+        startTimeRef.current = null;
+      } else {
+        startTimeRef.current = Date.now() - stopwatchTimeRef.current;
+      }
       writePersistedStopwatchState({
         baseTime: stopwatchTimeRef.current,
         isRunning: next,
@@ -134,6 +150,7 @@ export function useStopwatchTimer(showMilliseconds = true) {
   }, []);
 
   const resetStopwatch = useCallback(() => {
+    startTimeRef.current = null;
     setIsStopwatchRunning(false);
     setStopwatchTime(0);
     setLaps([]);

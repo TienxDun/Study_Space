@@ -1,28 +1,39 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
+import { useIsMobile } from "@/components/study/mobile/hooks/useIsMobile";
 
 interface MascotFaceProps {
   size?: number;
   // null = chưa biết, true = nhạc chạy (tươi), false = nhạc dừng (lim dim)
   musicPlaying: boolean | null;
   poking?: boolean;
+  isMobile?: boolean;
 }
 
 const PUPIL_RANGE = 3.5;
 
 // Mặt mèo chill đeo tai nghe: mắt nhìn theo chuột, thỉnh thoảng chớp mắt.
-export const MascotFace = ({ size = 40, musicPlaying, poking = false }: MascotFaceProps) => {
+// Trên mobile: tắt toàn bộ hoạt ảnh (chớp mắt, chuột nhìn theo, nốt nhạc / chữ z bay) để tiết kiệm pin & GPU.
+export const MascotFace = ({
+  size = 40,
+  musicPlaying,
+  poking = false,
+  isMobile: isMobileProp,
+}: MascotFaceProps) => {
   const reduceMotion = useReducedMotion();
+  const detectedMobile = useIsMobile();
+  const isMobile = isMobileProp ?? detectedMobile;
+
   const [blinking, setBlinking] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const leftPupilRef = useRef<SVGGElement>(null);
   const rightPupilRef = useRef<SVGGElement>(null);
 
-  // Mắt nhìn theo chuột: chỉnh trực tiếp để khỏi vẽ lại liên tục
+  // Mắt nhìn theo chuột: trên mobile không cần theo dõi
   useEffect(() => {
-    if (reduceMotion || typeof window === "undefined") return;
+    if (isMobile || reduceMotion || typeof window === "undefined") return;
     let raf = 0;
     const onMove = (e: MouseEvent) => {
       cancelAnimationFrame(raf);
@@ -46,11 +57,11 @@ export const MascotFace = ({ size = 40, musicPlaying, poking = false }: MascotFa
       window.removeEventListener("mousemove", onMove);
       cancelAnimationFrame(raf);
     };
-  }, [reduceMotion]);
+  }, [isMobile, reduceMotion]);
 
-  // Thỉnh thoảng chớp mắt cho có hồn
+  // Thỉnh thoảng chớp mắt cho có hồn: trên mobile tắt để tránh re-render liên tục
   useEffect(() => {
-    if (reduceMotion) return;
+    if (isMobile || reduceMotion) return;
     let alive = true;
     let timer = 0;
     let blinkTimer = 0;
@@ -81,10 +92,10 @@ export const MascotFace = ({ size = 40, musicPlaying, poking = false }: MascotFa
       window.clearTimeout(blinkTimer);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [reduceMotion]);
+  }, [isMobile, reduceMotion]);
 
   const sleepy = musicPlaying === false;
-  const eyesShut = blinking || sleepy;
+  const eyesShut = (blinking && !isMobile) || sleepy;
 
   return (
     <div ref={boxRef} className="relative" style={{ width: size, height: size }}>
@@ -134,36 +145,30 @@ export const MascotFace = ({ size = 40, musicPlaying, poking = false }: MascotFa
           strokeLinecap="round"
         />
       </svg>
-      {/* Nhạc chạy thì nốt nhạc bay, nhạc dừng thì mèo ngủ gật */}
-      {!reduceMotion && musicPlaying && (
+      {/* Nhạc chạy thì nốt nhạc bay, nhạc dừng thì mèo ngủ gật - Tắt hoàn toàn trên điện thoại để tiết kiệm pin & GPU */}
+      {!isMobile && !reduceMotion && musicPlaying && (
         <>
-          <motion.span
+          <span
             aria-hidden="true"
-            className="pointer-events-none absolute -right-1 top-0 text-xs font-bold text-emerald-300"
-            animate={{ y: [0, -5, 0], opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+            className="pointer-events-none absolute -right-1 top-0 text-xs font-bold text-emerald-300 animate-[bounce_2s_infinite] hidden sm:inline"
           >
             ♪
-          </motion.span>
-          <motion.span
+          </span>
+          <span
             aria-hidden="true"
-            className="pointer-events-none absolute -left-1 top-2 text-[10px] font-bold text-emerald-200"
-            animate={{ y: [0, -4, 0], opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+            className="pointer-events-none absolute -left-1 top-2 text-[10px] font-bold text-emerald-200 animate-[bounce_2.5s_infinite_0.5s] hidden sm:inline"
           >
             ♫
-          </motion.span>
+          </span>
         </>
       )}
-      {!reduceMotion && sleepy && (
-        <motion.span
+      {!isMobile && !reduceMotion && sleepy && (
+        <span
           aria-hidden="true"
-          className="pointer-events-none absolute -right-1 top-0 text-xs font-bold text-sky-300"
-          animate={{ y: [0, -4, 0], opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+          className="pointer-events-none absolute -right-1 top-0 text-xs font-bold text-sky-300 animate-[pulse_2.2s_infinite] hidden sm:inline"
         >
           z
-        </motion.span>
+        </span>
       )}
     </div>
   );

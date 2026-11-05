@@ -346,7 +346,7 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
                           setActiveCardIndex(idx);
                         }
                       }}
-                      className="absolute inset-0 rounded-[24px] p-3.5 bg-slate-900/90 border border-white/20 backdrop-blur-md shadow-[0_20px_45px_rgba(0,0,0,0.65)] flex flex-col justify-between cursor-pointer select-none transform-gpu will-change-transform"
+                      className="absolute inset-0 rounded-[24px] p-3.5 surface-graphite border shadow-[0_20px_45px_rgba(0,0,0,0.65)] flex flex-col justify-between cursor-pointer select-none transform-gpu will-change-transform"
                       style={{
                         boxShadow: isFront
                           ? `0 24px 50px -10px rgba(0,0,0,0.7), 0 0 25px ${card.glowColor}`
@@ -475,9 +475,6 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
                   <span>Vào không gian</span>
                   <ArrowRightIcon className="w-3.5 h-3.5 text-white/90 group-hover:translate-x-0.5 transition-transform" weight="bold" />
                 </button>
-
-                {/* Đốm sáng ngón tay quét qua thanh kính */}
-                <span aria-hidden="true" className="lg-spot pointer-events-none" />
               </div>
             </div>
           </motion.div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, startTransition } from "react";
 import Image from "next/image";
 import {
   ArrowsClockwiseIcon,
@@ -73,7 +73,7 @@ export function MobileAccountCard() {
       <button
         onClick={signIn}
         disabled={isSigningIn}
-        className="min-h-[48px] w-full flex items-center justify-center gap-2 px-4 rounded-2xl bg-white text-slate-950 text-sm font-bold active:scale-[0.98] disabled:opacity-60 cursor-pointer"
+        className="min-h-[48px] w-full flex items-center justify-center gap-2 px-4 rounded-2xl bg-white text-slate-950 text-sm font-bold active:scale-[0.98] disabled:opacity-60 cursor-pointer touch-manipulation"
       >
         {isSigningIn ? (
           <CircleNotchIcon className="w-4 h-4 animate-spin" />
@@ -123,7 +123,7 @@ export function MobileAccountCard() {
             aria-busy={isSyncing || undefined}
             title={isSyncing ? "Đang đồng bộ…" : "Đồng bộ dữ liệu"}
             aria-label={isSyncing ? "Đang đồng bộ dữ liệu" : "Đồng bộ dữ liệu"}
-            className="w-10 h-10 grid place-items-center rounded-full border border-white/10 text-slate-300 hover:text-sky-300 hover:border-sky-400/30 active:scale-95 disabled:opacity-60 disabled:cursor-wait transition-colors cursor-pointer"
+            className="w-10 h-10 grid place-items-center rounded-full border border-white/10 text-slate-300 hover:text-sky-300 hover:border-sky-400/30 active:scale-95 disabled:opacity-60 disabled:cursor-wait transition-colors cursor-pointer touch-manipulation"
           >
             {isSyncing ? (
               <CircleNotchIcon className="w-[18px] h-[18px] text-sky-400 animate-spin" weight="bold" />
@@ -138,7 +138,7 @@ export function MobileAccountCard() {
             aria-busy={isSigningOut || undefined}
             title={isSigningOut ? "Đang đăng xuất…" : "Đăng xuất"}
             aria-label={isSigningOut ? "Đang đăng xuất" : "Đăng xuất"}
-            className="w-10 h-10 grid place-items-center rounded-full border border-white/10 text-slate-300 hover:text-rose-200 hover:border-rose-400/30 active:scale-95 disabled:opacity-60 disabled:cursor-wait transition-colors cursor-pointer"
+            className="w-10 h-10 grid place-items-center rounded-full border border-white/10 text-slate-300 hover:text-rose-200 hover:border-rose-400/30 active:scale-95 disabled:opacity-60 disabled:cursor-wait transition-colors cursor-pointer touch-manipulation"
           >
             {isSigningOut ? (
               <CircleNotchIcon className="w-[18px] h-[18px] animate-spin" weight="bold" />
@@ -151,10 +151,14 @@ export function MobileAccountCard() {
 
       <button
         type="button"
-        onClick={() => setIsDeleteOpen(true)}
-        className="group mt-1.5 w-full min-h-[46px] flex items-center gap-3 px-3 py-1 rounded-2xl bg-white/[0.04] hover:bg-rose-500/[0.08] active:scale-[0.98] border border-white/[0.08] hover:border-rose-400/25 transition-all text-left select-none cursor-pointer"
+        onClick={() => {
+          startTransition(() => {
+            setIsDeleteOpen(true);
+          });
+        }}
+        className="group mt-1.5 w-full min-h-[46px] flex items-center gap-3 px-3 py-1 rounded-2xl bg-white/[0.04] hover:bg-rose-500/[0.08] active:bg-rose-500/[0.12] active:scale-[0.97] border border-white/[0.08] hover:border-rose-400/25 transition-[background-color,border-color,transform] duration-75 text-left select-none cursor-pointer touch-manipulation"
       >
-        <span className="w-9 h-9 rounded-xl bg-white/[0.08] border border-white/[0.15] flex items-center justify-center shrink-0 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] transition-transform group-hover:scale-105">
+        <span className="w-9 h-9 rounded-xl bg-white/[0.08] border border-white/[0.15] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
           <TrashIcon className="w-5 h-5 text-rose-300" />
         </span>
         <span className="min-w-0 flex-1">

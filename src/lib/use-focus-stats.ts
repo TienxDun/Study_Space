@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FocusSummary,
   EVENT_FOCUS_SESSION_LOGGED,
@@ -15,6 +15,15 @@ export type FocusStatsPeriod = "today" | "week" | "month" | "all";
 
 const EMPTY: FocusSummary = { totalSeconds: 0, sessions: 0, byTask: [] };
 
+/**
+ * Dấu vân tắt nội dung thống kê. getFocusSummary luôn trả object mới, nên nếu
+ * so theo danh tính thì mỗi lần refresh (kể cả khi dữ liệu y hệt) đều kéo theo
+ * một commit thừa. So chuỗi này thay cho việc đó.
+ */
+function summarySignature(s: FocusSummary): string {
+  return `${s.totalSeconds}|${s.sessions}|${s.byTask.map((t) => `${t.taskId}:${t.focusSeconds}`).join(",")}`;
+}
+
 /** Đọc tổng hợp focus theo kỳ, tự refresh khi có phiên mới/cross-tab/quay lại tab. */
 export function useFocusStats(period: FocusStatsPeriod = "today"): FocusSummary {
   const compute = useCallback((): FocusSummary => {
@@ -27,9 +36,16 @@ export function useFocusStats(period: FocusStatsPeriod = "today"): FocusSummary 
   }, [period]);
 
   const [summary, setSummary] = useState<FocusSummary>(EMPTY);
+  const signatureRef = useRef(summarySignature(EMPTY));
 
   useEffect(() => {
-    const refresh = () => setSummary(compute());
+    const refresh = () => {
+      const next = compute();
+      const sig = summarySignature(next);
+      if (sig === signatureRef.current) return;
+      signatureRef.current = sig;
+      setSummary(next);
+    };
     refresh();
     window.addEventListener(EVENT_FOCUS_SESSION_LOGGED, refresh);
     window.addEventListener("storage", refresh);
@@ -57,11 +73,18 @@ export function useFocusStatsPair(): { today: FocusSummary; week: FocusSummary }
     today: EMPTY,
     week: EMPTY,
   });
+  const signatureRef = useRef(
+    `${summarySignature(EMPTY)}#${summarySignature(EMPTY)}`
+  );
 
   useEffect(() => {
     const refresh = () => {
       const sessions = focusSessionStore.list();
-      setPair({ today: getTodaySummary(sessions), week: getWeekSummary(sessions) });
+      const next = { today: getTodaySummary(sessions), week: getWeekSummary(sessions) };
+      const sig = `${summarySignature(next.today)}#${summarySignature(next.week)}`;
+      if (sig === signatureRef.current) return;
+      signatureRef.current = sig;
+      setPair(next);
     };
     refresh();
     window.addEventListener(EVENT_FOCUS_SESSION_LOGGED, refresh);

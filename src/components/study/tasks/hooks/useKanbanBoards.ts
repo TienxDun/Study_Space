@@ -18,6 +18,23 @@ import { DEFAULT_BOARDS } from "../constants/default-boards";
 const STORAGE_KEY = STORAGE_KEYS.kanbanBoards;
 const ACTIVE_BOARD_KEY = STORAGE_KEYS.activeBoard;
 
+// Cùng chuỗi thô => trả về đúng mảng đã parse lần trước. Hai instance của hook
+// (widget desktop + sheet mobile) dùng chung một danh tính, và setBoards không
+// sinh commit thừa mỗi lần mở sheet khi dữ liệu thực ra không đổi.
+let boardsRawCache: { raw: string; boards: KanbanBoard[] } | null = null;
+
+function parseBoards(raw: string): KanbanBoard[] | null {
+  if (boardsRawCache && boardsRawCache.raw === raw) return boardsRawCache.boards;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
+    boardsRawCache = { raw, boards: parsed as KanbanBoard[] };
+    return boardsRawCache.boards;
+  } catch {
+    return null;
+  }
+}
+
 export function useKanbanBoards() {
   const [boards, setBoards] = useState<KanbanBoard[]>(DEFAULT_BOARDS);
   const [activeBoardId, setActiveBoardId] = useState<string>("board-default");
@@ -72,16 +89,7 @@ export function useKanbanBoards() {
   const loadFromStorage = useCallback(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setBoards(parsed);
-        } else {
-          setBoards(DEFAULT_BOARDS);
-        }
-      } else {
-        setBoards(DEFAULT_BOARDS);
-      }
+      setBoards((saved ? parseBoards(saved) : null) ?? DEFAULT_BOARDS);
       const savedActive = localStorage.getItem(ACTIVE_BOARD_KEY);
       if (savedActive) {
         setActiveBoardId(savedActive);
@@ -124,11 +132,9 @@ export function useKanbanBoards() {
       try {
         const custom = e as CustomEvent<{ taskId: string; newCount: number }>;
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setBoards(parsed);
-          }
+        const parsed = saved ? parseBoards(saved) : null;
+        if (parsed) {
+          setBoards(parsed);
         }
         if (custom.detail?.taskId) {
           setSelectedCard((prev) => {

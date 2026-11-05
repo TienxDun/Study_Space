@@ -44,7 +44,7 @@ export const TimerActionControls = memo(function TimerActionControls({
             <button
               type="button"
               onClick={onResetPomo}
-              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
               title="Đặt lại từ đầu"
             >
               <ArrowCounterClockwiseIcon className="w-5 h-5 transition-transform duration-200 group-hover:-rotate-45" />
@@ -55,7 +55,7 @@ export const TimerActionControls = memo(function TimerActionControls({
           <button
             type="button"
             onClick={onTogglePomoRunning}
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white text-slate-950 hover:bg-slate-100 flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-[0_0_28px_rgba(255,255,255,0.4),0_8px_25px_rgba(0,0,0,0.5)] cursor-pointer select-none"
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white text-slate-950 hover:bg-slate-100 flex items-center justify-center transition-transform duration-75 hover:scale-105 active:scale-95 shadow-[0_4px_16px_rgba(0,0,0,0.4),0_0_14px_rgba(255,255,255,0.35)] cursor-pointer select-none touch-manipulation will-change-transform"
             title={isPomoRunning ? "Tạm dừng" : "Bắt đầu tập trung"}
           >
             {isPomoRunning ? (
@@ -70,7 +70,7 @@ export const TimerActionControls = memo(function TimerActionControls({
             <button
               type="button"
               onClick={onSkipPomo}
-              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
               title="Bỏ qua / Hoàn thành phiên"
             >
               <SkipForwardIcon className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -83,7 +83,7 @@ export const TimerActionControls = memo(function TimerActionControls({
           <button
             type="button"
             onClick={onResetStopwatch}
-            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all active:scale-90 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
+            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
             title="Đặt lại từ đầu"
           >
             <ArrowCounterClockwiseIcon className="w-5 h-5 transition-transform duration-200 group-hover:-rotate-45" />
@@ -93,7 +93,7 @@ export const TimerActionControls = memo(function TimerActionControls({
           <button
             type="button"
             onClick={onToggleStopwatch}
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white text-slate-950 hover:bg-slate-100 flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-[0_0_28px_rgba(255,255,255,0.4),0_8px_25px_rgba(0,0,0,0.5)] cursor-pointer select-none"
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white text-slate-950 hover:bg-slate-100 flex items-center justify-center transition-transform duration-75 hover:scale-105 active:scale-95 shadow-[0_4px_16px_rgba(0,0,0,0.4),0_0_14px_rgba(255,255,255,0.35)] cursor-pointer select-none touch-manipulation will-change-transform"
             title={isStopwatchRunning ? "Tạm dừng" : "Bắt đầu bấm giờ"}
           >
             {isStopwatchRunning ? (
@@ -108,7 +108,7 @@ export const TimerActionControls = memo(function TimerActionControls({
             type="button"
             onClick={onAddLap}
             disabled={!isStopwatchRunning}
-            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all ${
+            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-transform duration-75 touch-manipulation ${
               isStopwatchRunning
                 ? "text-slate-300 hover:text-white hover:bg-white/10 active:scale-90 cursor-pointer drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] group"
                 : "text-white/20 cursor-not-allowed drop-shadow-none"

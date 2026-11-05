@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { TimerIcon, CheckSquareIcon, NotePencilIcon, MusicNoteIcon, DotsThreeIcon } from "@phosphor-icons/react";
 import type { MobileNavId } from "./types";
 import { MobileNavItem } from "./MobileNavItem";
+import { useRenderTrace } from "../perf/useRenderTrace";
+import { yieldToPaint } from "../perf/yieldToPaint";
+import { preloadCriticalSheets } from "../sheets/sheet-preloader";
 import { cn } from "@/lib/utils";
 
 interface StudyMobileNavProps {
@@ -20,7 +23,7 @@ const ITEMS: { id: MobileNavId; label: string; icon: (active: boolean) => React.
     label: "Giờ",
     icon: (a) => (
       <TimerIcon
-        className={cn("h-[22px] w-[22px] transition-all duration-200", a ? "text-white" : "text-slate-300/75")}
+        className={cn("h-[22px] w-[22px] transition-colors duration-200", a ? "text-white" : "text-slate-300/75")}
         weight={a ? "fill" : "duotone"}
       />
     ),
@@ -30,7 +33,7 @@ const ITEMS: { id: MobileNavId; label: string; icon: (active: boolean) => React.
     label: "Việc",
     icon: (a) => (
       <CheckSquareIcon
-        className={cn("h-[22px] w-[22px] transition-all duration-200", a ? "text-white" : "text-slate-300/75")}
+        className={cn("h-[22px] w-[22px] transition-colors duration-200", a ? "text-white" : "text-slate-300/75")}
         weight={a ? "fill" : "duotone"}
       />
     ),
@@ -40,7 +43,7 @@ const ITEMS: { id: MobileNavId; label: string; icon: (active: boolean) => React.
     label: "Ghi chú",
     icon: (a) => (
       <NotePencilIcon
-        className={cn("h-[22px] w-[22px] transition-all duration-200", a ? "text-white" : "text-slate-300/75")}
+        className={cn("h-[22px] w-[22px] transition-colors duration-200", a ? "text-white" : "text-slate-300/75")}
         weight={a ? "fill" : "duotone"}
       />
     ),
@@ -50,7 +53,7 @@ const ITEMS: { id: MobileNavId; label: string; icon: (active: boolean) => React.
     label: "Nhạc",
     icon: (a) => (
       <MusicNoteIcon
-        className={cn("h-[22px] w-[22px] transition-all duration-200", a ? "text-white" : "text-slate-300/75")}
+        className={cn("h-[22px] w-[22px] transition-colors duration-200", a ? "text-white" : "text-slate-300/75")}
         weight={a ? "fill" : "duotone"}
       />
     ),
@@ -60,7 +63,7 @@ const ITEMS: { id: MobileNavId; label: string; icon: (active: boolean) => React.
     label: "Thêm",
     icon: (a) => (
       <DotsThreeIcon
-        className={cn("h-[22px] w-[22px] transition-all duration-200", a ? "text-white" : "text-slate-300/75")}
+        className={cn("h-[22px] w-[22px] transition-colors duration-200", a ? "text-white" : "text-slate-300/75")}
         weight="bold"
       />
     ),
@@ -73,42 +76,32 @@ export const StudyMobileNav = React.memo(function StudyMobileNav({
   onSelect,
   hasEntered = true,
 }: StudyMobileNavProps) {
-  const cachedRectRef = useRef<DOMRect | null>(null);
-  const rafRef = useRef<number | null>(null);
-
-  // Đốm sáng đi theo ngón tay: cache rect khi chạm để không gây layout reflow
-  const updateSpot = (clientX: number, clientY: number, el: HTMLDivElement) => {
-    if (!cachedRectRef.current) {
-      cachedRectRef.current = el.getBoundingClientRect();
-    }
-    const rect = cachedRectRef.current;
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(() => {
-      el.style.setProperty("--mx", `${((clientX - rect.left) / rect.width) * 100}%`);
-      el.style.setProperty("--my", `${((clientY - rect.top) / rect.height) * 100}%`);
-    });
-  };
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    const el = e.currentTarget;
-    cachedRectRef.current = el.getBoundingClientRect();
-    updateSpot(e.clientX, e.clientY, el);
-    el.classList.add("is-touching");
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    updateSpot(e.clientX, e.clientY, e.currentTarget);
-  };
-
-  const handlePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
-    cachedRectRef.current = null;
-    e.currentTarget.classList.remove("is-touching");
-  };
+  useRenderTrace("nav props", { active, onSelect, hasEntered });
 
   const [mounted, setMounted] = useState(false);
+  const [localActive, setLocalActive] = useState<string | null>(active);
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setLocalActive(active);
+  }, [active]);
+
+  const handleSelect = useCallback(
+    (id: MobileNavId) => {
+      // 1. Phản hồi thị giác nút bấm tức thì trong frame hiện tại (< 2ms)
+      setLocalActive(id);
+
+      // 2. Nhường quyền vẽ (Next Paint) cho trình duyệt ngay lập tức (< 16ms -> INP Xanh tuyệt đối).
+      // Ngay frame tiếp theo, onSelect mới mount/mở bảng để người dùng không cảm thấy độ trễ.
+      yieldToPaint(() => {
+        onSelect(id);
+      });
+    },
+    [onSelect]
+  );
 
   const navContent = (
     <motion.nav
@@ -128,28 +121,24 @@ export const StudyMobileNav = React.memo(function StudyMobileNav({
       <div className="relative mx-3 pointer-events-auto">
         {/* Thanh capsule kính lỏng: mờ + đậm màu nền, viền sáng trên, bóng trung tính */}
         <div
+          onPointerDown={() => preloadCriticalSheets()}
+          onPointerEnter={() => preloadCriticalSheets()}
           className="lg-bar p-1 flex items-stretch h-[58px] rounded-full overflow-hidden transition-all"
-          onPointerMove={handlePointerMove}
-          onPointerDown={handlePointerDown}
-          onPointerUp={handlePointerEnd}
-          onPointerLeave={handlePointerEnd}
-          onPointerCancel={handlePointerEnd}
         >
           {/* Danh sách 5 nút điều hướng */}
           {ITEMS.map((item) => {
-            const isActive = active === item.id;
+            const currentActive = localActive ?? active;
+            const isActive = currentActive === item.id;
             return (
               <MobileNavItem
                 key={item.id}
                 label={item.label}
                 isActive={isActive}
-                onClick={() => onSelect(item.id)}
+                onClick={() => handleSelect(item.id)}
                 icon={item.icon(isActive)}
               />
             );
           })}
-          {/* Đốm sáng theo tay */}
-          <span aria-hidden="true" className="lg-spot" />
         </div>
       </div>
     </motion.nav>

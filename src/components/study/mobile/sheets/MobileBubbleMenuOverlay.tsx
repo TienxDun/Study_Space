@@ -58,7 +58,7 @@ export function MobileBubbleMenuOverlay({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] bg-black/25 backdrop-blur-[2px]"
+            className="fixed inset-0 z-[70] bg-black/45"
             onClick={(e) => {
               e.stopPropagation();
               onClose();
@@ -74,7 +74,7 @@ export function MobileBubbleMenuOverlay({
             exit={{ opacity: 0, scale: 0.92, y: -6 }}
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
             style={{ top: anchor.top, right: anchor.right }}
-            className="fixed z-[71] w-max min-w-[210px] max-w-[calc(100vw-1.5rem)] p-1.5 rounded-2xl bg-neutral-950/92 backdrop-blur-2xl border border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.85)] text-white select-none"
+            className="fixed z-[71] w-max min-w-[210px] max-w-[calc(100vw-1.5rem)] p-1.5 rounded-2xl surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] text-white select-none"
             onClick={(e) => e.stopPropagation()}
           >
             {children}

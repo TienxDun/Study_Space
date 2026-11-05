@@ -138,10 +138,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Bản shell Android luôn chạy layout mobile: gắn dấu mobile-scope ngay từ
+  // HTML tĩnh để chất liệu surface mobile có hiệu lực từ khung hình đầu.
+  const isMobileShellBuild = process.env.NEXT_PUBLIC_MOBILE_SHELL === "1";
+
   return (
     <html
       lang="vi"
-      className={`${beVietnamPro.variable} font-sans h-full antialiased`}
+      className={`${beVietnamPro.variable} font-sans h-full antialiased${
+        isMobileShellBuild ? " mobile-scope" : ""
+      }`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans overflow-x-hidden bg-[#090d16] text-white">

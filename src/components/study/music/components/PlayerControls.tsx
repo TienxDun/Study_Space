@@ -49,10 +49,10 @@ export function PlayerControls({
       {/* 1. Xáo trộn bài hát */}
       <button
         onClick={onToggleShuffle}
-        className={`relative w-8.5 h-8.5 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer backdrop-blur-md sm:backdrop-blur-none ${
+        className={`relative w-8.5 h-8.5 rounded-full flex items-center justify-center transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation sm:bg-transparent sm:border-0 sm:shadow-none sm:w-8.5 sm:h-8.5 ${
           isShuffle
-            ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)] bg-white/15 hover:bg-white/20 border border-white/25 shadow-[0_2px_8px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.25)] sm:text-accent-music-glow sm:bg-accent-music/20 sm:border-0 sm:shadow-sm sm:hover:bg-accent-music/20 sm:drop-shadow-none"
-            : "text-white/45 hover:text-white/80 bg-white/10 hover:bg-white/15 border border-white/15 shadow-sm sm:text-slate-400 sm:bg-transparent sm:hover:bg-white/10 sm:border-0 sm:shadow-none"
+            ? "glass-round-btn-active text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)] sm:text-accent-music-glow sm:bg-accent-music/20 sm:hover:bg-accent-music/20 sm:drop-shadow-none"
+            : "glass-round-btn text-white/75 hover:text-white sm:text-slate-400 sm:hover:bg-white/10"
         }`}
         title="Xáo trộn bài hát (S)"
         aria-label="Xáo trộn bài hát"
@@ -66,7 +66,7 @@ export function PlayerControls({
       {/* 2. Bài trước đó */}
       <button
         onClick={onPrevTrack}
-        className="w-8.5 h-8.5 rounded-full flex items-center justify-center text-white/80 hover:text-white bg-white/10 hover:bg-white/15 border border-white/15 backdrop-blur-md shadow-sm sm:backdrop-blur-none sm:text-slate-300 sm:bg-transparent sm:hover:bg-white/10 sm:border-0 sm:shadow-none transition-all active:scale-90 cursor-pointer"
+        className="glass-round-btn w-8.5 h-8.5 rounded-full flex items-center justify-center text-white/80 hover:text-white sm:text-slate-300 sm:bg-transparent sm:hover:bg-white/10 sm:border-0 sm:shadow-none transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation"
         title="Bài trước đó (←)"
         aria-label="Bài trước đó"
       >
@@ -83,7 +83,7 @@ export function PlayerControls({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 2, scale: 0.95 }}
               transition={{ duration: 0.18 }}
-              className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-full border border-white/15 bg-black/40 backdrop-blur-2xl px-2.5 py-1 text-[11px] font-medium text-white shadow-lg"
+              className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-full border border-white/20 bg-black/70 backdrop-blur-md px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg"
             >
               {bubble}
             </motion.div>
@@ -95,7 +95,7 @@ export function PlayerControls({
           transition={{ duration: 0.32, ease: "easeOut" }}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.9 }}
-          className={`cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70 ${
+          className={`cursor-pointer rounded-full outline-none touch-manipulation focus-visible:ring-2 focus-visible:ring-emerald-300/70 ${
             musicPlaying ? "drop-shadow-[0_0_10px_rgba(52,211,153,0.6)]" : ""
           }`}
           title={musicPlaying ? "Tạm dừng (Space)" : "Phát nhạc (Space)"}
@@ -108,7 +108,7 @@ export function PlayerControls({
       {/* 4. Bài tiếp theo */}
       <button
         onClick={onNextTrack}
-        className="w-8.5 h-8.5 rounded-full flex items-center justify-center text-white/80 hover:text-white bg-white/10 hover:bg-white/15 border border-white/15 backdrop-blur-md shadow-sm sm:backdrop-blur-none sm:text-slate-300 sm:bg-transparent sm:hover:bg-white/10 sm:border-0 sm:shadow-none transition-all active:scale-90 cursor-pointer"
+        className="glass-round-btn w-8.5 h-8.5 rounded-full flex items-center justify-center text-white/80 hover:text-white sm:text-slate-300 sm:bg-transparent sm:hover:bg-white/10 sm:border-0 sm:shadow-none transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation"
         title="Bài tiếp theo (→)"
         aria-label="Bài tiếp theo"
       >
@@ -118,10 +118,10 @@ export function PlayerControls({
       {/* 5. Lặp lại danh sách */}
       <button
         onClick={onToggleLoop}
-        className={`relative w-8.5 h-8.5 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer backdrop-blur-md sm:backdrop-blur-none ${
+        className={`relative w-8.5 h-8.5 rounded-full flex items-center justify-center transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation sm:bg-transparent sm:border-0 sm:shadow-none sm:w-8.5 sm:h-8.5 ${
           isLooping
-            ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)] bg-white/15 hover:bg-white/20 border border-white/25 shadow-[0_2px_8px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.25)] sm:text-accent-music-glow sm:bg-accent-music/20 sm:border-0 sm:shadow-sm sm:hover:bg-accent-music/20 sm:drop-shadow-none"
-            : "text-white/45 hover:text-white/80 bg-white/10 hover:bg-white/15 border border-white/15 shadow-sm sm:text-slate-400 sm:bg-transparent sm:hover:bg-white/10 sm:border-0 sm:shadow-none"
+            ? "glass-round-btn-active text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)] sm:text-accent-music-glow sm:bg-accent-music/20 sm:hover:bg-accent-music/20 sm:drop-shadow-none"
+            : "glass-round-btn text-white/75 hover:text-white sm:text-slate-400 sm:hover:bg-white/10"
         }`}
         title="Lặp lại danh sách (L)"
         aria-label="Lặp lại danh sách"

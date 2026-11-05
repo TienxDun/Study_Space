@@ -197,12 +197,13 @@ export const MobileRadialBubbleMenu = React.memo(function MobileRadialBubbleMenu
 
   return (
     <>
-      {/* Backdrop mờ nền khi mở quạt - Thường trực DOM, fade bằng opacity GPU.
-          Đóng thì ẩn hẳn bằng visibility để backdrop-filter không chạy ngầm trên toàn màn hình. */}
+      {/* Lớp nền tối khi mở quạt - Thường trực DOM, fade bằng opacity GPU.
+          Không dùng backdrop-filter: làm mờ toàn màn hình đè lên video đang phát
+          là thứ đốt GPU nhiều nhất, mà người dùng vẫn phân biệt được nhờ nền tối. */}
       <div
         aria-hidden="true"
         onClick={closeMenu}
-        className={`fixed inset-0 z-[55] bg-black/40 backdrop-blur-[2px] sm:hidden transition-all duration-200 ease-out ${
+        className={`fixed inset-0 z-[55] bg-black/55 sm:hidden transition-all duration-200 ease-out ${
           isOpen ? "opacity-100 visible pointer-events-auto" : "opacity-0 invisible pointer-events-none"
         }`}
       />

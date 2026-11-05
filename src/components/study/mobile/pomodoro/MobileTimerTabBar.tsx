@@ -1,8 +1,9 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import type { TimerTab } from "@/components/study/pomodoro/types";
+import { yieldToPaint } from "../perf/yieldToPaint";
 import { cn } from "@/lib/utils";
 
 interface MobileTimerTabBarProps {
@@ -17,69 +18,77 @@ const TABS: { id: TimerTab; label: string }[] = [
   { id: "stopwatch", label: "Stopwatch" },
 ];
 
-// Hàng nút chuyển chế độ RIÊNG cho mobile, kiểu nút kính mẫu 001 Lucianlabs:
-// viên kính trượt lò xo, đốm sáng theo tay, bấm lún như giọt nước.
-// Mỏng nhẹ và tự ẩn khi không dùng tới (cha điều khiển qua visible).
+// Hàng nút chuyển chế độ RIÊNG cho mobile, theo chất liệu kính lỏng:
+// viên kính trượt lò xo, bấm lún như giọt nước.
+// Tối ưu INP: phản hồi visual ngay frame 1 (< 16ms), nhường paint rồi mới cập nhật state nặng ở cha.
 export const MobileTimerTabBar = memo(function MobileTimerTabBar({ currentTab, onSelectTab, visible }: MobileTimerTabBarProps) {
-  // Đốm sáng đi theo ngón tay: chạm đâu sáng đó
-  const handleSpot = (e: React.PointerEvent<HTMLDivElement>) => {
-    const el = e.currentTarget;
-    const rect = el.getBoundingClientRect();
-    el.style.setProperty("--mx", `${((e.clientX - rect.left) / rect.width) * 100}%`);
-    el.style.setProperty("--my", `${((e.clientY - rect.top) / rect.height) * 100}%`);
-  };
+  const [localTab, setLocalTab] = useState<TimerTab>(currentTab);
+
+  useEffect(() => {
+    setLocalTab(currentTab);
+  }, [currentTab]);
+
+  const activeTab = localTab ?? currentTab;
+
+  const handleTabClick = useCallback(
+    (tabId: TimerTab) => {
+      if (tabId === activeTab) return;
+      // 1. Chuyển viên kính active ngay tức thì trong frame 1 (< 2ms)
+      setLocalTab(tabId);
+      // 2. Nhường main-thread để trình duyệt Paint ngay phản hồi bấm nút (< 16ms -> INP Xanh tuyệt đối)
+      // Ngay frame tiếp theo, onSelectTab mới đổi chế độ đồng hồ/pomodoro/stopwatch nặng
+      yieldToPaint(() => {
+        onSelectTab(tabId);
+      });
+    },
+    [activeTab, onSelectTab]
+  );
 
   return (
     <div
       aria-hidden={!visible}
       className={cn(
-        "w-full mb-1 z-20 items-center gap-2.5 transition-all duration-300 flex sm:hidden",
-        // Tự ẩn sau 4 giây: ẩn hẳn bằng visibility để thanh kính (blur 24px) không
-        // chạy backdrop-filter ngầm trên nền video trong suốt phần còn lại của phiên.
+        "w-full max-w-sm mx-auto mb-1 z-20 items-center gap-2.5 transition-all duration-300 flex sm:hidden",
         visible
           ? "opacity-100 visible translate-y-0 pointer-events-auto"
           : "opacity-0 invisible -translate-y-1.5 pointer-events-none"
       )}
     >
-      <div
-        className="lg-bar w-full flex items-center gap-0.5 p-0.5"
-        onPointerMove={handleSpot}
-        onPointerDown={(e) => {
-          handleSpot(e);
-          e.currentTarget.classList.add("is-touching");
-        }}
-        onPointerUp={(e) => e.currentTarget.classList.remove("is-touching")}
-        onPointerLeave={(e) => e.currentTarget.classList.remove("is-touching")}
-        onPointerCancel={(e) => e.currentTarget.classList.remove("is-touching")}
-      >
+      <div className="timer-tab-bar w-full flex items-center gap-0.5 p-0.5">
         {TABS.map((tab) => {
-          const isActive = currentTab === tab.id;
+          const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
-              onClick={() => onSelectTab(tab.id)}
+              type="button"
+              onClick={() => handleTabClick(tab.id)}
               aria-pressed={isActive}
               tabIndex={visible ? 0 : -1}
               className={cn(
-                "lg-seg relative flex-1 min-w-0 inline-flex items-center justify-center rounded-full py-1 min-h-[38px] text-[11px] font-black uppercase tracking-wider text-center cursor-pointer",
-                isActive ? "text-white" : "text-white/80 hover:text-white font-bold"
+                "relative flex-1 min-w-0 inline-flex items-center justify-center rounded-full py-1 min-h-[38px] text-[11px] uppercase tracking-wider text-center cursor-pointer transition-colors duration-150 touch-manipulation",
+                isActive ? "text-white font-black" : "text-white/65 hover:text-white/90 font-bold"
               )}
             >
               {isActive && (
                 <motion.span
                   layoutId="mobile-timer-seg-pill"
                   transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                  className="absolute inset-0 lg-seg-active"
+                  className="absolute inset-0 timer-seg-active pointer-events-none"
                 />
               )}
-              <span className="relative z-10 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+              <span
+                className={cn(
+                  "pointer-events-none relative z-10 transition-colors duration-150",
+                  isActive
+                    ? "drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]"
+                    : "drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
+                )}
+              >
                 {tab.label}
               </span>
             </button>
           );
         })}
-        {/* Đốm sáng theo tay */}
-        <span aria-hidden="true" className="lg-spot" />
       </div>
     </div>
   );

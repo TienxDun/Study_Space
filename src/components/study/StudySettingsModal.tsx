@@ -24,9 +24,10 @@ import { BlockedUsersSection } from "./settings/BlockedUsersSection";
 import { formatStopwatch } from "./pomodoro/utils/timer-formatters";
 
 /** Demo bấm giờ chạy riêng trong cài đặt để thấy ngay .00 khác gì. */
-function StopwatchPreview({ showMs }: { showMs: boolean }) {
+function StopwatchPreview({ showMs, enabled = true }: { showMs: boolean; enabled?: boolean }) {
   const [ms, setMs] = useState(0);
   useEffect(() => {
+    if (!enabled) return;
     const start = Date.now();
     const delay = showMs ? 30 : 200;
     let id: number | undefined;
@@ -41,7 +42,7 @@ function StopwatchPreview({ showMs }: { showMs: boolean }) {
       window.clearInterval(id);
       id = undefined;
     };
-    // Chỉ nhịp khi tab đang hiện — đồng hồ demo 30ms không cần chạy khi bị ẩn.
+    // Chỉ nhịp khi tab đang hiện và bảng đang mở — đồng hồ demo 30ms không cần chạy ngầm.
     const onVisibility = () => (document.hidden ? stopTimer() : startTimer());
     if (!document.hidden) startTimer();
     document.addEventListener("visibilitychange", onVisibility);
@@ -49,7 +50,7 @@ function StopwatchPreview({ showMs }: { showMs: boolean }) {
       stopTimer();
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [showMs]);
+  }, [showMs, enabled]);
   return <span>{formatStopwatch(ms, showMs)}</span>;
 }
 
@@ -198,10 +199,11 @@ export const StudySettingsModal = ({
   const [previewingSoundId, setPreviewingSoundId] = useState<string | null>(null);
 
   // Đồng hồ xem trước chạy thật: gạt nút nào là thấy đổi ngay tại chỗ,
-  // khỏi phải đóng bảng ra nhìn đồng hồ lớn giữa màn hình.
+  // khỏi phải đóng bảng ra nhìn đồng hồ lớn giữa màn hình (chỉ chạy khi modal đang mở).
   const { clockDigits, clockPeriod } = useRealtimeClock({
     showClockSeconds,
     isClock12Hour,
+    enabled: isOpen,
   });
 
   const stepDuration = (key: DurationKey, delta: number) => {
@@ -322,7 +324,7 @@ export const StudySettingsModal = ({
           title="Demo kiểu bấm giờ đã chọn"
         >
           <div className="text-[10px] font-sans font-medium text-slate-500 tracking-normal mb-0.5">Bấm giờ (demo)</div>
-          <StopwatchPreview showMs={showStopwatchMilliseconds} />
+          <StopwatchPreview showMs={showStopwatchMilliseconds} enabled={isOpen} />
         </div>
       </SettingsSection>
 

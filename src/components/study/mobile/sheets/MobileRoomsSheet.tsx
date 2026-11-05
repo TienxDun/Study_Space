@@ -169,6 +169,7 @@ function MobileRoomsSheetBase({
           onBack={onBack}
           backLabel={backLabel}
           sheetId="rooms"
+          keepMounted={false}
           title={
             <span className="text-sm font-bold text-white tracking-tight truncate">
               {joinedRoom}
@@ -215,6 +216,7 @@ function MobileRoomsSheetBase({
           onBack={onBack}
           backLabel={backLabel}
           sheetId="rooms"
+          keepMounted={false}
           title={
             <span>Kiểm tra thiết bị</span>
           }
@@ -241,6 +243,7 @@ function MobileRoomsSheetBase({
       onBack={onBack}
       backLabel={backLabel}
       sheetId="rooms"
+      keepMounted={false}
       title="Phòng học nhóm"
       maxHeightClassName="h-auto max-h-[85dvh]"
       headerRight={

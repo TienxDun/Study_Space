@@ -21,6 +21,8 @@ interface UsePomodoroCountdownOptions {
   onSessionComplete?: (result: PomodoroSessionResult) => void;
   /** Bắn mỗi khi 1 đoạn chạy focus dừng (pause/skip/reset/hết giờ/tắt tab) để ghi log thầm lặng. */
   onFocusSpan?: (span: FocusSpanInfo) => void;
+  /** Chỉ cập nhật timeLeft state vào UI khi tab Pomodoro đang hiển thị. */
+  enabled?: boolean;
 }
 
 /** Giờ đang chạy dở, lưu xuống máy để F5 vẫn nhớ. Tính theo giờ thật
@@ -72,6 +74,7 @@ export function usePomodoroCountdown({
   soundType = "classic_clock",
   onSessionComplete,
   onFocusSpan,
+  enabled = true,
 }: UsePomodoroCountdownOptions) {
   const [pomoMode, setPomoMode] = useState<PomodoroMode>("focus");
   const [timeLeft, setTimeLeft] = useState(durations.focus * 60);
@@ -181,9 +184,16 @@ export function usePomodoroCountdown({
       flushSpan(false);
       saveNow();
     };
+    const onVisibility = () => {
+      if (document.hidden) {
+        saveNow();
+      }
+    };
     window.addEventListener("beforeunload", onUnload);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener("beforeunload", onUnload);
+      document.removeEventListener("visibilitychange", onVisibility);
       flushSpan(false);
     };
   }, [flushSpan]);
@@ -264,9 +274,8 @@ export function usePomodoroCountdown({
     setIsRunning(false);
   }, []);
 
-  // Giờ thay đổi mỗi giây là ghi nhớ ngay để F5 lúc nào cũng còn số mới nhất.
-  // Bỏ qua lần đầu lúc mới mở trang: lúc đó số trên màn hình chưa phải số
-  // thật (số thật đang chờ nhớ lại), ghi lúc này sẽ đè mất số đúng.
+  // Lưu trạng thái khi chuyển chế độ, bắt đầu/dừng hoặc đổi cấu hình thời lượng.
+  // Khi đang chạy, endAt là mốc cố định nên không cần ghi đĩa liên tục mỗi giây.
   const isFirstPersistRunRef = useRef(true);
   useEffect(() => {
     if (isFirstPersistRunRef.current) {
@@ -275,11 +284,12 @@ export function usePomodoroCountdown({
     }
     try {
       const sess = sessionRef.current;
+      const left = timeLeftRef.current;
       writePersistedPomoState({
         mode: pomoMode,
-        timeLeft,
+        timeLeft: left,
         isRunning,
-        endAt: isRunning ? Date.now() + Math.max(0, timeLeft) * 1000 : 0,
+        endAt: isRunning ? Date.now() + Math.max(0, left) * 1000 : 0,
         savedAt: Date.now(),
         plannedSeconds: sess?.plannedSeconds ?? durations[pomoMode] * 60,
         flushedSeconds: sess?.flushedSeconds ?? 0,
@@ -287,7 +297,7 @@ export function usePomodoroCountdown({
         durationsSnapshot: durations,
       });
     } catch {}
-  }, [pomoMode, timeLeft, isRunning, durations]);
+  }, [pomoMode, isRunning, durations]);
 
   // Tự động kích hoạt đếm ngược chế độ Focus khi người dùng bấm Bắt đầu tập trung vào Task
   useEffect(() => {
@@ -435,11 +445,21 @@ export function usePomodoroCountdown({
       if (remaining <= 0) {
         finishSession(true);
       } else {
-        setTimeLeft((prev) => (prev === remaining ? prev : remaining));
+        timeLeftRef.current = remaining;
+        if (enabled) {
+          setTimeLeft((prev) => (prev === remaining ? prev : remaining));
+        }
       }
     }, 250);
     return () => clearInterval(interval);
-  }, [isRunning, finishSession]);
+  }, [isRunning, finishSession, enabled]);
+
+  // Đồng bộ lại timeLeft ngay khi người dùng quay lại tab Pomodoro
+  useEffect(() => {
+    if (enabled && isRunning) {
+      setTimeLeft(timeLeftRef.current);
+    }
+  }, [enabled, isRunning]);
 
   const toggleRunning = useCallback(() => {
     if (isRunningRef.current) {

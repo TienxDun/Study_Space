@@ -43,11 +43,19 @@
   }
 }
 
+/* Mobile: tắt hiệu ứng chạy vô hạn. Mỗi cái là một lớp compositor phải vẽ
+   lại mãi mãi kể cả khi người dùng không chạm vào: đĩa nhạc quay 10s, đốm
+   pulse "đang phát"/"đang ghi", các cột equalizer, chữ shimmer.
+   Giữ animate-spin (chỉ báo đang tải) và animate-bounce (tín hiệu chốc lát). */
+.mobile-scope .animate-ping,
+.mobile-scope [class*="animate-[bounce"],
+.mobile-scope [class*="animate-[spin_"],
+.mobile-scope [class*="animate-[shimmer"] {
+  animation: none;
+}
+
 /* Người dùng chọn giảm chuyển động: tắt hết hiệu ứng chạy */
 @media (prefers-reduced-motion: reduce) {
-  .lg-spot {
-    display: none;
-  }
   .mobile-undo-enter {
     animation: none;
   }

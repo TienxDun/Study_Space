@@ -71,14 +71,14 @@ const TopBarClockButton = ({
       );
     };
     updateTime();
-    const interval = setInterval(updateTime, 1000);
+    const interval = setInterval(updateTime, showClockSeconds ? 1000 : 10000);
     return () => clearInterval(interval);
   }, [showClockSeconds, isClock12Hour]);
 
   return (
     <motion.button
-      layout
-      transition={{ layout: { type: "spring", stiffness: 400, damping: 30 } }}
+
+
       onClick={onToggleClock}
       className={`absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 h-9 hidden lg:inline-flex items-center justify-center px-2.5 sm:px-3 rounded-xl pointer-events-auto group cursor-pointer active:scale-95 will-change-transform transition-all duration-200 select-none ${
         isPomodoroVisible && centerTab === "clock"

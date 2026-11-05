@@ -33,7 +33,7 @@ export const GiantDigitsDisplay = memo(function GiantDigitsDisplay({
       {currentTab === "clock" ? (
         // Giữ nguyên khung, chỉ đổi chữ — không đập đi xây lại mỗi giây
         <div
-          className={`flex items-baseline justify-center whitespace-nowrap font-black tracking-tight text-white drop-shadow-[0_15px_40px_rgba(0,0,0,0.85)] select-none tabular-nums text-center leading-none ${clockSize}`}
+          className={`flex items-baseline justify-center whitespace-nowrap font-black tracking-tight text-white clock-glow sm:drop-shadow-[0_15px_40px_rgba(0,0,0,0.85)] select-none tabular-nums text-center leading-none ${clockSize}`}
         >
           <span>{clockDigits || "00 : 00"}</span>
           {clockPeriod ? (
@@ -43,11 +43,11 @@ export const GiantDigitsDisplay = memo(function GiantDigitsDisplay({
           ) : null}
         </div>
       ) : currentTab === "pomodoro" ? (
-        <div className="text-6xl min-[380px]:text-7xl sm:text-[5rem] font-black tracking-tight text-white drop-shadow-[0_15px_40px_rgba(0,0,0,0.85)] select-none tabular-nums text-center leading-none">
+        <div className="text-6xl min-[380px]:text-7xl sm:text-[5rem] font-black tracking-tight text-white clock-glow sm:drop-shadow-[0_15px_40px_rgba(0,0,0,0.85)] select-none tabular-nums text-center leading-none">
           {formatTime(timeLeft)}
         </div>
       ) : (
-        <div className="text-6xl sm:text-7xl md:text-8xl font-black tracking-tight text-white drop-shadow-[0_15px_40px_rgba(0,0,0,0.85)] select-none tabular-nums text-center leading-none">
+        <div className="text-6xl sm:text-7xl md:text-8xl font-black tracking-tight text-white clock-glow sm:drop-shadow-[0_15px_40px_rgba(0,0,0,0.85)] select-none tabular-nums text-center leading-none">
           {formatStopwatch(stopwatchTime, showStopwatchMilliseconds)}
         </div>
       )}

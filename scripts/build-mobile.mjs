@@ -14,7 +14,19 @@ if (existsSync(stashDir)) {
   process.exit(1);
 }
 
-if (hadApi) renameSync(apiDir, stashDir);
+function safeMove(from, to) {
+  try {
+    renameSync(from, to);
+  } catch (err) {
+    if (process.platform === "win32") {
+      execSync(`powershell -NoProfile -Command "Move-Item -LiteralPath '${from}' -Destination '${to}' -Force"`);
+    } else {
+      throw err;
+    }
+  }
+}
+
+if (hadApi) safeMove(apiDir, stashDir);
 
 // Kiểu sinh từ `next dev` vẫn trỏ tới src/app/api vừa cất đi -> typecheck fail.
 rmSync(path.join(root, ".next", "dev"), { recursive: true, force: true });
@@ -28,7 +40,7 @@ try {
     env: { ...process.env, CF_PAGES: "1", NEXT_PUBLIC_MOBILE_SHELL: "1" },
   });
 } finally {
-  if (hadApi && existsSync(stashDir)) renameSync(stashDir, apiDir);
+  if (hadApi && existsSync(stashDir)) safeMove(stashDir, apiDir);
 }
 
 execSync("node scripts/strip-admin-export.mjs", { stdio: "inherit", shell: true });

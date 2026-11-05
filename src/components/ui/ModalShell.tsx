@@ -24,6 +24,11 @@ export interface ModalShellProps {
   ariaLabel?: string;
   /** Vai trò modal: hộp thường hoặc hộp cảnh báo xóa. */
   role?: "dialog" | "alertdialog";
+  /**
+   * Giữ panel trong DOM sau lần mở đầu, chỉ ẩn bằng display:none khi hoạt ảnh
+   * đóng chạy xong. Mặc định false = mở/dựng, đóng/hủy như cũ.
+   */
+  keepMounted?: boolean;
 }
 
 const DEFAULT_TRANSITION: Transition = {
@@ -35,6 +40,12 @@ function setRef(ref: Ref<HTMLDivElement> | undefined, el: HTMLDivElement | null)
   if (!ref) return;
   if (typeof ref === "function") ref(el);
   else (ref as React.MutableRefObject<HTMLDivElement | null>).current = el;
+}
+
+/** Đọc thời lượng hoạt ảnh đóng để biết lúc nào được phép ẩn panel khỏi màn hình. */
+function getExitDurationMs(exit: TargetAndTransition): number {
+  const raw = (exit.transition as { duration?: unknown } | undefined)?.duration;
+  return (typeof raw === "number" ? raw : 0.22) * 1000;
 }
 
 // Các modal đang mở, xếp theo thứ tự mở. Chỉ modal cuối (trên cùng) được
@@ -58,8 +69,14 @@ export const ModalShell = ({
   transition = DEFAULT_TRANSITION,
   ariaLabel = "Hộp thoại",
   role = "dialog",
+  keepMounted = false,
 }: ModalShellProps) => {
   const [mounted, setMounted] = useState(false);
+  // keepMounted: panel ở lại DOM sau lần mở đầu, chỉ bị display:none khi hoạt
+  // ảnh đóng đã chạy xong. Nhờ vậy mở lại không phải dựng lại cả danh sách.
+  const [hasOpened, setHasOpened] = useState(isOpen);
+  const [exitFinished, setExitFinished] = useState(!isOpen);
+  const exitDurationMs = getExitDurationMs(exit);
   // Lớp thứ 2 trở lên tự nâng z-index để nền mờ luôn phủ lên panel của hộp dưới
   const [layerZ, setLayerZ] = useState<number | null>(null);
   const innerRef = useRef<HTMLDivElement>(null);
@@ -73,6 +90,17 @@ export const ModalShell = ({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!keepMounted) return;
+    if (isOpen) {
+      setHasOpened(true);
+      setExitFinished(false);
+      return;
+    }
+    const t = window.setTimeout(() => setExitFinished(true), exitDurationMs + 80);
+    return () => window.clearTimeout(t);
+  }, [isOpen, keepMounted, exitDurationMs]);
 
   // Mở lên tự vào bảng, Tab xoay vòng bên trong, tắt đi trả về chỗ cũ
   useEffect(() => {
@@ -131,17 +159,27 @@ export const ModalShell = ({
     };
     }, [isOpen, mounted]);
 
+  const isHidden = keepMounted && !isOpen && exitFinished;
+  const backdropStyle = {
+    ...(layerZ !== null ? { zIndex: layerZ } : null),
+    ...(isHidden ? { display: "none" as const } : null),
+  };
+  const panelStyle = {
+    ...(layerZ !== null ? { zIndex: layerZ + 10 } : null),
+    ...(isHidden ? { display: "none" as const } : null),
+  };
+
   const content = (
     <AnimatePresence>
-      {isOpen && (
+      {(isOpen || (keepMounted && hasOpened)) && (
         <>
           <motion.div
             key={`${panelKey}-backdrop`}
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            animate={keepMounted && !isOpen ? { opacity: 0 } : { opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            style={layerZ !== null ? { zIndex: layerZ } : undefined}
+            style={backdropStyle}
             className={cn(
               "fixed inset-0 z-40 bg-black/10 cursor-default",
               backdropClassName
@@ -160,10 +198,10 @@ export const ModalShell = ({
             aria-label={ariaLabel}
             tabIndex={-1}
             initial={initial}
-            animate={animate}
+            animate={keepMounted && !isOpen ? exit : animate}
             exit={exit}
             transition={transition}
-            style={layerZ !== null ? { zIndex: layerZ + 10 } : undefined}
+            style={panelStyle}
             className={cn(panelClassName, "will-change-transform focus:outline-none")}
           >
             {children}

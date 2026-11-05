@@ -18,6 +18,8 @@ const eslintConfig = defineConfig([
     ".wrangler/**",
     "out/**",
     "build/**",
+    "android/**",
+    "dist-admin/**",
     "next-env.d.ts",
     "tsconfig.tsbuildinfo",
     ".agents/**",

@@ -12,11 +12,11 @@ export function MobilePomodoroView({
 }) {
   return (
     <div
-      className={`w-full flex justify-center -mt-6 min-[380px]:-mt-4 sm:mt-0 sm:contents${
+      className={`w-full flex justify-center -mt-6 min-[380px]:-mt-4 sm:mt-0 sm:contents contain-layout${
         className ? ` ${className}` : ""
       }`}
     >
-      <div className="w-full flex justify-center">{children}</div>
+      <div className="w-full flex justify-center contain-paint transform-gpu">{children}</div>
     </div>
   );
 }

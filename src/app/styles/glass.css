@@ -13,7 +13,7 @@
 
 /* Tablet / điện thoại (cảm ứng): giảm mờ kính còn 1/3 để mở bảng mượt hơn.
    Máy tính giữ nguyên không đổi. */
-@media (pointer: coarse) {
+@media (pointer: coarse), (max-width: 639px) {
   .glass-panel {
     background: rgba(0, 0, 0, 0.55);
     backdrop-filter: blur(14px);
@@ -34,7 +34,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-@media (pointer: coarse) {
+@media (pointer: coarse), (max-width: 639px) {
   .glass-popover {
     background: rgba(0, 0, 0, 0.72);
     backdrop-filter: blur(14px);
@@ -68,21 +68,17 @@
 .lg-bar {
   position: relative;
   border-radius: 999px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.09),
-      rgba(255, 255, 255, 0.03) 45%,
-      rgba(255, 255, 255, 0.01)
-    ),
-    rgba(10, 12, 18, 0.3);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.08)
+  );
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.45),
-    inset 0 1px 1px rgba(255, 255, 255, 0.32),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.3);
+    0 10px 28px rgba(0, 0, 0, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.35);
 }
 
 /* Vạch sáng cạnh trên: ánh sáng dội từ trên xuống như kính thật */
@@ -112,17 +108,17 @@
   overflow: hidden;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.18),
-    rgba(255, 255, 255, 0.07) 55%,
-    rgba(255, 255, 255, 0.03)
+    rgba(255, 255, 255, 0.36),
+    rgba(255, 255, 255, 0.16) 60%,
+    rgba(255, 255, 255, 0.1)
   );
   backdrop-filter: blur(16px) saturate(150%);
   -webkit-backdrop-filter: blur(16px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.26);
+  border: 1px solid rgba(255, 255, 255, 0.55);
   box-shadow:
-    inset 0 1px 2px rgba(255, 255, 255, 0.32),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.2),
-    0 4px 14px rgba(0, 0, 0, 0.25);
+    0 4px 14px rgba(0, 0, 0, 0.18),
+    inset 0 1px 2px rgba(255, 255, 255, 0.7),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.15);
 }
 
 /* Bóng gương nửa trên của viên kính */
@@ -142,21 +138,17 @@
   position: relative;
   border-radius: 999px;
   overflow: hidden;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.18),
-      rgba(255, 255, 255, 0.07) 50%,
-      rgba(255, 255, 255, 0.02)
-    ),
-    rgba(10, 12, 18, 0.65);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.08)
+  );
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   box-shadow:
-    0 12px 30px rgba(0, 0, 0, 0.45),
-    inset 0 1px 1.5px rgba(255, 255, 255, 0.36),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.25);
+    0 8px 24px rgba(0, 0, 0, 0.2),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -195,26 +187,7 @@
 }
 
 
-/* Đốm sáng đi theo ngón tay trên thanh kính (học từ mẫu 001 Lucianlabs) */
-.lg-spot {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: var(--spot, 0);
-  transition: opacity 0.4s ease;
-  background: radial-gradient(
-    120px 60px at var(--mx, 50%) var(--my, 0%),
-    rgba(255, 255, 255, 0.22),
-    transparent 70%
-  );
-}
-
-.lg-bar.is-touching {
-  --spot: 1;
-}
-
-/* Viên kính cho nút đang chọn trong cụm nút gạt (học từ mẫu 001 Lucianlabs) */
+/* Viên kính cho nút đang chọn trong cụm nút gạt */
 .lg-seg-active {
   position: absolute;
   inset: 0;
@@ -233,6 +206,92 @@
     inset 0 1px 2px rgba(255, 255, 255, 0.4),
     inset 0 -1px 1px rgba(0, 0, 0, 0.25),
     0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+/* Thanh chuyển chế độ Pomodoro/Đồng hồ mobile: Kính trắng mờ trong suốt (Frosted Liquid Glass) */
+.timer-tab-bar {
+  position: relative;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.08)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.12),
+    inset 0 1px 1px rgba(255, 255, 255, 0.35);
+}
+
+.timer-tab-bar::before {
+  content: "";
+  position: absolute;
+  left: 1.5rem;
+  right: 1.5rem;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.5),
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* Viên trượt active: Kính lỏng phát sáng (Luminous Frosted Glass - visionOS style) */
+.timer-seg-active {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.36),
+    rgba(255, 255, 255, 0.16) 60%,
+    rgba(255, 255, 255, 0.1)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.18),
+    inset 0 1px 2px rgba(255, 255, 255, 0.7),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.15);
+}
+
+/* Nút tròn kính lỏng (Player Controls & Circular Buttons) */
+.glass-round-btn {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.18),
+    rgba(255, 255, 255, 0.08) 60%,
+    rgba(255, 255, 255, 0.04)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.glass-round-btn:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.26),
+    rgba(255, 255, 255, 0.12) 60%,
+    rgba(255, 255, 255, 0.06)
+  );
+  border-color: rgba(255, 255, 255, 0.38);
+}
+
+.glass-round-btn-active {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.36),
+    rgba(255, 255, 255, 0.16) 60%,
+    rgba(255, 255, 255, 0.1)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.18),
+    inset 0 1px 2px rgba(255, 255, 255, 0.7);
 }
 
 
@@ -353,11 +412,42 @@
   transition-duration: 0.08s;
 }
 
+/* Chất liệu graphite: surface không mờ kính nhưng vẫn có chiều sâu nhờ
+   gradient than-xanh + ánh sáng dội ở mép trên. Dùng cho các surface nổi
+   trực tiếp trên video đang phát (thẻ màn chào, snackbar). */
+@utility surface-graphite {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.06),
+      rgba(255, 255, 255, 0.015) 42%,
+      rgba(255, 255, 255, 0)
+    ),
+    linear-gradient(180deg, var(--color-graphite-top), var(--color-graphite-bottom));
+  border-color: rgba(255, 255, 255, 0.34);
+}
+
+/* Kính tĩnh: chỉ dùng cho bảng/modal/popovers hiện ra KHI LỚP KÍNH TĨNH
+   (study-bg-overlay bản mobile) đang bật phía sau, vì nền bán trong 68%
+   vẫn cho màu cảnh đã làm mờ rò qua mà chữ không bị ảnh sau lưng đè lên.
+   Viền trắng sáng bậc 0.30 - không đổi màu theo bối cảnh. */
+@utility surface-frost {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0.04) 45%,
+      rgba(255, 255, 255, 0.015)
+    ),
+    rgba(16, 20, 30, 0.68);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
 /* Máy cảm ứng (điện thoại/tablet): bỏ hẳn backdrop-filter.
    Nền là video đang phát, nên mỗi khung hình trình duyệt phải làm mờ lại
    vùng kính phía sau -> tụt frame, giật khi cuộn/mở bảng.
    Thay bằng nền đặc hơn, chữ vẫn đọc rõ. Máy tính (chuột) giữ nguyên kính mờ. */
-@media (pointer: coarse) {
+@media (pointer: coarse), (max-width: 639px) {
   .glass-panel,
   .glass-popover,
   .glass-hover:hover,
@@ -366,28 +456,75 @@
   .lg-bubble,
   .lg-input,
   .lg-btn-action,
-  .lg-seg-active {
+  .lg-seg-active,
+  .study-bg-overlay,
+  [class*="backdrop-blur"] {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    /* Utility Tailwind tự ghép backdrop-filter từ biến --tw-backdrop-blur,
+       còn minifier hay bỏ khai báo không tiền tố. Reset biến là chắc chắn
+       hết mờ kính trên Android WebView kể cả khi dòng trên bị cắt. */
+    --tw-backdrop-blur: initial;
   }
 
+  /* study-bg-overlay bản mobile tự mang ảnh cảnh đã mờ tĩnh bên trong,
+     không cần nền đặc hay backdrop-filter ở lớp ngoài nữa. */
+
   .glass-panel {
-    background: rgba(0, 0, 0, 0.82);
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0.04) 45%,
+        rgba(255, 255, 255, 0.015)
+      ),
+      rgba(16, 20, 30, 0.66);
+    border-color: rgba(255, 255, 255, 0.3);
   }
 
   .glass-popover {
-    background: rgba(0, 0, 0, 0.88);
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.11),
+        rgba(255, 255, 255, 0.05) 45%,
+        rgba(255, 255, 255, 0.02)
+      ),
+      rgba(16, 20, 30, 0.7);
+    border-color: rgba(255, 255, 255, 0.34);
   }
 
+  /* Chrome nổi trực tiếp trên video đang phát: Kính lỏng phát sáng bán trong suốt (Frosted Liquid Glass),
+     hòa quyện với bối cảnh nhưng vẫn bảo đảm độ tương phản cho icon và chữ. */
   .lg-bar {
     background:
       linear-gradient(
         180deg,
-        rgba(255, 255, 255, 0.09),
-        rgba(255, 255, 255, 0.03) 45%,
-        rgba(255, 255, 255, 0.01)
+        rgba(255, 255, 255, 0.16),
+        rgba(255, 255, 255, 0.06) 60%,
+        rgba(255, 255, 255, 0.02)
       ),
-      rgba(10, 12, 18, 0.88);
+      rgba(10, 14, 24, 0.38);
+    border-color: rgba(255, 255, 255, 0.24);
+    box-shadow:
+      0 6px 20px rgba(0, 0, 0, 0.2),
+      inset 0 1px 1px rgba(255, 255, 255, 0.35),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Viên kính "đang chọn" trong menu đáy: Kính lỏng phát sáng (Luminous Frosted Glass) */
+  .lg-pill {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.36),
+      rgba(255, 255, 255, 0.16) 60%,
+      rgba(255, 255, 255, 0.1)
+    );
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow:
+      0 2px 10px rgba(0, 0, 0, 0.2),
+      inset 0 1px 2px rgba(255, 255, 255, 0.7),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.15);
   }
 
   .lg-bubble {
@@ -398,7 +535,8 @@
         rgba(255, 255, 255, 0.07) 50%,
         rgba(255, 255, 255, 0.02)
       ),
-      rgba(10, 12, 18, 0.9);
+      rgba(10, 14, 24, 0.38);
+    border-color: rgba(255, 255, 255, 0.28);
   }
 
   .lg-input,
@@ -406,10 +544,139 @@
     background:
       linear-gradient(
         180deg,
-        rgba(255, 255, 255, 0.09),
-        rgba(255, 255, 255, 0.03) 45%,
+        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0.035) 45%,
         rgba(255, 255, 255, 0.01)
       ),
-      rgba(10, 12, 18, 0.88);
+      linear-gradient(180deg, rgba(27, 33, 48, 0.9), rgba(20, 24, 33, 0.92));
+    border-color: rgba(255, 255, 255, 0.3);
   }
 }
+
+/* ============================================================
+   ĐỒNG BỘ CHẤT LIỆU SURFACE TOÀN MOBILE
+   useIsMobile gắn class `mobile-scope` lên <html> (và layout.tsx gắn
+   sẵn cho bản shell Android). Desktop không có class này nên giữ
+   nguyên 100% - kể cả các widget chung (Mixer, Tasks, Notes, Chat,
+   Embed, Rooms) chạy cả hai nơi.
+   Ba việc: (1) mọi viền trung tính về trắng sáng bậc thống nhất,
+   (2) nền trắng lộn xộn ~8 bậc -> 3 bậc rõ nghĩa,
+   (3) mảng đen đặc -> ô lõm than-xanh, hết cảm giác "vết đen".
+   Selector dùng `:not(...)` để surface đã tự viền (lg-*, surface-*)
+   không bị nuốt mất viền đậm của nó.
+   ============================================================ */
+
+/* 1. Gom mọi viền trung tính còn sót về một bậc trắng sáng */
+.mobile-scope
+  [class*="border-white"]:not(.lg-bar):not(.lg-bubble):not(.lg-pill):not(.lg-seg-active):not(.lg-input):not(.lg-btn-action):not(.surface-frost):not(.surface-graphite),
+.mobile-scope
+  [class*="border-line"]:not(.lg-bar):not(.lg-bubble):not(.lg-pill):not(.lg-seg-active):not(.lg-input):not(.lg-btn-action):not(.surface-frost):not(.surface-graphite) {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* Vạch chia và viền rất mờ thì giữ nhẹ tay, đừng sáng bằng viền thẻ */
+.mobile-scope .border-white\/5,
+.mobile-scope .border-white\/\[0\.05\],
+.mobile-scope .border-white\/\[0\.06\],
+.mobile-scope .border-white\/10,
+.mobile-scope .border-white\/\[0\.08\],
+.mobile-scope .border-white\/\[0\.12\],
+.mobile-scope .border-line\/10 {
+  border-color: rgba(255, 255, 255, 0.13);
+}
+
+/* 2. Ba bậc nền trắng: thẻ - control - đang chọn */
+.mobile-scope .bg-white\/\[0\.02\],
+.mobile-scope .bg-white\/\[0\.03\],
+.mobile-scope .bg-white\/\[0\.035\],
+.mobile-scope .bg-white\/\[0\.04\],
+.mobile-scope .bg-white\/\[0\.05\],
+.mobile-scope .bg-white\/5,
+.mobile-scope .bg-white\/\[0\.06\],
+.mobile-scope .bg-white\/6 {
+  background-color: rgba(255, 255, 255, 0.055);
+}
+
+.mobile-scope .bg-white\/\[0\.07\],
+.mobile-scope .bg-white\/\[0\.08\],
+.mobile-scope .bg-white\/8,
+.mobile-scope .bg-white\/10,
+.mobile-scope .bg-white\/\[0\.12\],
+.mobile-scope .bg-white\/12 {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.mobile-scope .bg-white\/15,
+.mobile-scope .bg-white\/\[0\.15\],
+.mobile-scope .bg-white\/20,
+.mobile-scope .bg-white\/\[0\.2\],
+.mobile-scope .bg-white\/25 {
+  background-color: rgba(255, 255, 255, 0.17);
+}
+
+/* 3. Mảng đen đặc -> ô lõm than-xanh (giữ nguyên bậc sáng hơn để
+   chip đè lên ảnh/video vẫn đủ tương phản) */
+.mobile-scope .bg-black\/20,
+.mobile-scope .bg-black\/\[0\.2\],
+.mobile-scope .bg-black\/25,
+.mobile-scope .bg-black\/30 {
+  background-color: rgba(8, 11, 18, 0.35);
+}
+
+.mobile-scope .bg-black\/35,
+.mobile-scope .bg-black\/40,
+.mobile-scope .bg-black\/\[0\.4\],
+.mobile-scope .bg-black\/45,
+.mobile-scope .bg-black\/50,
+.mobile-scope .bg-black\/55,
+.mobile-scope .bg-black\/60 {
+  background-color: rgba(8, 11, 18, 0.55);
+}
+
+.mobile-scope .bg-neutral-950\/70,
+.mobile-scope .bg-neutral-950\/80,
+.mobile-scope .bg-neutral-950\/85,
+.mobile-scope .bg-neutral-950\/90,
+.mobile-scope .bg-neutral-950\/94,
+.mobile-scope .bg-neutral-950\/95,
+.mobile-scope .bg-zinc-950\/70,
+.mobile-scope .bg-slate-950\/85,
+.mobile-scope .bg-slate-950\/90 {
+  background-color: rgba(8, 11, 18, 0.62);
+}
+
+/* Nút kính của màn chào đặt backdrop-filter trong <style> inline nên
+   khối @media (pointer: coarse) phía trên không bắt được - tắt thủ công */
+.mobile-scope .u001-btn {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ============================================================
+   BỎ FILTER VẼ LẠI MỖI FRAME (chỉ mobile)
+   Khối widget giữa màn hình repaint liên tục trên nền video đang
+   phát: số đồng hồ nhảy mỗi giây, stopwatch nhảy mỗi 30 ms, vòng
+   pomodoro đổi stroke-dashoffset mỗi giây. Filter buộc trình duyệt
+   raster lại nguyên lớp mỗi lần nội dung đổi -> GPU hết frame.
+   Desktop không mang .mobile-scope nên giữ nguyên bóng như cũ.
+   ============================================================ */
+
+/* Glow của vòng tiến trình Pomodoro (thay cho style inline cũ) */
+.pomo-ring-glow {
+  filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.8));
+}
+
+/* Chữ số giờ: bỏ filter, thay bằng bóng text - trình duyệt vẽ theo glyph,
+   không phải cả lớp filter riêng */
+.mobile-scope .clock-glow {
+  filter: none;
+  --tw-drop-shadow: none;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+}
+
+/* Vòng pomodoro: bỏ glow và dày thêm 1px nét để vẫn đọc rõ trên nền sáng */
+.mobile-scope .pomo-ring-glow {
+  filter: none;
+  stroke-width: 5;
+}
+

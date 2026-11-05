@@ -150,6 +150,7 @@ export function MobileChatSheet({
       onBack={onBack}
       backLabel={backLabel}
       sheetId="chat"
+      keepMounted={false}
       title="Trợ lý học tập"
       heightClassName="h-[68dvh] max-h-[72dvh]"
       contentScroll={false}

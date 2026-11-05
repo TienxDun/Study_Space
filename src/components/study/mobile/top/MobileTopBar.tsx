@@ -1,27 +1,62 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { CornersOutIcon, CornersInIcon } from "@phosphor-icons/react";
+import {
+  CornersOutIcon,
+  CornersInIcon,
+  ImageIcon,
+  CircleNotchIcon,
+} from "@phosphor-icons/react";
 import { ZenStudyLogo } from "@/components/study/brand/ZenStudyLogo";
 import { isNativeApp } from "@/lib/google-sign-in";
+import { yieldToPaint } from "@/components/study/mobile/perf/yieldToPaint";
 
 interface MobileTopBarProps {
   isZenMode: boolean;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
   hasEntered?: boolean;
+  onChangeScene?: () => void;
+  onOpenScenes?: () => void;
+  isPreloadingScene?: boolean;
 }
 
-// Thanh trên mobile: logo, giờ, toàn màn hình. Tài khoản nằm trong bảng Thêm cho thoáng.
+// Thanh trên mobile: logo, giờ, đổi cảnh nhanh, toàn màn hình. Tài khoản nằm trong bảng Thêm cho thoáng.
 export const MobileTopBar = React.memo(function MobileTopBar({
   isZenMode,
   isFullscreen,
   onToggleFullscreen,
   hasEntered = true,
+  onChangeScene,
+  onOpenScenes,
+  isPreloadingScene = false,
 }: MobileTopBarProps) {
   const [time, setTime] = useState("");
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPressRef = useRef(false);
+
+  const handlePointerDown = useCallback(() => {
+    if (!onOpenScenes) return;
+    didLongPressRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      didLongPressRef.current = true;
+      try {
+        if (typeof window !== "undefined" && "vibrate" in navigator) {
+          navigator.vibrate(30);
+        }
+      } catch {}
+      yieldToPaint(onOpenScenes);
+    }, 550);
+  }, [onOpenScenes]);
+
+  const handlePointerUp = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     const update = () => {
@@ -66,22 +101,50 @@ export const MobileTopBar = React.memo(function MobileTopBar({
         <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-mono text-sm font-semibold tracking-wider tabular-nums text-slate-100 drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]">
           {time}
         </span>
-        {/* Nút toàn màn hình chỉ có ích khi xem bằng trình duyệt; trong app thì ẩn */}
-        {!isNativeApp() && (
-          <div className="flex items-center gap-1 shrink-0">
+
+        {/* Nút tác vụ góc phải: Đổi cảnh nhanh + Toàn màn hình */}
+        <div className="flex items-center gap-2 shrink-0">
+          {onChangeScene && (
             <button
-              onClick={onToggleFullscreen}
-              aria-label={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"}
-              className="w-11 h-11 rounded-2xl flex items-center justify-center text-slate-200 active:scale-95"
+              type="button"
+              onClick={() => {
+                if (didLongPressRef.current) {
+                  didLongPressRef.current = false;
+                  return;
+                }
+                yieldToPaint(onChangeScene);
+              }}
+              onPointerDown={handlePointerDown}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+              aria-label="Đổi cảnh nền"
+              title="Đổi cảnh nền (Chạm để đổi ngay, nhấn giữ để mở danh sách)"
+              className="glass-round-btn w-9 h-9 rounded-full flex items-center justify-center text-white/90 hover:text-white transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
             >
-              {isFullscreen ? (
-                <CornersInIcon className="w-5 h-5" />
+              {isPreloadingScene ? (
+                <CircleNotchIcon className="w-4.5 h-4.5 animate-spin text-white/80 pointer-events-none" />
               ) : (
-                <CornersOutIcon className="w-5 h-5" />
+                <ImageIcon className="w-4.5 h-4.5 pointer-events-none" weight="duotone" />
               )}
             </button>
-          </div>
-        )}
+          )}
+
+          {/* Nút toàn màn hình chỉ có ích khi xem bằng trình duyệt; trong app thì ẩn */}
+          {!isNativeApp() && (
+            <button
+              type="button"
+              onClick={onToggleFullscreen}
+              aria-label={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"}
+              className="glass-round-btn w-9 h-9 rounded-full flex items-center justify-center text-slate-200 hover:text-white transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+            >
+              {isFullscreen ? (
+                <CornersInIcon className="w-4.5 h-4.5 pointer-events-none" />
+              ) : (
+                <CornersOutIcon className="w-4.5 h-4.5 pointer-events-none" />
+              )}
+            </button>
+          )}
+        </div>
       </div>
     </motion.header>
   );

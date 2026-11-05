@@ -21,17 +21,18 @@ import { formatStopwatch } from "../../pomodoro/utils/timer-formatters";
 import { BlockedUsersSection } from "../../settings/BlockedUsersSection";
 import type { StudySettingsProps } from "../../StudySettingsModal";
 
-/** Demo bấm giờ chạy riêng trong cài đặt để thấy ngay .00 khác gì */
-function StopwatchPreview({ showMs }: { showMs: boolean }) {
+/** Demo bấm giờ chạy riêng trong cài đặt để thấy ngay .00 khác gì (chỉ chạy khi sheet đang mở) */
+function StopwatchPreview({ showMs, enabled = true }: { showMs: boolean; enabled?: boolean }) {
   const [ms, setMs] = useState(0);
   useEffect(() => {
+    if (!enabled) return;
     const start = Date.now();
     const id = window.setInterval(
       () => setMs(Date.now() - start),
       showMs ? 30 : 200
     );
     return () => window.clearInterval(id);
-  }, [showMs]);
+  }, [showMs, enabled]);
   return <span>{formatStopwatch(ms, showMs)}</span>;
 }
 
@@ -161,10 +162,11 @@ export function MobileSettingsSheet({
 }: StudySettingsProps) {
   const [previewingSoundId, setPreviewingSoundId] = useState<string | null>(null);
 
-  // Đồng hồ xem trước chạy thật
+  // Đồng hồ xem trước chạy thật (chỉ chạy khi sheet đang mở)
   const { clockDigits, clockPeriod } = useRealtimeClock({
     showClockSeconds,
     isClock12Hour,
+    enabled: isOpen,
   });
 
   const stepDuration = (key: DurationKey, delta: number) => {
@@ -280,7 +282,7 @@ export function MobileSettingsSheet({
             <div className="text-[10px] font-sans font-medium text-white/50 tracking-normal mb-0.5">
               Bấm giờ (demo)
             </div>
-            <StopwatchPreview showMs={showStopwatchMilliseconds} />
+            <StopwatchPreview showMs={showStopwatchMilliseconds} enabled={isOpen} />
           </div>
         </SettingsSection>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import type { StudySpaceState } from "@/components/study/hooks/useStudySpaceState";
@@ -9,35 +9,48 @@ import { StudyMobileNav } from "@/components/study/mobile/navigation/StudyMobile
 import { MobileRadialBubbleMenu } from "@/components/study/mobile/navigation/MobileRadialBubbleMenu";
 import { useMobileDoubleTap } from "@/components/study/mobile/hooks/useMobileDoubleTap";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
-// Dynamic imports cho các bảng chức năng mobile để giảm tải RAM ban đầu
+import { MobilePerfProbe } from "@/components/study/mobile/perf/MobilePerfProbe";
+import {
+  loadTasksSheet,
+  loadNotesSheet,
+  loadSceneSheet,
+  loadSettingsSheet,
+  loadStatsSheet,
+  loadMoreSheet,
+  loadChatSheet,
+  scheduleIdlePreloadMobileSheets,
+} from "@/components/study/mobile/sheets/sheet-preloader";
+import { SheetGlassSkeleton } from "@/components/study/mobile/sheets/SheetGlassSkeleton";
+
+// Dynamic imports kết hợp Idle Preload: vừa giữ FCP ban đầu siêu nhẹ,
+// vừa nạp ngầm trong nền để khi bấm mở là có sẵn 100% không độ trễ
 const MobileTasksSheet = dynamic(
-  () => import("@/components/study/mobile/sheets/MobileTasksSheet").then((mod) => mod.MobileTasksSheet),
-  { ssr: false }
+  () => loadTasksSheet().then((mod) => mod.MobileTasksSheet),
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Công việc" /> }
 );
 const MobileNotesSheet = dynamic(
-  () => import("@/components/study/mobile/sheets/MobileNotesSheet").then((mod) => mod.MobileNotesSheet),
-  { ssr: false }
+  () => loadNotesSheet().then((mod) => mod.MobileNotesSheet),
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Ghi chú" /> }
 );
 const MobileSceneSheet = dynamic(
-  () => import("@/components/study/mobile/sheets/MobileSceneSheet").then((mod) => mod.MobileSceneSheet),
-  { ssr: false }
+  () => loadSceneSheet().then((mod) => mod.MobileSceneSheet),
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Không gian" /> }
 );
 const MobileSettingsSheet = dynamic(
-  () => import("@/components/study/mobile/sheets/MobileSettingsSheet").then((mod) => mod.MobileSettingsSheet),
-  { ssr: false }
+  () => loadSettingsSheet().then((mod) => mod.MobileSettingsSheet),
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Cài đặt" /> }
 );
 const MobileFocusStatsSheet = dynamic(
-  () => import("@/components/study/mobile/sheets/MobileFocusStatsSheet").then((mod) => mod.MobileFocusStatsSheet),
-  { ssr: false }
+  () => loadStatsSheet().then((mod) => mod.MobileFocusStatsSheet),
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Thống kê" /> }
 );
 const MobileMoreSheet = dynamic(
-  () => import("@/components/study/mobile/sheets/MobileMoreSheet").then((mod) => mod.MobileMoreSheet),
-  { ssr: false }
+  () => loadMoreSheet().then((mod) => mod.MobileMoreSheet),
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Thêm" /> }
 );
-// Dynamic import cho Chat Sheet vì dùng Firebase auth và markdown rendering
 const MobileChatSheet = dynamic(
-  () => import("@/components/study/mobile/sheets/MobileChatSheet").then((mod) => mod.MobileChatSheet),
-  { ssr: false }
+  () => loadChatSheet().then((mod) => mod.MobileChatSheet),
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Trợ lý AI" /> }
 );
 
 interface StudyMobileLayoutProps {
@@ -74,6 +87,7 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
     isSlideshowPoolFavorites,
     handleToggleSlideshow,
     handleCycleSlideshowInterval,
+    handleRandomScene,
     mobileCurrentScreen,
     mobileCanGoBack,
     mobilePrevScreen,
@@ -108,23 +122,23 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
     systemFlags,
   } = state;
 
-  // Chỉ mount các bảng chức năng khi người dùng mở lần đầu để tiết kiệm RAM tối đa cho mobile
-  const [mountedSheets, setMountedSheets] = useState<Record<string, boolean>>({});
+  // Chỉ mount các bảng chức năng khi người dùng mở lần đầu để tiết kiệm RAM tối đa cho mobile.
+  // Đồng bộ ngay trong lúc render (qua Ref) thay vì chờ useEffect sau frame đầu để sheet mount tức thì.
+  const mountedSheetsRef = useRef<Record<string, boolean>>({});
+  if (isTasksOpen) mountedSheetsRef.current.tasks = true;
+  if (isNotesOpen) mountedSheetsRef.current.notes = true;
+  if (isScenesOpen) mountedSheetsRef.current.scenes = true;
+  if (isSettingsOpen) mountedSheetsRef.current.settings = true;
+  if (isStatsOpen) mountedSheetsRef.current.stats = true;
+  if (isChatOpen) mountedSheetsRef.current.chat = true;
+  if (isMoreOpen) mountedSheetsRef.current.more = true;
+  const mountedSheets = mountedSheetsRef.current;
 
+  // Lên lịch nạp ngầm các bảng chức năng khi CPU rảnh rỗi (sau khi màn hình chính đã tải xong)
   useEffect(() => {
-    setMountedSheets((prev) => {
-      let changed = false;
-      const next = { ...prev };
-      if (isTasksOpen && !next.tasks) { next.tasks = true; changed = true; }
-      if (isNotesOpen && !next.notes) { next.notes = true; changed = true; }
-      if (isScenesOpen && !next.scenes) { next.scenes = true; changed = true; }
-      if (isSettingsOpen && !next.settings) { next.settings = true; changed = true; }
-      if (isStatsOpen && !next.stats) { next.stats = true; changed = true; }
-      if (isChatOpen && !next.chat) { next.chat = true; changed = true; }
-      if (isMoreOpen && !next.more) { next.more = true; changed = true; }
-      return changed ? next : prev;
-    });
-  }, [isTasksOpen, isNotesOpen, isScenesOpen, isSettingsOpen, isStatsOpen, isChatOpen, isMoreOpen]);
+    const cancel = scheduleIdlePreloadMobileSheets(1500);
+    return cancel;
+  }, []);
 
   // Không cho phép Double Tap toggle Zen Mode khi đang mở bất kỳ sheet/bảng chức năng nào
   const isAnySheetOpen = Boolean(
@@ -165,73 +179,96 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
     onDoubleTap: handleDoubleTap,
   });
 
+  const handleQuickChangeScene = useCallback(() => {
+    const next = handleRandomScene();
+    if (next) {
+      toast(`Đã đổi bối cảnh: ${next.name}`, {
+        id: "scene-quick-change",
+        duration: 2000,
+        position: "bottom-center",
+      });
+    }
+  }, [handleRandomScene]);
+
   return (
     <>
       {/* Top Bar cho Mobile */}
-      <MobileTopBar
-        isZenMode={isZenMode}
-        isFullscreen={isFullscreen}
-        onToggleFullscreen={toggleFullscreen}
-        hasEntered={hasEntered}
-      />
+      <MobilePerfProbe name="topbar">
+        <MobileTopBar
+          isZenMode={isZenMode}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
+          hasEntered={hasEntered}
+          onChangeScene={handleQuickChangeScene}
+          onOpenScenes={handleOpenScenesRoot}
+          isPreloadingScene={isPreloadingScene}
+        />
+      </MobilePerfProbe>
 
       {/* Tasks Sheet */}
       {mountedSheets.tasks && (
         <ErrorBoundary>
-          <MobileTasksSheet
-            isOpen={isTasksOpen}
-            onClose={handleMobileCloseAllSheets}
-            onBack={mobileCanGoBack ? handleMobileBack : undefined}
-            backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
-            isEditingDetail={mobileCurrentScreen?.id === "tasks-detail"}
-            onOpenDetail={handleOpenTasksDetail}
-            onCloseDetail={handleCloseDetail}
-          />
+          <MobilePerfProbe name="sheet:tasks">
+            <MobileTasksSheet
+              isOpen={isTasksOpen}
+              onClose={handleMobileCloseAllSheets}
+              onBack={mobileCanGoBack ? handleMobileBack : undefined}
+              backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+              isEditingDetail={mobileCurrentScreen?.id === "tasks-detail"}
+              onOpenDetail={handleOpenTasksDetail}
+              onCloseDetail={handleCloseDetail}
+            />
+          </MobilePerfProbe>
         </ErrorBoundary>
       )}
 
       {/* Notes Sheet */}
       {mountedSheets.notes && (
         <ErrorBoundary>
-          <MobileNotesSheet
-            isOpen={isNotesOpen}
-            onClose={handleMobileCloseAllSheets}
-            onBack={mobileCanGoBack ? handleMobileBack : undefined}
-            backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
-            isEditingDetail={mobileCurrentScreen?.id === "notes-detail"}
-            onOpenDetail={handleOpenNotesDetail}
-          />
+          <MobilePerfProbe name="sheet:notes">
+            <MobileNotesSheet
+              isOpen={isNotesOpen}
+              onClose={handleMobileCloseAllSheets}
+              onBack={mobileCanGoBack ? handleMobileBack : undefined}
+              backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+              isEditingDetail={mobileCurrentScreen?.id === "notes-detail"}
+              onOpenDetail={handleOpenNotesDetail}
+            />
+          </MobilePerfProbe>
         </ErrorBoundary>
       )}
 
       {/* Scene Sheet */}
       {mountedSheets.scenes && (
         <ErrorBoundary>
-          <MobileSceneSheet
-            isOpen={isScenesOpen}
-            onClose={handleMobileCloseAllSheets}
-            onBack={mobileCanGoBack ? handleMobileBack : undefined}
-            backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
-            currentScene={currentScene}
-            pendingScene={pendingScene}
-            isPreloading={isPreloadingScene}
-            onSelectScene={handleSelectScene}
-            slideshowEnabled={isSlideshowOn}
-            slideshowIntervalMin={slideshowIntervalMin}
-            slideshowPoolLabel={
-              isSlideshowPoolFavorites
-                ? `${slideshowPool.length} cảnh yêu thích`
-                : `tất cả ${slideshowPool.length} cảnh`
-            }
-            onToggleSlideshow={handleToggleSlideshow}
-            onCycleSlideshowInterval={handleCycleSlideshowInterval}
-          />
+          <MobilePerfProbe name="sheet:scenes">
+            <MobileSceneSheet
+              isOpen={isScenesOpen}
+              onClose={handleMobileCloseAllSheets}
+              onBack={mobileCanGoBack ? handleMobileBack : undefined}
+              backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+              currentScene={currentScene}
+              pendingScene={pendingScene}
+              isPreloading={isPreloadingScene}
+              onSelectScene={handleSelectScene}
+              slideshowEnabled={isSlideshowOn}
+              slideshowIntervalMin={slideshowIntervalMin}
+              slideshowPoolLabel={
+                isSlideshowPoolFavorites
+                  ? `${slideshowPool.length} cảnh yêu thích`
+                  : `tất cả ${slideshowPool.length} cảnh`
+              }
+              onToggleSlideshow={handleToggleSlideshow}
+              onCycleSlideshowInterval={handleCycleSlideshowInterval}
+            />
+          </MobilePerfProbe>
         </ErrorBoundary>
       )}
 
       {/* Settings Sheet */}
       {mountedSheets.settings && (
         <ErrorBoundary>
+          <MobilePerfProbe name="sheet:settings">
           <MobileSettingsSheet
             isOpen={isSettingsOpen}
             onClose={handleMobileCloseAllSheets}
@@ -253,52 +290,61 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
             onToggleKeepAwake={handleToggleKeepAwake}
             wakeLockSupported={wakeLockSupported}
           />
+          </MobilePerfProbe>
         </ErrorBoundary>
       )}
 
       {/* Focus Stats Sheet */}
       {mountedSheets.stats && (
         <ErrorBoundary>
-          <MobileFocusStatsSheet
-            isOpen={isStatsOpen}
-            onClose={handleMobileCloseAllSheets}
-            onBack={mobileCanGoBack ? handleMobileBack : undefined}
-            backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
-          />
+          <MobilePerfProbe name="sheet:stats">
+            <MobileFocusStatsSheet
+              isOpen={isStatsOpen}
+              onClose={handleMobileCloseAllSheets}
+              onBack={mobileCanGoBack ? handleMobileBack : undefined}
+              backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+            />
+          </MobilePerfProbe>
         </ErrorBoundary>
       )}
 
       {/* Chat Sheet */}
       {mountedSheets.chat && (
         <ErrorBoundary>
-          <MobileChatSheet
-            isOpen={isChatOpen}
-            onClose={handleMobileCloseAllSheets}
-            onBack={mobileCanGoBack ? handleMobileBack : undefined}
-            backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
-          />
+          <MobilePerfProbe name="sheet:chat">
+            <MobileChatSheet
+              isOpen={isChatOpen}
+              onClose={handleMobileCloseAllSheets}
+              onBack={mobileCanGoBack ? handleMobileBack : undefined}
+              backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+            />
+          </MobilePerfProbe>
         </ErrorBoundary>
       )}
 
       {/* Thanh điều hướng đáy 5 nút */}
       {!isZenMode && (
-        <StudyMobileNav
-          active={activeNavTab}
-          onSelect={handleMobileNavSelect}
-          hasEntered={hasEntered}
-        />
+        <MobilePerfProbe name="nav">
+          <StudyMobileNav
+            active={activeNavTab}
+            onSelect={handleMobileNavSelect}
+            hasEntered={hasEntered}
+          />
+        </MobilePerfProbe>
       )}
 
       {/* Bảng Thêm */}
       {mountedSheets.more && (
         <ErrorBoundary>
-          <MobileMoreSheet
-            isOpen={isMoreOpen}
-            onClose={handleMobileCloseAllSheets}
-            onSelect={handleMoreSelect}
-            chatEnabled={systemFlags.chatEnabled}
-            roomsEnabled={systemFlags.roomsEnabled}
-          />
+          <MobilePerfProbe name="sheet:more">
+            <MobileMoreSheet
+              isOpen={isMoreOpen}
+              onClose={handleMobileCloseAllSheets}
+              onSelect={handleMoreSelect}
+              chatEnabled={systemFlags.chatEnabled}
+              roomsEnabled={systemFlags.roomsEnabled}
+            />
+          </MobilePerfProbe>
         </ErrorBoundary>
       )}
 
@@ -315,15 +361,17 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
         !isSettingsOpen &&
         !isStatsOpen && (
           <div className="sm:hidden">
-            <MobileRadialBubbleMenu
-              onOpenChat={handleOpenChatRoot}
-              onOpenScenes={handleOpenScenesRoot}
-              onOpenRooms={handleOpenRoomsRoot}
-              onOpenRadio={handleOpenRadioRoot}
-              onOpenStats={handleOpenStatsRoot}
-              chatEnabled={systemFlags.chatEnabled}
-              roomsEnabled={systemFlags.roomsEnabled}
-            />
+            <MobilePerfProbe name="radial">
+              <MobileRadialBubbleMenu
+                onOpenChat={handleOpenChatRoot}
+                onOpenScenes={handleOpenScenesRoot}
+                onOpenRooms={handleOpenRoomsRoot}
+                onOpenRadio={handleOpenRadioRoot}
+                onOpenStats={handleOpenStatsRoot}
+                chatEnabled={systemFlags.chatEnabled}
+                roomsEnabled={systemFlags.roomsEnabled}
+              />
+            </MobilePerfProbe>
           </div>
         )}
     </>

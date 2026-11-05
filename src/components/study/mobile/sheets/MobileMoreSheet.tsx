@@ -14,6 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { MobileAccountCard } from "./MobileAccountCard";
+import { yieldToPaint } from "../perf/yieldToPaint";
 import type { MobilePanelId } from "../types";
 import { APP_VERSION_LABEL } from "@/lib/version";
 
@@ -43,9 +44,9 @@ function MoreButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="group w-full min-h-[46px] flex items-center gap-3 px-3 py-1 rounded-2xl bg-white/[0.04] hover:bg-white/[0.1] active:scale-[0.98] border border-white/[0.08] hover:border-white/[0.18] transition-all text-left select-none disabled:opacity-60 disabled:cursor-default disabled:active:scale-100"
+      className="group w-full min-h-[46px] flex items-center gap-3 px-3 py-1 rounded-2xl bg-white/[0.04] hover:bg-white/[0.1] active:bg-white/[0.12] active:scale-[0.97] border border-white/[0.08] hover:border-white/[0.18] transition-[background-color,border-color,transform] duration-75 text-left select-none touch-manipulation cursor-pointer disabled:opacity-60 disabled:cursor-default disabled:active:scale-100"
     >
-      <span className="w-9 h-9 rounded-xl bg-white/[0.08] border border-white/[0.15] flex items-center justify-center shrink-0 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] transition-transform group-hover:scale-105">
+      <span className="w-9 h-9 rounded-xl bg-white/[0.08] border border-white/[0.15] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
@@ -66,9 +67,14 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
   chatEnabled = true,
   roomsEnabled = true,
 }: MobileMoreSheetProps) {
-  const go = (id: MobilePanelId) => {
-    onSelect(id);
-  };
+  const go = React.useCallback(
+    (id: MobilePanelId) => {
+      yieldToPaint(() => {
+        onSelect(id);
+      });
+    },
+    [onSelect]
+  );
 
   return (
     <MobileSheetShell isOpen={isOpen} onClose={onClose} sheetId="more" title="Thêm">

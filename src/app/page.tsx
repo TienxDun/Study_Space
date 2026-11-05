@@ -5,19 +5,15 @@ import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { CircleNotchIcon } from "@phosphor-icons/react";
 import { StudyBackground } from "@/components/study/StudyBackground";
+import { MobilePerfProbe } from "@/components/study/mobile/perf/MobilePerfProbe";
 import { SystemBanner } from "@/components/study/SystemBanner";
 import { StudyMusicPlayer } from "@/components/study/music/StudyMusicPlayer";
 import { StudyPomodoroWidget } from "@/components/study/pomodoro/StudyPomodoroWidget";
 import { MobilePomodoroView } from "@/components/study/mobile/pomodoro/MobilePomodoroView";
 import { StudySeoSemanticContent } from "@/components/study/seo/StudySeoSemanticContent";
-import { StudyShortcutsModal } from "@/components/study/StudyShortcutsModal";
-import { StudyOnboardingTour } from "@/components/study/tour/StudyOnboardingTour";
 import { StudyDesktopLayout } from "@/components/study/layout/StudyDesktopLayout";
 import { StudyMobileLayout } from "@/components/study/layout/StudyMobileLayout";
-import { MobileWelcomeScreen } from "@/components/study/mobile/welcome/MobileWelcomeScreen";
-import { MobileSplashScreen } from "@/components/study/mobile/splash/MobileSplashScreen";
 import { MOBILE_SPLASH_ENABLED } from "@/lib/mobile-splash-flag";
-import { MobileLandscapeGuard } from "@/components/study/mobile/MobileLandscapeGuard";
 import { useStudySpaceState } from "@/components/study/hooks/useStudySpaceState";
 import { useContentCatalog } from "@/components/study/hooks/useContentCatalog";
 import { useAuth } from "@/lib/use-auth";
@@ -33,6 +29,31 @@ const StudyEmbedPlayerWidget = dynamic(
 
 const StudyRoomsWidget = dynamic(
   () => import("@/components/study/rooms/StudyRoomsWidget").then((mod) => mod.StudyRoomsWidget),
+  { ssr: false }
+);
+
+const StudyShortcutsModal = dynamic(
+  () => import("@/components/study/StudyShortcutsModal").then((mod) => mod.StudyShortcutsModal),
+  { ssr: false }
+);
+
+const StudyOnboardingTour = dynamic(
+  () => import("@/components/study/tour/StudyOnboardingTour").then((mod) => mod.StudyOnboardingTour),
+  { ssr: false }
+);
+
+const MobileSplashScreen = dynamic(
+  () => import("@/components/study/mobile/splash/MobileSplashScreen").then((mod) => mod.MobileSplashScreen),
+  { ssr: false }
+);
+
+const MobileWelcomeScreen = dynamic(
+  () => import("@/components/study/mobile/welcome/MobileWelcomeScreen").then((mod) => mod.MobileWelcomeScreen),
+  { ssr: false }
+);
+
+const MobileLandscapeGuard = dynamic(
+  () => import("@/components/study/mobile/MobileLandscapeGuard").then((mod) => mod.MobileLandscapeGuard),
   { ssr: false }
 );
 
@@ -113,15 +134,39 @@ export default function StudySpacePage() {
   const handleCloseTour = useCallback(() => state.setIsTourOpen(false), [state.setIsTourOpen]);
   const handleOpenTour = useCallback(() => state.setIsTourOpen(true), [state.setIsTourOpen]);
 
+  const handleOpenScenes = useCallback(() => state.setIsScenesOpen(true), [state.setIsScenesOpen]);
+  const handleOpenMixer = useCallback(() => state.setIsMixerOpen(true), [state.setIsMixerOpen]);
+  const handleTogglePomodoro = useCallback(() => state.setIsPomodoroVisible((v) => !v), [state.setIsPomodoroVisible]);
+  const handleOpenChat = useCallback(() => state.setIsChatOpen(true), [state.setIsChatOpen]);
+  const handleOpenTasks = useCallback(() => state.setIsTasksOpen(true), [state.setIsTasksOpen]);
+  const handleOpenNotes = useCallback(() => state.setIsNotesOpen(true), [state.setIsNotesOpen]);
+  const handleOpenShortcuts = useCallback(() => state.setIsShortcutsHelpOpen(true), [state.setIsShortcutsHelpOpen]);
+
+  // Đồng hồ giữa màn: mobile ẩn hẳn (visibility hidden, vẫn mounted để chạy
+  // tiếp countdown) khi chưa vào màn hình chính hoặc khi có bảng che nền,
+  // khỏi phải vẽ chữ số khổng lồ rò xuyên qua sheet và đỡ tải GPU.
+  const isCenterHidden =
+    state.isMobile && (!hasEntered || state.isAnyMobileSheetOpen);
+
+  // Chỉ lần hiện đầu tiên sau splash/welcome mới so le 0.22s cho đúng nhịp
+  // cũ; các lần đóng sheet sau đó đồng hồ phải hiện ngay theo bảng.
+  const [hasRevealedCenter, setHasRevealedCenter] = useState(false);
+  useEffect(() => {
+    if (!isCenterHidden) setHasRevealedCenter(true);
+  }, [isCenterHidden]);
+  const centerRevealDelay = state.isMobile && !hasRevealedCenter ? 0.22 : 0;
+
   return (
     <div className="fixed inset-0 sm:relative sm:w-screen sm:h-dvh overflow-hidden bg-slate-950 text-white select-none font-sans">
       {/* Nền bối cảnh chung */}
-      <StudyBackground
-        scene={state.currentScene}
-        isBlurActive={state.isAnyModalOpen}
-        isMobile={state.isMobile}
-        onLoaded={handleBackgroundLoaded}
-      />
+      <MobilePerfProbe name="background">
+        <StudyBackground
+          scene={state.currentScene}
+          isBlurActive={state.isMobile ? state.isAnyMobileSheetOpen : state.isAnyModalOpen}
+          isMobile={state.isMobile}
+          onLoaded={handleBackgroundLoaded}
+        />
+      </MobilePerfProbe>
 
       {/* Thông báo bảo trì / banner chung từ cờ hệ thống */}
       <SystemBanner flags={state.systemFlags} />
@@ -149,10 +194,14 @@ export default function StudySpacePage() {
 
       {/* Phân tách 2 tầng hiển thị rõ ràng */}
       {!state.isMobile && <StudyDesktopLayout state={state} />}
-      {state.isMobile && <StudyMobileLayout state={state} hasEntered={hasEntered} />}
+      {state.isMobile && (
+        <MobilePerfProbe name="MOBILE-LAYOUT">
+          <StudyMobileLayout state={state} hasEntered={hasEntered} />
+        </MobilePerfProbe>
+      )}
 
-      {/* Màn hình khởi động Splash Screen chuẩn nhận diện thương hiệu cho Mobile (tự ẩn trên Desktop bằng CSS sm:hidden, hỗ trợ xem thử qua ?splash=preview) */}
-      {MOBILE_SPLASH_ENABLED && (
+      {/* Màn hình khởi động Splash Screen chuẩn nhận diện thương hiệu cho Mobile (chỉ render trên Mobile) */}
+      {state.isMobile && MOBILE_SPLASH_ENABLED && (
         <MobileSplashScreen
           preview={isSplashPreview}
           isReady={isBackgroundReady && !state.isPreloadingScene}
@@ -170,18 +219,24 @@ export default function StudySpacePage() {
       )}
 
       {/* Khu vực Đồng hồ Pomodoro trung tâm - Hiệu ứng trượt từ dưới lên (Fly in from bottom) */}
+      <MobilePerfProbe name="center">
       <main className="relative z-10 w-full h-full flex flex-col items-center justify-center pointer-events-none px-4 pb-14 mobile-content-safe">
         <StudySeoSemanticContent />
         <motion.div
-          initial={{ opacity: 0, y: 35 }}
-          animate={{
-            opacity: state.isMobile ? (hasEntered ? 1 : 0) : 1,
-            y: state.isMobile ? (hasEntered ? 0 : 35) : 0,
-          }}
-          transition={{
-            duration: 0.55,
-            delay: state.isMobile && hasEntered ? 0.22 : 0,
-            ease: [0.16, 1, 0.3, 1],
+          initial={{ opacity: 0, y: 35, visibility: "hidden" }}
+          animate={isCenterHidden ? "off" : "on"}
+          variants={{
+            on: {
+              opacity: 1,
+              y: 0,
+              visibility: "visible",
+              transition: { duration: 0.55, delay: centerRevealDelay, ease: [0.16, 1, 0.3, 1] },
+            },
+            off: {
+              opacity: 0,
+              transition: { duration: 0.25, ease: "easeIn" },
+              transitionEnd: { visibility: "hidden" },
+            },
           }}
           className="w-full flex justify-center pointer-events-none"
         >
@@ -204,6 +259,7 @@ export default function StudySpacePage() {
           </MobilePomodoroView>
         </motion.div>
       </main>
+      </MobilePerfProbe>
 
       {/* Trình phát nhạc nền Lo-fi (Luôn giữ mounted để không ngắt nhạc khi ẩn UI) */}
       <StudyMusicPlayer
@@ -248,28 +304,32 @@ export default function StudySpacePage() {
         soundType={state.soundType}
       />
 
-      {/* Bảng phím tắt bàn phím */}
-      <StudyShortcutsModal
-        isOpen={state.isShortcutsHelpOpen}
-        onClose={handleCloseShortcuts}
-        onOpenTour={handleOpenTour}
-      />
+      {/* Bảng danh sách phím tắt (Tải động khi được kích hoạt bởi phím ? hoặc sự kiện) */}
+      {state.isShortcutsHelpOpen && (
+        <StudyShortcutsModal
+          isOpen={state.isShortcutsHelpOpen}
+          onClose={handleCloseShortcuts}
+          onOpenTour={handleOpenTour}
+        />
+      )}
 
-      {/* Tour giới thiệu tính năng */}
-      <StudyOnboardingTour
-        isOpen={state.isTourOpen ? true : undefined}
-        onClose={handleCloseTour}
-        onOpenScenes={() => state.setIsScenesOpen(true)}
-        onOpenMixer={() => state.setIsMixerOpen(true)}
-        onTogglePomodoro={() => state.setIsPomodoroVisible((v) => !v)}
-        onOpenChat={() => state.setIsChatOpen(true)}
-        onOpenTasks={() => state.setIsTasksOpen(true)}
-        onOpenNotes={() => state.setIsNotesOpen(true)}
-        onOpenShortcuts={() => state.setIsShortcutsHelpOpen(true)}
-      />
+      {/* Tour giới thiệu tính năng (Chỉ dành cho Desktop) */}
+      {!state.isMobile && (
+        <StudyOnboardingTour
+          isOpen={state.isTourOpen ? true : undefined}
+          onClose={handleCloseTour}
+          onOpenScenes={handleOpenScenes}
+          onOpenMixer={handleOpenMixer}
+          onTogglePomodoro={handleTogglePomodoro}
+          onOpenChat={handleOpenChat}
+          onOpenTasks={handleOpenTasks}
+          onOpenNotes={handleOpenNotes}
+          onOpenShortcuts={handleOpenShortcuts}
+        />
+      )}
 
       {/* Chặn thao tác khi điện thoại đang xoay ngang (UI mobile chỉ tối ưu cho màn hình dọc) */}
-      <MobileLandscapeGuard />
+      {state.isMobile && <MobileLandscapeGuard />}
     </div>
   );
 }

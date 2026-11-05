@@ -20,6 +20,17 @@
   gap: 0.75rem !important;
 }
 
+/* Máy cảm ứng: bỏ hẳn blur. Nền là video đang phát nên blur(40px) buộc
+   GPU làm mờ lại toàn vùng mỗi khung hình -> giật đúng lúc vừa thao tác.
+   Đổi sang graphite để toast không thành vệt đen dán trên màn hình. */
+@media (pointer: coarse) {
+  [data-sonner-toaster] [data-sonner-toast] {
+    background: linear-gradient(180deg, rgba(27, 33, 48, 0.96), rgba(20, 24, 33, 0.97)) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
 [data-sonner-toaster] [data-sonner-toast] [data-icon] {
   margin-top: 2px !important;
   display: flex !important;

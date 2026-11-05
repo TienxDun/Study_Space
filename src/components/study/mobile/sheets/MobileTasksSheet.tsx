@@ -26,6 +26,8 @@ import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { formatFocusDuration } from "@/lib/focus-sessions";
 import { startFocusTask } from "@/lib/use-focus-task";
 import { MobileTaskBubbleMenu } from "./MobileTaskBubbleMenu";
+import { MobilePerfProbe } from "../perf/MobilePerfProbe";
+import { useRenderTrace } from "../perf/useRenderTrace";
 
 /**
  * Thanh thêm việc nhanh tách riêng khỏi danh sách.
@@ -343,9 +345,10 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
     }));
   }, [cards, columnMap]);
 
-  // Lọc thẻ theo cột đang chọn và từ khóa tìm kiếm
+  // Lọc thẻ theo cột đang chọn và từ khóa tìm kiếm (useDeferredValue giúp gõ tìm kiếm không nghẽn INP)
+  const deferredSearchQuery = React.useDeferredValue(searchQuery);
   const displayedCards = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const q = deferredSearchQuery.trim().toLowerCase();
     return allCardsWithColumn.filter(({ card, colId }) => {
       // Lọc theo cột
       if (selectedColumnFilter !== "all" && colId !== selectedColumnFilter) {
@@ -359,7 +362,32 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
       }
       return true;
     });
-  }, [allCardsWithColumn, selectedColumnFilter, searchQuery]);
+  }, [allCardsWithColumn, selectedColumnFilter, deferredSearchQuery]);
+
+  useRenderTrace("sheet:tasks", {
+    // props
+    isOpen,
+    onClose,
+    onBack,
+    backLabel,
+    isEditingDetail,
+    onOpenDetail,
+    onCloseDetail,
+    // state tự có trong sheet
+    activeBoardId,
+    searchQuery,
+    colFilter: selectedColumnFilter,
+    searchOpen: isSearchOpen,
+    menuCard: activeMenuCardId,
+    boardMenu: showBoardMenu,
+    cardDangMo: selectedCard?.id,
+    // danh tính dữ liệu: đổi là có sự kiện localStorage/cloud/stats
+    boards: boards.length,
+    danhTinhBoards: boards,
+    danhTinhStats: allTimeStats,
+    soThe: displayedCards.length,
+    danhTinhCards: displayedCards,
+  });
 
   return (
     <>
@@ -399,7 +427,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
 
             {/* Popover Menu chuyển bảng dạng Liquid Glass */}
             {showBoardMenu && (
-              <div className="absolute left-0 top-full mt-2 w-64 max-w-[calc(100vw-3.5rem)] rounded-2xl bg-neutral-950/95 backdrop-blur-2xl border border-white/20 p-2 shadow-[0_20px_48px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.2)] z-50 text-white animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute left-0 top-full mt-2 w-64 max-w-[calc(100vw-3.5rem)] rounded-2xl surface-frost border p-2 shadow-[0_20px_48px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.2)] z-50 text-white animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/40">
                   Danh sách bảng học tập
                 </div>
@@ -457,7 +485,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                       }}
                       placeholder="Tên bảng mới..."
                       autoFocus
-                      className="lg-input h-8 w-full px-2.5 text-xs text-white bg-black/40 border-white/20 rounded-lg placeholder:text-white/40"
+                      className="lg-input h-8 w-full px-2.5 text-xs text-white rounded-lg placeholder:text-white/40"
                     />
                     <div className="flex items-center justify-end gap-1.5">
                       <button
@@ -621,6 +649,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
           )}
 
           {/* Danh sách các công việc cuộn dọc */}
+          <MobilePerfProbe name="tasks:list">
           <div className="flex-1 min-h-0 px-3 space-y-2 overflow-y-auto custom-study-scroll pb-16 overscroll-contain touch-pan-y no-scrollbar">
             {displayedCards.length > 0 ? (
               displayedCards.map(({ card, colId, colTitle }, idx) => {
@@ -817,6 +846,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
               </div>
             )}
           </div>
+          </MobilePerfProbe>
         </div>
       </MobileSheetShell>
 

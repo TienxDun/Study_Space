@@ -111,7 +111,11 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
     redoStackRef,
   } = useRichTextEditor({
     onContentChange: (newHtml) => {
-      if (editingNoteId) updateNoteContent(editingNoteId, newHtml);
+      if (editingNoteId) {
+        React.startTransition(() => {
+          updateNoteContent(editingNoteId, newHtml);
+        });
+      }
     },
   });
 
@@ -163,16 +167,17 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showDetailMoreMenu]);
 
-  // Tìm kiếm ghi chú theo tiêu đề hoặc nội dung
+  // Tìm kiếm ghi chú theo tiêu đề hoặc nội dung (useDeferredValue giúp gõ phím không bị nghẽn INP)
+  const deferredSearchQuery = React.useDeferredValue(searchQuery);
   const filteredNotes = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const q = deferredSearchQuery.trim().toLowerCase();
     if (!q) return sortedNotes;
     return sortedNotes.filter((note) => {
       const matchTitle = note.title.toLowerCase().includes(q);
       const matchContent = extractPlainText(note.content).toLowerCase().includes(q);
       return matchTitle || matchContent;
     });
-  }, [sortedNotes, searchQuery]);
+  }, [sortedNotes, deferredSearchQuery]);
 
   // Ghi chú đang mở xem/sửa chi tiết
   const currentEditingNote = useMemo(() => {
@@ -287,7 +292,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                 </button>
 
                 {showDetailMoreMenu && (
-                  <div className="absolute right-0 top-full mt-1.5 w-48 p-1.5 rounded-2xl bg-neutral-950/95 backdrop-blur-2xl border border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.85)] z-50 text-white text-xs space-y-0.5 select-none animate-in fade-in zoom-in-95 duration-150">
+                  <div className="absolute right-0 top-full mt-1.5 w-48 p-1.5 rounded-2xl surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] z-50 text-white text-xs space-y-0.5 select-none animate-in fade-in zoom-in-95 duration-150">
                     {/* Mục Ghim */}
                     <button
                       type="button"
@@ -560,7 +565,12 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                 <textarea
                   ref={titleInputRef}
                   value={currentEditingNote.title}
-                  onChange={(e) => handleUpdateTitle(e.target.value)}
+                  onChange={(e) => {
+                    const nextVal = e.target.value;
+                    React.startTransition(() => {
+                      handleUpdateTitle(nextVal);
+                    });
+                  }}
                   aria-label="Tiêu đề ghi chú"
                   placeholder="Tiêu đề ghi chú..."
                   rows={1}

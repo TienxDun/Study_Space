@@ -49,7 +49,11 @@ spacing:
 
 ## 1. Nhìn chung là kiểu gì
 
-- Nền tối, chữ trắng. Cảm giác như mặt kính mờ (nhìn xuyên qua hơi mờ).
+- Nền tối, chữ trắng. Panel là "kính tĩnh": nền cảnh được làm mờ sẵn và đặt
+  phía sau, panel chỉ trong 68% chứ không mờ động (không `backdrop-filter`),
+  vì blur động đè lên video đang phát là nguyên nhân tụt FPS nặng nhất trên máy.
+- Viền luôn là trắng sáng (0.13 vạch chia - 0.22 thẻ - 0.30 surface - 0.38 đang
+  chọn), không đổi màu theo bối cảnh.
 - Tất cả bảng mobile đều trượt lên từ đáy, giống tờ giấy kéo lên trong iPhone.
 - Thanh menu chính nằm đáy, hình con nhộng dài (capsule), có 5 nút: Giờ / Việc / Ghi chú / Nhạc / Thêm.
 - Thanh trên cùng rất gọn: chỉ có logo bên trái, giờ ở giữa, nút phóng to bên phải.
@@ -58,14 +62,25 @@ spacing:
 ## 2. Màu dùng chung
 
 - Nền chính: `#0B0F1A` (đen hơi xanh).
-- Bảng trượt lên:
-  - Dạng thường: đen mờ `bg-neutral-950/90` + mờ nền `backdrop-blur-lg`, viền trắng mờ `border-white/[0.16]`, bo góc 28px.
-  - Dạng to toàn màn hình (Zen): `bg-neutral-950/94` + `backdrop-blur-xl`, viền `border-white/[0.18]`, bo góc 32px.
+- Bảng trượt lên (dùng `surface-frost`, KHÔNG tự pha nền):
+  - Dạng thường: `rounded-[28px] surface-frost border` (nền `rgba(16,20,30,0.68)`
+    + ánh sáng dội mép trên + viền trắng 0.30).
+  - Dạng to toàn màn hình (Zen): `rounded-[32px] surface-frost border`.
+  - Surface nổi trực tiếp trên video đang phát (thẻ màn chào, snackbar) thì dùng
+    `surface-graphite border` - đặc hơn, không trong, viền trắng 0.34.
+- Đồng hồ to giữa màn bị ẩn (`visibility: hidden`, vẫn mounted để countdown chạy
+  tiếp) mỗi khi có bảng mở, khỏi rò chữ số xuyên qua kính và bớt một lớp GPU.
 - Chữ:
   - Chữ chính: trắng `text-white`.
   - Chữ phụ: xám nhạt `text-slate-300`, `text-slate-400`.
   - Chữ tiêu đề nhóm nhỏ: trắng mờ 50% `text-white/50`, cỡ 11px, viết hoa.
 - Nút chưa bấm: nền trắng rất nhạt `bg-white/[0.04]`, viền `border-white/[0.08]`.
+- Ở layout mobile, `glass.css` tự gom các bậc màu lộn xộn về 3 bậc nền trắng
+  (0.055 thẻ / 0.10 control / 0.17 đang chọn) và 3 bậc lõm than-xanh
+  (0.35 / 0.55 / 0.62), đồng thời gom mọi viền trung tính về trắng 0.22
+  (vạch chia mờ thì 0.13). Cứ viết class Tailwind bình thường, không cần thêm
+  class riêng; surface đã tự viền (`lg-*`, `surface-*`) được loại trừ nên giữ
+  bậc sáng riêng của nó.
 - Nút khi chạm: nền lên `bg-white/[0.1]`, icon thu nhỏ lại `active:scale-95` hoặc `active:scale-90`.
 - Màu nhấn theo việc:
   - Xanh lá (xong, an toàn): `emerald-300`, `emerald-400`, nền `emerald-500/15`.
@@ -111,7 +126,13 @@ Dùng đúng các class có sẵn trong `src/app/styles/glass.css`, không tự 
 - `lg-input`: ô gõ chữ. Cao 36px (`h-9`), bo 12px, chữ trắng 12px, chữ gợi ý trắng mờ 40%.
 - `lg-btn-action`: nút bấm kiểu kính (Thêm, chọn Gấp/Vừa/Thấp). Bo 12px, bấm vào thu nhỏ `active:scale-95`.
 - `lg-bubble`: bong bóng tròn (nút tròn nổi).
-- `lg-spot`: đốm sáng chạy theo ngón tay trên thanh kính.
+- `surface-frost`: kính tĩnh cho bảng/modal/popovers - chỉ dùng khi lớp kính
+  tĩnh (`study-bg-overlay` bản mobile) đang bật phía sau.
+- `surface-graphite`: than-xanh đặc cho surface nằm trực tiếp trên video.
+- Công tắc phạm vi: dấu `mobile-scope` gắn lên `<html>` (do `useIsMobile`, và
+  `layout.tsx` gắn sẵn cho bản shell Android `NEXT_PUBLIC_MOBILE_SHELL=1`).
+  Sheet/popover portal ra `<body>` vẫn ăn rule vì dấu nằm ở `<html>`; desktop
+  không có dấu nên giữ nguyên từng pixel.
 - Bo góc chuẩn:
   - Menu đáy, viên lọc, nút tròn: bo tròn hết `rounded-full`.
   - Bảng thường: 28px, bảng to Zen: 32px.
@@ -182,7 +203,7 @@ Dùng đúng các class có sẵn trong `src/app/styles/glass.css`, không tự 
 
 ### 6.9. Thanh hoàn tác `MobileUndoSnackbar`
 
-- Nằm trên menu đáy 5.5rem, lề 12px (`inset-x-3`), cao 58px (`h-[58px]`), bo 16px, nền `bg-black/75 backdrop-blur-2xl border-white/15`.
+- Nằm trên menu đáy 5.5rem, lề 12px (`inset-x-3`), cao 58px (`h-[58px]`), bo 16px, `surface-graphite border`.
 - Chữ 13px đậm cắt ngắn `text-[13px] font-semibold truncate`.
 - Nút Hoàn tác cao 44px (`h-11`), chữ xanh nhạt 14px đậm + vòng đếm ngược 22px. Đếm 5 giây, chạm giữ để dừng.
 
@@ -191,6 +212,8 @@ Dùng đúng các class có sẵn trong `src/app/styles/glass.css`, không tự 
 - Nền `bg-slate-950`, video bo 16px viền `border-white/15`.
 - Cụm nút gọi: con nhộng tròn `rounded-full bg-slate-900/95 border-white/20`, nút 36px tròn trắng mờ, nút rời phòng đỏ `bg-rose-600`.
 - Tin nhắn: của mình nền `bg-emerald-500/25 border-emerald-400/30`, của bạn nền `bg-white/10 border-white/10`, bo 16px nhưng góc trên phía mình nhọn (`rounded-tr-sm` / `rounded-tl-sm`), rộng tối đa 82%.
+- Nhận diện trong phòng (micro/camera emerald, tin nhắn của mình) là hệ màu
+  riêng của phòng họp, không nằm trong quy tắc gom viền chung.
 
 ## 7. Icon
 
@@ -204,6 +227,11 @@ Dùng đúng các class có sẵn trong `src/app/styles/glass.css`, không tự 
 - Mở/đóng bảng: trượt lên 40px + mờ dần, 0.22 giây, đường cong `cubic-bezier(0.16, 1, 0.3, 1)`.
 - Viên kính menu trượt lò xo: `stiffness 420, damping 32`.
 - Bấm nút: thu nhỏ `active:scale-95` (nút tròn nhỏ là `active:scale-90`), menu là lún giọt nước.
+- Chỉ animate `transform` + `opacity`. Ba thứ đã bỏ vì bắt máy vẽ lại trên nền
+  video đang phát: đốm sáng đuổi theo ngón tay (`lg-spot`), glow `drop-shadow`
+  ở icon đang chọn, và `layoutId` của viên kính menu đáy (phải đo lại DOM mỗi
+  frame). Viên kính trượt của cụm tab giờ vẫn dùng `layoutId` vì nó thật sự trượt
+  giữa 3 tab.
 - Tôn trọng người say chuyển động: nếu máy bật giảm chuyển động thì bỏ hiệu ứng.
 
 ## 9. Nên làm / Không nên làm
@@ -219,7 +247,10 @@ Không:
 - Không tự đặt bo góc, bóng, màu mới ngoài file này.
 - Không để chữ quá nhỏ dưới 10px, không để 2 nút 44px sát nhau dưới 8px.
 - Không dùng `ScrollView` dài cho danh sách dài mà không tối ưu, không để nút chỉ dùng cử chỉ khó hiểu mà không có nút bấm.
-- Không đụng vào code desktop. Chỉ sửa file trong `src/components/study/mobile/`, `src/app/styles/mobile.css`, `src/app/styles/glass.css` (phần `lg-*`).
+- Không đụng vào code desktop. Chỉ sửa file trong `src/components/study/mobile/`,
+  `src/app/styles/mobile.css`, `src/app/styles/glass.css` (phần `lg-*`, `surface-*`
+  và khối `.mobile-scope`). Widget chung chạy cả hai layout thì KHÔNG sửa file của
+  nó - muốn đổi chất liệu cho mobile thì thêm rule `.mobile-scope ...` trong glass.css.
 
 ## 10. File liên quan để đọc khi làm
 

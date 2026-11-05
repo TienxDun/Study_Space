@@ -33,6 +33,7 @@ import { TimerActionControls } from "./components/TimerActionControls";
 import { PaginationDots } from "./components/PaginationDots";
 import { FocusStatsLine } from "./components/FocusStatsLine";
 import { StopwatchLapsDrawer } from "./components/StopwatchLapsDrawer";
+import { yieldToPaint } from "@/components/study/mobile/perf/yieldToPaint";
 
 export const StudyPomodoroWidget = memo(function StudyPomodoroWidget({
   isVisible,
@@ -109,8 +110,12 @@ const TIMER_TABS: TimerTab[] = ["clock", "pomodoro", "stopwatch"];
 
   const switchTab = useCallback(
     (tab: TimerTab) => {
-      if (onTabChange) onTabChange(tab);
       setInternalTab(tab);
+      if (onTabChange) {
+        yieldToPaint(() => {
+          onTabChange(tab);
+        });
+      }
     },
     [onTabChange]
   );
@@ -270,6 +275,7 @@ const TIMER_TABS: TimerTab[] = ["clock", "pomodoro", "stopwatch"];
     soundType: externalSoundType,
     onSessionComplete: handleSessionComplete,
     onFocusSpan: handleFocusSpan,
+    enabled: currentTab === "pomodoro",
   });
 
   // Stopwatch hook
@@ -284,7 +290,7 @@ const TIMER_TABS: TimerTab[] = ["clock", "pomodoro", "stopwatch"];
     addLap,
     toggleLapsDrawer,
     clearLaps,
-  } = useStopwatchTimer(showStopwatchMilliseconds);
+  } = useStopwatchTimer(showStopwatchMilliseconds, currentTab === "stopwatch");
 
   // Báo lên cha khi bắt đầu/dừng chạy để giữ màn hình sáng lúc đang học
   useEffect(() => {

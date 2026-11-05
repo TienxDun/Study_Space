@@ -25,5 +25,12 @@ export function useIsMobile(breakpoint = 640) {
     return () => mql.removeEventListener("change", update);
   }, [breakpoint]);
 
+  // Dấu "đang chạy layout mobile" lên <html> để glass.css đồng bộ chất liệu
+  // surface cho toàn bộ cây mobile - kể cả sheet/menu render bằng portal ra
+  // body. Desktop (không có class) không bị ảnh hưởng một dòng nào.
+  useEffect(() => {
+    document.documentElement.classList.toggle("mobile-scope", isMobile);
+  }, [isMobile]);
+
   return isMobile;
 }

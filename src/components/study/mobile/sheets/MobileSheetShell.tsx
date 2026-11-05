@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, type ReactNode } from "react";
+import { useState, useRef, useEffect, useCallback, startTransition, type ReactNode } from "react";
 import { XIcon, ArrowsInSimpleIcon, ArrowsOutSimpleIcon, CaretLeftIcon } from "@phosphor-icons/react";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
@@ -23,6 +23,12 @@ interface MobileSheetShellProps {
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
   contentScroll?: boolean;
+  /**
+   * Giữ nội dung trong DOM sau lần mở đầu. Bật vì dựng lại danh sách thẻ/ghi chú
+   * mỗi lần mở là ~100ms React + DOM trên máy yếu. Tắt với bảng có media
+   * (phòng học, chat) để không nuôi video/Firestore ngầm khi đã đóng.
+   */
+  keepMounted?: boolean;
   children: ReactNode;
 }
 
@@ -49,6 +55,7 @@ export function MobileSheetShell({
   onSwipeLeft,
   onSwipeRight,
   contentScroll = true,
+  keepMounted = true,
   children,
 }: MobileSheetShellProps) {
   const effectiveSheetId =
@@ -89,7 +96,7 @@ export function MobileSheetShell({
         clearTimeout(closeTimerRef.current);
         closeTimerRef.current = null;
       }
-      if (localPanelRef.current) {
+      if (isClosingByDrag && localPanelRef.current) {
         localPanelRef.current.style.removeProperty("display");
         localPanelRef.current.style.removeProperty("visibility");
         localPanelRef.current.style.removeProperty("opacity");
@@ -279,20 +286,21 @@ export function MobileSheetShell({
       panelKey={`mobile-sheet-${effectiveSheetId}`}
       panelRef={setCombinedRef}
       ariaLabel={typeof title === "string" ? title : sheetId || "Bảng điều khiển"}
-      initial={{ opacity: 0, y: 72, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      keepMounted={keepMounted}
+      initial={{ opacity: 0, y: 80 }}
+      animate={{ opacity: 1, y: 0 }}
       exit={
         isClosingByDrag
           ? { opacity: 0, y: "100%", transition: { duration: 0 } }
           : { opacity: 0, y: "100%", transition: { duration: 0.22, ease: [0.32, 0, 0.67, 0] } }
       }
-      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
       backdropClassName="sm:hidden"
       panelClassName={cn(
-        "fixed z-50 flex flex-col text-white overflow-hidden sm:hidden transform-gpu sheet-motion-panel",
+        "fixed z-50 flex flex-col text-white overflow-hidden sm:hidden transform-gpu will-change-transform sheet-motion-panel",
         isZenMode
-          ? "inset-x-2 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] max-h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] rounded-[32px] bg-neutral-950/97 border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]"
-          : `inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] rounded-[28px] bg-neutral-950/96 border border-white/[0.16] shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.2)] ${
+          ? "inset-x-2 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] max-h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] rounded-[32px] surface-frost border shadow-[0_12px_28px_rgba(0,0,0,0.7),inset_0_1px_1.5px_rgba(255,255,255,0.25)]"
+          : `inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] rounded-[28px] surface-frost border shadow-[0_10px_24px_rgba(0,0,0,0.65),inset_0_1px_1.5px_rgba(255,255,255,0.2)] ${
               heightClassName || maxHeightClassName || "h-[68dvh] max-h-[72dvh]"
             }`
       )}
@@ -328,10 +336,14 @@ export function MobileSheetShell({
           {onBack && (
             <button
               type="button"
-              onClick={onBack}
+              onClick={() => {
+                startTransition(() => {
+                  onBack();
+                });
+              }}
               title={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
               aria-label={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
-              className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.18] active:scale-90 border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-all shrink-0 select-none shadow-sm cursor-pointer"
+              className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.18] active:scale-90 border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-[background-color,border-color,transform] duration-75 shrink-0 select-none shadow-sm cursor-pointer touch-manipulation"
             >
               <CaretLeftIcon className="w-4 h-4" weight="bold" />
             </button>
@@ -354,10 +366,14 @@ export function MobileSheetShell({
             {/* Nút chuyển chế độ Full-Screen Zen Overlay / Khay đáy */}
             <button
               type="button"
-              onClick={handleToggleZenMode}
+              onClick={() => {
+                startTransition(() => {
+                  handleToggleZenMode();
+                });
+              }}
               title={isZenMode ? "Thu gọn về dạng khay đáy" : "Mở rộng không gian Zen (Toàn màn hình)"}
               aria-label="Chuyển chế độ xem"
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all shadow-sm cursor-pointer"
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-[background-color,border-color,transform] duration-75 shadow-sm cursor-pointer touch-manipulation"
             >
               <span className={cn("inline-flex transition-transform duration-300 ease-out", isZenMode ? "rotate-180 scale-105" : "rotate-0 scale-100")}>
                 {isZenMode ? (
@@ -371,9 +387,13 @@ export function MobileSheetShell({
             {/* Nút Đóng */}
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                startTransition(() => {
+                  onClose();
+                });
+              }}
               aria-label={typeof title === "string" ? `Đóng ${title}` : "Đóng"}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all shadow-sm"
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-[background-color,border-color,transform] duration-75 shadow-sm cursor-pointer touch-manipulation"
             >
               <XIcon className="w-4 h-4" weight="bold" />
             </button>

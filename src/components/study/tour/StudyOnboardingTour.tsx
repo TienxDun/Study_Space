@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useTransition, useRef } from "react";
+import React, { useState, useEffect, useCallback, useTransition, useRef } from "react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import {
   XIcon,
@@ -17,7 +17,7 @@ import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { TOUR_GROUPS, QUEST_TASKS } from "./constants";
 import type { StudyOnboardingTourProps } from "./types";
 
-export function StudyOnboardingTour({
+export const StudyOnboardingTour = React.memo(function StudyOnboardingTour({
   isOpen: externalIsOpen,
   onClose: externalOnClose,
   onOpenScenes,
@@ -669,4 +669,4 @@ export function StudyOnboardingTour({
       </AnimatePresence>
     </div>
   );
-}
+});

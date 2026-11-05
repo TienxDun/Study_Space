@@ -80,7 +80,7 @@ export function MobileUndoSnackbar({
         pausedRef.current = false;
         lastRef.current = performance.now();
       }}
-      className="mobile-undo-enter fixed inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+5.5rem)] z-[80] flex items-center gap-2.5 h-[58px] pl-4 pr-2 rounded-2xl bg-black/75 backdrop-blur-2xl border border-white/15 text-white shadow-[0_16px_40px_rgba(0,0,0,0.6)] sm:hidden"
+      className="mobile-undo-enter fixed inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+5.5rem)] z-[80] flex items-center gap-2.5 h-[58px] pl-4 pr-2 rounded-2xl surface-graphite border text-white shadow-[0_16px_40px_rgba(0,0,0,0.6)] sm:hidden"
     >
       <p className="flex-1 min-w-0 text-[13px] font-semibold truncate">{message}</p>
       <button

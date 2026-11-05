@@ -22,7 +22,7 @@ export const PomoProgressRing = memo(function PomoProgressRing({ progress, size 
   return (
     <div
       aria-hidden="true"
-      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none h-full w-full"
+      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none h-full w-full contain-paint will-change-transform transform-gpu"
       style={{ maxWidth: size, maxHeight: size }}
     >
       <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`}>
@@ -53,8 +53,7 @@ export const PomoProgressRing = memo(function PomoProgressRing({ progress, size 
             strokeLinecap="round"
             pathLength={100}
             strokeDasharray={`${clamped * ARC} 100`}
-            className="transition-[stroke-dashoffset] duration-1000 ease-linear"
-            style={{ filter: "drop-shadow(0 0 8px rgba(52,211,153,0.8))" }}
+            className="pomo-ring-glow"
           />
         </g>
       </svg>
