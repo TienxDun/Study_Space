@@ -13,6 +13,7 @@ import {
   DotsThreeIcon,
   TextBIcon,
   TextItalicIcon,
+  TextUnderlineIcon,
   CheckSquareIcon,
   HighlighterIcon,
   ArrowUUpLeftIcon,
@@ -434,8 +435,28 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                     : "text-slate-300 hover:bg-white/10 hover:text-white"
                 }`}
                 title="In nghiêng (Ctrl+I)"
+                aria-label="In nghiêng (Ctrl+I)"
               >
                 <TextItalicIcon className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => execFormat("underline")}
+                className={`p-1.5 rounded-lg text-xs transition-all cursor-pointer ${
+                  activeFormats.underline
+                    ? isLight
+                      ? "bg-slate-900 text-white font-bold"
+                      : "bg-white text-slate-950 font-bold shadow-xs"
+                    : isLight
+                    ? "hover:bg-slate-200/80 text-slate-700 hover:text-slate-950"
+                    : "text-slate-300 hover:bg-white/10 hover:text-white"
+                }`}
+                title="Gạch chân (Ctrl+U)"
+                aria-label="Gạch chân (Ctrl+U)"
+              >
+                <TextUnderlineIcon className="w-3.5 h-3.5" />
               </button>
 
               <button
