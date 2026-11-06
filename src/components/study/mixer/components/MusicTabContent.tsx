@@ -15,6 +15,35 @@ import { MoodType, Track } from "../types";
 import { MOOD_OPTIONS } from "../constants";
 import { formatTime } from "../utils/sound-helpers";
 
+const MOOD_STYLES: Record<
+  MoodType,
+  {
+    activeBg: string;
+    activeText: string;
+    activeIcon: string;
+    glow: string;
+  }
+> = {
+  lofi: {
+    activeBg: "bg-indigo-500/25 border-indigo-400/80",
+    activeText: "text-indigo-200",
+    activeIcon: "text-indigo-300 drop-shadow-[0_0_8px_rgba(99,102,241,0.6)]",
+    glow: "shadow-[0_0_16px_rgba(99,102,241,0.35),inset_0_1px_1px_rgba(255,255,255,0.25)]",
+  },
+  jazz: {
+    activeBg: "bg-emerald-500/25 border-emerald-400/80",
+    activeText: "text-emerald-200",
+    activeIcon: "text-emerald-300 drop-shadow-[0_0_8px_rgba(52,211,153,0.6)]",
+    glow: "shadow-[0_0_16px_rgba(16,185,129,0.35),inset_0_1px_1px_rgba(255,255,255,0.25)]",
+  },
+  relax: {
+    activeBg: "bg-amber-500/25 border-amber-400/80",
+    activeText: "text-amber-200",
+    activeIcon: "text-amber-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]",
+    glow: "shadow-[0_0_16px_rgba(245,158,11,0.35),inset_0_1px_1px_rgba(255,255,255,0.25)]",
+  },
+};
+
 interface MusicTabContentProps {
   currentMood: MoodType;
   onSelectMood: (mood: MoodType) => void;
@@ -52,7 +81,6 @@ export const MusicTabContent = memo(function MusicTabContent({
   isLooping,
   onToggleLoop,
   currentMoodTracks,
-  isMobile = false,
 }: MusicTabContentProps) {
   return (
     <>
@@ -65,20 +93,23 @@ export const MusicTabContent = memo(function MusicTabContent({
           {MOOD_OPTIONS.map((mood) => {
             const isSelected = currentMood === mood.key;
             const Icon = mood.icon;
+            const style = MOOD_STYLES[mood.key as MoodType];
+
             return (
               <button
                 key={mood.key}
                 onClick={() => onSelectMood(mood.key as MoodType)}
-                className={`flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl transition-all active:scale-95 cursor-pointer backdrop-blur-md border ${
+                className={`relative flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl transition-all active:scale-95 cursor-pointer backdrop-blur-md border ${
                   isSelected
-                    ? isMobile
-                      ? "bg-white/20 border-white/30 text-white font-semibold shadow-sm"
-                      : "border bg-emerald-600/90 text-white border-emerald-400 shadow-lg shadow-emerald-500/20 font-bold"
+                    ? `${style.activeBg} ${style.activeText} ${style.glow} font-bold ring-1 ring-white/10`
                     : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white font-medium"
                 }`}
               >
-                <Icon className={`w-5 h-5 ${isSelected ? "text-white" : mood.color}`} />
+                <Icon className={`w-5 h-5 ${isSelected ? style.activeIcon : mood.color}`} />
                 <span className="text-xs">{mood.label}</span>
+                {isSelected && (
+                  <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-current shadow-[0_0_6px_currentColor]" />
+                )}
               </button>
             );
           })}
