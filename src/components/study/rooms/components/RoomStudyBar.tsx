@@ -33,6 +33,7 @@ export interface RoomStudyBarProps {
   isTimerOwner: boolean;
   handRaisedCount: number;
   compact?: boolean;
+  hideHandButton?: boolean;
   onSetStatus: (status: MeetStatus) => void;
   onToggleHand: () => void;
   onEditGoal: () => void;
@@ -63,6 +64,7 @@ export function RoomStudyBar({
   isTimerOwner,
   handRaisedCount,
   compact = false,
+  hideHandButton = false,
   onSetStatus,
   onToggleHand,
   onEditGoal,
@@ -347,34 +349,37 @@ export function RoomStudyBar({
       </div>
 
       {/* 3. NÚT GIƠ TAY */}
-      <button
-        type="button"
-        onClick={onToggleHand}
-        className={`flex items-center gap-1 rounded-xl border transition-all cursor-pointer shrink-0 active:scale-95 ${
-          compact ? "h-7.5 px-2" : "px-2 py-1"
-        } ${
-          local.handRaised
-            ? "bg-amber-500/25 border-amber-400/40 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
-            : compact
-            ? "bg-white/[0.06] hover:bg-white/[0.12] border-white/10 text-slate-300 hover:text-white"
-            : "bg-white/5 border-white/10 text-slate-300 hover:text-white"
-        }`}
-        title={local.handRaised ? "Hạ tay xuống" : "Giơ tay phát biểu"}
-        aria-label={local.handRaised ? "Hạ tay" : "Giơ tay"}
-      >
-        <HandWavingIcon
-          className={`w-3.5 h-3.5 ${local.handRaised ? "text-amber-300 animate-bounce" : "text-slate-400"}`}
-          weight={local.handRaised ? "fill" : "bold"}
-        />
-        <span>{compact ? "" : "Giơ tay"}</span>
-        {handRaisedCount > 0 && (
-          <span className="ml-0.5 px-1 rounded-full bg-amber-400/20 text-amber-300 font-bold text-[10px]">
-            {handRaisedCount}
-          </span>
-        )}
-      </button>
-
-      {!compact && <div className="h-4 w-px bg-white/10 shrink-0" />}
+      {!hideHandButton && (
+        <>
+          <button
+            type="button"
+            onClick={onToggleHand}
+            className={`flex items-center gap-1 rounded-xl border transition-all cursor-pointer shrink-0 active:scale-95 ${
+              compact ? "h-7.5 px-2" : "px-2 py-1"
+            } ${
+              local.handRaised
+                ? "bg-amber-500/25 border-amber-400/40 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
+                : compact
+                ? "bg-white/[0.06] hover:bg-white/[0.12] border-white/10 text-slate-300 hover:text-white"
+                : "bg-white/5 border-white/10 text-slate-300 hover:text-white"
+            }`}
+            title={local.handRaised ? "Hạ tay xuống" : "Giơ tay phát biểu"}
+            aria-label={local.handRaised ? "Hạ tay" : "Giơ tay"}
+          >
+            <HandWavingIcon
+              className={`w-3.5 h-3.5 ${local.handRaised ? "text-amber-300 animate-bounce" : "text-slate-400"}`}
+              weight={local.handRaised ? "fill" : "bold"}
+            />
+            <span>{compact ? "" : "Giơ tay"}</span>
+            {handRaisedCount > 0 && (
+              <span className="ml-0.5 px-1 rounded-full bg-amber-400/20 text-amber-300 font-bold text-[10px]">
+                {handRaisedCount}
+              </span>
+            )}
+          </button>
+          {!compact && <div className="h-4 w-px bg-white/10 shrink-0" />}
+        </>
+      )}
 
       {/* 4. MỤC TIÊU CÁ NHÂN */}
       <button

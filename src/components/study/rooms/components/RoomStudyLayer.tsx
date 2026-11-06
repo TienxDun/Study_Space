@@ -1,17 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useMeetStudyState } from "../hooks/useMeetStudyState";
+import { useMeetStudyState, type UseMeetStudyStateReturn } from "../hooks/useMeetStudyState";
 import { RoomStudyBar } from "./RoomStudyBar";
 import { RoomReactionsOverlay } from "./RoomReactionsOverlay";
 import { ModalShell } from "@/components/ui/ModalShell";
 import type { PomodoroSoundType } from "@/components/study/study-sound";
 import { TargetIcon, XIcon, CheckIcon, TrashIcon } from "@phosphor-icons/react";
 
-interface RoomStudyLayerProps {
+export interface RoomStudyLayerProps {
   compact?: boolean;
   soundEnabled?: boolean;
   soundType?: PomodoroSoundType;
+  studyState?: UseMeetStudyStateReturn;
+  hideHandButton?: boolean;
 }
 
 /**
@@ -21,11 +23,26 @@ interface RoomStudyLayerProps {
  * - Hiệu ứng reaction bay lên RoomReactionsOverlay
  * - Modal thiết lập mục tiêu học tập cá nhân (tối đa 120 ký tự)
  */
-export function RoomStudyLayer({
+export function RoomStudyLayer(props: RoomStudyLayerProps) {
+  if (props.studyState) {
+    return <RoomStudyLayerContent {...props} state={props.studyState} />;
+  }
+  return <RoomStudyLayerWithState {...props} />;
+}
+
+function RoomStudyLayerWithState(props: RoomStudyLayerProps) {
+  const state = useMeetStudyState({
+    soundEnabled: props.soundEnabled,
+    soundType: props.soundType,
+  });
+  return <RoomStudyLayerContent {...props} state={state} />;
+}
+
+function RoomStudyLayerContent({
   compact = false,
-  soundEnabled,
-  soundType,
-}: RoomStudyLayerProps) {
+  hideHandButton = false,
+  state,
+}: RoomStudyLayerProps & { state: UseMeetStudyStateReturn }) {
   const {
     local,
     timer,
@@ -40,7 +57,7 @@ export function RoomStudyLayer({
     stopTimer,
     startNextPhase,
     sendReaction,
-  } = useMeetStudyState({ soundEnabled, soundType });
+  } = state;
 
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [goalDraft, setGoalDraft] = useState("");
@@ -72,6 +89,7 @@ export function RoomStudyLayer({
         isTimerOwner={isTimerOwner}
         handRaisedCount={handRaisedCount}
         compact={compact}
+        hideHandButton={hideHandButton}
         onSetStatus={setStatus}
         onToggleHand={toggleHand}
         onEditGoal={() => setIsGoalModalOpen(true)}
@@ -138,32 +156,33 @@ export function RoomStudyLayer({
         </div>
 
         <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-white/10 bg-white/[0.02]">
-          <div>
-            {local.goal && (
-              <button
-                type="button"
-                onClick={handleClearGoal}
-                className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold border border-rose-400/20 transition-all cursor-pointer"
-              >
-                <TrashIcon className="w-3.5 h-3.5" />
-                <span>Xóa mục tiêu</span>
-              </button>
-            )}
-          </div>
+          {local.goal ? (
+            <button
+              type="button"
+              onClick={handleClearGoal}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-rose-300 hover:text-rose-200 hover:bg-rose-500/10 border border-rose-400/20 transition-colors"
+            >
+              <TrashIcon className="w-4 h-4" />
+              <span>Xóa mục tiêu</span>
+            </button>
+          ) : (
+            <div />
+          )}
+
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setIsGoalModalOpen(false)}
-              className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-semibold border border-white/10 transition-all cursor-pointer"
+              className="px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
             >
               Hủy
             </button>
             <button
               type="button"
               onClick={handleSaveGoal}
-              className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-colors shadow-sm"
             >
-              <CheckIcon className="w-3.5 h-3.5" weight="bold" />
+              <CheckIcon className="w-4 h-4" weight="bold" />
               <span>Lưu mục tiêu</span>
             </button>
           </div>

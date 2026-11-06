@@ -85,12 +85,12 @@ export function MemberSafetyMenu({
         }}
         aria-label={`Tùy chọn an toàn cho ${targetName}`}
         title="Báo cáo hoặc chặn thành viên"
-        className={`absolute bottom-1.5 right-1.5 z-20 grid place-items-center rounded-md bg-black/70 hover:bg-black/85 text-white/85 hover:text-white border border-white/20 shadow-sm transition-colors cursor-pointer ${
-          variant === "mobile" ? "h-6 w-6" : "h-7 w-7"
+        className={`absolute bottom-2 right-2 z-20 grid place-items-center rounded-xl bg-black/75 hover:bg-black/90 active:scale-95 text-white/85 hover:text-white border border-white/20 shadow-sm transition-all cursor-pointer ${
+          variant === "mobile" ? "h-7.5 w-7.5" : "h-7 w-7"
         }`}
       >
         <DotsThreeVerticalIcon
-          size={variant === "mobile" ? 13 : 15}
+          size={variant === "mobile" ? 15 : 15}
           weight="bold"
           aria-hidden="true"
         />

@@ -47,6 +47,7 @@ export const STORAGE_KEYS = {
   // Thẻ gọi video phòng học nhóm
   roomsPos: "study_space_rooms_pos",
   roomsSize: "study_space_rooms_size",
+  roomsActiveSession: "study_space_rooms_active_session",
   // Giữ màn hình sáng khi đang học (Wake Lock)
   screenAwake: "study_space_screen_awake",
   // Favorites

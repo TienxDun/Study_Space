@@ -126,6 +126,16 @@
   transform: none;
 }
 
+/* Nút điều khiển cuộc gọi LiveKit (TrackToggle) trong phòng học mobile:
+   Loại bỏ padding khối hộp chữ nhật, ép tròn hoàn toàn theo rounded-full và khôi phục viền border chuẩn */
+.mobile-room-shell .lk-button,
+.mobile-room-shell .lk-track-toggle {
+  padding: 0;
+  border-radius: 9999px;
+  border-width: 1px;
+  border-style: solid;
+}
+
 /* =========================================================================
    ANIMATION MỞ BẢNG & SẮP XẾP THỨ TỰ RENDER (STAGGERED CASCADE)
    Tối ưu máy yếu không bị giựt khung hình, trải nghiệm thị giác êm ái

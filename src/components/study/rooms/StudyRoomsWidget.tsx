@@ -168,6 +168,27 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
     }
   }, [stableOnOpen]);
 
+  // Cập nhật timestamp phiên gọi video định kỳ & trước khi tải lại trang (F5)
+  useEffect(() => {
+    if (!joinedRoom || !token) return;
+    const updateSessionHeartbeat = () => {
+      try {
+        const raw = sessionStorage.getItem(STORAGE_KEYS.roomsActiveSession);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          parsed.timestamp = Date.now();
+          sessionStorage.setItem(STORAGE_KEYS.roomsActiveSession, JSON.stringify(parsed));
+        }
+      } catch {}
+    };
+    const interval = setInterval(updateSessionHeartbeat, 15000);
+    window.addEventListener("beforeunload", updateSessionHeartbeat);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("beforeunload", updateSessionHeartbeat);
+    };
+  }, [joinedRoom, token]);
+
   const toggleFullscreen = useCallback(() => {
     const next = !isFullscreenRef.current;
     if (typeof document !== "undefined") {
@@ -378,6 +399,17 @@ const getLiveKitEndpoints = () => {
       setToken(data.token);
       setServerUrl(data.url);
       setJoinedRoom(data.room);
+      try {
+        sessionStorage.setItem(
+          STORAGE_KEYS.roomsActiveSession,
+          JSON.stringify({
+            room: data.room,
+            name,
+            password,
+            timestamp: Date.now(),
+          })
+        );
+      } catch {}
       trackEvent("room-join");
       // Vào phòng thành công thì thông báo rời phòng cũ không còn cần thiết
       setExitNotice(null);
@@ -416,6 +448,42 @@ const getLiveKitEndpoints = () => {
       setJoining(false);
     }
   }, [roomSize, getToken]);
+
+  // Tự động kết nối lại (Auto-rejoin) vào phòng khi vừa F5 hoặc rớt mạng nhẹ (mic & cam mặc định TẮT)
+  const autoRejoinAttemptedRef = useRef(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || authLoading || autoRejoinAttemptedRef.current) return;
+    autoRejoinAttemptedRef.current = true;
+
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEYS.roomsActiveSession);
+      if (!raw) return;
+      const session = JSON.parse(raw);
+      // Chỉ tự động vào lại nếu phiên học xảy ra trong vòng 2 phút gần nhất
+      if (session?.room && session?.name && Date.now() - session.timestamp < 120000) {
+        if (!user) {
+          sessionStorage.removeItem(STORAGE_KEYS.roomsActiveSession);
+          return;
+        }
+        setRoomName(session.room);
+        // Yêu cầu quan trọng: khi rejoin thì mic và cam mặc định là OFF
+        setInitialMedia({ audio: false, video: false });
+        stableOnOpen();
+        toast.info(`Đang tự động kết nối lại vào phòng ${session.room}...`, { id: "rejoin-room" });
+        doJoin(session.room, session.name, session.password).catch(() => {
+          try {
+            sessionStorage.removeItem(STORAGE_KEYS.roomsActiveSession);
+          } catch {}
+        });
+      } else {
+        sessionStorage.removeItem(STORAGE_KEYS.roomsActiveSession);
+      }
+    } catch {
+      try {
+        sessionStorage.removeItem(STORAGE_KEYS.roomsActiveSession);
+      } catch {}
+    }
+  }, [authLoading, user, stableOnOpen, doJoin]);
 
   const resolvedDisplayName =
     displayName.trim() || user?.displayName || user?.email?.split("@")[0] || "";
@@ -586,6 +654,9 @@ const getLiveKitEndpoints = () => {
           } catch {}
         }
       }
+      try {
+        sessionStorage.removeItem(STORAGE_KEYS.roomsActiveSession);
+      } catch {}
       setIsFullscreen(false);
       setToken(null);
       setServerUrl("");
@@ -731,11 +802,11 @@ const getLiveKitEndpoints = () => {
             }
             className={`hidden sm:flex pointer-events-auto fixed flex-col select-none will-change-transform ${isFullscreen ? "" : "transform-gpu"} ${
               isFullscreen
-                ? "inset-0 w-screen h-screen rounded-none bg-[#111827]/95 backdrop-blur-3xl z-[90] border-none shadow-none"
-                : `min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] rounded-3xl bg-[#111827]/60 backdrop-blur-2xl border overflow-hidden z-[70] ${
+                ? "inset-0 w-screen h-screen rounded-none bg-neutral-950/95 backdrop-blur-3xl z-[90] border-none shadow-none"
+                : `min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] rounded-3xl bg-black/60 hover:bg-black/65 backdrop-blur-2xl border overflow-hidden z-[70] ${
                     isDragging
                       ? "shadow-[0_30px_80px_rgba(0,0,0,0.65)] ring-2 ring-emerald-500/40 cursor-grabbing border-white/15"
-                      : "shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-white/15"
+                      : "shadow-[0_20px_50px_rgba(0,0,0,0.6)] border-white/15"
                   }`
             }`}
           >

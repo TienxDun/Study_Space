@@ -680,3 +680,34 @@
   stroke-width: 5;
 }
 
+/* Nút điều khiển LiveKit mang rounded-full: loại bỏ padding khối hộp chữ nhật, ép tròn hoàn toàn và khôi phục viền */
+.lk-button.rounded-full,
+.lk-track-toggle.rounded-full {
+  padding: 0;
+  border-radius: 9999px;
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* =========================================================================
+   VIDEO CHUẨN MỰC PHÒNG HỌC (LIVEKIT)
+   Mặc định là "Vừa khung" (Fit / object-contain) để giữ trọn vẹn 100% khung hình camera & trình chiếu,
+   không bao giờ bị cắt xén góc quay trên cả Desktop và Mobile.
+   Hỗ trợ chuyển sang "Lấp đầy" (Fill / object-cover) khi có class .tile-fit-cover.
+   ========================================================================= */
+
+.lk-participant-tile .lk-participant-media-video,
+.lk-participant-tile .lk-participant-media-video[data-lk-orientation="landscape"],
+.tile-fit-contain .lk-participant-media-video,
+.tile-fit-contain .lk-participant-media-video[data-lk-orientation="landscape"] {
+  object-fit: contain;
+}
+
+.tile-fit-cover .lk-participant-media-video,
+.tile-fit-cover .lk-participant-media-video[data-lk-orientation="landscape"],
+.lk-participant-tile.tile-fit-cover .lk-participant-media-video,
+.lk-participant-tile.tile-fit-cover .lk-participant-media-video[data-lk-orientation="landscape"] {
+  object-fit: cover;
+}
+
+

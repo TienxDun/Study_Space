@@ -33,13 +33,22 @@ import {
   ClockCounterClockwiseIcon,
   MicrophoneSlashIcon,
   UserMinusIcon,
+  SquaresFourIcon,
+  PresentationIcon,
+  PushPinIcon,
+  PushPinSlashIcon,
+  CornersOutIcon,
+  CornersInIcon,
 } from "@phosphor-icons/react";
+
+export type MobileRoomLayoutMode = "grid" | "speaker";
 import { toast } from "sonner";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import type { PomodoroSoundType } from "@/components/study/study-sound";
 import { RoomSessionTimer } from "../../rooms/components/RoomSessionTimer";
 import { buildInviteLink, getMeetEndpoints } from "@/lib/meet-invite";
 import { RoomStudyLayer } from "../../rooms/components/RoomStudyLayer";
+import { useMeetStudyState } from "../../rooms/hooks/useMeetStudyState";
 import { MEET_ATTR } from "../../rooms/utils/meet-protocol";
 import { applyChosenDevices } from "../../rooms/utils/room-devices";
 import { RoomHostControlsModal } from "../../rooms/components/RoomHostControlsModal";
@@ -115,6 +124,9 @@ interface MobileParticipantTileProps {
   onKick: (identity: string, name: string) => void;
   onToggleCoHost: (identity: string) => void;
   onBlocked: () => void;
+  isPinned?: boolean;
+  onTogglePin?: () => void;
+  isCompact?: boolean;
 }
 
 function MobileParticipantTileBase({
@@ -129,6 +141,9 @@ function MobileParticipantTileBase({
   getToken,
   roomName,
   onBlocked,
+  isPinned,
+  onTogglePin,
+  isCompact = false,
 }: MobileParticipantTileProps) {
   const contextTrackRef = useMaybeTrackRefContext();
   const resolvedTrackRef = trackRef ?? contextTrackRef;
@@ -155,47 +170,107 @@ function MobileParticipantTileBase({
       ? "Cần giúp"
       : null;
 
+  // Trạng thái hiển thị video: false (Vừa khung / contain - mặc định), true (Lấp đầy / cover)
+  const [isCover, setIsCover] = useState(false);
+  const [feedbackText, setFeedbackText] = useState<string | null>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTapRef = useRef<number>(0);
+
+  const isVideoActive = Boolean(
+    resolvedTrackRef?.publication &&
+    !resolvedTrackRef.publication.isMuted &&
+    (resolvedTrackRef.source === Track.Source.Camera || resolvedTrackRef.source === Track.Source.ScreenShare)
+  );
+
+  const toggleFit = useCallback(() => {
+    setIsCover((prev) => {
+      const next = !prev;
+      setFeedbackText(next ? "Lấp đầy khung" : "Vừa khung");
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+      feedbackTimerRef.current = setTimeout(() => {
+        setFeedbackText(null);
+      }, 1200);
+      return next;
+    });
+  }, []);
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("button, [role='button'], a, input, select")) return;
+    const now = Date.now();
+    if (now - lastTapRef.current < 350) {
+      if (isVideoActive) {
+        toggleFit();
+      }
+      lastTapRef.current = 0;
+    } else {
+      lastTapRef.current = now;
+    }
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("button, [role='button'], a, input, select")) return;
+    if (isVideoActive) {
+      toggleFit();
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    };
+  }, []);
+
   return (
-    <div className="relative w-full h-full group/tile">
+    <div
+      className={`relative w-full h-full group/tile ${
+        isHandRaised ? "z-20" : "z-0"
+      } ${isCover ? "tile-fit-cover" : "tile-fit-contain"}`}
+      onTouchEnd={handleTouchEnd}
+      onDoubleClick={handleDoubleClick}
+    >
       <ParticipantTile
         trackRef={resolvedTrackRef}
-        className="w-full h-full bg-[#0B0F1A] [&_.lk-participant-placeholder]:bg-[#0E1526]"
+        className={`w-full h-full rounded-2xl overflow-hidden bg-black/25 ${
+          isCover ? "tile-fit-cover" : "tile-fit-contain"
+        } [&_.lk-participant-placeholder]:bg-white/[0.04] [&_.lk-participant-metadata]:whitespace-nowrap [&_.lk-participant-metadata]:flex-nowrap [&_.lk-participant-metadata-item]:max-w-[calc(100%-4.5rem)] [&_.lk-participant-metadata-item]:whitespace-nowrap [&_.lk-participant-metadata-item]:flex-nowrap [&_.lk-participant-metadata-item]:overflow-hidden [&_.lk-participant-name]:whitespace-nowrap [&_.lk-participant-name]:truncate [&_.lk-participant-name]:block ${!isLocal && targetUid ? "[&_.lk-connection-quality]:mr-7.5" : ""}`}
       />
 
       {/* Huy hiệu vai trò, trạng thái, giơ tay và mục tiêu góc trên trái (mobile nhỏ gọn) */}
-      <div className="absolute top-1.5 left-1.5 z-10 pointer-events-none flex items-center gap-1 max-w-[calc(100%-4rem)] flex-wrap">
+      <div className="absolute top-1.5 left-1.5 z-20 pointer-events-none flex items-center gap-1 max-w-[calc(100%-3.5rem)] flex-nowrap">
         {isTargetHost && (
           <div
-            className="px-1 py-0.5 rounded bg-amber-500/90 text-slate-950 font-bold text-[9px] flex items-center gap-0.5 shadow-sm border border-amber-300 pointer-events-auto"
+            className="px-1 py-0.5 rounded bg-amber-500/90 text-slate-950 font-bold text-[9px] flex items-center gap-0.5 shadow-sm border border-amber-300 pointer-events-auto shrink-0 whitespace-nowrap"
             title="Trưởng phòng"
           >
-            <CrownIcon className="w-2.5 h-2.5 text-slate-950" weight="fill" />
+            <CrownIcon className="w-2.5 h-2.5 text-slate-950 shrink-0" weight="fill" />
             <span>Host</span>
           </div>
         )}
 
         {isTargetCoHost && (
           <div
-            className="px-1 py-0.5 rounded bg-sky-500/90 text-white font-bold text-[9px] flex items-center gap-0.5 shadow-sm border border-sky-300 pointer-events-auto"
+            className="px-1 py-0.5 rounded bg-sky-500/90 text-white font-bold text-[9px] flex items-center gap-0.5 shadow-sm border border-sky-300 pointer-events-auto shrink-0 whitespace-nowrap"
             title="Phó phòng"
           >
-            <StarIcon className="w-2.5 h-2.5 text-white" weight="fill" />
+            <StarIcon className="w-2.5 h-2.5 text-white shrink-0" weight="fill" />
             <span>Phó</span>
           </div>
         )}
 
         {isHandRaised && (
           <div
-            className="p-0.5 rounded bg-amber-500/90 text-slate-950 flex items-center justify-center shadow-md animate-bounce"
+            className="px-1 py-0.5 rounded bg-amber-500 text-slate-950 flex items-center justify-center shadow-md border border-amber-300 shrink-0 animate-bounce pointer-events-auto"
             title="Đang giơ tay phát biểu"
           >
-            <HandWavingIcon className="w-3 h-3" weight="fill" />
+            <HandWavingIcon className="w-2.5 h-2.5 text-slate-950 shrink-0" weight="fill" />
           </div>
         )}
 
         {statusLabel && (
           <div
-            className={`px-1.5 py-0.5 rounded text-[9px] font-bold border shadow-sm truncate ${
+            className={`px-1.5 py-0.5 rounded text-[9px] font-bold border shadow-sm truncate shrink-0 whitespace-nowrap ${
               status === "focus"
                 ? "bg-emerald-500/85 text-slate-950 border-emerald-400/50"
                 : status === "break"
@@ -211,7 +286,7 @@ function MobileParticipantTileBase({
         {/* Mục tiêu học tập cá nhân hiển thị thực sự trên mobile (tối ưu nền không blur trên video WebRTC) */}
         {goal && (
           <div
-            className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-black/85 border border-emerald-400/40 text-emerald-200 shadow-sm flex items-center gap-1 max-w-[100px] truncate pointer-events-auto"
+            className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-black/85 border border-emerald-400/40 text-emerald-200 shadow-sm flex items-center gap-1 max-w-[80px] truncate pointer-events-auto shrink-0"
             title={`Mục tiêu: ${goal}`}
           >
             <TargetIcon className="w-2.5 h-2.5 text-emerald-400 shrink-0" weight="bold" />
@@ -220,63 +295,109 @@ function MobileParticipantTileBase({
         )}
       </div>
 
-      {/* Nút hành động nhanh của Host & Phó phòng trên mobile */}
-      {canModerate && !isLocal && (
-        <div className="absolute top-1.5 right-1.5 z-20 flex items-center gap-1">
+      {/* Cụm nút hành động nhanh góc trên phải: Ghim video & Quyền điều hành */}
+      <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5 pointer-events-auto">
+        {onTogglePin && (
           <button
             type="button"
-            onClick={() => identity && onMute(identity)}
-            disabled={isActionPending}
-            aria-busy={pendingType === "mute" || undefined}
-            className="p-1 rounded bg-black/70 active:bg-rose-500/80 text-white border border-white/20 transition-colors shadow-sm disabled:opacity-60"
-            title="Tắt micro"
-            aria-label="Tắt micro"
+            onClick={onTogglePin}
+            className={`w-7.5 h-7.5 rounded-xl bg-black/75 active:scale-95 border transition-all shadow-sm flex items-center justify-center cursor-pointer ${
+              isPinned
+                ? "bg-emerald-500/90 border-emerald-400 text-white shadow-emerald-500/20"
+                : "border-white/20 text-white/80 active:text-white"
+            }`}
+            title={isPinned ? "Bỏ ghim" : "Ghim video"}
+            aria-label={isPinned ? "Bỏ ghim" : "Ghim video"}
           >
-            {pendingType === "mute" ? (
-              <CircleNotchIcon className="w-2.5 h-2.5 animate-spin" weight="bold" />
+            {isPinned ? (
+              <PushPinSlashIcon className="w-3.5 h-3.5" weight="fill" />
             ) : (
-              <MicrophoneSlashIcon className="w-2.5 h-2.5" />
+              <PushPinIcon className="w-3.5 h-3.5" />
             )}
           </button>
+        )}
+
+        {/* Nút chuyển đổi Vừa khung (Fit) / Lấp đầy (Fill) khi có video hoạt động */}
+        {isVideoActive && (
           <button
             type="button"
-            onClick={() =>
-              identity &&
-              onKick(identity, participant?.name || "Học viên")
-            }
-            disabled={isActionPending}
-            aria-busy={pendingType === "kick" || undefined}
-            className="p-1 rounded bg-black/70 active:bg-rose-500/80 text-white border border-white/20 transition-colors shadow-sm disabled:opacity-60"
-            title="Mời rời phòng"
-            aria-label="Mời rời phòng"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFit();
+            }}
+            className={`w-7.5 h-7.5 rounded-xl border transition-all shadow-sm flex items-center justify-center cursor-pointer active:scale-95 ${
+              isCover
+                ? "bg-amber-500/90 border-amber-300 text-slate-950 shadow-amber-500/20"
+                : "bg-black/75 border-white/20 text-white/80 active:text-white"
+            }`}
+            title={isCover ? "Thu về vừa khung (chạm đúp để đổi)" : "Phóng to lấp đầy (chạm đúp để đổi)"}
+            aria-label={isCover ? "Thu về vừa khung" : "Phóng to lấp đầy"}
           >
-            {pendingType === "kick" ? (
-              <CircleNotchIcon className="w-2.5 h-2.5 animate-spin" weight="bold" />
+            {isCover ? (
+              <CornersInIcon className="w-3.5 h-3.5" weight="bold" />
             ) : (
-              <UserMinusIcon className="w-2.5 h-2.5" />
+              <CornersOutIcon className="w-3.5 h-3.5" weight="bold" />
             )}
           </button>
-          {isLocalHost && (
+        )}
+
+        {!isCompact && canModerate && !isLocal && (
+          <>
             <button
               type="button"
-              onClick={() => identity && onToggleCoHost(identity)}
+              onClick={() => identity && onMute(identity)}
               disabled={isActionPending}
-              aria-busy={pendingType === "co-host" || undefined}
-              className={`p-1 rounded bg-black/70 text-white border border-white/20 transition-colors shadow-sm disabled:opacity-60 ${
-                isTargetCoHost ? "text-amber-300" : "text-sky-300"
-              }`}
-              title={isTargetCoHost ? "Hủy quyền Phó phòng" : "Bổ nhiệm Phó phòng"}
-              aria-label="Chỉ định hoặc hủy Phó phòng"
+              aria-busy={pendingType === "mute" || undefined}
+              className="w-7.5 h-7.5 rounded-xl bg-black/75 active:bg-rose-500/80 active:scale-95 text-white border border-white/20 transition-all shadow-sm disabled:opacity-60 flex items-center justify-center cursor-pointer"
+              title="Tắt micro"
+              aria-label="Tắt micro"
             >
-              {pendingType === "co-host" ? (
-                <CircleNotchIcon className="w-2.5 h-2.5 animate-spin" weight="bold" />
+              {pendingType === "mute" ? (
+                <CircleNotchIcon className="w-3.5 h-3.5 animate-spin" weight="bold" />
               ) : (
-                <StarIcon className="w-2.5 h-2.5" weight={isTargetCoHost ? "fill" : "regular"} />
+                <MicrophoneSlashIcon className="w-3.5 h-3.5" />
               )}
             </button>
-          )}
-        </div>
-      )}
+            <button
+              type="button"
+              onClick={() =>
+                identity &&
+                onKick(identity, participant?.name || "Học viên")
+              }
+              disabled={isActionPending}
+              aria-busy={pendingType === "kick" || undefined}
+              className="w-7.5 h-7.5 rounded-xl bg-black/75 active:bg-rose-500/80 active:scale-95 text-white border border-white/20 transition-all shadow-sm disabled:opacity-60 flex items-center justify-center cursor-pointer"
+              title="Mời rời phòng"
+              aria-label="Mời rời phòng"
+            >
+              {pendingType === "kick" ? (
+                <CircleNotchIcon className="w-3.5 h-3.5 animate-spin" weight="bold" />
+              ) : (
+                <UserMinusIcon className="w-3.5 h-3.5" />
+              )}
+            </button>
+            {isLocalHost && (
+              <button
+                type="button"
+                onClick={() => identity && onToggleCoHost(identity)}
+                disabled={isActionPending}
+                aria-busy={pendingType === "co-host" || undefined}
+                className={`w-7.5 h-7.5 rounded-xl bg-black/75 active:scale-95 text-white border border-white/20 transition-all shadow-sm disabled:opacity-60 flex items-center justify-center cursor-pointer ${
+                  isTargetCoHost ? "text-amber-300" : "text-sky-300"
+                }`}
+                title={isTargetCoHost ? "Hủy quyền Phó phòng" : "Bổ nhiệm Phó phòng"}
+                aria-label="Chỉ định hoặc hủy Phó phòng"
+              >
+                {pendingType === "co-host" ? (
+                  <CircleNotchIcon className="w-3.5 h-3.5 animate-spin" weight="bold" />
+                ) : (
+                  <StarIcon className="w-3.5 h-3.5" weight={isTargetCoHost ? "fill" : "regular"} />
+                )}
+              </button>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Menu an toàn (báo cáo/chặn) chỉ dành cho thành viên khác */}
       {!isLocal && targetUid ? (
@@ -289,6 +410,20 @@ function MobileParticipantTileBase({
           onBlocked={onBlocked}
         />
       ) : null}
+
+      {/* Thông báo phản hồi cử chỉ Vừa khung / Lấp đầy */}
+      {feedbackText && (
+        <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center animate-in fade-in zoom-in-95 duration-150">
+          <div className="px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-white text-xs font-semibold shadow-xl flex items-center gap-1.5">
+            {isCover ? (
+              <CornersOutIcon className="w-3.5 h-3.5 text-amber-300" weight="bold" />
+            ) : (
+              <CornersInIcon className="w-3.5 h-3.5 text-emerald-300" weight="bold" />
+            )}
+            <span>{feedbackText}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -306,6 +441,7 @@ function areParticipantTilePropsEqual(
     prevRef?.source === nextRef?.source &&
     prevRef?.participant?.attributes === nextRef?.participant?.attributes &&
     prevRef?.participant?.name === nextRef?.participant?.name &&
+    prevRef?.publication?.isMuted === nextRef?.publication?.isMuted &&
     prev.localRole === next.localRole &&
     prev.canModerate === next.canModerate &&
     prev.isLocalHost === next.isLocalHost &&
@@ -315,7 +451,10 @@ function areParticipantTilePropsEqual(
     prev.onMute === next.onMute &&
     prev.onKick === next.onKick &&
     prev.onToggleCoHost === next.onToggleCoHost &&
-    prev.onBlocked === next.onBlocked
+    prev.onBlocked === next.onBlocked &&
+    prev.isPinned === next.isPinned &&
+    prev.onTogglePin === next.onTogglePin &&
+    prev.isCompact === next.isCompact
   );
 }
 
@@ -341,6 +480,7 @@ function MobileRoomViewBase({
   getIdToken,
 }: MobileRoomViewProps) {
   const room = useRoomContext();
+  const studyState = useMeetStudyState({ soundEnabled, soundType });
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [canShareScreen, setCanShareScreen] = useState(false);
   const [kickTarget, setKickTarget] = useState<{ identity: string; name: string } | null>(null);
@@ -349,6 +489,8 @@ function MobileRoomViewBase({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isLockedState, setIsLockedState] = useState(initialIsLocked);
   const [hasPasswordState, setHasPasswordState] = useState(initialHasPassword);
+  const [layoutMode, setLayoutMode] = useState<MobileRoomLayoutMode>("grid");
+  const [pinnedTrackId, setPinnedTrackId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<
     { type: PendingActionType; identity: string } | null
   >(null);
@@ -364,6 +506,16 @@ function MobileRoomViewBase({
   const endMemberAction = useCallback(() => {
     pendingActionRef.current = false;
     setPendingAction(null);
+  }, []);
+
+  const handleTogglePinTrack = useCallback((trackId: string) => {
+    setPinnedTrackId((prev) => {
+      if (prev === trackId) {
+        return null;
+      }
+      setLayoutMode("speaker");
+      return trackId;
+    });
   }, []);
 
   const handleMuteParticipant = useCallback(
@@ -586,7 +738,7 @@ function MobileRoomViewBase({
   };
 
   return (
-    <div className="mobile-room-shell relative flex flex-col h-full w-full bg-[#0B0F1A] text-white overflow-hidden select-none [--lk-bg:#0B0F1A] [--lk-bg2:#0E1526]">
+    <div className="mobile-room-shell relative flex flex-col h-full w-full bg-transparent text-white overflow-hidden select-none [--lk-bg:transparent] [--lk-bg2:rgba(255,255,255,0.06)]">
       {/* Phát âm thanh LiveKit */}
       <RoomAudioRenderer />
 
@@ -607,7 +759,7 @@ function MobileRoomViewBase({
       />
 
       {/* Thanh trạng thái phụ: số người, timer phiên và tiện ích phòng */}
-      <div className="flex items-center justify-between px-3.5 py-1.5 text-xs border-b border-white/[0.06] shrink-0 bg-[#0B0F1A] gap-2">
+      <div className="flex items-center justify-between px-3.5 py-1.5 text-xs border-b border-white/[0.08] shrink-0 bg-transparent gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
           <div
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/10 text-slate-200 text-[11px] font-medium shrink-0 shadow-sm"
@@ -636,7 +788,7 @@ function MobileRoomViewBase({
           <button
             type="button"
             onClick={() => setIsRoomMenuOpen((v) => !v)}
-            className={`w-7 h-7 rounded-full border flex items-center justify-center transition-all cursor-pointer shadow-sm shrink-0 active:scale-90 ${
+            className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all cursor-pointer shadow-sm shrink-0 active:scale-95 ${
               isRoomMenuOpen
                 ? "bg-white/15 border-white/30 text-white"
                 : "bg-white/[0.05] hover:bg-white/[0.12] border-white/10 text-slate-200 hover:text-white"
@@ -655,9 +807,50 @@ function MobileRoomViewBase({
                 onClick={() => setIsRoomMenuOpen(false)}
               />
 
-              {/* Menu popup tiện ích (tối ưu nền phẳng không tốn GPU blur) */}
-              <div className="absolute right-0 top-full mt-1.5 z-50 w-48 py-1.5 rounded-2xl bg-[#0B0F1A] border border-white/15 shadow-[0_12px_32px_rgba(0,0,0,0.85)] select-none">
+              {/* Menu popup tiện ích & bố cục (đồng bộ surface-frost theo mobile style guide) */}
+              <div className="absolute right-0 top-full mt-1.5 z-50 w-52 py-1.5 rounded-2xl surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] select-none">
+                {/* Phần 1: Bố cục hiển thị */}
                 <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/[0.08] mb-1">
+                  Bố cục hiển thị
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLayoutMode("grid");
+                    setPinnedTrackId(null);
+                    setIsRoomMenuOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-white/10 hover:text-white transition-colors flex items-center justify-between cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <SquaresFourIcon className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Lưới đều</span>
+                  </div>
+                  {layoutMode === "grid" && (
+                    <CheckIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" weight="bold" />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLayoutMode("speaker");
+                    setIsRoomMenuOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-white/10 hover:text-white transition-colors flex items-center justify-between cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <PresentationIcon className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Tiêu điểm</span>
+                  </div>
+                  {layoutMode === "speaker" && (
+                    <CheckIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" weight="bold" />
+                  )}
+                </button>
+
+                {/* Phần 2: Tiện ích phòng */}
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-y border-white/[0.08] my-1">
                   Tiện ích phòng
                 </div>
 
@@ -710,27 +903,70 @@ function MobileRoomViewBase({
         </div>
       </div>
 
-      {/* Thanh công cụ tương tác học tập di động: Pomodoro, Trạng thái, Giơ tay, Mục tiêu, Reaction (Phase 2) */}
-      <RoomStudyLayer compact soundEnabled={soundEnabled} soundType={soundType} />
+      {/* Thanh công cụ tương tác học tập di động: Pomodoro, Trạng thái, Mục tiêu, Reaction (Phase 2) */}
+      <RoomStudyLayer
+        compact
+        soundEnabled={soundEnabled}
+        soundType={soundType}
+        studyState={studyState}
+        hideHandButton
+      />
 
       {/* Vùng hiển thị Video các thành viên (Mở rộng tối đa không gian) */}
       <main className="flex-1 min-h-0 relative p-2 overflow-hidden flex flex-col justify-center">
-        {tracks.length > 0 ? (
-          <div
-            className={`w-full h-full overflow-y-auto custom-study-scroll rounded-2xl grid gap-2 p-2 ${
-              videoColumns === 2 && tracks.length % 2 === 1
-                ? "[&>*:last-child]:col-span-2"
-                : ""
-            }`}
-            style={{
-              gridTemplateColumns: `repeat(${videoColumns}, minmax(0, 1fr))`,
-              gridTemplateRows: `repeat(${videoRows}, minmax(0, 1fr))`,
-            }}
-          >
-            {tracks.map((track) => (
+        {(() => {
+          if (tracks.length === 0) {
+            return (
+              <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
+                <div className="relative mb-2.5">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-400/25 flex items-center justify-center text-emerald-300 shadow-[0_0_25px_rgba(52,211,153,0.2)] animate-pulse">
+                    <SparkleIcon className="w-7 h-7" />
+                  </div>
+                </div>
+                <h3 className="text-xs font-bold text-white mb-0.5">
+                  Đang đợi bạn bè tham gia
+                </h3>
+                <p className="text-[11px] text-slate-400 max-w-[220px] leading-relaxed mb-3">
+                  Gửi link mời phòng{" "}
+                  <strong className="text-emerald-300 font-mono font-semibold">
+                    {roomName}
+                  </strong>{" "}
+                  để cùng học nhé.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleCopyInviteLink}
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 active:scale-95 border border-white/15 text-[11px] font-semibold text-slate-200 flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                >
+                  {copied ? (
+                    <>
+                      <CheckIcon className="w-3 h-3 text-emerald-400" />
+                      <span>Đã chép link!</span>
+                    </>
+                  ) : (
+                    <>
+                      <LinkSimpleIcon className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Sao chép link mời</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            );
+          }
+
+          const renderParticipantTile = (
+            track: TrackReferenceOrPlaceholder,
+            isCompact = false
+          ) => {
+            const trackId = getTrackReferenceId(track);
+            const isPinned = pinnedTrackId === trackId;
+            const isHandRaised = track.participant?.attributes?.[MEET_ATTR.hand] === "1";
+            return (
               <div
-                key={getTrackReferenceId(track)}
-                className="min-h-0 min-w-0 rounded-2xl border border-white/10 overflow-hidden bg-[#0B0F1A] shadow-md"
+                key={trackId}
+                className={`relative w-full h-full min-h-0 min-w-0 rounded-2xl border border-white/15 bg-white/[0.04] shadow-md ${
+                  isHandRaised ? "z-20" : "z-0"
+                }`}
               >
                 <MobileParticipantTile
                   trackRef={track}
@@ -748,56 +984,66 @@ function MobileRoomViewBase({
                   onKick={handleSelectKickTarget}
                   onToggleCoHost={handleToggleCoHost}
                   onBlocked={handleBlockedMember}
+                  isPinned={isPinned}
+                  onTogglePin={() => handleTogglePinTrack(trackId)}
+                  isCompact={isCompact}
                 />
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
-            <div className="relative mb-2.5">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-400/25 flex items-center justify-center text-emerald-300 shadow-[0_0_25px_rgba(52,211,153,0.2)] animate-pulse">
-                <SparkleIcon className="w-7 h-7" />
+            );
+          };
+
+          const screenShareTrack = tracks.find((t) => t.source === Track.Source.ScreenShare);
+          const pinnedTrack = pinnedTrackId ? tracks.find((t) => getTrackReferenceId(t) === pinnedTrackId) : null;
+          const mainTrack = screenShareTrack || pinnedTrack || tracks[0];
+          const otherTracks = tracks.filter((t) => getTrackReferenceId(t) !== getTrackReferenceId(mainTrack));
+
+          // Chế độ Tiêu điểm (Speaker): 1 ô lớn ở trên, dải trượt ngang các bạn khác ở dưới
+          if (layoutMode === "speaker" && mainTrack) {
+            return (
+              <div className="flex flex-col gap-2 h-full w-full min-h-0">
+                <div className="flex-1 min-h-0 w-full rounded-2xl">
+                  {renderParticipantTile(mainTrack, false)}
+                </div>
+                {otherTracks.length > 0 && (
+                  <div className="h-24 shrink-0 flex gap-2 overflow-x-auto custom-study-scroll pb-1 pt-2">
+                    {otherTracks.map((track) => (
+                      <div key={getTrackReferenceId(track)} className="h-full aspect-[4/3] shrink-0">
+                        {renderParticipantTile(track, true)}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-            <h3 className="text-xs font-bold text-white mb-0.5">
-              Đang đợi bạn bè tham gia
-            </h3>
-            <p className="text-[11px] text-slate-400 max-w-[220px] leading-relaxed mb-3">
-              Gửi link mời phòng{" "}
-              <strong className="text-emerald-300 font-mono font-semibold">
-                {roomName}
-              </strong>{" "}
-              để cùng học nhé.
-            </p>
-            <button
-              type="button"
-              onClick={handleCopyInviteLink}
-              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 active:scale-95 border border-white/15 text-[11px] font-semibold text-slate-200 flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+            );
+          }
+
+          // Chế độ Lưới đều (Grid - mặc định)
+          return (
+            <div
+              className={`w-full h-full overflow-y-auto custom-study-scroll rounded-2xl grid gap-2 p-1 ${
+                videoColumns === 2 && tracks.length % 2 === 1
+                  ? "[&>*:last-child]:col-span-2"
+                  : ""
+              }`}
+              style={{
+                gridTemplateColumns: `repeat(${videoColumns}, minmax(0, 1fr))`,
+                gridTemplateRows: `repeat(${videoRows}, minmax(0, 1fr))`,
+              }}
             >
-              {copied ? (
-                <>
-                  <CheckIcon className="w-3 h-3 text-emerald-400" />
-                  <span>Đã chép link!</span>
-                </>
-              ) : (
-                <>
-                  <LinkSimpleIcon className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Sao chép link mời</span>
-                </>
-              )}
-            </button>
-          </div>
-        )}
+              {tracks.map((track) => renderParticipantTile(track))}
+            </div>
+          );
+        })()}
       </main>
 
-      {/* Thanh điều khiển cuộc gọi dưới đáy (tối ưu nền phẳng không blur thừa) */}
+      {/* Thanh điều khiển cuộc gọi dưới đáy (đồng bộ viên kính surface-frost) */}
       <footer className="shrink-0 py-1.5 px-3 flex items-center justify-center z-20">
-        <div className="flex items-center gap-3 px-3.5 py-1.5 rounded-full bg-[#0B0F1A] border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.85)]">
+        <div className="flex items-center gap-3 px-3.5 py-1.5 rounded-full surface-frost border shadow-[0_8px_30px_rgba(0,0,0,0.7)]">
           {/* Nút Micro */}
           <TrackToggle
             source={Track.Source.Microphone}
             onChange={(enabled) => setMicEnabled(enabled)}
-            className={`w-9 h-9 rounded-full flex items-center justify-center cursor-pointer active:scale-95 transition-all [&_svg]:w-4.5 [&_svg]:h-4.5 ${
+            className={`w-9 h-9 p-0 rounded-full flex items-center justify-center cursor-pointer active:scale-95 transition-all [&_svg]:w-4 [&_svg]:h-4 [&_svg]:scale-110 [&_svg]:shrink-0 ${
               micEnabled
                 ? "bg-emerald-400/15 border border-emerald-400/70 text-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.35)]"
                 : "bg-white/[0.08] hover:bg-white/[0.16] border border-white/20 text-white/90"
@@ -825,7 +1071,7 @@ function MobileRoomViewBase({
                   : "Không bật được camera";
               toast.error(message);
             }}
-            className={`w-9 h-9 rounded-full flex items-center justify-center cursor-pointer active:scale-95 transition-all [&_svg]:w-4.5 [&_svg]:h-4.5 ${
+            className={`w-9 h-9 p-0 rounded-full flex items-center justify-center cursor-pointer active:scale-95 transition-all [&_svg]:w-4 [&_svg]:h-4 [&_svg]:scale-110 [&_svg]:shrink-0 ${
               camEnabled
                 ? "bg-emerald-400/15 border border-emerald-400/70 text-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.35)]"
                 : "bg-white/[0.08] hover:bg-white/[0.16] border border-white/20 text-white/90"
@@ -837,10 +1083,33 @@ function MobileRoomViewBase({
             <TrackToggle
               source={Track.Source.ScreenShare}
               captureOptions={{ audio: true }}
-              className="w-9 h-9 rounded-full bg-white/[0.08] hover:bg-white/[0.16] border border-white/20 text-white/90 flex items-center justify-center cursor-pointer active:scale-95 transition-all [&_svg]:w-4.5 [&_svg]:h-4.5 aria-pressed:bg-emerald-400/15 aria-pressed:border-emerald-400/70 aria-pressed:text-emerald-300 aria-pressed:shadow-[0_0_20px_rgba(52,211,153,0.35)]"
+              className="w-9 h-9 p-0 rounded-full bg-white/[0.08] hover:bg-white/[0.16] border border-white/20 text-white/90 flex items-center justify-center cursor-pointer active:scale-95 transition-all [&_svg]:w-4.5 [&_svg]:h-3.5 [&_svg]:shrink-0 aria-pressed:bg-emerald-400/15 aria-pressed:border-emerald-400/70 aria-pressed:text-emerald-300 aria-pressed:shadow-[0_0_20px_rgba(52,211,153,0.35)]"
               title="Chia sẻ màn hình"
             />
           )}
+
+          {/* Nút Giơ tay */}
+          <button
+            type="button"
+            onClick={studyState.toggleHand}
+            className={`relative w-9 h-9 p-0 rounded-full border flex items-center justify-center cursor-pointer active:scale-95 transition-all ${
+              studyState.local.handRaised
+                ? "bg-amber-500/25 border-amber-400/70 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.35)]"
+                : "bg-white/[0.08] hover:bg-white/[0.16] border-white/20 text-white/90"
+            }`}
+            title={studyState.local.handRaised ? "Hạ tay xuống" : "Giơ tay phát biểu"}
+            aria-label={studyState.local.handRaised ? "Hạ tay" : "Giơ tay"}
+          >
+            <HandWavingIcon
+              className={`w-4.5 h-4.5 ${studyState.local.handRaised ? "text-amber-300 animate-bounce" : "text-white/90"}`}
+              weight={studyState.local.handRaised ? "fill" : "bold"}
+            />
+            {studyState.handRaisedCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-3.5 h-3.5 px-0.5 rounded-full bg-amber-500 text-slate-950 text-[9px] font-bold flex items-center justify-center shadow-md">
+                {studyState.handRaisedCount}
+              </span>
+            )}
+          </button>
 
           {/* Nút Chat */}
           <button
@@ -878,9 +1147,9 @@ function MobileRoomViewBase({
         </div>
       </footer>
 
-      {/* Khung chat trượt lên từ đáy (In-Room Mobile Chat Drawer - tối ưu không blur khi bật phím ảo) */}
+      {/* Khung chat trượt lên từ đáy (In-Room Mobile Chat Drawer - đồng bộ surface-frost) */}
       {chatOpen && (
-        <div className="absolute inset-x-0 bottom-0 h-[65%] bg-[#0B0F1A] border-t border-white/20 rounded-t-3xl shadow-[0_-16px_50px_rgba(0,0,0,0.85)] flex flex-col z-30 animate-in slide-in-from-bottom duration-250 ease-out">
+        <div className="absolute inset-x-0 bottom-0 h-[65%] surface-frost border-t border-white/25 rounded-t-3xl shadow-[0_-16px_50px_rgba(0,0,0,0.85)] flex flex-col z-30 animate-in slide-in-from-bottom duration-250 ease-out">
           {/* Header Chat */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 shrink-0">
             <div className="flex items-center gap-2">

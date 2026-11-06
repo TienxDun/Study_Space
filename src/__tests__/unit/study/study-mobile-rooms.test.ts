@@ -44,6 +44,7 @@ vi.mock("@livekit/components-react", () => ({
 
 import { MobileRoomsSheet } from "@/components/study/mobile/sheets/MobileRoomsSheet";
 import { MobileActiveRoomPill } from "@/components/study/mobile/rooms/MobileActiveRoomPill";
+import { MobileRoomView } from "@/components/study/mobile/rooms/MobileRoomView";
 
 describe("MobileRoomsSheet UI Tests", () => {
   beforeEach(() => {
@@ -176,5 +177,18 @@ describe("MobileRoomsSheet UI Tests", () => {
     expect(html).toContain("Mở lại");
     expect(html).toContain("Rời");
     expect(html).toContain("Phòng học đang hoạt động");
+  });
+
+  it("renders MobileRoomView with room utilities button and waiting placeholder", () => {
+    const html = renderToString(
+      React.createElement(MobileRoomView, {
+        roomName: "phong-test-mobile",
+        onLeave: () => {},
+      })
+    );
+
+    expect(html).toContain("Tiện ích phòng");
+    expect(html).toContain("Đang đợi bạn bè tham gia");
+    expect(html).toContain("phong-test-mobile");
   });
 });
