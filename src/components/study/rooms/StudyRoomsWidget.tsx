@@ -743,22 +743,7 @@ const getLiveKitEndpoints = () => {
               <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
             )}
 
-            {/* Vạch kéo ở giữa mép trên cho biết thẻ di chuyển được */}
-            {!isFullscreen && (
-              <div
-                onPointerDown={(e) => dragControls.start(e)}
-                className="absolute top-1 left-1/2 -translate-x-1/2 z-20 h-5 px-3 flex items-start justify-center cursor-grab active:cursor-grabbing touch-none group/grab"
-                title="Kéo để di chuyển"
-              >
-                <span
-                  className={`block h-1 rounded-full transition-all duration-150 ${
-                    isDragging
-                      ? "w-14 bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]"
-                      : "w-10 bg-white/30 group-hover/grab:w-12 group-hover/grab:bg-white/60"
-                  }`}
-                />
-              </div>
-            )}
+
 
             {!token ? (
               preJoinConfig ? (
@@ -769,6 +754,7 @@ const getLiveKitEndpoints = () => {
                     passwordMode={preJoinConfig.passwordMode}
                     onJoin={handlePreJoinSubmit}
                     onCancel={handlePreJoinCancel}
+                    onDragStart={(e) => dragControls.start(e)}
                     joining={joining}
                   />
                 </div>
@@ -777,8 +763,24 @@ const getLiveKitEndpoints = () => {
                   {/* Thanh kéo / Header */}
                   <div
                     onPointerDown={(e) => dragControls.start(e)}
-                    className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 cursor-grab active:cursor-grabbing touch-none shrink-0"
+                    className="relative group/header flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 cursor-grab active:cursor-grabbing touch-none shrink-0"
                   >
+                    {/* Vạch kéo ở giữa mép trên - span rộng khi hover vào thanh tiêu đề */}
+                    {!isFullscreen && (
+                      <div
+                        className="absolute top-1.5 left-1/2 -translate-x-1/2 z-10 flex items-center justify-center pointer-events-none"
+                        aria-hidden="true"
+                      >
+                        <span
+                          className={`block h-1 rounded-full transition-all duration-200 ease-out ${
+                            isDragging
+                              ? "w-16 bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]"
+                              : "w-10 bg-white/30 group-hover/header:w-16 group-hover/header:bg-white/70"
+                          }`}
+                        />
+                      </div>
+                    )}
+
                     <div className="flex items-center gap-2.5">
                       <span className="p-2 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300">
                         <UsersIcon className="w-5 h-5" />
@@ -795,8 +797,9 @@ const getLiveKitEndpoints = () => {
                       <button
                         onClick={onClose}
                         onPointerDown={(e) => e.stopPropagation()}
-                        className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 flex items-center justify-center text-white/70 hover:text-white transition-all shadow-sm cursor-pointer"
                         title="Đóng (Esc)"
+                        aria-label="Đóng phòng học nhóm"
                       >
                         <XIcon className="w-4 h-4" />
                       </button>

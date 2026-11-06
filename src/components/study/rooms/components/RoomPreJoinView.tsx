@@ -47,6 +47,7 @@ interface RoomPreJoinViewProps {
   displayName: string;
   onJoin: (choices: PreJoinChoices) => void;
   onCancel: () => void;
+  onDragStart?: (e: React.PointerEvent) => void;
   joining?: boolean;
   /**
    * Chế độ mật khẩu:
@@ -72,6 +73,7 @@ export function RoomPreJoinView({
   displayName,
   onJoin,
   onCancel,
+  onDragStart,
   joining = false,
   passwordMode = "optional-create",
   hideHeader = false,
@@ -227,7 +229,20 @@ export function RoomPreJoinView({
     <div className="flex flex-col h-full select-none">
       {/* Header */}
       {!hideHeader && (
-      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 shrink-0">
+      <div
+        onPointerDown={(e) => onDragStart && onDragStart(e)}
+        className={`relative group/header flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 shrink-0 ${
+          onDragStart ? "cursor-grab active:cursor-grabbing touch-none" : ""
+        }`}
+      >
+        {onDragStart && (
+          <div
+            className="absolute top-1.5 left-1/2 -translate-x-1/2 z-10 flex items-center justify-center pointer-events-none"
+            aria-hidden="true"
+          >
+            <span className="block h-1 rounded-full transition-all duration-200 ease-out w-10 bg-white/30 group-hover/header:w-16 group-hover/header:bg-white/70" />
+          </div>
+        )}
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-bold text-white">Kiểm tra thiết bị</h2>
@@ -239,8 +254,9 @@ export function RoomPreJoinView({
         <button
           onClick={onCancel}
           disabled={joining}
-          className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-40"
+          className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 flex items-center justify-center text-white/70 hover:text-white transition-all shadow-sm cursor-pointer disabled:opacity-40"
           title="Hủy"
+          aria-label="Hủy và quay lại"
         >
           <XIcon className="w-4 h-4" />
         </button>

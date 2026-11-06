@@ -528,10 +528,18 @@ export const StudyRoomView = ({
       {/* Đầu phòng: tên + nút toàn màn hình + nút rời, cả thanh để kéo thẻ */}
       <div
         onPointerDown={isFullscreen ? undefined : onDragStart}
-        className={`flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 shrink-0 ${
+        className={`relative group/header flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 shrink-0 ${
           isFullscreen ? "cursor-default" : "cursor-grab active:cursor-grabbing touch-none"
         }`}
       >
+        {!isFullscreen && (
+          <div
+            className="absolute top-1.5 left-1/2 -translate-x-1/2 z-10 flex items-center justify-center pointer-events-none"
+            aria-hidden="true"
+          >
+            <span className="block h-1 rounded-full transition-all duration-200 ease-out w-10 bg-white/30 group-hover/header:w-16 group-hover/header:bg-white/70" />
+          </div>
+        )}
         <div className="flex items-center gap-2 min-w-0">
           <h2 className="text-sm font-bold truncate">Phòng: {roomName}</h2>
           <span className="text-[11px] text-slate-400 shrink-0">

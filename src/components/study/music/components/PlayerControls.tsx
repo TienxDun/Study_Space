@@ -49,28 +49,28 @@ export function PlayerControls({
       {/* 1. Xáo trộn bài hát */}
       <button
         onClick={onToggleShuffle}
-        className={`relative w-8.5 h-8.5 rounded-full flex items-center justify-center transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation sm:bg-transparent sm:border-0 sm:shadow-none sm:w-8.5 sm:h-8.5 ${
+        className={`relative w-8.5 h-8.5 rounded-full flex items-center justify-center transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation ${
           isShuffle
-            ? "glass-round-btn-active text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)] sm:text-accent-music-glow sm:bg-accent-music/20 sm:hover:bg-accent-music/20 sm:drop-shadow-none"
-            : "glass-round-btn text-white/75 hover:text-white sm:text-slate-400 sm:hover:bg-white/10"
+            ? "glass-round-btn-active text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)]"
+            : "glass-round-btn text-white/75 hover:text-white"
         }`}
         title="Xáo trộn bài hát (S)"
         aria-label="Xáo trộn bài hát"
       >
-        <ShuffleIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+        <ShuffleIcon className="w-4 h-4" />
         {isShuffle && (
-          <span className="sm:hidden absolute -bottom-0.5 w-1 h-1 rounded-full bg-white shadow-[0_0_4px_rgba(255,255,255,1)]" />
+          <span className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-white shadow-[0_0_4px_rgba(255,255,255,1)]" />
         )}
       </button>
 
       {/* 2. Bài trước đó */}
       <button
         onClick={onPrevTrack}
-        className="glass-round-btn w-8.5 h-8.5 rounded-full flex items-center justify-center text-white/80 hover:text-white sm:text-slate-300 sm:bg-transparent sm:hover:bg-white/10 sm:border-0 sm:shadow-none transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation"
+        className="glass-round-btn w-8.5 h-8.5 rounded-full flex items-center justify-center text-white/80 hover:text-white transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation"
         title="Bài trước đó (←)"
         aria-label="Bài trước đó"
       >
-        <SkipBackIcon weight="fill" className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+        <SkipBackIcon weight="fill" className="w-4 h-4" />
       </button>
 
       {/* 3. Mèo linh vật: nút phát/dừng chính, bấm vào mèo để bật/tắt nhạc */}
@@ -108,27 +108,27 @@ export function PlayerControls({
       {/* 4. Bài tiếp theo */}
       <button
         onClick={onNextTrack}
-        className="glass-round-btn w-8.5 h-8.5 rounded-full flex items-center justify-center text-white/80 hover:text-white sm:text-slate-300 sm:bg-transparent sm:hover:bg-white/10 sm:border-0 sm:shadow-none transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation"
+        className="glass-round-btn w-8.5 h-8.5 rounded-full flex items-center justify-center text-white/80 hover:text-white transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation"
         title="Bài tiếp theo (→)"
         aria-label="Bài tiếp theo"
       >
-        <SkipForwardIcon weight="fill" className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+        <SkipForwardIcon weight="fill" className="w-4 h-4" />
       </button>
 
       {/* 5. Lặp lại danh sách */}
       <button
         onClick={onToggleLoop}
-        className={`relative w-8.5 h-8.5 rounded-full flex items-center justify-center transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation sm:bg-transparent sm:border-0 sm:shadow-none sm:w-8.5 sm:h-8.5 ${
+        className={`relative w-8.5 h-8.5 rounded-full flex items-center justify-center transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation ${
           isLooping
-            ? "glass-round-btn-active text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)] sm:text-accent-music-glow sm:bg-accent-music/20 sm:hover:bg-accent-music/20 sm:drop-shadow-none"
-            : "glass-round-btn text-white/75 hover:text-white sm:text-slate-400 sm:hover:bg-white/10"
+            ? "glass-round-btn-active text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)]"
+            : "glass-round-btn text-white/75 hover:text-white"
         }`}
         title="Lặp lại danh sách (L)"
         aria-label="Lặp lại danh sách"
       >
-        <RepeatIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+        <RepeatIcon className="w-4 h-4" />
         {isLooping && (
-          <span className="sm:hidden absolute -bottom-0.5 w-1 h-1 rounded-full bg-white shadow-[0_0_4px_rgba(255,255,255,1)]" />
+          <span className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-white shadow-[0_0_4px_rgba(255,255,255,1)]" />
         )}
       </button>
     </div>
