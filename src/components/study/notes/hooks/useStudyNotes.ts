@@ -321,6 +321,7 @@ export function useStudyNotes() {
         label: "Hoàn tác",
         onClick: () => handleRestoreNote(idToDelete, prevContent),
       },
+      duration: 5000,
     });
   }, [noteToDelete, notes, activeNoteId, saveNotesToStorage, handleRestoreNote]);
 

@@ -96,13 +96,6 @@ export function MobileSheetShell({
         clearTimeout(closeTimerRef.current);
         closeTimerRef.current = null;
       }
-      if (isClosingByDrag && localPanelRef.current) {
-        localPanelRef.current.style.removeProperty("display");
-        localPanelRef.current.style.removeProperty("visibility");
-        localPanelRef.current.style.removeProperty("opacity");
-        localPanelRef.current.style.removeProperty("transform");
-        localPanelRef.current.style.removeProperty("transition");
-      }
     }
     return () => {
       if (closeTimerRef.current) {

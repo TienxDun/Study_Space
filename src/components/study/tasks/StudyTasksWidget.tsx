@@ -10,7 +10,6 @@ import { TaskHeader } from "./components/TaskHeader";
 import { TaskBoardView } from "./components/TaskBoardView";
 import { TaskListView } from "./components/TaskListView";
 import { CardDetailModal } from "./components/CardDetailModal";
-import { MobileUndoSnackbar } from "@/components/study/mobile/feedback/MobileUndoSnackbar";
 
 export { getDeadlineStatus };
 
@@ -79,9 +78,6 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
     handleMoveCard,
     promptDeleteCard,
     handleConfirmDeleteCard,
-    lastDeletedCard,
-    undoDeleteCard,
-    clearDeletedCard,
     handleAddColumn,
     promptDeleteColumn,
     handleConfirmDeleteColumn,
@@ -363,18 +359,6 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
         confirmText="Xóa thẻ"
         cancelText="Hủy bỏ"
       />
-
-      {/* Mobile: thanh hoàn tác sau khi xóa thẻ, desktop không hiện */}
-      {lastDeletedCard && (
-        <div className="sm:hidden">
-          <MobileUndoSnackbar
-            key={lastDeletedCard.deletedAt}
-            message={`Đã xóa "${lastDeletedCard.card.title}"`}
-            onUndo={undoDeleteCard}
-            onTimeout={clearDeletedCard}
-          />
-        </div>
-      )}
     </>
   );
 };

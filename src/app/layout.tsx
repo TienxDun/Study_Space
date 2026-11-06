@@ -187,6 +187,7 @@ export default function RootLayout({
           closeButton
           swipeDirections={["left", "right", "bottom"]}
           offset={{ top: 72, right: 24 }}
+          mobileOffset={{ top: "calc(env(safe-area-inset-top, 0px) + 64px)" }}
           style={{ "--width": "390px" } as React.CSSProperties}
           toastOptions={{
             className:

@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZenStudy Mobile — UI Board</title>
+<style>
+  :root{
+    --panel:#020617; --soft:#0f172a; --edge:rgba(255,255,255,.14);
+    --em:#10b981; --em-b:#34d399; --sky:#0ea5e9; --amber:#fbbf24; --rose:#f43f5f; --violet:#c084fc;
+    --glass:linear-gradient(180deg,rgba(27,33,48,.88),rgba(20,24,33,.94));
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#08090d;color:#e2e8f0;font-family:"Be Vietnam Pro",ui-sans-serif,system-ui,"Segoe UI",sans-serif;padding:40px 32px 80px}
+  a{color:inherit}
+  .page-head{max-width:1180px;margin:0 auto 40px}
+  .kicker{font:600 11px/1 ui-monospace,monospace;letter-spacing:.18em;text-transform:uppercase;color:#64748b}
+  h1{font-size:30px;line-height:1.2;margin:12px 0 8px;letter-spacing:-.02em}
+  .lede{color:#94a3b8;font-size:14px;max-width:760px;line-height:1.6;margin:0}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .chip{font-size:11px;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#cbd5e1}
+  .board{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(390px,1fr));gap:64px 44px;justify-items:center}
+  figure{margin:0;width:390px}
+  .phone{position:relative;width:390px;height:844px;border-radius:46px;background:#05070d;border:10px solid #0d1117;box-shadow:0 30px 80px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.06)}
+  .screen{position:absolute;inset:0;border-radius:36px;overflow:hidden;background:
+    radial-gradient(120% 80% at 20% 0%,rgba(56,189,248,.20),transparent 60%),
+    radial-gradient(90% 70% at 90% 100%,rgba(16,185,129,.10),transparent 60%),
+    linear-gradient(160deg,#0b1220,#05070d 60%,#0a1018)}
+  .scene-shape{position:absolute;border-radius:24px;background:linear-gradient(150deg,rgba(148,163,184,.16),rgba(148,163,184,.03));box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  /* fake scene geometry */
+  .s1{width:220px;height:150px;left:20px;top:190px;transform:rotate(-4deg)}
+  .s2{width:120px;height:120px;right:8px;top:150px;border-radius:50%;opacity:.55}
+  .s3{width:300px;height:110px;left:40px;bottom:150px;transform:rotate(3deg);opacity:.5}
+  .sb{height:47px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 22px 6px;font-size:11px;font-weight:600;color:#e2e8f0;letter-spacing:.02em}
+  .tb{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:relative}
+  .tb .clock{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:600 14px ui-monospace,monospace;letter-spacing:.08em;color:#f1f5f9}
+  .logo{width:44px;height:44px;display:grid;place-items:center}
+  .logo i{width:34px;height:34px;border-radius:11px;background:linear-gradient(145deg,#0ea5e9,#6366f1);display:grid;place-items:center;font:800 15px/1 ui-sans-serif;color:#fff;font-style:normal}
+  .ghost{width:36px;height:36px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);display:grid;place-items:center;font-size:13px;color:#e2e8f0}
+  .ghost.dim{opacity:.6}
+  .center{position:absolute;inset:47px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding-bottom:110px}
+  .tabs{display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)}
+  .tabs span{font-size:11px;padding:6px 12px;border-radius:999px;color:#94a3b8}
+  .tabs span.on{background:rgba(255,255,255,.92);color:#0f172a;font-weight:700}
+  .digit{font:800 68px/1 ui-sans-serif;letter-spacing:-.03em;color:#fff;text-shadow:0 10px 40px rgba(0,0,0,.85)}
+  .digit.sm{font-size:56px}
+  .sub{font-size:12px;color:#94a3b8;margin-top:-8px}
+  .controls{display:flex;align-items:center;gap:22px;margin-top:6px}
+  .controls .small{width:44px;height:44px;border-radius:999px;display:grid;place-items:center;color:#cbd5e1;font-size:15px}
+  .play{width:64px;height:64px;border-radius:999px;background:#fff;color:#0f172a;display:grid;place-items:center;font-size:22px;box-shadow:0 6px 22px rgba(0,0,0,.45)}
+  .audio{position:absolute;left:12px;right:12px;bottom:110px;height:56px;border-radius:18px;background:var(--glass);border:1px solid var(--edge);display:flex;align-items:center;gap:10px;padding:0 10px;box-shadow:0 16px 40px rgba(0,0,0,.55)}
+  .cover{width:38px;height:38px;border-radius:10px;background:linear-gradient(145deg,#059669,#065f46)}
+  .audio .t{flex:1;min-width:0}
+  .audio .t b{display:block;font-size:11px;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .audio .t span{font-size:10px;color:#94a3b8}
+  .eq{display:flex;align-items:flex-end;gap:2px;height:14px}
+  .eq i{width:2px;background:var(--em-b);border-radius:2px;display:block}
+  .nav{position:absolute;left:12px;right:12px;bottom:42px;height:58px;border-radius:999px;background:var(--glass);border:1px solid var(--edge);display:flex;align-items:stretch;padding:4px;box-shadow:0 16px 40px rgba(0,0,0,.6)}
+  .nav .it{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:999px;font-size:9px;color:rgba(203,213,225,.75)}
+  .nav .it b{font-size:15px;line-height:1;font-weight:400}
+  .nav .it.on{background:rgba(255,255,255,.12);color:#fff}
+  .fab{position:absolute;right:14px;bottom:120px;width:52px;height:52px;border-radius:999px;background:var(--glass);border:1px solid var(--edge);display:grid;place-items:center;font-size:20px;color:#fff;box-shadow:0 14px 34px rgba(0,0,0,.6)}
+  /* sheets */
+  .scrim{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+  .sheet{position:absolute;left:0;right:0;bottom:0;height:574px;border-radius:28px 28px 0 0;background:linear-gradient(180deg,rgba(22,27,38,.96),rgba(9,12,19,.98));border-top:1px solid rgba(255,255,255,.22);box-shadow:0 -30px 80px rgba(0,0,0,.8);display:flex;flex-direction:column;overflow:hidden}
+  .sheet.tall{height:620px}
+  .edge-light{position:absolute;left:48px;right:48px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent)}
+  .handle{height:22px;display:grid;place-items:center;flex:none}
+  .handle i{width:48px;height:6px;border-radius:999px;background:rgba(255,255,255,.3);display:block}
+  .hd{display:flex;align-items:center;gap:8px;padding:0 14px 10px;border-bottom:1px solid rgba(255,255,255,.12);flex:none}
+  .hd .ttl{flex:1;min-width:0;font-size:13px;font-weight:600;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hd .ttl.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);flex:0 1 auto}
+  .cnt{font-size:10px;font-weight:600;background:rgba(255,255,255,.15);border-radius:999px;padding:1px 6px;color:rgba(255,255,255,.8)}
+  .body{flex:1;min-height:0;overflow:hidden;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+  .footer{flex:none;border-top:1px solid rgba(255,255,255,.12);background:rgba(10,12,18,.9);padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+  .field{height:34px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:8px;padding:0 10px;font-size:11px;color:#64748b}
+  .pillrow{display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden}
+  .p{font-size:10.5px;height:28px;padding:0 11px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#94a3b8;white-space:nowrap}
+  .p.on{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff;font-weight:600}
+  .card{border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:12px}
+  .card.done{background:rgba(255,255,255,.02);border-color:rgba(16,185,129,.2);opacity:.8}
+  .card.pin{background:rgba(245,158,11,.08);border-color:rgba(251,191,36,.25)}
+  .card .line1{display:flex;gap:10px;align-items:flex-start}
+  .check{width:18px;height:18px;border-radius:999px;border:1.5px solid rgba(255,255,255,.35);flex:none;margin-top:1px}
+  .check.on{border-color:var(--em);color:var(--em);display:grid;place-items:center;font-size:11px}
+  .c-title{font-size:12px;font-weight:600;color:rgba(255,255,255,.9);line-height:1.35}
+  .c-title.strike{text-decoration:line-through;color:rgba(255,255,255,.4)}
+  .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+  .tag{font-size:9.5px;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.6)}
+  .tag.hi{background:rgba(244,63,95,.15);border-color:rgba(251,113,133,.3);color:#fda4af}
+  .tag.mid{background:rgba(245,158,11,.15);border-color:rgba(251,191,36,.3);color:#fcd34d}
+  .tag.ok{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.25);color:#6ee7b7}
+  .tag.sky{background:rgba(14,165,233,.14);border-color:rgba(56,189,248,.3);color:#7dd3fc}
+  .snip{font-size:10.5px;color:#94a3b8;line-height:1.45;margin-top:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .meta{font-size:9.5px;color:#64748b;margin-top:7px;display:flex;gap:8px;align-items:center}
+  .sec-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);padding:0 4px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+  .row .lab{font-size:11.5px;font-weight:600;color:rgba(255,255,255,.9)}
+  .row .desc{font-size:10px;color:rgba(255,255,255,.5);margin-top:1px}
+  .tg{width:40px;height:23px;border-radius:999px;background:rgba(255,255,255,.18);position:relative;flex:none}
+  .tg i{position:absolute;top:2.5px;left:2.5px;width:18px;height:18px;border-radius:999px;background:#fff;display:block}
+  .tg.on{background:var(--em)}
+  .tg.on i{left:19.5px}
+  .seg{display:flex;padding:2px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.1);font-size:10.5px;font-weight:700}
+  .seg span{padding:4px 10px;border-radius:9px;color:rgba(255,255,255,.5)}
+  .seg span.on{background:#fff;color:#0f172a}
+  .preview{border-radius:12px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);padding:10px;text-align:center;font:700 13px ui-monospace,monospace;color:#fff;letter-spacing:.06em}
+  .preview small{display:block;font:500 9px ui-sans-serif;color:rgba(255,255,255,.5);letter-spacing:0;margin-bottom:2px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .thumb{position:relative;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.1);aspect-ratio:16/9;background:linear-gradient(150deg,#1e3a5f,#0b1220)}
+  .thumb.on{outline:2px solid var(--em);outline-offset:1px}
+  .thumb .nm{position:absolute;left:7px;bottom:6px;font-size:9.5px;font-weight:600;color:#fff;text-shadow:0 1px 4px #000}
+  .thumb .bd{position:absolute;right:6px;top:6px;font-size:8px;padding:1px 5px;border-radius:999px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.2);color:#e2e8f0}
+  .acct{display:flex;align-items:center;gap:10px;padding:10px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+  .av{width:38px;height:38px;border-radius:999px;background:linear-gradient(145deg,#6366f1,#0ea5e9);display:grid;place-items:center;font-weight:700;font-size:14px;color:#fff;flex:none}
+  .acct .who{flex:1;min-width:0}
+  .acct .who b{display:block;font-size:11.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acct .who span{font-size:9.5px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini{width:30px;height:30px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);display:grid;place-items:center;font-size:12px;flex:none}
+  .mrow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);font-size:11.5px;color:rgba(255,255,255,.85)}
+  .mrow .ic{width:18px;text-align:center;font-size:13px}
+  .mrow .arr{margin-left:auto;color:rgba(255,255,255,.3);font-size:11px}
+  .mrow.off{opacity:.45}
+  .toast{position:absolute;left:16px;right:16px;top:111px;display:flex;align-items:center;gap:10px;font-size:11.5px;line-height:1.4;padding:12px 14px;border-radius:16px;background:rgba(0,0,0,.4);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.2);color:#f1f5f9;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+  .toast .x{margin-left:auto;width:20px;height:20px;border-radius:999px;background:rgba(255,255,255,.12);display:grid;place-items:center;font-size:10px;color:#cbd5e1;flex:none}
+  .bubble{position:absolute;width:46px;height:46px;border-radius:999px;background:var(--glass);border:1px solid var(--edge);display:grid;place-items:center;font-size:15px;color:#fff;box-shadow:0 12px 30px rgba(0,0,0,.55)}
+  .blabel{position:absolute;font-size:9.5px;padding:3px 7px;border-radius:999px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.14);color:#cbd5e1;white-space:nowrap}
+  .n{display:inline-grid;place-items:center;width:14px;height:14px;border-radius:999px;background:#f97316;color:#0b0f17;font:700 9px/1 ui-sans-serif;font-style:normal;margin-left:4px;vertical-align:middle;flex:none}
+  figcaption{margin-top:16px}
+  figcaption h3{margin:0 0 2px;font-size:14px;letter-spacing:-.01em}
+  figcaption .path{font:500 10.5px/1.4 ui-monospace,monospace;color:#64748b;word-break:break-all}
+  figcaption ul{margin:10px 0 0;padding-left:0;list-style:none;font-size:11px;color:#94a3b8;line-height:1.55}
+  figcaption li{display:flex;gap:7px;margin-bottom:3px}
+  figcaption li b{color:#cbd5e1;font-weight:600}
+  .num{flex:none;width:14px;height:14px;border-radius:999px;background:#f97316;color:#0b0f17;font:700 9px/14px ui-sans-serif;text-align:center;margin-top:2px}
+  .todo{max-width:1180px;margin:70px auto 0;border-top:1px solid rgba(255,255,255,.1);padding-top:24px;font-size:12px;color:#64748b;line-height:1.7}
+  .todo b{color:#cbd5e1}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="kicker">ZenStudy · Mobile UI</div>
+  <h1>Board khung hình mobile — 8 frame lõi</h1>
+  <p class="lede">Vẽ lại đúng cây component trong <code>src/components/study/mobile/</code>. Khung 390×844, safe top 47 / bottom 34. Số tròn cam là callout, chú giải nằm dưới mỗi frame. Bản tĩnh, không tương tác — dùng để duyệt bố cục trước khi sửa code.</p>
+  <div class="legend">
+    <span class="chip">Kính lỏng: nền graphite + viền white/14</span>
+    <span class="chip">Nav 58px · Topbar 56px · FAB 52px</span>
+    <span class="chip">Sheet khay đáy 68dvh</span>
+    <span class="chip">Emerald = hành động chính</span>
+  </div>
+</div>
+
+<div class="board">
+<figure>
+  <div class="phone"><div class="screen">
+    <div class="sb"><span>9:41</span><span>▮▮▮ ᯤ ▰</span></div>
+    <div class="tb">
+      <div class="logo"><i>Z</i><i class="n">1</i></div>
+      <span class="clock">21:34</span>
+      <div style="display:flex;gap:8px">
+        <div class="ghost">▣<i class="n">2</i></div>
+        <div class="ghost">⛶<i class="n">3</i></div>
+      </div>
+    </div>
+    <div class="center">
+      <div class="tabs"><span class="on">Đồng hồ</span><span>Pomodoro</span><span>Bấm giờ</span><i class="n">4</i></div>
+      <div class="digit">21:34</div>
+      <div class="sub">Thứ Sáu, 6 tháng 11</div>
+      <div class="controls"><div class="small">⟳</div><div class="play">▶</div><div class="small">⏭</div></div>
+    </div>
+    <div class="audio">
+      <div class="cover"></div>
+      <div class="t"><b>Lo-fi Focus</b><span>Đang phát · Đài nội bộ</span></div>
+      <div class="eq"><i style="height:6px"></i><i style="height:12px"></i><i style="height:9px"></i><i style="height:14px"></i></div>
+      <div class="ghost" style="width:30px;height:30px">❚❚</div>
+      <i class="n">5</i>
+    </div>
+    <div class="fab">+<i class="n">6</i></div>
+    <div class="nav">
+      <div class="it on"><b>◷</b>Giờ</div>
+      <div class="it"><b>☑</b>Việc</div>
+      <div class="it"><b>✎</b>Ghi chú</div>
+      <div class="it"><b>♪</b>Nhạc</div>
+      <div class="it"><b>⋯</b>Thêm</div>
+      <i class="n">7</i>
+    </div>
+  </div></div>
+  <figcaption>
+    <h3>① Home — màn chính</h3>
+    <div class="path">StudyMobileLayout · MobileTopBar · MobilePomodoroView · StudyMusicPlayer · StudyMobileNav · MobileRadialBubbleMenu</div>
+    <ul>
+      <li><span class="num">1</span><span><b>Logo</b> 44px, bấm về <code>/</code>. Topbar <code>fixed</code>, ẩn hẳn khi Zen.</span></li>
+      <li><span class="num">2</span><span><b>Đổi cảnh nhanh:</b> tap = random (toast tên cảnh), giữ 550ms = mở sheet Không gian.</span></li>
+      <li><span class="num">3</span><span><b>Toàn màn hình</b> — cùng hàng, cách 8px.</span></li>
+      <li><span class="num">4</span><span><b>Tab đồng hồ</b> (MobileTimerTabBar): Đồng hồ / Pomodoro / Bấm giờ. Chữ số 68px, tab Bấm giờ dùng <code>.stopwatch-pin-top</code>.</span></li>
+      <li><span class="num">5</span><span><b>Thanh nhạc</b> thu gọn: bấm mở Mixer. Khi phát đài ngoài, thanh đổi sang đỏ (stream).</span></li>
+      <li><span class="num">6</span><span><b>FAB 52px</b> long-press 450ms → mở trợ lý AI (chat). Tự nâng lên khi có thanh nhạc / pill phòng.</span></li>
+      <li><span class="num">7</span><span><b>Nav 58px</b> cách đáy 42px: Giờ · Việc · Ghi chú · Nhạc · Thêm.</span></li>
+    </ul>
+  </figcaption>
+</figure>
+
+<figure>
+  <div class="phone"><div class="screen">
+    <div class="scene-shape s1"></div><div class="scene-shape s2"></div><div class="scene-shape s3"></div>
+    <div class="center" style="padding-bottom:0;inset:47px 0 34px">
+      <div class="digit" style="font-size:82px">21:34</div>
+      <div class="sub">Thứ Sáu, 6 tháng 11</div>
+      <div class="controls" style="margin-top:18px"><div class="small">⟳</div><div class="play">▶</div><div class="small">⏭</div></div>
+      <i class="n">2</i>
+    </div>
+    <div class="toast">Đã bật chế độ Zen (Chạm đúp để thoát)<i class="n">1</i><span class="x">✕</span></div>
+  </div></div>
+  <figcaption>
+    <h3>② Home — Zen mode</h3>
+    <div class="path">useMobileDoubleTap → setIsZenMode · MobileTopBar trả null · StudyMobileNav + Radial ẩn</div>
+    <ul>
+      <li><span class="num">1</span><span><b>Toast 2s top-center</b>, id cố định <code>zen-mode-toggle</code>, có nút ✕ (closeButton). Vị trí thật: <code>calc(safe-area-inset-top + 64px)</code> nhờ <code>mobileOffset</code>, để không đè topbar khi thoát Zen.</span></li>
+      <li><span class="num">2</span><span>Đồng hồ to hơn, không còn topbar/nav/FAB. Sheet đang mở thì double-tap bị tắt.</span></li>
+      <li><span class="num">3</span><span>Thoát: chạm đúp lần nữa, hoặc chọn "Chế độ Zen" trong bảng Thêm (mở pomodoro).</span></li>
+    </ul>
+  </figcaption>
+</figure>
+
+<figure>
+  <div class="phone"><div class="screen">
+    <div class="scrim"></div>
+    <div class="bubble" style="right:12px;bottom:300px">▤</div>
+    <div class="blabel" style="right:70px;bottom:360px">Thống kê<i class="n">1</i></div>
+    <div class="bubble" style="right:64px;bottom:270px">▣</div>
+    <div class="blabel" style="right:120px;bottom:302px">Cảnh không gian</div>
+    <div class="bubble" style="right:104px;bottom:220px">☺</div>
+    <div class="blabel" style="right:160px;bottom:232px">Phòng học nhóm</div>
+    <div class="bubble" style="right:130px;bottom:166px">◉</div>
+    <div class="blabel" style="right:186px;bottom:172px">Đài phát thanh</div>
+    <div class="fab" style="bottom:112px">✕<i class="n">2</i></div>
+    <div class="nav"><div class="it"><b>◷</b>Giờ</div><div class="it"><b>☑</b>Việc</div><div class="it"><b>✎</b>Ghi chú</div><div class="it"><b>♪</b>Nhạc</div><div class="it on"><b>⋯</b>Thêm</div></div>
+  </div></div>
+  <figcaption>
+    <h3>③ Radial bubble menu — mở</h3>
+    <div class="path">MobileRadialBubbleMenu · scene: isOpen + scrim z-[55] + FAB z-[60]</div>
+    <ul>
+      <li><span class="num">1</span><span><b>4 bong bóng</b> trên cung 90°→180°, R = 108px: Thống kê · Cảnh · Phòng học nhóm · Đài phát thanh. Stagger 30ms.</span></li>
+      <li><span class="num">2</span><span><b>FAB</b> chỉ xoay icon thành ✕; nền tối 55% (không backdrop-blur để đỡ GPU).</span></li>
+      <li><span class="num">3</span><span>Chat <b>không</b> nằm trong quạt: long-press FAB 450ms mới mở chat — dễ phát hiện nhầm. Cân nhắc thêm nhánh thứ 5.</span></li>
+      <li><span class="num">4</span><span>Phòng tắt cờ → bong bóng mờ 40%, nhãn "· Tạm tắt", không phản hồi chạm.</span></li>
+    </ul>
+  </figcaption>
+</figure>
+
+<figure>
+  <div class="phone"><div class="screen">
+    <div class="scrim"></div>
+    <div class="sheet">
+      <div class="edge-light"></div>
+      <div class="handle"><i></i></div>
+      <div class="hd">
+        <div class="ttl pill">Nhiệm vụ học tập <span class="cnt">12</span> ⌄<i class="n">1</i></div>
+        <div class="ghost" style="width:32px;height:32px">⌕<i class="n">2</i></div>
+        <div class="ghost" style="width:32px;height:32px">⤢<i class="n">5</i></div>
+        <div class="ghost" style="width:32px;height:32px">✕</div>
+      </div>
+      <div class="body" style="gap:8px">
+        <div class="card">
+          <div class="line1"><div class="check"></div><div style="flex:1;min-width:0">
+            <div class="c-title">Ôn chương 3 — Đạo hàm</div>
+            <div class="tags"><span class="tag">Cần làm</span><span class="tag hi">● Gấp</span><span class="tag sky">◷ 45′</span><span class="tag">☑ 2/5</span></div>
+          </div></div>
+          <i class="n">3</i>
+        </div>
+        <div class="card">
+          <div class="line1"><div class="check"></div><div style="flex:1;min-width:0">
+            <div class="c-title">Viết dàn ý Văn nghị luận</div>
+            <div class="tags"><span class="tag">Đang làm</span><span class="tag mid">● Vừa</span><span class="tag">⏱ 6/11</span></div>
+          </div></div>
+        </div>
+        <div class="card done">
+          <div class="line1"><div class="check on">✓</div><div style="flex:1;min-width:0">
+            <div class="c-title strike">Ghi chú công thức Lý</div>
+            <div class="tags"><span class="tag ok">Xong</span></div>
+          </div></div>
+        </div>
+        <div class="card">
+          <div class="line1"><div class="check"></div><div style="flex:1;min-width:0">
+            <div class="c-title">Làm 20 câu trắc nghiệm Anh</div>
+            <div class="tags"><span class="tag">Cần làm</span><span class="tag">☑ 0/3</span></div>
+          </div></div>
+        </div>
+      </div>
+      <div class="footer">
+        <div class="pillrow"><span class="p on">Tất cả</span><span class="p">Cần làm</span><span class="p">Đang làm</span><span class="p">Xong</span><i class="n">4</i></div>
+        <div class="field">＋ Thêm việc nhanh…<span style="margin-left:auto">🎙</span></div>
+      </div>
+    </div>
+  </div></div>
+  <figcaption>
+    <h3>④ Sheet Công việc</h3>
+    <div class="path">MobileTasksSheet · MobileSheetShell sheetId="tasks" · h-[68dvh] max-h-[72dvh]</div>
+    <ul>
+      <li><span class="num">1</span><span><b>Chuyển bảng:</b> pill tiêu đề + số thẻ + caret → popover danh sách bảng, tạo/xoá bảng.</span></li>
+      <li><span class="num">2</span><span><b>Tìm kiếm</b> bung thanh input ngay dưới header.</span></li>
+      <li><span class="num">3</span><span><b>Thẻ việc:</b> tap chọn → mở detail trong cùng sheet; giữ 450ms → bubble menu (đổi cột, xoá, ưu tiên). Chip: cột, ưu tiên, pomodoro, deadline, checklist.</span></li>
+      <li><span class="num">4</span><span><b>Footer thumb-zone:</b> pill lọc trạng thái + ô thêm nhanh. Vuốt trái/phải trên nội dung để đổi bộ lọc.</span></li>
+      <li><span class="num">5</span><span><b>Header phải:</b> tìm kiếm · mở rộng Zen · đóng. Nút back chỉ hiện khi vào detail/stack.</span></li>
+    </ul>
+  </figcaption>
+</figure>
+
+<figure>
+  <div class="phone"><div class="screen">
+    <div class="scrim"></div>
+    <div class="sheet">
+      <div class="edge-light"></div>
+      <div class="handle"><i></i></div>
+      <div class="hd">
+        <div class="ttl">Ghi chú (7)<i class="n">1</i></div>
+        <div class="ghost" style="width:32px;height:32px">⌕</div>
+        <div class="ghost" style="width:32px;height:32px;background:rgba(52,211,153,.2);border-color:rgba(52,211,153,.4);color:#6ee7b7">＋<i class="n">2</i></div>
+        <div class="ghost" style="width:32px;height:32px">⤢</div>
+        <div class="ghost" style="width:32px;height:32px">✕</div>
+      </div>
+      <div class="body">
+        <div class="card pin">
+          <div style="font-size:11.5px;font-weight:700;color:#fff">📌 Công thức lượng giác cần nhớ<i class="n">3</i></div>
+          <div class="snip">sin²x + cos²x = 1 · tanx = sinx/cosx · công thức cộng, nhân đôi, hạ bậc…</div>
+          <div class="meta"><span>6/11 · 14:20</span><span>· 82 từ</span><span class="tag">☑ 3/4</span></div>
+        </div>
+        <div class="card">
+          <div style="font-size:11.5px;font-weight:700;color:#fff">Ý tưởng bài thuyết trình</div>
+          <div class="snip">Mở bằng câu hỏi tu từ, 3 luận điểm chính, kết bằng trích dẫn Nam Cao…</div>
+          <div class="meta"><span>6/11 · 09:05</span><span>· 120 từ</span></div>
+        </div>
+        <div class="card">
+          <div style="font-size:11.5px;font-weight:700;color:#fff">Từ vựng Unit 5</div>
+          <div class="snip">adequate, beneficial, consequence, deteriorate, enhance…</div>
+          <div class="meta"><span>5/11 · 20:41</span><span>· 46 từ</span></div>
+        </div>
+        <div class="card">
+          <div style="font-size:11.5px;font-weight:700;color:#fff">Checklist ôn thi giữa kỳ</div>
+          <div class="snip">☑ Đại số · ☑ Hình học · ☐ Lý thuyết · ☐ Đề mẫu 2024</div>
+          <div class="meta"><span>4/11 · 18:02</span><span class="tag">☑ 2/4</span></div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <figcaption>
+    <h3>⑤ Sheet Ghi chú — danh sách</h3>
+    <div class="path">MobileNotesSheet · chế độ list (chưa chọn note) · h-[68dvh]</div>
+    <ul>
+      <li><span class="num">1</span><span><b>Tiêu đề + đếm</b> note. Vào editor thì đổi thành tiêu đề note + nút back "Ghi chú".</span></li>
+      <li><span class="num">2</span><span><b>Tạo mới</b> (emerald) mở editor trống, focus title.</span></li>
+      <li><span class="num">3</span><span><b>Note ghim:</b> nền amber, ghim lên đầu. Card: title · snippet 2 dòng · thời gian · số từ · checklist.</span></li>
+      <li><span class="num">4</span><span>Giữ 450ms trên card → bubble menu (ghim, nhân bản, xoá). Xoá hiện Undo snackbar 5s.</span></li>
+      <li><span class="num">5</span><span>List <b>không có footer</b>; footer chỉ xuất hiện trong editor (số từ + trạng thái lưu + toolbar B/I/S/☑/🖍).</span></li>
+    </ul>
+  </figcaption>
+</figure>
+
+<figure>
+  <div class="phone"><div class="screen">
+    <div class="scrim"></div>
+    <div class="sheet">
+      <div class="edge-light"></div>
+      <div class="handle"><i></i></div>
+      <div class="hd">
+        <div class="ttl">Không gian bối cảnh</div>
+        <div class="ghost" style="width:32px;height:32px">⤢</div>
+        <div class="ghost" style="width:32px;height:32px">✕</div>
+      </div>
+      <div class="body" style="gap:10px">
+        <div style="display:flex;gap:6px;align-items:center">
+          <div class="field" style="flex:1">⌕ Tìm cảnh…<i class="n">1</i></div>
+          <div class="ghost" style="width:34px;height:34px;border-radius:12px">⇄</div>
+          <div class="p" style="height:34px;background:rgba(16,185,129,.14);border-color:rgba(16,185,129,.35);color:#6ee7b7">◷ 15′<i class="n">2</i></div>
+        </div>
+        <div class="grid2">
+          <div class="thumb on" style="background:linear-gradient(150deg,#1d4ed8,#0b1220)"><span class="nm">Thư viện đêm</span><span class="bd">4K</span></div>
+          <div class="thumb" style="background:linear-gradient(150deg,#0f766e,#0b1220)"><span class="nm">Rừng mưa</span><span class="bd">4K</span></div>
+          <div class="thumb" style="background:linear-gradient(150deg,#7c2d12,#0b1220)"><span class="nm">Quán cà phê</span><span class="bd">HD</span></div>
+          <div class="thumb" style="background:linear-gradient(150deg,#312e81,#0b1220)"><span class="nm">Mưa Sài Gòn</span><span class="bd">4K</span></div>
+          <div class="thumb" style="background:linear-gradient(150deg,#065f46,#0b1220)"><span class="nm">Bàn học gỗ</span><span class="bd">HD</span></div>
+          <div class="thumb" style="background:linear-gradient(150deg,#1e3a8a,#0b1220)"><span class="nm">Tàu đêm</span><span class="bd">4K</span></div>
+        </div>
+        <div style="font-size:9.5px;color:#64748b">▲ Chạm để chọn · giữ để xem trước · cảnh đang tải hiện vòng xoay</div>
+      </div>
+      <div class="footer">
+        <div class="pillrow"><span class="p on">Tất cả</span><span class="p">Tối</span><span class="p">Thiên nhiên</span><span class="p">Mưa</span><span class="p">Đô thị</span><span class="p">Yêu thích</span><i class="n">3</i></div>
+      </div>
+    </div>
+  </div></div>
+  <figcaption>
+    <h3>⑥ Sheet Không gian bối cảnh</h3>
+    <div class="path">MobileSceneSheet · category theo <code>src/data/assets/scenes.json</code></div>
+    <ul>
+      <li><span class="num">1</span><span>Tìm cảnh + nút <b>đổi ngẫu nhiên</b> (icon shuffle emerald).</span></li>
+      <li><span class="num">2</span><span><b>Tự đổi cảnh:</b> chip gộp 2 nút — bật/tắt + chạm đổi chu kỳ phút; có chấm ping khi đang chạy.</span></li>
+      <li><span class="num">3</span><span><b>Footer danh mục</b> cuộn ngang, tự cuộn pill đang chọn vào giữa. Vuốt trái/phải nội dung để đổi danh mục.</span></li>
+      <li><span class="num">4</span><span>Card đang chọn có viền emerald; badge 4K/HD. Tải cảnh thật hiện capsule "Đang tải …" ở top.</span></li>
+    </ul>
+  </figcaption>
+</figure>
+
+<figure>
+  <div class="phone"><div class="screen">
+    <div class="scrim"></div>
+    <div class="sheet tall">
+      <div class="edge-light"></div>
+      <div class="handle"><i></i></div>
+      <div class="hd">
+        <div class="ttl">Cài đặt không gian</div>
+        <div class="ghost" style="width:32px;height:32px">⤢</div>
+        <div class="ghost" style="width:32px;height:32px">✕</div>
+      </div>
+      <div class="body" style="overflow:hidden;gap:12px">
+        <div class="sec-label">◷ Hiển thị</div>
+        <div class="preview"><small>Đồng hồ</small>21:34:08</div>
+        <div class="row"><div><div class="lab">Hiển thị giây (:ss)</div><div class="desc">23:52:48 ⟷ 23:52</div></div><div class="tg on"><i></i><span class="n">1</span></div></div>
+        <div class="row"><div><div class="lab">Định dạng thời gian</div><div class="desc">24 Giờ hoặc 12 Giờ (AM/PM)</div></div><div class="seg"><span class="on">24h</span><span>12h</span></div></div>
+        <div class="row"><div><div class="lab">Phần trăm giây bấm giờ (.00)</div><div class="desc">00:00.00 ⟷ 00:00</div></div><div class="tg"><i></i></div></div>
+        <div class="sec-label" style="padding-top:4px">🔥 Thời lượng phiên học<i class="n">2</i></div>
+        <div class="row"><span class="lab">Tập trung</span><div style="display:flex;align-items:center;gap:8px"><div class="mini">−</div><b style="font:700 12px ui-monospace,monospace;width:34px;text-align:center">25′</b><div class="mini">+</div></div></div>
+        <div class="row"><span class="lab">Nghỉ ngắn</span><div style="display:flex;align-items:center;gap:8px"><div class="mini">−</div><b style="font:700 12px ui-monospace,monospace;width:34px;text-align:center">5′</b><div class="mini">+</div></div></div>
+        <div class="row"><span class="lab">Nghỉ dài</span><div style="display:flex;align-items:center;gap:8px"><div class="mini">−</div><b style="font:700 12px ui-monospace,monospace;width:34px;text-align:center">15′</b><div class="mini">+</div></div></div>
+        <div class="sec-label">🔔 Chuông báo</div>
+        <div class="row"><div><div class="lab">Chuông báo khi hoàn thành</div><div class="desc">Nghe thử ngay khi chọn</div></div><div class="tg on"><i></i></div></div>
+      </div>
+    </div>
+  </div></div>
+  <figcaption>
+    <h3>⑦ Sheet Cài đặt</h3>
+    <div class="path">MobileSettingsSheet · MobileSheetShell max-h-[82dvh] · auto height</div>
+    <ul>
+      <li><span class="num">1</span><span><b>ToggleSwitch</b> tự vẽ (40×23), track emerald khi bật; bấm cả hàng không đổi, chỉ toggle.</span></li>
+      <li><span class="num">2</span><span><b>Stepper thời lượng:</b> 3 mục focus/short/long, giới hạn min-max riêng, disable nút ở biên.</span></li>
+      <li><span class="num">3</span><span>Có <b>preview chạy thật</b> cho đồng hồ và bấm giờ — sửa toggle là thấy ngay.</span></li>
+      <li><span class="num">4</span><span>Board cắt phần cuộn: còn <b>danh sách chuông</b> (chạm để nghe thử), hàng <b>"Giữ màn hình sáng"</b> (disable nếu không có Wake Lock) và <code>BlockedUsersSection</code>.</span></li>
+    </ul>
+  </figcaption>
+</figure>
+
+<figure>
+  <div class="phone"><div class="screen">
+    <div class="scrim"></div>
+    <div class="sheet tall">
+      <div class="edge-light"></div>
+      <div class="handle"><i></i></div>
+      <div class="hd">
+        <div class="ttl">Thêm</div>
+        <div class="ghost" style="width:32px;height:32px">⤢</div>
+        <div class="ghost" style="width:32px;height:32px">✕</div>
+      </div>
+      <div class="body" style="gap:9px">
+        <div class="sec-label">Tài khoản</div>
+        <div class="acct"><div class="av">L</div><div class="who"><b>Lê Minh Anh</b><span>minhanh@gmail.com</span></div><div class="mini">⟳</div><div class="mini">⏻</div><i class="n">1</i></div>
+        <div class="sec-label">Học và ghi</div>
+        <div class="mrow"><span class="ic">▣</span>Đổi cảnh không gian<span class="arr">›</span></div>
+        <div class="mrow"><span class="ic">✎</span>Ghi chú nhanh<span class="arr">›</span></div>
+        <div class="mrow"><span class="ic">◉</span>Đài YouTube và Spotify<span class="arr">›</span></div>
+        <div class="mrow"><span class="ic">▤</span>Thống kê tập trung<span class="arr">›</span></div>
+        <div class="sec-label">Học cùng nhau<i class="n">2</i></div>
+        <div class="mrow"><span class="ic">☺</span>Phòng học nhóm<span class="arr">›</span></div>
+        <div class="mrow off"><span class="ic">✦</span>Trợ lý AI<span style="margin-left:auto;font-size:9.5px;color:#94a3b8">Tạm tắt</span></div>
+        <div class="sec-label">Chung</div>
+        <div class="mrow"><span class="ic">⚙</span>Cài đặt<span class="arr">›</span></div>
+        <div class="mrow"><span class="ic">◑</span>Chế độ Zen (Toàn màn hình)<span class="arr">›</span></div>
+        <div style="text-align:center;font-size:9px;color:#475569;margin-top:4px">ZenStudy Space · v2.4.1<br><u>Chính sách quyền riêng tư</u> · <u>Điều khoản sử dụng</u></div>
+      </div>
+    </div>
+  </div></div>
+  <figcaption>
+    <h3>⑧ Sheet Thêm</h3>
+    <div class="path">MobileMoreSheet · MobileAccountCard · MobilePanelId</div>
+    <ul>
+      <li><span class="num">1</span><span><b>Thẻ tài khoản:</b> avatar + tên/email, 2 nút tròn Đồng bộ và Đăng xuất; chưa đăng nhập thì hiện nút Google.</span></li>
+      <li><span class="num">2</span><span>Cờ hệ thống tắt → hàng mờ 45%, chữ "Tạm tắt", chặn chạm.</span></li>
+      <li><span class="num">3</span><span>Điều hướng bằng <code>onSelect(id)</code> → <code>mobileOpenRoot</code>; mỗi hàng là 1 screen trong <code>useMobileStack</code>, back trả về "Thêm".</span></li>
+      <li><span class="num">4</span><span>"Chế độ Zen" mở tab pomodoro chứ không bật Zen ngay — nhãn dễ gây hiểu nhầm, nên đổi thành "Mở đồng hồ".</span></li>
+    </ul>
+  </figcaption>
+</figure>
+
+<!-- FRAMES -->
+</div>
+
+<div class="todo">
+  <p><b>Chưa vẽ (12 frame còn lại):</b> Splash · Welcome · Landscape guard · Tasks detail · Note editor · Tasks/Notes bubble menu · Chat sheet · Chat history drawer · Rooms list · Room view + pill · Stats · Music/Mixer + Radio · Skeleton &amp; empty state · cờ chat/rooms tắt.</p>
+  <p>Đối chiếu: mỗi class trong board map 1-1 với component thật; frame nào lệch code thì sửa code hoặc sửa hình, không để hai nguồn sự thật.</p>
+</div>
+
+</body>
+</html>

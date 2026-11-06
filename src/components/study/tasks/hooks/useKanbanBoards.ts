@@ -458,10 +458,13 @@ export function useKanbanBoards() {
     setSelectedCard((prev) => (prev?.id === cardId ? null : prev));
     setCardToDelete(null);
     toast.success(`Đã xóa "${cardTitle}"`, {
+      duration: 5000,
       action: {
         label: "Hoàn tác",
         onClick: () => undoDeleteCard(),
       },
+      onAutoClose: () => setLastDeletedCard(null),
+      onDismiss: () => setLastDeletedCard(null),
     });
   }, [cardToDelete, currentBoard.cards, activeBoardId, updateCurrentBoard, undoDeleteCard]);
 

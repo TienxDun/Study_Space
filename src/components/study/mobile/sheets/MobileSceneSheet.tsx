@@ -12,7 +12,7 @@ import {
   TelevisionIcon,
   ShuffleIcon,
   SmileyIcon,
-  TimerIcon,
+  ArrowClockwiseIcon,
   XIcon,
 } from "@phosphor-icons/react";
 import Image from "next/image";
@@ -308,43 +308,49 @@ export const MobileSceneSheet = React.memo(function MobileSceneSheet({
             <ShuffleIcon className="w-4 h-4 text-emerald-400" />
           </button>
 
-          {/* Cụm Tự xoay bối cảnh */}
+          {/* Cụm Tự xoay bối cảnh: Đồng bộ 100% style hệ thống với nút Shuffle và thanh Search */}
           {onToggleSlideshow && (
             <div className="flex items-center shrink-0">
-              <button
-                type="button"
-                onClick={onToggleSlideshow}
-                title={slideshowEnabled ? "Tắt tự động đổi cảnh" : "Bật tự động đổi cảnh"}
-                aria-label="Tự xoay cảnh"
-                className={`h-8.5 border flex items-center justify-center transition-all active:scale-95 shadow-xs ${
-                  slideshowEnabled
-                    ? "px-2 bg-emerald-500/20 border-emerald-400/40 text-emerald-300 font-semibold gap-1.5 rounded-l-xl border-r-0"
-                    : "w-8.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border-white/[0.08] text-white/70 hover:text-white"
-                }`}
-              >
-                {slideshowEnabled ? (
-                  <>
-                    <span className="relative flex h-2 w-2 shrink-0">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                    </span>
-                    <span className="text-[11px] leading-none">Tự đổi</span>
-                  </>
-                ) : (
-                  <TimerIcon className="w-4 h-4" />
-                )}
-              </button>
+              {slideshowEnabled ? (
+                <div className="h-8.5 flex items-center rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] shadow-xs shrink-0 overflow-hidden transition-all">
+                  {/* Nút Tắt tự xoay */}
+                  <button
+                    type="button"
+                    onClick={onToggleSlideshow}
+                    title="Tắt tự động đổi cảnh"
+                    aria-label="Tắt tự động đổi cảnh"
+                    className="h-full px-2.5 flex items-center justify-center text-emerald-400 hover:text-white active:scale-95 transition-all cursor-pointer"
+                  >
+                    <ArrowClockwiseIcon
+                      weight="bold"
+                      className="w-4 h-4 animate-[spin_8s_linear_infinite]"
+                    />
+                  </button>
 
-              {/* Nút chọn chu kỳ phút (khi đang bật tự đổi) */}
-              {slideshowEnabled && onCycleSlideshowInterval && (
+                  <div className="w-px h-3.5 bg-white/10 shrink-0" aria-hidden="true" />
+
+                  {/* Nút Chọn chu kỳ thời gian */}
+                  {onCycleSlideshowInterval && (
+                    <button
+                      type="button"
+                      onClick={onCycleSlideshowInterval}
+                      title={`Đổi mỗi ${slideshowIntervalMin} phút. Chạm để thay đổi thời gian.`}
+                      aria-label="Đổi thời gian tự xoay"
+                      className="h-full px-2.5 flex items-center justify-center text-xs font-mono font-bold text-emerald-400 hover:text-white active:scale-95 transition-all cursor-pointer tabular-nums"
+                    >
+                      <span>{slideshowIntervalMin}m</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
                 <button
                   type="button"
-                  onClick={onCycleSlideshowInterval}
-                  title={`Đổi mỗi ${slideshowIntervalMin} phút. Chạm để thay đổi thời gian.`}
-                  aria-label="Đổi thời gian tự xoay"
-                  className="h-8.5 px-2 rounded-r-xl bg-emerald-500/25 hover:bg-emerald-500/35 border-y border-r border-emerald-400/40 text-[11px] font-bold text-emerald-200 active:scale-95 transition-all"
+                  onClick={onToggleSlideshow}
+                  title="Bật tự động đổi cảnh"
+                  aria-label="Bật tự động đổi cảnh"
+                  className="w-8.5 h-8.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] active:scale-95 border border-white/[0.08] flex items-center justify-center text-white/70 hover:text-white transition-all shadow-xs cursor-pointer"
                 >
-                  {slideshowIntervalMin}m
+                  <ArrowClockwiseIcon className="w-4 h-4 text-white/70 hover:text-white transition-colors" />
                 </button>
               )}
             </div>

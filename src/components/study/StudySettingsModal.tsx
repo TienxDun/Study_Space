@@ -9,7 +9,6 @@ import {
   MinusIcon,
   PlusIcon,
   CompassIcon,
-  DeviceMobileIcon,
 } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { ModalShell } from "../ui/ModalShell";
@@ -20,7 +19,6 @@ import {
   playPomodoroSound
 } from "./study-sound";
 import { useRealtimeClock } from "./pomodoro/hooks/useRealtimeClock";
-import { BlockedUsersSection } from "./settings/BlockedUsersSection";
 import { formatStopwatch } from "./pomodoro/utils/timer-formatters";
 
 /** Demo bấm giờ chạy riêng trong cài đặt để thấy ngay .00 khác gì. */
@@ -74,10 +72,10 @@ export interface StudySettingsProps {
   // Stopwatch settings
   showStopwatchMilliseconds: boolean;
   onToggleStopwatchMilliseconds: () => void;
-  // Giữ màn hình sáng khi đang học
-  keepAwake: boolean;
-  onToggleKeepAwake: () => void;
-  wakeLockSupported: boolean;
+  // Giữ màn hình sáng khi đang học (tùy chọn)
+  keepAwake?: boolean;
+  onToggleKeepAwake?: () => void;
+  wakeLockSupported?: boolean;
   // Stack navigation (mobile)
   onBack?: () => void;
   backLabel?: string;
@@ -192,9 +190,6 @@ export const StudySettingsModal = ({
   onSelectSoundType,
   showStopwatchMilliseconds,
   onToggleStopwatchMilliseconds,
-  keepAwake,
-  onToggleKeepAwake,
-  wakeLockSupported,
 }: StudySettingsProps) => {
   const [previewingSoundId, setPreviewingSoundId] = useState<string | null>(null);
 
@@ -415,32 +410,6 @@ export const StudySettingsModal = ({
           </div>
         )}
       </SettingsSection>
-
-      {/* NHÓM 4: MÀN HÌNH — chỉ 1 nút nên gọn 1 hàng, khỏi khung nhóm + tiêu đề riêng */}
-      <div className="flex items-center justify-between gap-2 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.08]">
-        <div className="flex items-start gap-2 min-w-0">
-          <DeviceMobileIcon className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
-          <div className="min-w-0">
-            <div className="font-bold text-slate-200 text-xs">Giữ màn hình sáng khi học</div>
-            <p className="text-[11px] text-slate-400">
-              {wakeLockSupported
-                ? "Không tắt màn hình khi đang học"
-                : "Máy này không hỗ trợ giữ sáng"}
-            </p>
-          </div>
-        </div>
-        <div className="shrink-0">
-          <ToggleSwitch
-            checked={keepAwake && wakeLockSupported}
-            onChange={onToggleKeepAwake}
-            activeColor="bg-emerald-500"
-            disabled={!wakeLockSupported}
-          />
-        </div>
-      </div>
-
-      {/* Người đã chặn: báo cáo/chặn trong phòng học (P0.5) */}
-      <BlockedUsersSection />
 
       {/* Tour hướng dẫn sử dụng */}
       {onOpenTour && (

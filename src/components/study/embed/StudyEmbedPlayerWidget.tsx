@@ -467,7 +467,7 @@ export const StudyEmbedPlayerWidget = memo(function StudyEmbedPlayerWidget({
                   </button>
                 )}
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className="w-7 h-7 rounded-lg bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-300 shrink-0">
+                  <div className="hidden sm:flex w-7 h-7 rounded-lg bg-rose-500/20 border border-rose-500/30 items-center justify-center text-rose-300 shrink-0">
                     <RadioIcon className="w-4 h-4" />
                   </div>
                   <h3 className="text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate">

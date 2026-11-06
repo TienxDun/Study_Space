@@ -18,7 +18,6 @@ import { getDeadlineStatus } from "../../tasks/utils/task-deadline";
 import { CardDetailModal } from "../../tasks/components/CardDetailModal";
 import { PrioritySignalIcon } from "../../tasks/components/PrioritySignalIcon";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
-import { MobileUndoSnackbar } from "../feedback/MobileUndoSnackbar";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { KanbanCard, KanbanBoard, CardPriority } from "../../tasks/types";
 import { useFocusStats } from "@/lib/use-focus-stats";
@@ -165,9 +164,6 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
     cardToDelete,
     setCardToDelete,
     handleConfirmDeleteCard,
-    lastDeletedCard,
-    undoDeleteCard,
-    clearDeletedCard,
     handleUpdateCardDueDate,
     handleToggleChecklist,
     handleAddChecklistItem,
@@ -894,16 +890,6 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
         confirmText="Xóa việc"
         cancelText="Hủy bỏ"
       />
-
-      {/* Thanh hoàn tác sau khi xóa thẻ */}
-      {lastDeletedCard && (
-        <MobileUndoSnackbar
-          key={lastDeletedCard.deletedAt}
-          message={`Đã xóa "${lastDeletedCard.card.title}"`}
-          onUndo={undoDeleteCard}
-          onTimeout={clearDeletedCard}
-        />
-      )}
     </>
   );
 });

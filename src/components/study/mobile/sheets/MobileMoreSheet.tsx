@@ -11,9 +11,11 @@ import {
   SlidersIcon,
   EyeSlashIcon,
   ImageIcon,
+  ProhibitIcon,
 } from "@phosphor-icons/react";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { MobileAccountCard } from "./MobileAccountCard";
+import { BlockedUsersDialog } from "../../settings/BlockedUsersSection";
 import { yieldToPaint } from "../perf/yieldToPaint";
 import type { MobilePanelId } from "../types";
 import { APP_VERSION_LABEL } from "@/lib/version";
@@ -67,6 +69,7 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
   chatEnabled = true,
   roomsEnabled = true,
 }: MobileMoreSheetProps) {
+  const [isBlockedUsersOpen, setIsBlockedUsersOpen] = React.useState(false);
   const go = React.useCallback(
     (id: MobilePanelId) => {
       yieldToPaint(() => {
@@ -116,6 +119,14 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
           <div className="space-y-1.5">
             <MoreButton label="Cài đặt" onClick={() => go("settings")} icon={<SlidersIcon className="w-5 h-5 text-slate-200" />} />
             <MoreButton label="Chế độ Zen (Toàn màn hình)" onClick={() => go("pomodoro")} icon={<EyeSlashIcon className="w-5 h-5 text-slate-200" />} />
+
+            {/* Người đã chặn — chuẩn MoreButton mở dialog quản lý */}
+            <MoreButton
+              label="Người đã chặn"
+              sub="Danh sách chặn trong phòng học"
+              onClick={() => setIsBlockedUsersOpen(true)}
+              icon={<ProhibitIcon className="w-5 h-5 text-rose-300" />}
+            />
           </div>
         </section>
         <div className="pt-3 pb-2 text-center select-none space-y-1.5">
@@ -146,6 +157,12 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
           className="pointer-events-none sticky -bottom-1 -mx-3 h-8 bg-gradient-to-t from-black/60 to-transparent"
         />
       </div>
+
+      {/* Hộp thoại quản lý người đã chặn */}
+      <BlockedUsersDialog
+        isOpen={isBlockedUsersOpen}
+        onClose={() => setIsBlockedUsersOpen(false)}
+      />
     </MobileSheetShell>
   );
 });

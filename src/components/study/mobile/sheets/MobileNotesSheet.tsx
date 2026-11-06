@@ -26,10 +26,8 @@ import { useStudyNotes } from "../../notes/hooks/useStudyNotes";
 import { useRichTextEditor, flattenNestedTodos } from "../../notes/hooks/useRichTextEditor";
 import { parseNoteChecklistStats } from "../../notes/utils/note-checklist";
 import { NoteChatPromptMenu } from "../../notes/components/NoteChatPromptMenu";
-import { StudyNote } from "../../notes/types";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
-import { MobileUndoSnackbar } from "../feedback/MobileUndoSnackbar";
 import { MobileNoteBubbleMenu } from "./MobileNoteBubbleMenu";
 import { SyncStatusBadge } from "@/components/study/sync/SyncStatusBadge";
 
@@ -82,7 +80,6 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
   const [isToolbarOpen, setIsToolbarOpen] = useState(true);
   const [showAiPromptMenu, setShowAiPromptMenu] = useState(false);
 
-  const [lastDeletedNote, setLastDeletedNote] = useState<StudyNote | null>(null);
   const [showDetailMoreMenu, setShowDetailMoreMenu] = useState(false);
   const detailMoreMenuRef = useRef<HTMLDivElement>(null);
 
@@ -251,7 +248,6 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
   const confirmDelete = () => {
     if (!noteToDelete) return;
     const stash = noteToDelete;
-    setLastDeletedNote(stash);
     handleConfirmDeleteNote();
     if (editingNoteId === stash.id) {
       setEditingNoteId(null);
@@ -582,6 +578,13 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                   className="w-full text-lg sm:text-xl font-bold bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-white/25 text-white tracking-tight px-1 py-1 mb-2.5 rounded-lg hover:bg-white/[0.04] focus:bg-white/[0.06] transition-colors resize-none overflow-y-auto leading-snug max-h-20"
                 />
 
+                {/* Gợi ý khi note còn trống: đặt ngay dưới tiêu đề để không trôi xuống đáy khung soạn thảo */}
+                {richWordCount === 0 && (
+                  <div className="mb-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] p-3 text-xs text-slate-400 leading-relaxed shrink-0 select-none">
+                    Bôi đen chữ rồi dùng B / I ở trên để nhấn mạnh. Thêm checklist cho việc cần làm.
+                  </div>
+                )}
+
                 <div
                   ref={richEditorRef}
                   contentEditable
@@ -599,13 +602,6 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                   data-placeholder="Chạm vào đây để ghi chú bài học, ý tưởng, công thức..."
                   className="study-editor-content min-h-[240px] focus:outline-none text-sm text-slate-100 leading-relaxed space-y-2 select-text pb-28"
                 />
-
-                {/* Gợi ý khi note còn trống để bớt khoảng đen */}
-                {richWordCount === 0 && (
-                  <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] p-3 text-xs text-slate-400 leading-relaxed shrink-0 select-none">
-                    Bôi đen chữ rồi dùng B / I ở trên để nhấn mạnh. Thêm checklist cho việc cần làm.
-                  </div>
-                )}
               </div>
             </div>
           ) : (
@@ -759,19 +755,6 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
         confirmText="Xóa ghi chú"
         cancelText="Hủy bỏ"
       />
-
-      {/* Thanh hoàn tác nếu vừa xóa */}
-      {lastDeletedNote && (
-        <MobileUndoSnackbar
-          key={lastDeletedNote.id}
-          message={`Đã xóa "${lastDeletedNote.title || "Ghi chú"}"`}
-          onUndo={() => {
-            // Khôi phục lại note
-            setLastDeletedNote(null);
-          }}
-          onTimeout={() => setLastDeletedNote(null)}
-        />
-      )}
     </>
   );
 });

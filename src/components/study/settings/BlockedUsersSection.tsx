@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ProhibitIcon } from "@phosphor-icons/react";
+import { ProhibitIcon, XIcon } from "@phosphor-icons/react";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { ModalShell } from "@/components/ui/ModalShell";
 import { useAuth } from "@/components/study/auth";
 import { fetchBlockedUsers, unblockUser, type BlockedUser } from "@/lib/user-blocks";
 
@@ -11,8 +13,14 @@ function shortUid(uid: string): string {
   return `${uid.slice(0, 6)}…${uid.slice(-4)}`;
 }
 
-// Danh sách người đã chặn: xem và bỏ chặn ngay trong Cài đặt (P0.5 Phase 4).
-export function BlockedUsersSection() {
+// Danh sách người đã chặn: xem và bỏ chặn trong bảng Thêm (mobile) hoặc Menu Tài khoản (desktop).
+export function BlockedUsersSection({
+  className = "pt-2 border-t border-white/10",
+  hideHeader = false,
+}: {
+  className?: string;
+  hideHeader?: boolean;
+} = {}) {
   const { user, getToken } = useAuth();
   const [blocks, setBlocks] = useState<BlockedUser[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -58,12 +66,14 @@ export function BlockedUsersSection() {
   };
 
   return (
-    <div className="pt-2 border-t border-white/10">
+    <div className={className}>
       <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-2">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
-          <ProhibitIcon className="w-3.5 h-3.5 text-rose-300" weight="bold" />
-          <span>Người đã chặn{blocks && blocks.length > 0 ? ` (${blocks.length})` : ""}</span>
-        </div>
+        {!hideHeader && (
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
+            <ProhibitIcon className="w-3.5 h-3.5 text-rose-300" weight="bold" />
+            <span>Người đã chặn{blocks && blocks.length > 0 ? ` (${blocks.length})` : ""}</span>
+          </div>
+        )}
         <p className="text-[11px] text-slate-400 leading-relaxed">
           Bạn và người bị chặn sẽ không vào chung phòng học nhóm được nữa.
         </p>
@@ -100,5 +110,69 @@ export function BlockedUsersSection() {
         )}
       </div>
     </div>
+  );
+}
+
+/** Hộp thoại quản lý người đã chặn cho Mobile (bảng Thêm) */
+export function BlockedUsersDialog({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      panelKey="blocked-users-dialog"
+      role="dialog"
+      ariaLabel="Danh sách người đã chặn"
+      backdropClassName="z-[110] bg-black/60 backdrop-blur-xs"
+      panelClassName="fixed inset-0 z-[120] flex items-center justify-center p-4 pointer-events-none"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.97, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.97, y: 4 }}
+        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 w-full max-w-[380px] max-h-[min(520px,calc(100vh-2rem))] overflow-y-auto custom-study-scroll glass-panel hover:bg-black/45 p-4 text-white select-none pointer-events-auto rounded-3xl border border-white/10 shadow-2xl space-y-3"
+      >
+        <div className="flex items-center justify-between pb-2 border-b border-white/10">
+          <div className="flex items-center gap-2.5">
+            <span className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-400/20 flex items-center justify-center text-rose-300">
+              <ProhibitIcon className="w-4 h-4" weight="bold" />
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-white">Người đã chặn</h3>
+              <p className="text-[11px] text-white/50">Phòng học nhóm</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            aria-label="Đóng"
+          >
+            <XIcon className="w-4 h-4" />
+          </button>
+        </div>
+
+        <BlockedUsersSection className="pt-0" hideHeader />
+
+        <div className="pt-2 flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-xs font-semibold text-white/90 hover:text-white transition-colors cursor-pointer"
+          >
+            Đóng
+          </button>
+        </div>
+      </motion.div>
+    </ModalShell>
   );
 }

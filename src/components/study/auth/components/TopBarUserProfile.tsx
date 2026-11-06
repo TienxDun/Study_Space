@@ -11,6 +11,7 @@ import { SyncStatusBadge } from "@/components/study/sync/SyncStatusBadge";
 import { syncNow } from "@/lib/simple-cloud-sync";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
+import { BlockedUsersSection } from "@/components/study/settings/BlockedUsersSection";
 import { APP_VERSION_LABEL } from "@/lib/version";
 
 /**
@@ -125,7 +126,7 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 6 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute right-0 top-full mt-2 z-50 w-72 glass-panel hover:bg-black/45 p-4 text-left select-none text-white shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
+            className="absolute right-0 top-full mt-2 z-50 w-80 glass-panel hover:bg-black/45 p-4 text-left select-none text-white shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
           >
             <div className="flex items-center gap-3 pb-3 border-b border-white/10">
               <div className="relative w-10 h-10 shrink-0">
@@ -188,7 +189,7 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
               </button>
             </div>
 
-            <div className="pt-2 flex items-center justify-between">
+            <div className="py-2.5 border-b border-white/10 flex items-center justify-between">
               <span className="text-[11px] font-medium text-emerald-300/90 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 Đã kết nối Google
@@ -205,6 +206,9 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
                 <span>Đăng xuất</span>
               </button>
             </div>
+
+            {/* Người đã chặn: báo cáo/chặn trong phòng học (P0.5) */}
+            <BlockedUsersSection className="pt-2" />
 
             {/* Chân thẻ hồ sơ: Xoá tài khoản + Phiên bản ứng dụng */}
             <button

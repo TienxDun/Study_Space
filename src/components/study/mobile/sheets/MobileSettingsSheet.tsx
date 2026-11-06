@@ -7,7 +7,6 @@ import {
   SpeakerHighIcon,
   MinusIcon,
   PlusIcon,
-  DeviceMobileIcon,
 } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { MobileSheetShell } from "./MobileSheetShell";
@@ -18,7 +17,6 @@ import {
 } from "../../study-sound";
 import { useRealtimeClock } from "../../pomodoro/hooks/useRealtimeClock";
 import { formatStopwatch } from "../../pomodoro/utils/timer-formatters";
-import { BlockedUsersSection } from "../../settings/BlockedUsersSection";
 import type { StudySettingsProps } from "../../StudySettingsModal";
 
 /** Demo bấm giờ chạy riêng trong cài đặt để thấy ngay .00 khác gì (chỉ chạy khi sheet đang mở) */
@@ -154,9 +152,6 @@ export function MobileSettingsSheet({
   onSelectSoundType,
   showStopwatchMilliseconds,
   onToggleStopwatchMilliseconds,
-  keepAwake,
-  onToggleKeepAwake,
-  wakeLockSupported,
   onBack,
   backLabel,
 }: StudySettingsProps) {
@@ -377,35 +372,6 @@ export function MobileSettingsSheet({
             </div>
           )}
         </SettingsSection>
-
-        {/* NHÓM 4: MÀN HÌNH */}
-        <div
-          style={{ "--stagger-idx": 3 } as React.CSSProperties}
-          className="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] sheet-stagger-item sheet-lazy-card"
-        >
-          <div className="flex items-start gap-2.5 min-w-0">
-            <DeviceMobileIcon className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" weight="bold" />
-            <div className="min-w-0">
-              <div className="font-semibold text-white/90 text-xs">Giữ màn hình sáng khi học</div>
-              <p className="text-[11px] text-white/50 mt-0.5">
-                {wakeLockSupported
-                  ? "Ngăn màn hình điện thoại tự tắt trong phiên học"
-                  : "Thiết bị này không hỗ trợ tính năng giữ sáng"}
-              </p>
-            </div>
-          </div>
-          <div className="shrink-0">
-            <ToggleSwitch
-              checked={keepAwake && wakeLockSupported}
-              onChange={onToggleKeepAwake}
-              activeColor="bg-emerald-500"
-              disabled={!wakeLockSupported}
-            />
-          </div>
-        </div>
-
-        {/* Người đã chặn: báo cáo/chặn trong phòng học (P0.5) */}
-        <BlockedUsersSection />
 
       </div>
     </MobileSheetShell>

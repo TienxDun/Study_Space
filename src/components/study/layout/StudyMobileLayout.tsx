@@ -161,13 +161,13 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
         toast("Đã bật chế độ Zen (Chạm đúp để thoát)", {
           id: "zen-mode-toggle",
           duration: 2000,
-          position: "bottom-center",
+          position: "top-center",
         });
       } else {
         toast("Đã thoát chế độ Zen", {
           id: "zen-mode-toggle",
           duration: 2000,
-          position: "bottom-center",
+          position: "top-center",
         });
       }
       return next;
@@ -349,18 +349,8 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
       )}
 
       {/* Bong bóng mở nhanh (Radial Menu) */}
-      {!isZenMode &&
-        !isMoreOpen &&
-        !isTasksOpen &&
-        !isNotesOpen &&
-        !isScenesOpen &&
-        !isMixerOpen &&
-        !isEmbedPlayerOpen &&
-        !isRoomsOpen &&
-        !isChatOpen &&
-        !isSettingsOpen &&
-        !isStatsOpen && (
-          <div className="sm:hidden">
+      {!isZenMode && !isAnySheetOpen && (
+        <div className="sm:hidden">
             <MobilePerfProbe name="radial">
               <MobileRadialBubbleMenu
                 onOpenChat={handleOpenChatRoot}
