@@ -171,7 +171,7 @@ export default function StudySpacePage() {
       {/* Thông báo bảo trì / banner chung từ cờ hệ thống */}
       <SystemBanner flags={state.systemFlags} />
 
-      {/* Thông báo capsule khi đang tải bối cảnh mới */}
+      {/* Thông báo capsule khi đang tải bối cảnh mới - Chuẩn Kính lỏng (Frosted Liquid Glass) */}
       <AnimatePresence>
         {state.isPreloadingScene && state.pendingScene && (
           <motion.div
@@ -179,13 +179,13 @@ export default function StudySpacePage() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={state.isMobile ? { opacity: 0, y: -12, scale: 0.95 } : { opacity: 0, y: 15, scale: 0.95 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="fixed top-[calc(env(safe-area-inset-top,0px)+3.75rem)] sm:top-auto sm:bottom-24 left-1/2 -translate-x-1/2 z-[80] flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-black/85 backdrop-blur-2xl border border-white/20 text-white text-xs shadow-[0_12px_40px_rgba(0,0,0,0.8)] pointer-events-none select-none max-w-[calc(100vw-2rem)] w-max"
+            className="fixed top-[calc(env(safe-area-inset-top,0px)+3.75rem)] sm:top-auto sm:bottom-24 left-1/2 -translate-x-1/2 z-[80] flex items-center gap-2.5 px-4 py-2 rounded-full surface-frost border border-white/20 text-white text-xs shadow-[0_16px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.35),inset_0_-1px_1px_rgba(0,0,0,0.15)] backdrop-blur-2xl pointer-events-none select-none max-w-[calc(100vw-2rem)] w-max"
           >
-            <CircleNotchIcon className="w-3.5 h-3.5 animate-spin text-accent-music-glow shrink-0" />
-            <span className="text-slate-200 truncate max-w-[190px] sm:max-w-none">
+            <CircleNotchIcon className="w-4 h-4 animate-spin text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.5)] shrink-0" />
+            <span className="text-slate-200 text-xs tracking-tight truncate max-w-[190px] sm:max-w-none">
               Đang tải <strong className="text-white font-semibold">{state.pendingScene.name}</strong>...
             </span>
-            <span className="shrink-0 text-[10px] text-accent-music-bright font-mono bg-white/10 px-1.5 py-0.5 rounded border border-white/10">
+            <span className="shrink-0 text-[10px] font-medium text-sky-300 bg-white/[0.08] px-2 py-0.5 rounded-full border border-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)]">
               {state.pendingScene.type === "VIDEO" ? "Video" : "Ảnh"}
             </span>
           </motion.div>

@@ -49,7 +49,6 @@
    Giữ animate-spin (chỉ báo đang tải) và animate-bounce (tín hiệu chốc lát). */
 .mobile-scope .animate-ping,
 .mobile-scope [class*="animate-[bounce"],
-.mobile-scope [class*="animate-[spin_"],
 .mobile-scope [class*="animate-[shimmer"] {
   animation: none;
 }
@@ -65,4 +64,25 @@
   .lg-seg:active {
     transform: none;
   }
+}
+
+
+/* Đĩa nhạc quay tròn mượt mà khi phát nhạc */
+@keyframes vinyl-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-vinyl-spin {
+  animation: vinyl-spin 12s linear infinite;
+  will-change: transform;
+}
+
+.animate-vinyl-spin-paused {
+  animation: vinyl-spin 12s linear infinite;
+  animation-play-state: paused;
 }

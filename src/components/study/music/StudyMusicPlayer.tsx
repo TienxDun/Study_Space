@@ -252,7 +252,7 @@ export const StudyMusicPlayer = memo(function StudyMusicPlayer({
             <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full ring-1 ring-white/25 shadow-xl shadow-black/80 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
               <div
                 className={`w-full h-full rounded-full overflow-hidden relative shadow-inner ${
-                  isPlaying ? "animate-[spin_10s_linear_infinite]" : ""
+                  isPlaying ? "animate-vinyl-spin" : "animate-vinyl-spin-paused"
                 }`}
               >
                 <Image

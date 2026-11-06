@@ -12,6 +12,7 @@ import {
   TimerIcon,
   CaretDownIcon,
   CheckIcon,
+  PencilLineIcon,
 } from "@phosphor-icons/react";
 import { useKanbanBoards } from "../../tasks/hooks/useKanbanBoards";
 import { getDeadlineStatus } from "../../tasks/utils/task-deadline";
@@ -27,6 +28,7 @@ import { startFocusTask } from "@/lib/use-focus-task";
 import { MobileTaskBubbleMenu } from "./MobileTaskBubbleMenu";
 import { MobilePerfProbe } from "../perf/MobilePerfProbe";
 import { useRenderTrace } from "../perf/useRenderTrace";
+import { SyncStatusBadge } from "@/components/study/sync/SyncStatusBadge";
 
 /**
  * Thanh thêm việc nhanh tách riêng khỏi danh sách.
@@ -390,12 +392,33 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
       <MobileSheetShell
         isOpen={isOpen}
         onClose={onClose}
-        onBack={selectedCard ? undefined : onBack}
-        backLabel={selectedCard ? undefined : backLabel}
+        onBack={selectedCard ? (onBack || (() => handleSelectCard(null))) : onBack}
+        backLabel={selectedCard ? "Kế hoạch" : backLabel}
         sheetId="tasks"
         title={
-          <div ref={boardMenuRef} className="relative flex items-center min-w-0 flex-1 max-w-full">
-            <button
+          selectedCard ? (
+            <div className="relative inline-flex items-center min-w-0 max-w-full">
+              <input
+                type="text"
+                value={selectedCard.title}
+                onChange={(e) => {
+                  const updatedTitle = e.target.value;
+                  handleSelectCard({ ...selectedCard, title: updatedTitle });
+                  updateCurrentBoard((b) => ({
+                    ...b,
+                    cards: b.cards.map((c) =>
+                      c.id === selectedCard.id ? { ...c, title: updatedTitle } : c
+                    ),
+                  }));
+                }}
+                className="text-sm font-semibold tracking-tight text-white bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-white/25 truncate min-w-0 pr-1"
+                placeholder="Tiêu đề nhiệm vụ..."
+              />
+              <PencilLineIcon className="w-3.5 h-3.5 text-slate-400 shrink-0 pointer-events-none" />
+            </div>
+          ) : (
+            <div ref={boardMenuRef} className="relative flex items-center min-w-0 flex-1 max-w-full">
+              <button
               type="button"
               onClick={() => {
                 setShowBoardMenu((prev) => !prev);
@@ -538,85 +561,125 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
               </div>
             )}
           </div>
-        }
+        )
+      }
         heightClassName="h-[68dvh] max-h-[72dvh]"
         contentScroll={false}
-        onSwipeLeft={goToNextFilter}
-        onSwipeRight={goToPrevFilter}
+        onSwipeLeft={selectedCard ? undefined : goToNextFilter}
+        onSwipeRight={selectedCard ? undefined : goToPrevFilter}
         headerRight={
-          <button
-            type="button"
-            onClick={() => setIsSearchOpen((prev) => !prev)}
-            aria-label="Tìm kiếm việc"
-            className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all active:scale-90 ${
-              isSearchOpen || searchQuery
-                ? "bg-white/20 border-white/30 text-white"
-                : "bg-white/10 hover:bg-white/15 border-white/15 text-white/80 hover:text-white"
-            }`}
-          >
-            <MagnifyingGlassIcon className="w-4 h-4" />
-          </button>
+          selectedCard ? (
+            <button
+              type="button"
+              onClick={() => promptDeleteCard(selectedCard)}
+              className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-rose-500/20 active:scale-90 border border-white/15 hover:border-rose-500/30 flex items-center justify-center text-slate-300 hover:text-rose-400 transition-all shadow-sm cursor-pointer"
+              title="Xóa nhiệm vụ này"
+              aria-label="Xóa nhiệm vụ này"
+            >
+              <TrashIcon className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsSearchOpen((prev) => !prev)}
+              aria-label="Tìm kiếm việc"
+              className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all active:scale-90 ${
+                isSearchOpen || searchQuery
+                  ? "bg-white/20 border-white/30 text-white"
+                  : "bg-white/10 hover:bg-white/15 border-white/15 text-white/80 hover:text-white"
+              }`}
+            >
+              <MagnifyingGlassIcon className="w-4 h-4" />
+            </button>
+          )
         }
         footer={
-          /* Cụm điều khiển ngón tay cái Thumb-Zone: Bộ lọc trạng thái + Thanh thêm nhanh */
-          <div className="p-2.5 space-y-2 select-none">
-            {/* Bộ lọc trạng thái dạng viên nhộng (Status Pills cuộn ngang) - Ghost Glass Style */}
-            <div className="overflow-x-auto no-scrollbar pb-0.5">
-              <div className="flex items-center justify-center gap-1.5 min-w-full w-max px-1">
-                <button
-                  ref={(el) => {
-                    if (el) pillRefs.current.set("all", el);
-                    else pillRefs.current.delete("all");
-                  }}
-                  type="button"
-                  onClick={() => setSelectedColumnFilter("all")}
-                  className={`h-7 px-3 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer border ${
-                    selectedColumnFilter === "all"
-                      ? "bg-white/20 border-white/30 text-white font-medium shadow-sm"
-                      : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white"
-                  }`}
-                >
-                  <span>Tất cả</span>
-                  <span className="text-[10px] opacity-75">({allCardsWithColumn.length})</span>
-                </button>
-
-                {columns.map((col) => {
-                  const isActive = selectedColumnFilter === col.id;
-                  const count = cards.filter((c) => c.columnId === col.id).length;
-                  return (
-                    <button
-                      ref={(el) => {
-                        if (el) pillRefs.current.set(col.id, el);
-                        else pillRefs.current.delete(col.id);
-                      }}
-                      key={col.id}
-                      type="button"
-                      onClick={() => setSelectedColumnFilter(col.id)}
-                      className={`h-7 px-3 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer border ${
-                        isActive
-                          ? "bg-white/20 border-white/30 text-white font-medium shadow-sm"
-                          : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white"
-                      }`}
-                    >
-                      <span className="truncate max-w-[120px]">{col.title}</span>
-                      <span className="text-[10px] opacity-75">({count})</span>
-                    </button>
-                  );
-                })}
+          selectedCard ? (
+            <div className="shrink-0 px-3.5 sm:px-6 py-2 sm:py-2.5 border-t border-white/[0.12] bg-white/[0.02] flex items-center justify-between text-xs select-none">
+              <div className="flex items-center gap-2 text-[11px] text-slate-400 truncate">
+                <span className="font-medium text-slate-300 truncate">{currentBoard?.title || "Nhiệm vụ học tập"}</span>
               </div>
+              <SyncStatusBadge variant="text" className="text-[11px] font-medium" />
             </div>
+          ) : (
+            /* Cụm điều khiển ngón tay cái Thumb-Zone: Bộ lọc trạng thái + Thanh thêm nhanh */
+            <div className="p-2.5 space-y-2 select-none">
+              {/* Bộ lọc trạng thái dạng viên nhộng (Status Pills cuộn ngang) - Ghost Glass Style */}
+              <div className="overflow-x-auto no-scrollbar pb-0.5">
+                <div className="flex items-center justify-center gap-1.5 min-w-full w-max px-1">
+                  <button
+                    ref={(el) => {
+                      if (el) pillRefs.current.set("all", el);
+                      else pillRefs.current.delete("all");
+                    }}
+                    type="button"
+                    onClick={() => setSelectedColumnFilter("all")}
+                    className={`h-7 px-3 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer border ${
+                      selectedColumnFilter === "all"
+                        ? "bg-white/20 border-white/30 text-white font-medium shadow-sm"
+                        : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white"
+                    }`}
+                  >
+                    <span>Tất cả</span>
+                    <span className="text-[10px] opacity-75">({allCardsWithColumn.length})</span>
+                  </button>
 
-            {/* Thanh nhập việc nhanh ở đáy (Quick Add Bar) */}
-            <QuickAddBar
-              targetColId={
-                selectedColumnFilter !== "all" ? selectedColumnFilter : defaultColId
-              }
-              updateCurrentBoard={updateCurrentBoard}
-            />
-          </div>
+                  {columns.map((col) => {
+                    const isActive = selectedColumnFilter === col.id;
+                    const count = cards.filter((c) => c.columnId === col.id).length;
+                    return (
+                      <button
+                        ref={(el) => {
+                          if (el) pillRefs.current.set(col.id, el);
+                          else pillRefs.current.delete(col.id);
+                        }}
+                        key={col.id}
+                        type="button"
+                        onClick={() => setSelectedColumnFilter(col.id)}
+                        className={`h-7 px-3 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer border ${
+                          isActive
+                            ? "bg-white/20 border-white/30 text-white font-medium shadow-sm"
+                            : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white"
+                        }`}
+                      >
+                        <span className="truncate max-w-[120px]">{col.title}</span>
+                        <span className="text-[10px] opacity-75">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Thanh nhập việc nhanh ở đáy (Quick Add Bar) */}
+              <QuickAddBar
+                targetColId={
+                  selectedColumnFilter !== "all" ? selectedColumnFilter : defaultColId
+                }
+                updateCurrentBoard={updateCurrentBoard}
+              />
+            </div>
+          )
         }
       >
-        <div className="flex-1 min-h-0 flex flex-col space-y-2 pt-0.5 select-none">
+        {selectedCard ? (
+          <CardDetailModal
+            embedded
+            selectedCard={selectedCard}
+            setSelectedCard={handleSelectCard}
+            currentBoard={currentBoard}
+            updateCurrentBoard={updateCurrentBoard}
+            isStatusDropdownOpen={isStatusDropdownOpen}
+            setIsStatusDropdownOpen={setIsStatusDropdownOpen}
+            handleMoveCard={handleMoveCard}
+            handleUpdateCardDueDate={handleUpdateCardDueDate}
+            handleToggleChecklist={handleToggleChecklist}
+            handleAddChecklistItem={handleAddChecklistItem}
+            handleUpdateChecklistItemText={handleUpdateChecklistItemText}
+            handleDeleteChecklistItem={handleDeleteChecklistItem}
+            promptDeleteCard={promptDeleteCard}
+          />
+        ) : (
+          <div className="flex-1 min-h-0 flex flex-col space-y-2 pt-0.5 select-none">
 
           {/* Thanh tìm kiếm mở rộng khi cần */}
           {isSearchOpen && (
@@ -844,28 +907,8 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
           </div>
           </MobilePerfProbe>
         </div>
+        )}
       </MobileSheetShell>
-
-      {/* Modal sửa chi tiết thẻ (khi bấm vào thẻ) */}
-      {selectedCard && (
-        <CardDetailModal
-          selectedCard={selectedCard}
-          setSelectedCard={handleSelectCard}
-          currentBoard={currentBoard}
-          updateCurrentBoard={updateCurrentBoard}
-          isStatusDropdownOpen={isStatusDropdownOpen}
-          setIsStatusDropdownOpen={setIsStatusDropdownOpen}
-          handleMoveCard={handleMoveCard}
-          handleUpdateCardDueDate={handleUpdateCardDueDate}
-          handleToggleChecklist={handleToggleChecklist}
-          handleAddChecklistItem={handleAddChecklistItem}
-          handleUpdateChecklistItemText={handleUpdateChecklistItemText}
-          handleDeleteChecklistItem={handleDeleteChecklistItem}
-          promptDeleteCard={promptDeleteCard}
-          onBack={onBack || (() => handleSelectCard(null))}
-          backLabel={backLabel || "Kế hoạch"}
-        />
-      )}
 
       {/* Modal xác nhận xóa bảng học tập */}
       <ConfirmDeleteModal

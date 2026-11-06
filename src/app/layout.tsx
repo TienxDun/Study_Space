@@ -187,24 +187,24 @@ export default function RootLayout({
           closeButton
           swipeDirections={["left", "right", "bottom"]}
           offset={{ top: 72, right: 24 }}
-          mobileOffset={{ top: "calc(env(safe-area-inset-top, 0px) + 64px)" }}
+          mobileOffset={{ top: "calc(env(safe-area-inset-top, 0px) + 60px)" }}
           style={{ "--width": "390px" } as React.CSSProperties}
           toastOptions={{
             className:
-              "!items-start bg-black/40 backdrop-blur-2xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] text-white rounded-2xl p-4 gap-3",
-            // Tô thẳng vào thẻ để thắng màu nền mặc định của thư viện
+              "!items-center surface-frost border text-white rounded-[20px] p-3.5 gap-3 shadow-[0_16px_40px_rgba(0,0,0,0.5)]",
             style: {
-              background: "rgba(0, 0, 0, 0.55)",
-              backdropFilter: "blur(40px)",
-              WebkitBackdropFilter: "blur(40px)",
-              border: "1px solid rgba(255, 255, 255, 0.2)",
+              background:
+                "linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05) 45%, rgba(255, 255, 255, 0.015)), rgba(16, 20, 30, 0.72)",
+              backdropFilter: "blur(20px) saturate(160%)",
+              WebkitBackdropFilter: "blur(20px) saturate(160%)",
+              border: "1px solid rgba(255, 255, 255, 0.22)",
               boxShadow:
-                "0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12)",
+                "0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.35), inset 0 -1px 1px rgba(0, 0, 0, 0.15)",
             },
-            descriptionClassName: "text-slate-300 text-xs mt-1 leading-relaxed",
+            descriptionClassName: "text-slate-300 text-xs mt-0.5 leading-relaxed",
             classNames: {
-              icon: "mt-0.5 shrink-0",
-              title: "font-semibold text-sm",
+              icon: "shrink-0",
+              title: "font-semibold text-sm tracking-tight text-white",
             },
           }}
         />

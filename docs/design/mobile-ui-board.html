@@ -126,6 +126,39 @@
   .bubble{position:absolute;width:46px;height:46px;border-radius:999px;background:var(--glass);border:1px solid var(--edge);display:grid;place-items:center;font-size:15px;color:#fff;box-shadow:0 12px 30px rgba(0,0,0,.55)}
   .blabel{position:absolute;font-size:9.5px;padding:3px 7px;border-radius:999px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.14);color:#cbd5e1;white-space:nowrap}
   .n{display:inline-grid;place-items:center;width:14px;height:14px;border-radius:999px;background:#f97316;color:#0b0f17;font:700 9px/1 ui-sans-serif;font-style:normal;margin-left:4px;vertical-align:middle;flex:none}
+  .modal{position:absolute;left:12px;right:12px;top:30px;bottom:26px;border-radius:24px;background:rgba(10,11,15,.97);border:1px solid rgba(255,255,255,.2);box-shadow:0 24px 60px rgba(0,0,0,.85);display:flex;flex-direction:column;overflow:hidden}
+  .mhead{padding:12px 14px 11px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:9px}
+  .mrow1{display:flex;align-items:center;gap:8px}
+  .mtitle{flex:1;font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:2px}
+  .chip3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+  .chipx{height:28px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;padding:0 7px;font-size:9.5px;font-weight:600;color:#cbd5e1}
+  .chipx.pri{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.25);color:#fcd34d}
+  .chipx.due{background:rgba(244,63,95,.1);border-color:rgba(244,63,95,.25);color:#fda4af}
+  .cta{height:34px;border-radius:10px;background:linear-gradient(90deg,rgba(245,158,11,.2),rgba(251,191,36,.2));border:1px solid rgba(251,191,36,.35);color:#fde68a;font-size:10.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}
+  .mbody{flex:1;overflow:hidden;padding:12px 14px;display:flex;flex-direction:column;gap:11px}
+  .lbl{font-size:10px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;gap:5px}
+  .ta{min-height:50px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:8px 10px;font-size:10.5px;color:#94a3b8;line-height:1.5}
+  .bar{height:5px;border-radius:99px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.05);overflow:hidden}
+  .bar i{display:block;height:100%;width:40%;background:#34d399}
+  .ck{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);font-size:10px;color:#cbd5e1}
+  .ck .dot{width:13px;height:13px;border-radius:99px;border:1.5px solid rgba(255,255,255,.35);flex:none}
+  .ck.done .dot{border-color:#34d399;background:rgba(52,211,153,.2);display:grid;place-items:center;font-size:8px;color:#34d399}
+  .menu{position:absolute;right:14px;top:292px;width:224px;padding:6px;border-radius:16px;background:linear-gradient(180deg,rgba(30,36,48,.97),rgba(18,21,28,.98));border:1px solid rgba(255,255,255,.16);box-shadow:0 16px 40px rgba(0,0,0,.85);z-index:5}
+  .mi{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:12px;font-size:10.5px;color:rgba(255,255,255,.85)}
+  .mi .ic2{width:26px;height:26px;border-radius:99px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);display:grid;place-items:center;font-size:11px;flex:none}
+  .mi .rt{margin-left:auto;color:rgba(255,255,255,.4);font-size:10px}
+  .mi.danger{color:#fda4af}
+  .mi.danger .ic2{background:rgba(244,63,95,.1);border-color:rgba(244,63,95,.2)}
+  .hr{height:1px;background:rgba(255,255,255,.08);margin:4px 0}
+  .toolbar{display:flex;align-items:center;gap:5px;padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(10,12,18,.7)}
+  .tb2{width:28px;height:28px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:grid;place-items:center;font-size:11px;color:#cbd5e1;flex:none}
+  .tb2.on{background:#fff;color:#0f172a;font-weight:700}
+  .ai{margin-left:auto;height:28px;padding:0 9px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#34d399;font-size:10px;display:flex;align-items:center;gap:4px}
+  .note-title{font-size:16px;font-weight:700;color:#fff;padding:2px 4px;margin:10px 12px 0}
+  .hint{margin:10px 12px 0;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:10px 12px;font-size:10.5px;line-height:1.55;color:#94a3b8}
+  .editor{flex:1;margin:8px 12px 0;color:#475569;font-size:11px;padding:2px 4px}
+  .nfoot{flex:none;border-top:1px solid rgba(255,255,255,.12);padding:8px 14px;display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#94a3b8}
+  .dotok{width:6px;height:6px;border-radius:99px;background:#34d399;display:inline-block;margin-right:4px}
   figcaption{margin-top:16px}
   figcaption h3{margin:0 0 2px;font-size:14px;letter-spacing:-.01em}
   figcaption .path{font:500 10.5px/1.4 ui-monospace,monospace;color:#64748b;word-break:break-all}
@@ -141,7 +174,7 @@
 
 <div class="page-head">
   <div class="kicker">ZenStudy · Mobile UI</div>
-  <h1>Board khung hình mobile — 8 frame lõi</h1>
+  <h1>Board khung hình mobile — 11 frame</h1>
   <p class="lede">Vẽ lại đúng cây component trong <code>src/components/study/mobile/</code>. Khung 390×844, safe top 47 / bottom 34. Số tròn cam là callout, chú giải nằm dưới mỗi frame. Bản tĩnh, không tương tác — dùng để duyệt bố cục trước khi sửa code.</p>
   <div class="legend">
     <span class="chip">Kính lỏng: nền graphite + viền white/14</span>
@@ -480,11 +513,158 @@
   </figcaption>
 </figure>
 
+<figure>
+  <div class="phone"><div class="screen">
+    <div class="scene-shape s1"></div><div class="scene-shape s2"></div>
+    <div class="scrim"></div>
+    <div class="sheet" style="height:574px;opacity:.5"></div>
+    <div class="modal">
+      <div class="mhead">
+        <div class="mrow1">
+          <div class="ghost" style="width:30px;height:30px">‹<i class="n">1</i></div>
+          <div class="mtitle">Ôn chương 3 — Đạo hàm ✎<i class="n">2</i></div>
+          <div class="ghost" style="width:30px;height:30px">🗑</div>
+          <div class="ghost" style="width:30px;height:30px">✕</div>
+        </div>
+        <div class="chip3">
+          <div class="chipx">Cần làm ⌄</div>
+          <div class="chipx pri">▮ Gấp ⌄<i class="n">3</i></div>
+          <div class="chipx due">▦ 6/11 ⌄</div>
+        </div>
+        <div class="cta">▶ Bắt đầu phiên Pomodoro <span style="font:500 9px ui-monospace,monospace;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2);padding:1px 5px;border-radius:4px">6 phiên</span></div>
+      </div>
+      <div class="mbody">
+        <div class="lbl">▤ Mô tả chi tiết</div>
+        <div class="ta">Công thức đạo hàm hàm hợp, bài tập 12–20…<i class="n">4</i></div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="lbl">☑ Danh sách công việc con</div>
+          <span style="font:700 9.5px ui-monospace,monospace;padding:1px 7px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#e2e8f0">2/5 · 40%</span>
+        </div>
+        <div class="bar"><i></i></div>
+        <div class="ck done"><span class="dot">✓</span><span style="text-decoration:line-through;opacity:.6">Đọc lý thuyết SGK</span></div>
+        <div class="ck done"><span class="dot">✓</span><span style="text-decoration:line-through;opacity:.6">Chép công thức vào note</span></div>
+        <div class="ck"><span class="dot"></span>Bài 12 → 15</div>
+        <div class="ck" style="color:#64748b">＋ Thêm việc con…<i class="n">5</i></div>
+      </div>
+    </div>
+  </div></div>
+  <figcaption>
+    <h3>⑨ Chi tiết công việc</h3>
+    <div class="path">CardDetailModal · render từ MobileTasksSheet khi chọn thẻ · ModalShell max-w-660, 92dvh</div>
+    <ul>
+      <li><span class="num">1</span><span><b>Back</b> trả về danh sách thẻ (pop screen detail trong stack).</span></li>
+      <li><span class="num">2</span><span><b>Tiêu đề sửa tại chỗ</b>: input phủ lên thẻ đo chiều rộng, lưu mỗi lần gõ.</span></li>
+      <li><span class="num">3</span><span><b>3 chip thuộc tính</b> dàn đều: cột · ưu tiên (màu theo mức) · hạn chót. Mỗi chip mở popover riêng, bấm nền đóng popover trước chứ không đóng modal.</span></li>
+      <li><span class="num">4</span><span>Mô tả + checklist tự lưu, không có nút Lưu.</span></li>
+      <li><span class="num">5</span><span><b>Thêm việc con</b> bằng Enter; chạm vào dòng để sửa text, nút xoá hiện bên phải.</span></li>
+      <li><span class="num">6</span><span>Đây là modal giữa màn (không phải sheet đáy): nền tối 75% + blur, panel cách mép 12px.</span></li>
+    </ul>
+  </figcaption>
+</figure>
+
+<figure>
+  <div class="phone"><div class="screen">
+    <div class="scene-shape s1"></div><div class="scene-shape s3"></div>
+    <div class="scrim"></div>
+    <div class="sheet" style="height:660px">
+      <div class="edge-light"></div>
+      <div class="handle"><i></i></div>
+      <div class="hd">
+        <div class="ghost" style="width:30px;height:30px">‹<i class="n">1</i></div>
+        <div class="ttl">Ghi chú không tên</div>
+        <div class="ghost" style="width:30px;height:30px">⋯</div>
+        <div class="ghost" style="width:30px;height:30px">⤢</div>
+        <div class="ghost" style="width:30px;height:30px">✕</div>
+      </div>
+      <div class="toolbar">
+        <div class="tb2 on">B<i class="n">2</i></div>
+        <div class="tb2"><i>I</i></div>
+        <div class="tb2">S</div>
+        <div class="tb2">☑</div>
+        <div class="tb2" style="color:#fcd34d">🖍</div>
+        <div class="tb2">↺</div>
+        <div class="ai">✦ Hỏi AI ⌄<i class="n">3</i></div>
+        <div class="tb2">⌃</div>
+      </div>
+      <div class="note-title">Ghi chú không tên</div>
+      <div class="hint">Bôi đen chữ rồi dùng B / I ở trên để nhấn mạnh. Thêm checklist cho việc cần làm.<i class="n">4</i></div>
+      <div class="editor">Chạm vào đây để ghi chú bài học, ý tưởng, công thức…</div>
+      <div class="nfoot"><span>0 từ</span><span><span class="dotok"></span>Đã lưu trên máy</span></div>
+    </div>
+  </div></div>
+  <figcaption>
+    <h3>⑩ Chi tiết ghi chú — editor</h3>
+    <div class="path">MobileNotesSheet (chế độ editor) · useRichTextEditor · NoteChatPromptMenu</div>
+    <ul>
+      <li><span class="num">1</span><span>Back về danh sách ghi chú; header đổi tiêu đề thành tên note, thêm nút <b>⋯</b> (ghim / sao chép / xoá).</span></li>
+      <li><span class="num">2</span><span><b>Toolbar 1 hàng</b>: B · I · S · Checklist · Highlight · Undo. Định dạng đang bật đổi sang nền trắng (B) / emerald (☑) / amber (🖍).</span></li>
+      <li><span class="num">3</span><span><b>Hỏi AI</b> mở menu prompt, gửi nội dung note sang chat. Nút <b>⌃</b> thu gọn toolbar; khi gọn hiện nút "Aa Công cụ".</span></li>
+      <li><span class="num">4</span><span><b>Card gợi ý</b> nằm ngay dưới tiêu đề, chỉ hiện khi note trống (vừa sửa vị trí).</span></li>
+      <li><span class="num">5</span><span>Footer: số từ + trạng thái lưu (local / cloud). Không có nút Lưu.</span></li>
+      <li><span class="num">6</span><span>Editor <code>contentEditable</code>, placeholder chỉ hiện khi thật sự rỗng; checklist là <code>.todo-item</code> trong editor.</span></li>
+    </ul>
+  </figcaption>
+</figure>
+
+<figure>
+  <div class="phone"><div class="screen">
+    <div class="scene-shape s2"></div>
+    <div class="scrim" style="background:rgba(0,0,0,.35)"></div>
+    <div class="sheet" style="height:574px">
+      <div class="edge-light"></div>
+      <div class="handle"><i></i></div>
+      <div class="hd">
+        <div class="ttl pill">Nhiệm vụ học tập <span class="cnt">12</span> ⌄</div>
+        <div class="ghost" style="width:32px;height:32px">⌕</div>
+        <div class="ghost" style="width:32px;height:32px">⤢</div>
+        <div class="ghost" style="width:32px;height:32px">✕</div>
+      </div>
+      <div class="body" style="gap:8px">
+        <div class="card">
+          <div class="line1"><div class="check"></div><div style="flex:1;min-width:0">
+            <div class="c-title">Ôn chương 3 — Đạo hàm</div>
+            <div class="tags"><span class="tag">Cần làm</span><span class="tag hi">● Gấp</span></div>
+          </div><div class="ghost" style="width:30px;height:30px;flex:none">⋮<i class="n">1</i></div></div>
+        </div>
+        <div class="card" style="opacity:.55">
+          <div class="line1"><div class="check"></div><div style="flex:1;min-width:0"><div class="c-title">Viết dàn ý Văn nghị luận</div></div></div>
+        </div>
+        <div class="card" style="opacity:.4">
+          <div class="line1"><div class="check"></div><div style="flex:1;min-width:0"><div class="c-title">Làm 20 câu trắc nghiệm Anh</div></div></div>
+        </div>
+      </div>
+      <div class="footer">
+        <div class="pillrow"><span class="p on">Tất cả</span><span class="p">Cần làm</span><span class="p">Đang làm</span><span class="p">Xong</span></div>
+        <div class="field">＋ Thêm việc nhanh…</div>
+      </div>
+    </div>
+    <div class="menu">
+      <div class="mi"><span class="ic2">◷</span>Học với Pomodoro<span class="rt">45′</span><i class="n">2</i></div>
+      <div class="mi"><span class="ic2">→</span>Chuyển trạng thái<span class="rt">›</span></div>
+      <div class="mi"><span class="ic2">✎</span>Chi tiết công việc</div>
+      <div class="hr"></div>
+      <div class="mi danger"><span class="ic2">🗑</span>Xóa việc này<i class="n">3</i></div>
+    </div>
+  </div></div>
+  <figcaption>
+    <h3>⑪ Bubble menu — thẻ công việc</h3>
+    <div class="path">MobileTaskBubbleMenu → MobileBubbleMenuOverlay (portal ra body, z-70/71)</div>
+    <ul>
+      <li><span class="num">1</span><span><b>Trigger 3 chấm</b> chỉ hiện trên thẻ đang giữ 450ms (rung 30ms) — hoặc bấm trực tiếp nút trên thẻ.</span></li>
+      <li><span class="num">2</span><span>Mục 1 hiện chip thời gian đã tập trung nếu có. Neo menu ngay dưới nút, lệch phải 12px tối thiểu.</span></li>
+      <li><span class="num">3</span><span><b>Chuyển trạng thái</b> đổi sang chế độ 2: danh sách cột còn lại (ẩn cột hiện tại), có nút "Quay lại".</span></li>
+      <li><span class="num">4</span><span>Nền bắt chạm <code>black/45</code> phủ toàn màn, chạm ngoài là đóng; menu không đóng sheet bên dưới.</span></li>
+      <li><span class="num">5</span><span><b>Menu ghi chú</b> (MobileNoteBubbleMenu) cùng khung, 3 mục: Xem &amp; chỉnh sửa · Ghim/Bỏ ghim · Xoá ghi chú. Chưa vẽ riêng để tránh trùng khung.</span></li>
+    </ul>
+  </figcaption>
+</figure>
+
 <!-- FRAMES -->
 </div>
 
 <div class="todo">
-  <p><b>Chưa vẽ (12 frame còn lại):</b> Splash · Welcome · Landscape guard · Tasks detail · Note editor · Tasks/Notes bubble menu · Chat sheet · Chat history drawer · Rooms list · Room view + pill · Stats · Music/Mixer + Radio · Skeleton &amp; empty state · cờ chat/rooms tắt.</p>
+  <p><b>Đã bỏ theo yêu cầu:</b> Splash · Welcome/Onboarding · Landscape guard.</p>
+  <p><b>Chưa vẽ:</b> Chat sheet · Chat history drawer · Rooms list · Room view + pill · Stats · Music/Mixer · Radio/Embed + PiP · Skeleton kính · Empty state + cờ tắt · Sheet dạng Zen full-screen · Menu ghi chú (biến thể 3 mục).</p>
   <p>Đối chiếu: mỗi class trong board map 1-1 với component thật; frame nào lệch code thì sửa code hoặc sửa hình, không để hai nguồn sự thật.</p>
 </div>
 

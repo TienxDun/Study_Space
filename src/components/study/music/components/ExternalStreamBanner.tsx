@@ -44,9 +44,7 @@ export function ExternalStreamBanner({
         <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full ring-1 ring-white/25 shadow-xl shadow-black/80 shrink-0 group-hover/art:scale-105 transition-transform duration-300">
           <div
             className={`w-full h-full rounded-full overflow-hidden relative shadow-inner ${
-              !isExternalPaused
-                ? "animate-[spin_10s_linear_infinite] motion-reduce:animate-none"
-                : ""
+              !isExternalPaused ? "animate-vinyl-spin" : "animate-vinyl-spin-paused"
             }`}
           >
             {externalStreamItem.thumbnail ? (

@@ -7,44 +7,84 @@
 }
 
 [data-sonner-toaster] [data-sonner-toast] {
-  background: rgba(0, 0, 0, 0.55) !important;
-  backdrop-filter: blur(40px) !important;
-  -webkit-backdrop-filter: blur(40px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.15),
+      rgba(255, 255, 255, 0.05) 45%,
+      rgba(255, 255, 255, 0.015)
+    ),
+    rgba(16, 20, 30, 0.72) !important;
+  backdrop-filter: blur(20px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
   color: #ffffff !important;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
-  border-radius: 1rem !important;
-  padding: 1rem !important;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.35),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 1.25rem !important;
+  padding: 0.875rem 1rem !important;
   display: flex !important;
-  align-items: flex-start !important;
+  align-items: center !important;
   gap: 0.75rem !important;
 }
 
-/* Máy cảm ứng: bỏ hẳn blur. Nền là video đang phát nên blur(40px) buộc
-   GPU làm mờ lại toàn vùng mỗi khung hình -> giật đúng lúc vừa thao tác.
-   Đổi sang graphite để toast không thành vệt đen dán trên màn hình. */
-@media (pointer: coarse) {
-  [data-sonner-toaster] [data-sonner-toast] {
-    background: linear-gradient(180deg, rgba(27, 33, 48, 0.96), rgba(20, 24, 33, 0.97)) !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-}
-
 [data-sonner-toaster] [data-sonner-toast] [data-icon] {
-  margin-top: 2px !important;
+  position: relative !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   width: 1.25rem !important;
   height: 1.25rem !important;
   flex-shrink: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-icon] svg {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+}
+
+/* Spinner loading (Sonner Loader): căn giữa tuyệt đối theo trục dọc và ngang */
+[data-sonner-toaster] [data-sonner-toast] .sonner-loading-wrapper {
+  position: absolute !important;
+  inset: 0 !important;
+  margin: auto !important;
+  width: 1rem !important;
+  height: 1rem !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] .sonner-spinner {
+  position: relative !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 1rem !important;
+  height: 1rem !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] .sonner-loading-bar {
+  background: rgba(255, 255, 255, 0.85) !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] .sonner-loader {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast] [data-content] {
   display: flex !important;
   flex-direction: column !important;
-  gap: 0.15rem !important;
+  justify-content: center !important;
+  gap: 0.125rem !important;
   min-width: 0 !important;
   flex: 1 1 auto !important;
 }
@@ -54,33 +94,36 @@
   font-weight: 600 !important;
   font-size: 0.8125rem !important;
   letter-spacing: -0.01em !important;
-  line-height: 1.4 !important;
+  line-height: 1.35 !important;
   white-space: normal !important;
   overflow: visible !important;
   overflow-wrap: anywhere !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+  margin: 0 !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast] [data-description] {
-  color: #cbd5e1 !important;
+  color: rgba(255, 255, 255, 0.7) !important;
   font-size: 0.75rem !important;
   font-weight: 400 !important;
-  line-height: 1.6 !important;
-  margin-top: 0.25rem !important;
+  line-height: 1.45 !important;
+  margin-top: 0.1rem !important;
   white-space: normal !important;
   overflow: visible !important;
   overflow-wrap: anywhere !important;
 }
 
+/* Các biến thể theo loại thông báo: chỉ giữ màu sắc icon, bỏ khung nền và viền */
 [data-sonner-toaster] [data-sonner-toast][data-type="success"] [data-icon] {
   color: #34d399 !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast][data-type="info"] [data-icon] {
-  color: #a855f7 !important;
+  color: #38bdf8 !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast][data-type="error"] [data-icon] {
-  color: #f87171 !important;
+  color: #fb7185 !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast][data-type="warning"] [data-icon] {
@@ -94,35 +137,56 @@
   border-radius: 0.5rem !important;
 }
 
-/* Nút hành động xác nhận trong toast */
+/* Nút hành động xác nhận trong toast (ví dụ: "Hoàn tác") - Chuẩn Solid White tương phản cao */
 [data-sonner-toaster] [data-sonner-toast] [data-button] {
-  padding: 0.35rem 0.75rem !important;
+  padding: 0.35rem 0.85rem !important;
   font-size: 0.75rem !important;
   font-weight: 600 !important;
-  border-radius: 0.625rem !important;
+  letter-spacing: -0.01em !important;
+  border-radius: 9999px !important;
   transition: all 0.15s ease !important;
   cursor: pointer !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   min-height: 28px !important;
+  user-select: none !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast] [data-action] {
-  background: #e11d48 !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(244, 63, 94, 0.4) !important;
-  box-shadow: 0 2px 10px rgba(225, 29, 72, 0.35) !important;
+  background: #ffffff !important;
+  color: #090d16 !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.2) !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast] [data-action]:hover {
-  background: #be123c !important;
+  background: #f1f5f9 !important;
+  border-color: #ffffff !important;
+  color: #020617 !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-action]:active {
+  transform: scale(0.95) !important;
+  background: #e2e8f0 !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast] [data-cancel] {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   color: #cbd5e1 !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 9999px !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-cancel]:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+  color: #ffffff !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-cancel]:active {
+  transform: scale(0.95) !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast] [data-cancel]:hover {
@@ -147,25 +211,25 @@
     padding-right: 2.75rem !important;
   }
 
-  /* Nút tắt chỉ hiện trên mobile: dấu x tối giản, không nền tròn, căn giữa theo chiều dọc */
+  /* Nút tắt trên mobile: nút tròn kính mờ nhỏ gọn, thanh thoát */
   [data-sonner-toaster] [data-sonner-toast] [data-close-button],
   [data-sonner-toaster] [data-sonner-toast] button[data-close-button] {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 32px !important;
-    height: 32px !important;
+    width: 26px !important;
+    height: 26px !important;
     top: 50% !important;
     right: 10px !important;
     left: auto !important;
     bottom: auto !important;
     transform: translateY(-50%) !important;
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0.5rem !important;
-    box-shadow: none !important;
-    color: rgba(255, 255, 255, 0.65) !important;
-    transition: color 0.15s ease, opacity 0.15s ease !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    transition: all 0.15s ease !important;
     opacity: 1 !important;
   }
 
@@ -174,13 +238,14 @@
   [data-sonner-toaster] [data-sonner-toast] [data-close-button]:active,
   [data-sonner-toaster] [data-sonner-toast] button[data-close-button]:active {
     color: #ffffff !important;
-    background: transparent !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+    transform: translateY(-50%) scale(0.92) !important;
   }
 
   [data-sonner-toaster] [data-sonner-toast] [data-close-button] svg,
   [data-sonner-toaster] [data-sonner-toast] button[data-close-button] svg {
-    width: 15px !important;
-    height: 15px !important;
+    width: 13px !important;
+    height: 13px !important;
   }
 
   /* Thanh thời gian dưới đáy toast (học từ mẫu 070 Lucianlabs).
@@ -190,14 +255,30 @@
   [data-sonner-toaster] [data-sonner-toast]::after {
     content: "" !important;
     position: absolute !important;
-    left: 1rem !important;
-    right: 1rem !important;
-    bottom: 0.5rem !important;
+    left: 1.125rem !important;
+    right: 1.125rem !important;
+    bottom: 0.35rem !important;
     height: 2px !important;
-    border-radius: 2px !important;
-    background: rgba(255, 255, 255, 0.35) !important;
+    border-radius: 9999px !important;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.15)) !important;
     transform-origin: 0 50% !important;
     animation: sonner-timebar 1.5s linear forwards !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-type="success"]::after {
+    background: linear-gradient(90deg, rgba(52, 211, 153, 0.7), rgba(52, 211, 153, 0.2)) !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-type="error"]::after {
+    background: linear-gradient(90deg, rgba(244, 63, 94, 0.7), rgba(244, 63, 94, 0.2)) !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-type="warning"]::after {
+    background: linear-gradient(90deg, rgba(251, 191, 36, 0.7), rgba(251, 191, 36, 0.2)) !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-type="info"]::after {
+    background: linear-gradient(90deg, rgba(56, 189, 248, 0.7), rgba(56, 189, 248, 0.2)) !important;
   }
 }
 

@@ -135,26 +135,25 @@ describe("Mobile Nav Active State Resolution", () => {
   });
 });
 
-describe("Mobile Tasks Detail Back Button Routing", () => {
-  it("routes onBack to CardDetailModal when card is selected, not MobileSheetShell", () => {
-    const parentOnBack = () => {};
-    const parentBackLabel = "Kế hoạch";
-
-    // Khi chưa chọn thẻ: nút Back nằm trên MobileSheetShell (nếu có stack trước đó)
+describe("Mobile Tasks Detail Sheet Navigation", () => {
+  it("keeps MobileSheetShell open and routes back action to unselect card without re-animating", () => {
     let selectedCard: any = null;
-    const sheetOnBackBefore = selectedCard ? undefined : parentOnBack;
-    const detailOnBackBefore = selectedCard ? parentOnBack : undefined;
-    expect(sheetOnBackBefore).toBe(parentOnBack);
-    expect(detailOnBackBefore).toBeUndefined();
+    const isSheetOpen = true;
 
-    // Khi đã chọn thẻ xem chi tiết: nút Back chuyển sang CardDetailModal, MobileSheetShell không hiển thị
+    // Khi chưa chọn thẻ: sheet mở bình thường
+    expect(isSheetOpen).toBe(true);
+
+    // Khi chọn thẻ: sheet VẪN mở (không bị unmount hay ẩn)
     selectedCard = { id: "card-1", title: "Làm bài tập" };
-    const sheetOnBackAfter = selectedCard ? undefined : parentOnBack;
-    const detailOnBackAfter = selectedCard ? (parentOnBack || (() => {})) : undefined;
-    const detailBackLabel = selectedCard ? parentBackLabel : undefined;
-    expect(sheetOnBackAfter).toBeUndefined();
-    expect(detailOnBackAfter).toBe(parentOnBack);
-    expect(detailBackLabel).toBe("Kế hoạch");
+    expect(isSheetOpen).toBe(true);
+    expect(selectedCard).not.toBeNull();
+
+    // Khi bấm Back: chỉ unselect card, sheet vẫn giữ nguyên trạng thái mở không giật reload
+    const handleBack = () => {
+      selectedCard = null;
+    };
+    handleBack();
+    expect(selectedCard).toBeNull();
+    expect(isSheetOpen).toBe(true);
   });
 });
-

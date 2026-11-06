@@ -180,14 +180,7 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
   });
 
   const handleQuickChangeScene = useCallback(() => {
-    const next = handleRandomScene();
-    if (next) {
-      toast(`Đã đổi bối cảnh: ${next.name}`, {
-        id: "scene-quick-change",
-        duration: 2000,
-        position: "bottom-center",
-      });
-    }
+    handleRandomScene();
   }, [handleRandomScene]);
 
   return (
