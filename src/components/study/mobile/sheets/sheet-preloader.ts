@@ -18,6 +18,7 @@ export const loadSettingsSheet = () => import("./MobileSettingsSheet");
 export const loadStatsSheet = () => import("./MobileFocusStatsSheet");
 export const loadChatSheet = () => import("./MobileChatSheet");
 export const loadRadioSheet = () => import("./MobileRadioSheet");
+export const loadMixerSheet = () => import("./MobileMixerSheet");
 
 let hasPreloadedCritical = false;
 let hasPreloadedAll = false;
@@ -46,6 +47,7 @@ export function preloadSecondarySheets(): void {
   loadStatsSheet();
   loadChatSheet();
   loadRadioSheet();
+  loadMixerSheet();
 }
 
 /**

@@ -10,6 +10,9 @@ import {
 } from "@phosphor-icons/react";
 import { StudyMusicPlayerProps } from "./types";
 import { SoundMixerWidget } from "../mixer/SoundMixerWidget";
+import { MobileMixerSheet } from "../mobile/sheets/MobileMixerSheet";
+import { useAmbientAudio } from "../mixer/hooks/useAmbientAudio";
+import { useIsMobile } from "../mobile/hooks/useIsMobile";
 import { MixerTab } from "../mixer/types";
 import { useAudioPlayer } from "./hooks/useAudioPlayer";
 import { useYouTubeRemote, sendYouTubeCommand } from "@/lib/youtube-remote";
@@ -34,10 +37,22 @@ export const StudyMusicPlayer = memo(function StudyMusicPlayer({
   backLabel,
   hasEntered = true,
   isHidden = false,
+  isMobile: externalIsMobile,
 }: StudyMusicPlayerProps) {
+  const isMobileHook = useIsMobile();
+  const isMobile = externalIsMobile ?? isMobileHook;
   const [internalIsMixerOpen, setInternalIsMixerOpen] = useState(false);
   const [activeMixerTab, setActiveMixerTab] = useState<MixerTab>("ambience");
   const [isMounted, setIsMounted] = useState(false);
+
+  const {
+    ambientVolumes,
+    activeCount: ambientActiveCount,
+    toggleSound,
+    handleSoundVolume,
+    resetAllSounds,
+    handleTogglePreset,
+  } = useAmbientAudio({ isGlobalMuted });
 
   const [hasRevealedIsland, setHasRevealedIsland] = useState(false);
   useEffect(() => {
@@ -62,8 +77,6 @@ export const StudyMusicPlayer = memo(function StudyMusicPlayer({
     if (!isExternalYouTube) return;
     sendYouTubeCommand(isGlobalMuted ? "mute" : "unMute");
   }, [isGlobalMuted, isExternalYouTube, isExternalStreamActive]);
-
-  const [ambientActiveCount, setAmbientActiveCount] = useState(0);
 
   const isMixerOpen =
     externalIsMixerOpen !== undefined ? externalIsMixerOpen : internalIsMixerOpen;
@@ -114,7 +127,6 @@ export const StudyMusicPlayer = memo(function StudyMusicPlayer({
     currentMood,
     currentTrack,
     isPlaying,
-    volume,
     effectiveVolume,
     isLooping,
     isShuffle,
@@ -207,34 +219,69 @@ export const StudyMusicPlayer = memo(function StudyMusicPlayer({
         preload="metadata"
       />
 
-      {/* Sound Mixer Drawer Widget */}
-      <SoundMixerWidget
-        isOpen={isMixerOpen}
-        onClose={closeMixer}
-        activeTab={activeMixerTab}
-        onTabChange={setActiveMixerTab}
-        onAmbientActiveCountChange={setAmbientActiveCount}
-        currentMood={currentMood}
-        onSelectMood={handleSelectMood}
-        currentTrack={currentTrack}
-        isPlaying={isPlaying}
-        onTogglePlay={togglePlay}
-        onNextTrack={handleNextTrack}
-        onPrevTrack={handlePrevTrack}
-        currentTime={currentTime}
-        duration={duration}
-        onSeek={handleSeek}
-        onSelectTrack={handleSelectTrack}
-        volume={volume}
-        onVolumeChange={handleVolumeChange}
-        isShuffle={isShuffle}
-        onToggleShuffle={handleToggleShuffle}
-        isLooping={isLooping}
-        onToggleLoop={handleToggleLoop}
-        isGlobalMuted={isGlobalMuted}
-        onBack={onBack}
-        backLabel={backLabel}
-      />
+      {/* Sound Mixer Widget: Desktop Modal nổi */}
+      {!isMobile && (
+        <SoundMixerWidget
+          isOpen={isMixerOpen}
+          onClose={closeMixer}
+          activeTab={activeMixerTab}
+          onTabChange={setActiveMixerTab}
+          currentMood={currentMood}
+          onSelectMood={handleSelectMood}
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          onTogglePlay={togglePlay}
+          onNextTrack={handleNextTrack}
+          onPrevTrack={handlePrevTrack}
+          onSelectTrack={handleSelectTrack}
+          currentTime={currentTime}
+          duration={duration}
+          onSeek={handleSeek}
+          isShuffle={isShuffle}
+          onToggleShuffle={handleToggleShuffle}
+          isLooping={isLooping}
+          onToggleLoop={handleToggleLoop}
+          ambientVolumes={ambientVolumes}
+          activeCount={ambientActiveCount}
+          toggleSound={toggleSound}
+          handleSoundVolume={handleSoundVolume}
+          resetAllSounds={resetAllSounds}
+          handleTogglePreset={handleTogglePreset}
+        />
+      )}
+
+      {/* Sound Mixer Widget: Mobile Bottom Sheet trượt đáy */}
+      {isMobile && (
+        <MobileMixerSheet
+          isOpen={isMixerOpen}
+          onClose={closeMixer}
+          onBack={onBack}
+          backLabel={backLabel}
+          activeTab={activeMixerTab}
+          onTabChange={setActiveMixerTab}
+          currentMood={currentMood}
+          onSelectMood={handleSelectMood}
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          onTogglePlay={togglePlay}
+          onNextTrack={handleNextTrack}
+          onPrevTrack={handlePrevTrack}
+          onSelectTrack={handleSelectTrack}
+          currentTime={currentTime}
+          duration={duration}
+          onSeek={handleSeek}
+          isShuffle={isShuffle}
+          onToggleShuffle={handleToggleShuffle}
+          isLooping={isLooping}
+          onToggleLoop={handleToggleLoop}
+          ambientVolumes={ambientVolumes}
+          activeCount={ambientActiveCount}
+          toggleSound={toggleSound}
+          handleSoundVolume={handleSoundVolume}
+          resetAllSounds={resetAllSounds}
+          handleTogglePreset={handleTogglePreset}
+        />
+      )}
 
       {/* Bottom Ambient Vignette: Dải dốc bảo vệ tương phản tự nhiên ở đáy màn hình */}
       <div className="fixed bottom-0 inset-x-0 h-28 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none z-30" />

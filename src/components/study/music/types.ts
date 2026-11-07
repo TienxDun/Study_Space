@@ -16,6 +16,7 @@ export interface StudyMusicPlayerProps {
   backLabel?: string;
   hasEntered?: boolean;
   isHidden?: boolean;
+  isMobile?: boolean;
 }
 
 export type { Track, MoodType, StudyEmbedItem };

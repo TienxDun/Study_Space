@@ -32,6 +32,11 @@ const StudyRoomsWidget = dynamic(
   { ssr: false }
 );
 
+const MobileRoomsWidget = dynamic(
+  () => import("@/components/study/mobile/sheets/MobileRoomsWidget").then((mod) => mod.MobileRoomsWidget),
+  { ssr: false }
+);
+
 const StudyShortcutsModal = dynamic(
   () => import("@/components/study/StudyShortcutsModal").then((mod) => mod.StudyShortcutsModal),
   { ssr: false }
@@ -285,6 +290,7 @@ export default function StudySpacePage() {
         backLabel={state.isMobile && state.mobileCanGoBack ? state.mobilePrevScreen?.title : undefined}
         hasEntered={state.isMobile ? hasEntered : true}
         isHidden={state.isMobile && state.isAnyMobileSheetOpen}
+        isMobile={state.isMobile}
       />
 
       {/* Đài phát video YouTube & Spotify cho Desktop */}
@@ -301,18 +307,29 @@ export default function StudySpacePage() {
         />
       )}
 
-      {/* Phòng học nhóm LiveKit WebRTC (Dùng chung) */}
-      <StudyRoomsWidget
-        isOpen={state.isRoomsOpen}
-        onClose={handleCloseRooms}
-        onOpen={handleOpenRooms}
-        onBack={state.isMobile && state.mobileCanGoBack ? state.handleMobileBack : undefined}
-        backLabel={state.isMobile && state.mobileCanGoBack ? state.mobilePrevScreen?.title : undefined}
-        soundEnabled={state.soundEnabled}
-        soundType={state.soundType}
-        zIndex={state.getPanelZIndex("rooms")}
-        onFocus={() => state.bringPanelToFront("rooms")}
-      />
+      {/* Phòng học nhóm LiveKit WebRTC (Tách biệt Desktop / Mobile) */}
+      {!state.isMobile && (
+        <StudyRoomsWidget
+          isOpen={state.isRoomsOpen}
+          onClose={handleCloseRooms}
+          onOpen={handleOpenRooms}
+          soundEnabled={state.soundEnabled}
+          soundType={state.soundType}
+          zIndex={state.getPanelZIndex("rooms")}
+          onFocus={() => state.bringPanelToFront("rooms")}
+        />
+      )}
+      {state.isMobile && (
+        <MobileRoomsWidget
+          isOpen={state.isRoomsOpen}
+          onClose={handleCloseRooms}
+          onOpen={handleOpenRooms}
+          onBack={state.mobileCanGoBack ? state.handleMobileBack : undefined}
+          backLabel={state.mobileCanGoBack ? state.mobilePrevScreen?.title : undefined}
+          soundEnabled={state.soundEnabled}
+          soundType={state.soundType}
+        />
+      )}
 
       {/* Bảng danh sách phím tắt (Tải động khi được kích hoạt bởi phím ? hoặc sự kiện) */}
       {state.isShortcutsHelpOpen && (

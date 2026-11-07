@@ -6,9 +6,8 @@ import {
 export interface SoundMixerWidgetProps {
   isOpen: boolean;
   onClose: () => void;
-  activeTab?: MixerTab;
-  onTabChange?: (tab: MixerTab) => void;
-  onAmbientActiveCountChange?: (count: number) => void;
+  activeTab: MixerTab;
+  onTabChange: (tab: MixerTab) => void;
   currentMood: MoodType;
   onSelectMood: (mood: MoodType) => void;
   currentTrack: Track;
@@ -20,16 +19,19 @@ export interface SoundMixerWidgetProps {
   currentTime: number;
   duration: number;
   onSeek: (time: number) => void;
-  volume: number;
-  onVolumeChange: (vol: number) => void;
   isShuffle: boolean;
   onToggleShuffle: () => void;
   isLooping: boolean;
   onToggleLoop: () => void;
-  isGlobalMuted: boolean;
-  onBack?: () => void;
-  backLabel?: string;
+  ambientVolumes: Record<string, number>;
+  activeCount: number;
+  toggleSound: (id: string) => void;
+  handleSoundVolume: (id: string, volume: number) => void;
+  resetAllSounds: () => void;
+  handleTogglePreset: (recipe: Record<string, number>) => void;
 }
+
+export type DesktopSoundMixerProps = SoundMixerWidgetProps;
 
 export type MixerTab = "music" | "ambience";
 

@@ -25,10 +25,10 @@ interface UseStudyRoomSessionOptions {
   isOpen: boolean;
   stableOnOpen: () => void;
   stableOnClose: () => void;
-  roomSize: { width: number; height: number };
-  setRoomSize: (size: { width: number; height: number }) => void;
-  setRoomPos: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
-  setIsFullscreen: (val: boolean) => void;
+  roomSize?: { width: number; height: number };
+  setRoomSize?: (size: { width: number; height: number }) => void;
+  setRoomPos?: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
+  setIsFullscreen?: (val: boolean) => void;
 }
 
 /**
@@ -205,24 +205,26 @@ export function useStudyRoomSession({
         if (typeof data.sessionMaxMinutes === "number") setSessionMaxMinutes(data.sessionMaxMinutes);
         if (typeof data.quotaStatus === "string") setQuotaStatus(data.quotaStatus);
 
-        // Nở thẻ ra kích thước xem được
-        const grown = {
-          width: Math.max(roomSize.width, MIN_JOIN_W),
-          height: Math.max(roomSize.height, MIN_JOIN_H),
-        };
-        if (grown.width !== roomSize.width || grown.height !== roomSize.height) {
-          setRoomSize(grown);
-          try {
-            localStorage.setItem(STORAGE_KEYS.roomsSize, JSON.stringify(grown));
-          } catch {}
-          setRoomPos((p) => {
-            const fixed = clampRoom(p.x, p.y, grown.width, grown.height);
-            if (fixed.x === p.x && fixed.y === p.y) return p;
+        // Nở thẻ ra kích thước xem được (trên Desktop có cửa sổ bay)
+        if (roomSize && setRoomSize && setRoomPos) {
+          const grown = {
+            width: Math.max(roomSize.width, MIN_JOIN_W),
+            height: Math.max(roomSize.height, MIN_JOIN_H),
+          };
+          if (grown.width !== roomSize.width || grown.height !== roomSize.height) {
+            setRoomSize(grown);
             try {
-              localStorage.setItem(STORAGE_KEYS.roomsPos, JSON.stringify(fixed));
+              localStorage.setItem(STORAGE_KEYS.roomsSize, JSON.stringify(grown));
             } catch {}
-            return fixed;
-          });
+            setRoomPos((p) => {
+              const fixed = clampRoom(p.x, p.y, grown.width, grown.height);
+              if (fixed.x === p.x && fixed.y === p.y) return p;
+              try {
+                localStorage.setItem(STORAGE_KEYS.roomsPos, JSON.stringify(fixed));
+              } catch {}
+              return fixed;
+            });
+          }
         }
       } catch (e) {
         setError(String(e instanceof Error ? e.message : e));
@@ -433,7 +435,7 @@ export function useStudyRoomSession({
       try {
         sessionStorage.removeItem(STORAGE_KEYS.roomsActiveSession);
       } catch {}
-      setIsFullscreen(false);
+      setIsFullscreen?.(false);
       setToken(null);
       setServerUrl("");
       setJoinedRoom("");

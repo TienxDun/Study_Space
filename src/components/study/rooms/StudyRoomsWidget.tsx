@@ -7,8 +7,6 @@ import "@livekit/components-styles";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useFloatingSize } from "@/lib/use-floating-size";
 import { useAuth } from "@/components/study/auth";
-import { useIsMobile } from "@/components/study/mobile/hooks/useIsMobile";
-import { MobileRoomsSheet } from "@/components/study/mobile/sheets/MobileRoomsSheet";
 import type { PomodoroSoundType } from "@/components/study/study-sound";
 import { StudyRoomView } from "./components/StudyRoomView";
 import { RoomPreJoinView } from "./components/RoomPreJoinView";
@@ -16,7 +14,6 @@ import { RoomLobbyView } from "./components/RoomLobbyView";
 import {
   clampRoom,
   getCenter,
-  getLiveKitEndpoints,
   DEFAULT_ROOM_W,
   DEFAULT_ROOM_H,
   MIN_ROOM_W,
@@ -31,8 +28,6 @@ export interface StudyRoomsWidgetProps {
   isOpen: boolean;
   onClose: () => void;
   onOpen?: () => void;
-  onBack?: () => void;
-  backLabel?: string;
   soundEnabled?: boolean;
   soundType?: PomodoroSoundType;
   zIndex?: number;
@@ -41,14 +36,12 @@ export interface StudyRoomsWidgetProps {
 
 /**
  * Phòng học nhóm dạng thẻ bay: kéo đi được, đổi cỡ được,
- * nhớ vị trí trên màn hình desktop và hiển thị dạng Sheet trên di động.
+ * nhớ vị trí trên màn hình desktop.
  */
 export const StudyRoomsWidget = memo(function StudyRoomsWidget({
   isOpen,
   onClose,
   onOpen,
-  onBack,
-  backLabel,
   soundEnabled,
   soundType,
   zIndex = 70,
@@ -62,8 +55,6 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
     signIn,
     getToken,
   } = useAuth();
-
-  const isMobile = useIsMobile();
 
   const onCloseRef = useRef(onClose);
   const onOpenRef = useRef(onOpen);
@@ -234,60 +225,6 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
     },
     [beginRoomResize, roomPos.x, roomPos.y]
   );
-
-  if (isMobile) {
-    return (
-      <MobileRoomsSheet
-        isOpen={isOpen}
-        onClose={stableOnClose}
-        onOpen={stableOnOpen}
-        onBack={onBack}
-        backLabel={backLabel}
-        soundEnabled={soundEnabled}
-        soundType={soundType}
-        user={user}
-        authLoading={authLoading}
-        isSigningIn={isSigningIn}
-        authError={authError}
-        signIn={signIn}
-        displayName={session.displayName}
-        setDisplayName={session.setDisplayName}
-        roomName={session.roomName}
-        setRoomName={session.setRoomName}
-        openRooms={session.openRooms}
-        loadingRooms={session.loadingRooms}
-        loadOpenRooms={session.loadOpenRooms}
-        handleJoinListed={session.handleJoinListed}
-        handleJoin={session.handleJoin}
-        canJoin={session.canJoin}
-        joining={session.joining}
-        error={session.error}
-        token={session.token}
-        serverUrl={session.serverUrl}
-        joinedRoom={session.joinedRoom}
-        handleLeave={session.handleLeave}
-        exitNotice={session.exitNotice}
-        onDismissExitNotice={session.handleDismissExitNotice}
-        onRejoinExitNotice={session.handleRejoinFromNotice}
-        isAvailable={getLiveKitEndpoints().isAvailable}
-        maxParticipants={session.maxParticipants}
-        remainingMinutes={session.remainingMinutes}
-        quotaStatus={session.quotaStatus}
-        sessionMaxMinutes={session.sessionMaxMinutes}
-        preJoinConfig={session.preJoinConfig}
-        onPreJoinSubmit={session.handlePreJoinSubmit}
-        onPreJoinCancel={session.handlePreJoinCancel}
-        initialMedia={session.initialMedia}
-        handleCopyLobbyInvite={session.handleCopyLobbyInvite}
-        userRole={session.userRole}
-        isHost={session.isHost}
-        isCoHost={session.isCoHost}
-        initialIsLocked={session.isRoomLocked}
-        initialHasPassword={session.roomHasPassword}
-        getIdToken={getToken}
-      />
-    );
-  }
 
   return (
     <AnimatePresence>
