@@ -1,12 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, startTransition } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useCallback } from "react";
 import {
-  XIcon,
-  ArrowsInSimpleIcon,
-  ArrowsOutSimpleIcon,
-  CaretLeftIcon,
   SquareIcon,
   LinkIcon,
   BookmarkIcon,
@@ -18,10 +13,7 @@ import { useEmbedManager } from "@/components/study/embed/hooks/useEmbedManager"
 import { DiscoveryHub } from "@/components/study/embed/components/DiscoveryHub";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { ensureYouTubeJsApi, sendYouTubeCommand } from "@/lib/youtube-remote";
-import { STORAGE_KEYS } from "@/lib/storage-keys";
-import { saveStorage } from "@/lib/safe-storage";
-import { setSheetExpanded } from "./sheet-zen-tracker";
-import { cn } from "@/lib/utils";
+import { MobileSheetShell } from "./core/MobileSheetShell";
 
 export interface MobileRadioSheetProps {
   isOpen: boolean;
@@ -42,59 +34,7 @@ export const MobileRadioSheet = React.memo(function MobileRadioSheet({
   onStreamActiveChange,
   onActiveItemChange,
 }: MobileRadioSheetProps) {
-  // 1. Quản lý chế độ Zen toàn màn hình
-  const [isZenMode, setIsZenMode] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      const raw = localStorage.getItem(STORAGE_KEYS.mobileSheetZenMap);
-      if (raw) {
-        const map = JSON.parse(raw);
-        if (typeof map["embed"] === "boolean") return map["embed"];
-      }
-    } catch {}
-    return false;
-  });
-
-  const handleToggleZenMode = useCallback(() => {
-    setIsZenMode((prev) => {
-      const next = !prev;
-      try {
-        const raw = localStorage.getItem(STORAGE_KEYS.mobileSheetZenMap);
-        const map = raw ? JSON.parse(raw) : {};
-        map["embed"] = next;
-        saveStorage(STORAGE_KEYS.mobileSheetZenMap, JSON.stringify(map));
-      } catch {}
-      return next;
-    });
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEYS.mobileSheetZenMap);
-        if (raw) {
-          const map = JSON.parse(raw);
-          if (typeof map["embed"] === "boolean") {
-            setIsZenMode(map["embed"]);
-          }
-        }
-      } catch {}
-    }
-  }, [isOpen]);
-
-  // Đồng bộ trạng thái mở rộng toàn màn hình để ẩn MobileTopBar tránh nhìn xuyên thấu
-  useEffect(() => {
-    if (isOpen && isZenMode) {
-      setSheetExpanded("embed", true);
-      return () => {
-        setSheetExpanded("embed", false);
-      };
-    } else {
-      setSheetExpanded("embed", false);
-    }
-  }, [isOpen, isZenMode]);
-
-  // 2. Logic dữ liệu kênh và luồng phát
+  // Logic dữ liệu kênh và luồng phát
   const {
     activeCategory,
     setActiveCategory,
@@ -152,99 +92,23 @@ export const MobileRadioSheet = React.memo(function MobileRadioSheet({
       savedEmbeds.some((s) => s.id === activeItem.id || s.url === activeItem.url)
   );
 
-  // Không hiển thị nếu đã đóng hoàn toàn và không có bài nào đang phát
-  if (!isOpen && !activeItem) return null;
-
   return (
     <>
-      {/* Lớp nền mờ khi mở */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs cursor-default sm:hidden"
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Khung Sheet chuẩn Liquid Glass cho Mobile */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={
-          isOpen
-            ? { opacity: 1, y: 0 }
-            : { opacity: 0, y: 8, transition: { duration: 0.15, ease: [0.32, 0, 0.67, 0] } }
-        }
-        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-        style={!isOpen ? { pointerEvents: "none" } : undefined}
-        className={cn(
-          "fixed z-50 flex flex-col text-white overflow-hidden sm:hidden transform-gpu will-change-transform",
-          isZenMode
-            ? "inset-x-2 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[calc(100dvh-var(--app-safe-top)-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] max-h-[calc(100dvh-var(--app-safe-top)-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] rounded-[32px] bg-neutral-950/94 backdrop-blur-xl border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]"
-            : "inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[72dvh] max-h-[calc(100dvh-var(--app-safe-top)-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] rounded-[28px] bg-neutral-950/90 backdrop-blur-lg border border-white/[0.16] shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.2)]"
-        )}
+      <MobileSheetShell
+        isOpen={isOpen}
+        onClose={onClose}
+        onBack={onBack}
+        backLabel={backLabel}
+        sheetId="radio"
+        title="Đài phát thanh"
+        allowZenMode={true}
+        keepMounted={Boolean(activeItem)}
+        hiddenStrategy="offscreen"
+        onSwipeLeft={handleNextCategory}
+        onSwipeRight={handlePrevCategory}
+        contentScroll={true}
       >
-        {/* Mép kính bắt sáng trên đỉnh tấm kính mẹ */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-x-12 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none"
-        />
-
-        {/* Tiêu đề & Nút thao tác dạng kính chuẩn Mobile */}
-        <div className="shrink-0 select-none">
-          <div className="flex items-center px-3.5 py-2.5 border-b border-white/[0.12] gap-2">
-            {/* Bên trái: Nút Quay lại + Tiêu đề */}
-            <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-start">
-              {onBack && (
-                <button
-                  type="button"
-                  onClick={() => startTransition(() => onBack())}
-                  title={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
-                  aria-label={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
-                  className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.18] active:scale-90 border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-[background-color,border-color,transform] duration-75 shrink-0 select-none shadow-sm cursor-pointer touch-manipulation"
-                >
-                  <CaretLeftIcon className="w-4 h-4" weight="bold" />
-                </button>
-              )}
-              <h3 className="min-w-0 flex-1 text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate text-left">
-                Đài phát thanh
-              </h3>
-            </div>
-
-            {/* Bên phải: Nút Zen Mode + Đóng */}
-            <div className="flex items-center justify-end gap-1.5 shrink-0">
-              <button
-                type="button"
-                onClick={handleToggleZenMode}
-                title={isZenMode ? "Thu gọn về dạng khay đáy" : "Mở rộng không gian Zen (Toàn màn hình)"}
-                aria-label="Chuyển chế độ xem"
-                className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.18] active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-[background-color,border-color,transform] duration-75 shrink-0 select-none shadow-sm cursor-pointer touch-manipulation"
-              >
-                {isZenMode ? (
-                  <ArrowsInSimpleIcon className="w-3.5 h-3.5" weight="bold" />
-                ) : (
-                  <ArrowsOutSimpleIcon className="w-3.5 h-3.5" weight="bold" />
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.18] active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-[background-color,border-color,transform] duration-75 shrink-0 select-none shadow-sm cursor-pointer touch-manipulation"
-                title="Đóng Đài phát thanh"
-                aria-label="Đóng Đài phát thanh"
-              >
-                <XIcon className="w-4 h-4" weight="bold" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Nội dung chính cuộn dọc */}
-        <div className="flex-1 min-h-0 overflow-y-auto custom-study-scroll p-3.5 flex flex-col gap-3.5">
+        <div className="p-3.5 flex flex-col gap-3.5">
           {/* Khung video/nhạc phát nếu đang có bài */}
           {activeItem && (
             <div className="flex flex-col gap-2.5 rounded-2xl bg-white/[0.04] border border-white/10 p-2.5">
@@ -341,7 +205,7 @@ export const MobileRadioSheet = React.memo(function MobileRadioSheet({
             onSwipeRight={handlePrevCategory}
           />
         </div>
-      </motion.div>
+      </MobileSheetShell>
 
       {/* Hộp thoại xác nhận xóa đài đã lưu */}
       <ConfirmDeleteModal

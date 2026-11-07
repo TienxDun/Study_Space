@@ -8,7 +8,7 @@ import {
   CalendarDotsIcon,
   PlayIcon,
 } from "@phosphor-icons/react";
-import { MobileSheetShell } from "./MobileSheetShell";
+import { MobileSheetShell } from "./core/MobileSheetShell";
 import { useFocusStats } from "@/lib/use-focus-stats";
 import { EVENT_OPEN_POMODORO } from "@/lib/use-focus-task";
 import {

@@ -8,7 +8,7 @@ import {
   GoogleLogoIcon,
   SparkleIcon,
 } from "@phosphor-icons/react";
-import { MobileSheetShell } from "./MobileSheetShell";
+import { MobileSheetShell } from "./core/MobileSheetShell";
 import { useAuth, GoogleSignInButton } from "@/components/study/auth";
 import { firebaseConfigured } from "@/lib/firebase-config";
 import { useChatSessions } from "../../chat/hooks/useChatSessions";

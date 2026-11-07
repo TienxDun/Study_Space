@@ -13,6 +13,7 @@ import {
   XIcon,
   TextBIcon,
   TextItalicIcon,
+  TextUnderlineIcon,
   TextStrikethroughIcon,
   HighlighterIcon,
   ArrowUUpLeftIcon,
@@ -26,10 +27,10 @@ import { useStudyNotes } from "../../notes/hooks/useStudyNotes";
 import { useRichTextEditor, flattenNestedTodos } from "../../notes/hooks/useRichTextEditor";
 import { parseNoteChecklistStats } from "../../notes/utils/note-checklist";
 import { NoteChatPromptMenu } from "../../notes/components/NoteChatPromptMenu";
-import { MobileSheetShell } from "./MobileSheetShell";
+import { MobileSheetShell } from "./core/MobileSheetShell";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
-import { MobileNoteBubbleMenu } from "./MobileNoteBubbleMenu";
-import { MobileBubbleMenuOverlay } from "./MobileBubbleMenuOverlay";
+import { MobileNoteBubbleMenu } from "./components/notes/MobileNoteBubbleMenu";
+import { MobileBubbleMenuOverlay } from "./components/common/MobileBubbleMenuOverlay";
 import { SyncStatusBadge } from "@/components/study/sync/SyncStatusBadge";
 
 interface MobileNotesSheetProps {
@@ -220,7 +221,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
     if (!el) return;
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 64)}px`;
-  }, [editingNoteId, currentEditingNote?.title]);
+  }, [editingNoteId]);
 
   // Khi thoát chế độ sửa note từ ngăn xếp điều hướng (do phím Back phần cứng hoặc Back UI)
   useEffect(() => {
@@ -272,7 +273,18 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
         headerRight={
           currentEditingNote ? (
             <div className="flex items-center gap-1.5 shrink-0">
-              {/* Nút Tùy chọn Thêm `...` (Ghim, Sao chép, Xóa) */}
+              {/* Nút Xóa ghi chú (Đỏ nổi bật trên header) */}
+              <button
+                type="button"
+                onClick={() => promptDeleteNote(currentEditingNote)}
+                className="w-8 h-8 rounded-full bg-rose-500/10 hover:bg-rose-500/20 active:bg-rose-500/25 active:scale-90 border border-rose-500/25 hover:border-rose-500/40 flex items-center justify-center text-rose-400 hover:text-rose-300 transition-all shadow-sm cursor-pointer"
+                title="Xóa ghi chú này"
+                aria-label="Xóa ghi chú này"
+              >
+                <TrashIcon className="w-4 h-4" weight="bold" />
+              </button>
+
+              {/* Nút Tùy chọn Thêm `...` (Ghim, Sao chép) */}
               <div className="relative">
                 <button
                   ref={detailMoreMenuRef}
@@ -324,21 +336,6 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                     >
                       <CopyIcon className="w-4 h-4 text-white/60" />
                       <span>Sao chép nội dung</span>
-                    </button>
-
-                    <div className="my-1 border-t border-white/[0.08]" />
-
-                    {/* Mục Xóa */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowDetailMoreMenu(false);
-                        promptDeleteNote(currentEditingNote);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-left text-rose-300 hover:text-rose-200 hover:bg-rose-500/15 transition-colors cursor-pointer group/item"
-                    >
-                      <TrashIcon className="w-4 h-4 text-rose-400" />
-                      <span>Xóa ghi chú này</span>
                     </button>
                   </div>
                 </MobileBubbleMenuOverlay>
@@ -434,6 +431,18 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                         }`}
                     >
                       <TextItalicIcon className="w-3.5 h-3.5" weight="bold" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => richExec("underline")}
+                      aria-label="Gạch chân"
+                      title="Gạch chân (Underline)"
+                      className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shrink-0 ${richActiveFormats.underline
+                          ? "bg-white text-slate-950 font-bold shadow-sm"
+                          : "text-slate-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/10"
+                        }`}
+                    >
+                      <TextUnderlineIcon className="w-3.5 h-3.5" weight="bold" />
                     </button>
                     <button
                       type="button"
@@ -560,10 +569,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                   ref={titleInputRef}
                   value={currentEditingNote.title}
                   onChange={(e) => {
-                    const nextVal = e.target.value;
-                    React.startTransition(() => {
-                      handleUpdateTitle(nextVal);
-                    });
+                    handleUpdateTitle(e.target.value);
                   }}
                   aria-label="Tiêu đề ghi chú"
                   placeholder="Tiêu đề ghi chú..."

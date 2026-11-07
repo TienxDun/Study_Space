@@ -3,7 +3,7 @@
 import { memo, useCallback, useEffect, useRef } from "react";
 import { useAuth } from "@/components/study/auth";
 import { useStudyRoomSession } from "@/components/study/rooms/hooks/useStudyRoomSession";
-import { MobileRoomsSheet } from "./MobileRoomsSheet";
+import { MobileRoomsSheet } from "../sheets/MobileRoomsSheet";
 import { getLiveKitEndpoints } from "@/components/study/rooms/utils/floating-panel";
 import type { PomodoroSoundType } from "@/components/study/study-sound";
 

@@ -8,7 +8,7 @@ import type { MobileNavId } from "./types";
 import { MobileNavItem } from "./MobileNavItem";
 import { useRenderTrace } from "../perf/useRenderTrace";
 import { yieldToPaint } from "../perf/yieldToPaint";
-import { preloadCriticalSheets } from "../sheets/sheet-preloader";
+import { preloadCriticalSheets } from "../sheets/core/sheet-preloader";
 import { cn } from "@/lib/utils";
 
 interface StudyMobileNavProps {

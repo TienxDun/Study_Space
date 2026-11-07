@@ -32,6 +32,7 @@ interface MobileSheetShellProps {
    * (phòng học, chat) để không nuôi video/Firestore ngầm khi đã đóng.
    */
   keepMounted?: boolean;
+  hiddenStrategy?: "display" | "offscreen";
   children: ReactNode;
 }
 
@@ -61,6 +62,7 @@ export function MobileSheetShell({
   onSwipeRight,
   contentScroll = true,
   keepMounted = true,
+  hiddenStrategy,
   children,
 }: MobileSheetShellProps) {
   const effectiveSheetId =
@@ -174,6 +176,7 @@ export function MobileSheetShell({
       panelRef={setCombinedRef}
       ariaLabel={typeof title === "string" ? title : sheetId || "Bảng điều khiển"}
       keepMounted={keepMounted}
+      hiddenStrategy={hiddenStrategy}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 8, transition: { duration: 0.15, ease: [0.32, 0, 0.67, 0] } }}

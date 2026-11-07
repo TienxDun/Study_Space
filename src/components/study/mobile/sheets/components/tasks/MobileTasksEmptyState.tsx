@@ -2,7 +2,7 @@
 
 import React from "react";
 import { CheckCircleIcon, CheckSquareIcon } from "@phosphor-icons/react";
-import { KanbanColumn } from "../../../tasks/types";
+import { KanbanColumn } from "@/components/study/tasks/types";
 
 export interface MobileTasksEmptyStateProps {
   selectedColumnFilter: string;

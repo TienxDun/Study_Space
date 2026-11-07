@@ -2,7 +2,7 @@
 
 import { useRef, useMemo, memo } from "react";
 import { MusicNotesIcon, CloudRainIcon, SpeakerXIcon } from "@phosphor-icons/react";
-import { MobileSheetShell } from "./MobileSheetShell";
+import { MobileSheetShell } from "./core/MobileSheetShell";
 import { MixerTab, Track, MoodType } from "../../mixer/types";
 import { STUDY_TRACKS_BY_MOOD } from "../../study-types";
 import { MusicTabContent } from "../../mixer/components/MusicTabContent";
@@ -123,6 +123,20 @@ export const MobileMixerSheet = memo(function MobileMixerSheet({
       heightClassName="h-[68dvh] max-h-[72dvh]"
       onSwipeLeft={() => onTabChange("ambience")}
       onSwipeRight={() => onTabChange("music")}
+      headerRight={
+        activeTab === "ambience" && activeCount > 0 ? (
+          <button
+            type="button"
+            onClick={resetAllSounds}
+            className="h-8 px-2.5 rounded-full inline-flex items-center gap-1.5 text-xs font-semibold bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-400/30 active:scale-95 transition-all shadow-sm cursor-pointer touch-manipulation"
+            title="Tắt tất cả âm thanh thiên nhiên"
+            aria-label="Tắt tất cả âm thanh thiên nhiên"
+          >
+            <SpeakerXIcon className="w-3.5 h-3.5" weight="bold" />
+            <span>Tắt hết ({activeCount})</span>
+          </button>
+        ) : undefined
+      }
       footer={
         /* Thanh gạt chuyển Tab công thái học (Segmented Control) tinh gọn ở đáy */
         <div className="p-2.5 select-none">
@@ -158,20 +172,6 @@ export const MobileMixerSheet = memo(function MobileMixerSheet({
       {/* Nội dung Tab cuộn mượt mà - hỗ trợ vuốt ở cả nội dung lẫn khoảng trống */}
       <div className="flex-1 px-3 pt-2 pb-3 space-y-3">
         {tabContent}
-        {/* Nút tắt hết cho mobile: nằm góc phải bên dưới, dễ bấm bằng tay phải */}
-        {activeTab === "ambience" && activeCount > 0 && (
-          <div className="sticky bottom-1 flex justify-end pointer-events-none">
-            <button
-              type="button"
-              onClick={resetAllSounds}
-              className="pointer-events-auto h-11 px-4 rounded-full inline-flex items-center gap-1.5 text-xs font-bold bg-rose-500/20 text-rose-200 border border-rose-400/40 backdrop-blur-md shadow-lg active:scale-95 transition-all"
-              title="Tắt tất cả âm thanh thiên nhiên"
-            >
-              <SpeakerXIcon className="w-4 h-4" />
-              <span>Tắt hết ({activeCount})</span>
-            </button>
-          </div>
-        )}
       </div>
     </MobileSheetShell>
   );

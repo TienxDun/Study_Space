@@ -29,6 +29,13 @@ export interface ModalShellProps {
    * đóng chạy xong. Mặc định false = mở/dựng, đóng/hủy như cũ.
    */
   keepMounted?: boolean;
+  /**
+   * Chiến lược ẩn panel khi keepMounted = true và isOpen = false:
+   * - "display" (mặc định): dùng display: none, giải phóng render tree.
+   * - "offscreen": giữ panel trong DOM với opacity: 0 & pointer-events: none (offscreen),
+   *   phục vụ các bảng chứa iframe/media (như đài phát thanh) để duy trì luồng âm thanh ngầm.
+   */
+  hiddenStrategy?: "display" | "offscreen";
 }
 
 const DEFAULT_TRANSITION: Transition = {
@@ -70,6 +77,7 @@ export const ModalShell = ({
   ariaLabel = "Hộp thoại",
   role = "dialog",
   keepMounted = false,
+  hiddenStrategy = "display",
 }: ModalShellProps) => {
   const [mounted, setMounted] = useState(false);
   // keepMounted: panel ở lại DOM sau lần mở đầu, chỉ bị display:none khi hoạt
@@ -166,7 +174,11 @@ export const ModalShell = ({
   };
   const panelStyle = {
     ...(layerZ !== null ? { zIndex: layerZ + 10 } : null),
-    ...(isHidden ? { display: "none" as const } : null),
+    ...(isHidden
+      ? hiddenStrategy === "offscreen"
+        ? { opacity: 0, pointerEvents: "none" as const, transform: "translate3d(0, 9999px, 0)" }
+        : { display: "none" as const }
+      : null),
   };
 
   const content = (

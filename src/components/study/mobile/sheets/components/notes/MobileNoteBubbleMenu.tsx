@@ -8,8 +8,8 @@ import {
   TrashIcon,
   CaretRightIcon,
 } from "@phosphor-icons/react";
-import { StudyNote } from "../../notes/types";
-import { MobileBubbleMenuOverlay } from "./MobileBubbleMenuOverlay";
+import { StudyNote } from "@/components/study/notes/types";
+import { MobileBubbleMenuOverlay } from "../common/MobileBubbleMenuOverlay";
 
 interface MobileNoteBubbleMenuProps {
   note: StudyNote;

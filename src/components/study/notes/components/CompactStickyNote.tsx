@@ -14,6 +14,7 @@ import {
   TextBIcon,
   TextItalicIcon,
   TextUnderlineIcon,
+  TextStrikethroughIcon,
   CheckSquareIcon,
   HighlighterIcon,
   ArrowUUpLeftIcon,
@@ -457,6 +458,25 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                 aria-label="Gạch chân (Ctrl+U)"
               >
                 <TextUnderlineIcon className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => execFormat("strikeThrough")}
+                className={`p-1.5 rounded-lg text-xs transition-all cursor-pointer ${
+                  activeFormats.strikethrough
+                    ? isLight
+                      ? "bg-slate-900 text-white font-bold"
+                      : "bg-white text-slate-950 font-bold shadow-xs"
+                    : isLight
+                    ? "hover:bg-slate-200/80 text-slate-700 hover:text-slate-950"
+                    : "text-slate-300 hover:bg-white/10 hover:text-white"
+                }`}
+                title="Gạch ngang"
+                aria-label="Gạch ngang"
+              >
+                <TextStrikethroughIcon className="w-3.5 h-3.5" />
               </button>
 
               <button

@@ -10,8 +10,8 @@ import {
   CaretRightIcon,
   DotsThreeVerticalIcon,
 } from "@phosphor-icons/react";
-import { KanbanCard, KanbanColumn } from "../../tasks/types";
-import { MobileBubbleMenuOverlay } from "./MobileBubbleMenuOverlay";
+import { KanbanCard, KanbanColumn } from "@/components/study/tasks/types";
+import { MobileBubbleMenuOverlay } from "../common/MobileBubbleMenuOverlay";
 
 interface MobileTaskBubbleMenuProps {
   card: KanbanCard;

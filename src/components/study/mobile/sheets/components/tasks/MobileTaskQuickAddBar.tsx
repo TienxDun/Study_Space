@@ -2,8 +2,8 @@
 
 import React, { useState, useRef } from "react";
 import { PlusIcon } from "@phosphor-icons/react";
-import { PrioritySignalIcon } from "../../../tasks/components/PrioritySignalIcon";
-import { KanbanCard, KanbanBoard, CardPriority } from "../../../tasks/types";
+import { PrioritySignalIcon } from "@/components/study/tasks/components/PrioritySignalIcon";
+import { KanbanCard, KanbanBoard, CardPriority } from "@/components/study/tasks/types";
 
 export interface MobileTaskQuickAddBarProps {
   targetColId: string;

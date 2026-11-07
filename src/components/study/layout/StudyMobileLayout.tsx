@@ -20,8 +20,8 @@ import {
   loadChatSheet,
   loadRadioSheet,
   scheduleIdlePreloadMobileSheets,
-} from "@/components/study/mobile/sheets/sheet-preloader";
-import { SheetGlassSkeleton } from "@/components/study/mobile/sheets/SheetGlassSkeleton";
+} from "@/components/study/mobile/sheets/core/sheet-preloader";
+import { SheetGlassSkeleton } from "@/components/study/mobile/sheets/core/SheetGlassSkeleton";
 
 // Dynamic imports kết hợp Idle Preload: vừa giữ FCP ban đầu siêu nhẹ,
 // vừa nạp ngầm trong nền để khi bấm mở là có sẵn 100% không độ trễ

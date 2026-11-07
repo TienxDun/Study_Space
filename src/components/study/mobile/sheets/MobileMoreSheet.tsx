@@ -14,8 +14,8 @@ import {
   ProhibitIcon,
   CaretRightIcon,
 } from "@phosphor-icons/react";
-import { MobileSheetShell } from "./MobileSheetShell";
-import { MobileAccountCard } from "./MobileAccountCard";
+import { MobileSheetShell } from "./core/MobileSheetShell";
+import { MobileAccountCard } from "./components/more/MobileAccountCard";
 import { BlockedUsersDialog } from "../../settings/BlockedUsersSection";
 import { yieldToPaint } from "../perf/yieldToPaint";
 import type { MobilePanelId } from "../types";
@@ -98,8 +98,7 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
       onClose={onClose}
       sheetId="more"
       title="Thêm"
-      maxHeightClassName="h-auto max-h-[82dvh]"
-      allowZenMode={false}
+      heightClassName="h-[68dvh] max-h-[72dvh]"
     >
       <div className="px-3 pt-2 pb-1 space-y-3.5">
         <section>

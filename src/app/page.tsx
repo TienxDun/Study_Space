@@ -33,7 +33,7 @@ const StudyRoomsWidget = dynamic(
 );
 
 const MobileRoomsWidget = dynamic(
-  () => import("@/components/study/mobile/sheets/MobileRoomsWidget").then((mod) => mod.MobileRoomsWidget),
+  () => import("@/components/study/mobile/rooms/MobileRoomsWidget").then((mod) => mod.MobileRoomsWidget),
   { ssr: false }
 );
 

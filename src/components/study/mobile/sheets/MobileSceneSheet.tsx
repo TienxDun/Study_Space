@@ -18,7 +18,7 @@ import {
 import Image from "next/image";
 import { Scene, STUDY_SCENES } from "../../study-types";
 import { useFavoriteScenes } from "@/lib/use-favorites";
-import { MobileSheetShell } from "./MobileSheetShell";
+import { MobileSheetShell } from "./core/MobileSheetShell";
 
 interface MobileSceneSheetProps {
   isOpen: boolean;

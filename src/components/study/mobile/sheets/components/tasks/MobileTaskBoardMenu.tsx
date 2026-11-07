@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { CaretDownIcon, PlusIcon, TrashIcon, CheckIcon } from "@phosphor-icons/react";
-import { KanbanBoard } from "../../../tasks/types";
+import { KanbanBoard } from "@/components/study/tasks/types";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 export interface MobileTaskBoardMenuProps {

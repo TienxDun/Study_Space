@@ -10,16 +10,16 @@ import {
 import { useKanbanBoards } from "../../tasks/hooks/useKanbanBoards";
 import { CardDetailModal } from "../../tasks/components/CardDetailModal";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
-import { MobileSheetShell } from "./MobileSheetShell";
+import { MobileSheetShell } from "./core/MobileSheetShell";
 import { KanbanCard } from "../../tasks/types";
 import { useFocusStats } from "@/lib/use-focus-stats";
 import { MobilePerfProbe } from "../perf/MobilePerfProbe";
 import { useRenderTrace } from "../perf/useRenderTrace";
 import { SyncStatusBadge } from "@/components/study/sync/SyncStatusBadge";
-import { MobileTaskQuickAddBar } from "./tasks/MobileTaskQuickAddBar";
-import { MobileTaskBoardMenu } from "./tasks/MobileTaskBoardMenu";
-import { MobileTaskItem } from "./tasks/MobileTaskItem";
-import { MobileTasksEmptyState } from "./tasks/MobileTasksEmptyState";
+import { MobileTaskQuickAddBar } from "./components/tasks/MobileTaskQuickAddBar";
+import { MobileTaskBoardMenu } from "./components/tasks/MobileTaskBoardMenu";
+import { MobileTaskItem } from "./components/tasks/MobileTaskItem";
+import { MobileTasksEmptyState } from "./components/tasks/MobileTasksEmptyState";
 
 interface MobileTasksSheetProps {
   isOpen: boolean;
@@ -223,7 +223,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
         sheetId="tasks"
         title={
           selectedCard ? (
-            <div className="relative inline-flex items-center min-w-0 max-w-full">
+            <div className="group/title relative inline-flex items-center min-w-0 max-w-full">
               <input
                 type="text"
                 value={selectedCard.title}
@@ -237,10 +237,15 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                     ),
                   }));
                 }}
-                className="text-sm font-semibold tracking-tight text-white bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-white/25 truncate min-w-0 pr-1"
+                style={{
+                  width: selectedCard.title
+                    ? `${Math.max(1.2, selectedCard.title.length + 0.4)}ch`
+                    : "16ch",
+                }}
+                className="text-sm font-semibold tracking-tight text-white bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-white/25 border-b border-dashed border-white/35 focus:border-emerald-400 focus:border-solid transition-colors pb-0.5 px-0.5 max-w-[calc(100vw-210px)]"
                 placeholder="Tiêu đề nhiệm vụ..."
               />
-              <PencilLineIcon className="w-3.5 h-3.5 text-slate-400 shrink-0 pointer-events-none" />
+              <PencilLineIcon className="w-3.5 h-3.5 text-slate-400 group-focus-within/title:text-emerald-400 shrink-0 ml-1 transition-colors pointer-events-none" />
             </div>
           ) : (
             <MobileTaskBoardMenu

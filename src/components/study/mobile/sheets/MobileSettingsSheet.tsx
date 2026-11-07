@@ -9,7 +9,7 @@ import {
   PlusIcon,
 } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
-import { MobileSheetShell } from "./MobileSheetShell";
+import { MobileSheetShell } from "./core/MobileSheetShell";
 import {
   PomodoroSoundType,
   POMODORO_SOUND_OPTIONS,

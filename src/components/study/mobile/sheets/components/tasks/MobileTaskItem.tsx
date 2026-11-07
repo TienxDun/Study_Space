@@ -7,12 +7,12 @@ import {
   CheckSquareIcon,
   TimerIcon,
 } from "@phosphor-icons/react";
-import { KanbanCard, KanbanColumn } from "../../../tasks/types";
-import { getDeadlineStatus } from "../../../tasks/utils/task-deadline";
-import { PrioritySignalIcon } from "../../../tasks/components/PrioritySignalIcon";
+import { KanbanCard, KanbanColumn } from "@/components/study/tasks/types";
+import { getDeadlineStatus } from "@/components/study/tasks/utils/task-deadline";
+import { PrioritySignalIcon } from "@/components/study/tasks/components/PrioritySignalIcon";
 import { formatFocusDuration } from "@/lib/focus-sessions";
 import { startFocusTask } from "@/lib/use-focus-task";
-import { MobileTaskBubbleMenu } from "../MobileTaskBubbleMenu";
+import { MobileTaskBubbleMenu } from "./MobileTaskBubbleMenu";
 
 export interface MobileTaskItemProps {
   card: KanbanCard;

@@ -13,7 +13,7 @@ import { ZenStudyLogo } from "@/components/study/brand/ZenStudyLogo";
 import { isNativeApp } from "@/lib/google-sign-in";
 import { yieldToPaint } from "@/components/study/mobile/perf/yieldToPaint";
 import { cn } from "@/lib/utils";
-import { isAnySheetExpanded } from "@/components/study/mobile/sheets/sheet-zen-tracker";
+import { isAnySheetExpanded } from "@/components/study/mobile/sheets/core/sheet-zen-tracker";
 
 interface MobileTopBarProps {
   isZenMode: boolean;

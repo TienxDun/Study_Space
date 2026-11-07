@@ -16,7 +16,7 @@ import {
   LinkSimpleIcon,
 } from "@phosphor-icons/react";
 import { GoogleIcon } from "@/components/study/auth";
-import { MobileSheetShell } from "./MobileSheetShell";
+import { MobileSheetShell } from "./core/MobileSheetShell";
 import { MobileRoomView } from "../rooms/MobileRoomView";
 import { MobileActiveRoomPill } from "../rooms/MobileActiveRoomPill";
 import { RoomPreJoinView, type PreJoinChoices } from "@/components/study/rooms/components/RoomPreJoinView";

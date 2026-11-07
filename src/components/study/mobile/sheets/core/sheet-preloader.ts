@@ -10,15 +10,15 @@
  * giao diện mở tức thì 0ms mà không hề bị trễ hay giật lag.
  */
 
-export const loadTasksSheet = () => import("./MobileTasksSheet");
-export const loadNotesSheet = () => import("./MobileNotesSheet");
-export const loadSceneSheet = () => import("./MobileSceneSheet");
-export const loadMoreSheet = () => import("./MobileMoreSheet");
-export const loadSettingsSheet = () => import("./MobileSettingsSheet");
-export const loadStatsSheet = () => import("./MobileFocusStatsSheet");
-export const loadChatSheet = () => import("./MobileChatSheet");
-export const loadRadioSheet = () => import("./MobileRadioSheet");
-export const loadMixerSheet = () => import("./MobileMixerSheet");
+export const loadTasksSheet = () => import("../MobileTasksSheet");
+export const loadNotesSheet = () => import("../MobileNotesSheet");
+export const loadSceneSheet = () => import("../MobileSceneSheet");
+export const loadMoreSheet = () => import("../MobileMoreSheet");
+export const loadSettingsSheet = () => import("../MobileSettingsSheet");
+export const loadStatsSheet = () => import("../MobileFocusStatsSheet");
+export const loadChatSheet = () => import("../MobileChatSheet");
+export const loadRadioSheet = () => import("../MobileRadioSheet");
+export const loadMixerSheet = () => import("../MobileMixerSheet");
 
 let hasPreloadedCritical = false;
 let hasPreloadedAll = false;
