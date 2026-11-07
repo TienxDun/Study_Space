@@ -25,7 +25,7 @@ export interface RoomParticipantTileProps {
   isLocalHost?: boolean;
   onMute?: (identity: string) => void;
   onKick?: (identity: string, name: string) => void;
-  onToggleCoHost?: (identity: string) => void;
+  onToggleCoHost?: (identity: string, name: string, isCoHost: boolean) => void;
   pendingAction?: { type: "mute" | "kick" | "co-host"; identity: string } | null;
   safetyMenu?: React.ReactNode;
   isPinned?: boolean;
@@ -121,9 +121,13 @@ export function RoomParticipantTile({
     >
       <ParticipantTile
         trackRef={trackRef}
-        className={`w-full h-full rounded-2xl overflow-hidden border border-white/10 ${
+        className={`w-full h-full rounded-2xl overflow-hidden border transition-all duration-300 ease-out ${
+          isPinned
+            ? "border-emerald-400/50 shadow-[0_0_12px_rgba(52,211,153,0.12)]"
+            : "border-white/10"
+        } ${
           isCover ? "tile-fit-cover" : "tile-fit-contain"
-        } [&_.lk-participant-metadata]:whitespace-nowrap [&_.lk-participant-metadata]:flex-nowrap [&_.lk-participant-metadata-item]:max-w-[calc(100%-5rem)] [&_.lk-participant-metadata-item]:whitespace-nowrap [&_.lk-participant-metadata-item]:flex-nowrap [&_.lk-participant-metadata-item]:overflow-hidden [&_.lk-participant-name]:whitespace-nowrap [&_.lk-participant-name]:truncate [&_.lk-participant-name]:block ${safetyMenu ? "[&_.lk-connection-quality]:mr-8" : ""}`}
+        } [&_.lk-participant-metadata]:whitespace-nowrap [&_.lk-participant-metadata]:flex-nowrap [&_.lk-participant-metadata-item]:max-w-[calc(100%-5rem)] [&_.lk-participant-metadata-item]:whitespace-nowrap [&_.lk-participant-metadata-item]:flex-nowrap [&_.lk-participant-metadata-item]:overflow-hidden [&_.lk-participant-name]:whitespace-nowrap [&_.lk-participant-name]:truncate [&_.lk-participant-name]:block [&_.lk-connection-quality]:hidden`}
         {...rest}
       />
 
@@ -131,41 +135,41 @@ export function RoomParticipantTile({
       <div className="absolute top-2 left-2 z-20 pointer-events-none flex items-center gap-1.5 max-w-[calc(100%-3.5rem)] flex-nowrap">
         {isTargetHost && (
           <div
-            className="px-1.5 py-0.5 rounded-md bg-amber-500/90 text-slate-950 font-bold text-[10px] flex items-center gap-1 shadow-sm border border-amber-300 pointer-events-auto shrink-0 whitespace-nowrap"
+            className="px-2 py-0.5 rounded-full bg-amber-500/15 backdrop-blur-md border border-amber-400/30 text-amber-300 font-semibold text-[10px] flex items-center gap-1 shadow-[0_0_12px_rgba(245,158,11,0.15)] pointer-events-auto shrink-0 whitespace-nowrap"
             title="Trưởng phòng"
           >
-            <CrownIcon className="w-3 h-3 text-slate-950 shrink-0" weight="fill" />
+            <CrownIcon className="w-3 h-3 text-amber-400 shrink-0" weight="fill" />
             <span>Host</span>
           </div>
         )}
 
         {isTargetCoHost && (
           <div
-            className="px-1.5 py-0.5 rounded-md bg-sky-500/90 text-white font-bold text-[10px] flex items-center gap-1 shadow-sm border border-sky-300 pointer-events-auto shrink-0 whitespace-nowrap"
+            className="px-2 py-0.5 rounded-full bg-sky-500/15 backdrop-blur-md border border-sky-400/30 text-sky-300 font-semibold text-[10px] flex items-center gap-1 shadow-[0_0_12px_rgba(56,189,248,0.15)] pointer-events-auto shrink-0 whitespace-nowrap"
             title="Phó phòng"
           >
-            <StarIcon className="w-3 h-3 text-white shrink-0" weight="fill" />
+            <StarIcon className="w-3 h-3 text-sky-400 shrink-0" weight="fill" />
             <span>Phó</span>
           </div>
         )}
 
         {isHandRaised && (
           <div
-            className="px-1.5 py-0.5 rounded-md bg-amber-500 text-slate-950 flex items-center justify-center shadow-lg border border-amber-300 shrink-0 animate-bounce pointer-events-auto"
+            className="px-2 py-0.5 rounded-full bg-amber-500/20 backdrop-blur-md border border-amber-400/40 text-amber-300 flex items-center justify-center shadow-md shrink-0 animate-bounce pointer-events-auto"
             title="Đang giơ tay phát biểu"
           >
-            <HandWavingIcon className="w-3.5 h-3.5 text-slate-950 shrink-0" weight="fill" />
+            <HandWavingIcon className="w-3.5 h-3.5 text-amber-400 shrink-0" weight="fill" />
           </div>
         )}
 
         {statusLabel && (
           <div
-            className={`px-2 py-0.5 rounded-md text-[10px] font-bold border backdrop-blur-md shadow-sm truncate shrink-0 whitespace-nowrap ${
+            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border backdrop-blur-md shadow-sm truncate shrink-0 whitespace-nowrap ${
               status === "focus"
-                ? "bg-emerald-500/80 text-slate-950 border-emerald-400/50"
+                ? "bg-emerald-500/15 text-emerald-300 border-emerald-400/30 shadow-[0_0_10px_rgba(52,211,153,0.1)]"
                 : status === "break"
-                ? "bg-amber-500/80 text-slate-950 border-amber-400/50"
-                : "bg-rose-500/80 text-white border-rose-400/50"
+                ? "bg-amber-500/15 text-amber-300 border-amber-400/30 shadow-[0_0_10px_rgba(245,158,11,0.1)]"
+                : "bg-rose-500/15 text-rose-300 border-rose-400/30"
             }`}
             title={goal ? `Mục tiêu: ${goal}` : undefined}
           >
@@ -176,7 +180,7 @@ export function RoomParticipantTile({
         {/* Mục tiêu học tập cá nhân */}
         {goal && (
           <div
-            className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-black/70 backdrop-blur-md border border-emerald-400/40 text-emerald-200 shadow-sm flex items-center gap-1 max-w-[100px] sm:max-w-[140px] truncate pointer-events-auto shrink-0"
+            className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-black/60 backdrop-blur-md border border-emerald-400/30 text-emerald-300 shadow-sm flex items-center gap-1 max-w-[100px] sm:max-w-[140px] truncate pointer-events-auto shrink-0"
             title={`Mục tiêu: ${goal}`}
           >
             <TargetIcon className="w-3 h-3 text-emerald-400 shrink-0" weight="bold" />
@@ -275,7 +279,14 @@ export function RoomParticipantTile({
             {isLocalHost && (
               <button
                 type="button"
-                onClick={() => onToggleCoHost?.(trackRef?.participant?.identity)}
+                onClick={() =>
+                  trackRef?.participant?.identity &&
+                  onToggleCoHost?.(
+                    trackRef.participant.identity,
+                    trackRef.participant.name || "Thành viên",
+                    isTargetCoHost
+                  )
+                }
                 disabled={isActionPending}
                 aria-busy={pendingType === "co-host" || undefined}
                 className={`w-7 h-7 rounded-lg bg-black/70 text-white border border-white/20 transition-colors shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-wait flex items-center justify-center ${

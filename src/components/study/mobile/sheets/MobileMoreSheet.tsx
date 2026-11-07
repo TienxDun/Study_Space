@@ -16,7 +16,7 @@ import {
 } from "@phosphor-icons/react";
 import { MobileSheetShell } from "./core/MobileSheetShell";
 import { MobileAccountCard } from "./components/more/MobileAccountCard";
-import { BlockedUsersDialog } from "../../settings/BlockedUsersSection";
+import { MobileBlockedUsersView } from "./components/more/MobileBlockedUsersView";
 import { yieldToPaint } from "../perf/yieldToPaint";
 import type { MobilePanelId } from "../types";
 import { APP_VERSION_LABEL } from "@/lib/version";
@@ -82,7 +82,20 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
   chatEnabled = true,
   roomsEnabled = true,
 }: MobileMoreSheetProps) {
-  const [isBlockedUsersOpen, setIsBlockedUsersOpen] = React.useState(false);
+  const [activeSubScreen, setActiveSubScreen] = React.useState<"blocked" | null>(null);
+
+  // Tự động quay về menu chính của Thêm khi đóng sheet
+  React.useEffect(() => {
+    if (!isOpen) {
+      setActiveSubScreen(null);
+    }
+  }, [isOpen]);
+
+  const handleClose = React.useCallback(() => {
+    setActiveSubScreen(null);
+    onClose();
+  }, [onClose]);
+
   const go = React.useCallback(
     (id: MobilePanelId) => {
       yieldToPaint(() => {
@@ -95,12 +108,17 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
   return (
     <MobileSheetShell
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
+      onBack={activeSubScreen ? () => setActiveSubScreen(null) : undefined}
+      backLabel={activeSubScreen ? "Thêm" : undefined}
       sheetId="more"
-      title="Thêm"
+      title={activeSubScreen === "blocked" ? "Người đã chặn" : "Thêm"}
       heightClassName="h-[68dvh] max-h-[72dvh]"
     >
-      <div className="px-3 pt-2 pb-1 space-y-3.5">
+      {activeSubScreen === "blocked" ? (
+        <MobileBlockedUsersView />
+      ) : (
+        <div className="px-3 pt-2 pb-1 space-y-3.5">
         <section>
           <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/45">Tài khoản</p>
           <MobileAccountCard />
@@ -176,7 +194,7 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
             <MoreButton
               label="Người đã chặn"
               sub="Danh sách chặn trong phòng học"
-              onClick={() => setIsBlockedUsersOpen(true)}
+              onClick={() => setActiveSubScreen("blocked")}
               icon={<ProhibitIcon className="w-4 h-4 text-rose-300" />}
               iconBg="bg-rose-400/12"
             />
@@ -205,12 +223,7 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
           </div>
         </div>
       </div>
-
-      {/* Hộp thoại quản lý người đã chặn */}
-      <BlockedUsersDialog
-        isOpen={isBlockedUsersOpen}
-        onClose={() => setIsBlockedUsersOpen(false)}
-      />
+      )}
     </MobileSheetShell>
   );
 });

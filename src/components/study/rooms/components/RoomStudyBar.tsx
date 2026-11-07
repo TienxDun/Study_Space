@@ -24,6 +24,7 @@ import {
   BrainIcon,
   CaretDownIcon,
   ArrowsClockwiseIcon,
+  CheckIcon,
 } from "@phosphor-icons/react";
 
 export interface RoomStudyBarProps {
@@ -146,6 +147,9 @@ export function RoomStudyBar({
 
   const nextPhaseInfo = timer ? nextPhasePreset(timer) : null;
   const isTimerExpired = timer !== null && remainingSec <= 0;
+  const timerTotalSec = timer?.durationSec || 1;
+  const timerElapsedSec = Math.max(0, timerTotalSec - remainingSec);
+  const timerProgressPercent = Math.min(100, Math.max(0, (timerElapsedSec / timerTotalSec) * 100));
 
   // Nhãn trạng thái đầy đủ và nhãn compact ngắn gọn chuẩn tiếng Việt
   const currentStatusLabel =
@@ -171,7 +175,7 @@ export function RoomStudyBar({
       const rect = presetsBtnRef.current.getBoundingClientRect();
       setPresetsPos({
         top: rect.bottom + 6,
-        left: Math.max(8, Math.min(rect.left, window.innerWidth - 180)),
+        left: Math.max(8, Math.min(rect.left, window.innerWidth - 220)),
       });
       setShowPresets(true);
       setShowStatusMenu(false);
@@ -222,80 +226,55 @@ export function RoomStudyBar({
       <div
         className={`select-none transition-all ${
         compact
-          ? "mx-2.5 my-1.5 px-2 py-1.5 rounded-2xl bg-white/[0.04] backdrop-blur-md border border-white/10 shadow-[0_2px_12px_rgba(0,0,0,0.25)] flex items-center justify-between gap-1 text-[11px] overflow-x-auto no-scrollbar"
+          ? "px-3.5 py-1.5 flex items-center gap-1.5 text-[11px] overflow-x-auto no-scrollbar"
           : "flex items-center gap-1.5 px-3 py-1.5 border-b border-white/10 bg-white/[0.02] text-xs overflow-x-auto custom-study-scroll"
       }`}
     >
-      {/* 1. KHU VỰC POMODORO ĐỒNG BỘ */}
+      {/* 1. KHU VỰC POMODORO ĐỒNG BỘ: CHIP TIẾN TRÌNH TỐI GIẢN CHỈ HIỆN SỐ PHÚT */}
       <div className="flex items-center gap-1 shrink-0">
         {timer ? (
-          <div
-            className={`flex items-center gap-1.5 rounded-xl border tabular-nums transition-colors shrink-0 ${
-              compact ? "h-7.5 px-2" : "px-2 py-1"
-            } ${
-              timer.phase === "focus"
-                ? "bg-emerald-500/15 border-emerald-400/30 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.15)]"
-                : "bg-amber-500/15 border-amber-400/30 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.15)]"
+          <button
+            ref={presetsBtnRef}
+            type="button"
+            onClick={togglePresetsMenu}
+            className={`relative flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.06] hover:bg-white/[0.12] text-white tabular-nums transition-all shrink-0 overflow-hidden cursor-pointer active:scale-95 select-none shadow-sm backdrop-blur-md ${
+              compact ? "h-7.5 px-2.5" : "px-3 py-1"
             }`}
-            title={`Đồng hồ do ${timer.name} khởi tạo`}
+            title={`Pomodoro (${timer.phase === "focus" ? "Tập trung" : "Nghỉ ngơi"}): ${formatMeetCountdown(remainingSec)} • Chạm để đổi chu kỳ hoặc dừng`}
+            aria-label={`Pomodoro: ${formatMeetCountdown(remainingSec)}`}
           >
-            {timer.phase === "focus" ? (
-              <BrainIcon className="w-3.5 h-3.5 shrink-0 text-emerald-400" weight="bold" />
-            ) : (
-              <CoffeeIcon className="w-3.5 h-3.5 shrink-0 text-amber-400" weight="bold" />
-            )}
-            <span className="font-bold">
-              {`${timer.phase === "focus" ? (compact ? "Học" : "Tập trung") : (compact ? "Nghỉ" : "Nghỉ ngơi")} ${formatMeetCountdown(remainingSec)}`}
-            </span>
+            {/* Lớp nền Progress Fill đồng bộ hệ thống */}
+            <div
+              className={`absolute inset-y-0 left-0 transition-[width] duration-1000 ease-linear pointer-events-none ${
+                timer.phase === "focus"
+                  ? "bg-emerald-500/20"
+                  : "bg-amber-500/20"
+              }`}
+              style={{ width: `${timerProgressPercent}%` }}
+            />
 
-            {/* Owner controls: Dừng khi đang chạy hoặc Chuyển phase khi đã hết giờ */}
-            {isTimerOwner && (
-              <div className="flex items-center gap-1 ml-1 pl-1 border-l border-white/20">
-                {!isTimerExpired ? (
-                  <button
-                    type="button"
-                    onClick={() => setIsStopConfirmOpen(true)}
-                    className="p-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 transition-colors cursor-pointer"
-                    title="Dừng đồng hồ"
-                    aria-label="Dừng đồng hồ"
-                  >
-                    <StopIcon className="w-3 h-3" weight="bold" />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={onStartNextPhase}
-                    className="px-1.5 py-0.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[10px] transition-all cursor-pointer flex items-center gap-1"
-                    title={`Bắt đầu ${nextPhaseInfo?.phase === "focus" ? "tập trung" : "nghỉ"} ${nextPhaseInfo?.minutes}p`}
-                    aria-label={`Bắt đầu ${nextPhaseInfo?.phase === "focus" ? "tập trung" : "nghỉ"}`}
-                  >
-                    <PlayIcon className="w-2.5 h-2.5" weight="bold" />
-                    <span>{nextPhaseInfo?.phase === "focus" ? "Học tiếp" : "Nghỉ"}</span>
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Nút cho phép bất kỳ ai (kể cả không phải owner) mở preset bắt đầu chu kỳ mới để ghi đè */}
-            <button
-              ref={presetsBtnRef}
-              type="button"
-              onClick={togglePresetsMenu}
-              className="p-1 rounded-lg bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-colors cursor-pointer ml-0.5"
-              title="Đổi hoặc bắt đầu lại chu kỳ Pomodoro mới"
-              aria-label="Đổi chu kỳ Pomodoro"
+            {/* Chỉ hiển thị số phút đếm ngược và mũi tên mở menu */}
+            <span
+              className={`relative z-10 font-bold font-mono text-xs tracking-tight ${
+                timer.phase === "focus" ? "text-emerald-300" : "text-amber-300"
+              }`}
             >
-              <ArrowsClockwiseIcon className="w-3 h-3" weight="bold" />
-            </button>
-          </div>
+              {formatMeetCountdown(remainingSec)}
+            </span>
+            <CaretDownIcon
+              className={`relative z-10 w-2.5 h-2.5 text-slate-400 transition-transform duration-150 ${
+                showPresets ? "rotate-180" : ""
+              }`}
+            />
+          </button>
         ) : (
           <button
             ref={presetsBtnRef}
             type="button"
             onClick={togglePresetsMenu}
-            className={`flex items-center gap-1 rounded-xl transition-all cursor-pointer font-medium shrink-0 active:scale-95 ${
+            className={`flex items-center gap-1 rounded-xl transition-all cursor-pointer font-medium shrink-0 active:scale-95 shadow-sm backdrop-blur-md ${
               compact
-                ? "h-7.5 px-2 bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-200 hover:text-white"
+                ? "h-7.5 px-2.5 bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-200 hover:text-white"
                 : "px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white"
             }`}
             title="Khởi tạo đồng hồ Pomodoro cho cả phòng"
@@ -316,8 +295,8 @@ export function RoomStudyBar({
           ref={statusBtnRef}
           type="button"
           onClick={toggleStatusMenu}
-          className={`flex items-center gap-1 rounded-xl border transition-all cursor-pointer shrink-0 active:scale-95 ${
-            compact ? "h-7.5 px-2" : "px-2 py-1"
+          className={`flex items-center gap-1 rounded-xl border transition-all cursor-pointer shrink-0 active:scale-95 shadow-sm backdrop-blur-md ${
+            compact ? "h-7.5 px-2.5" : "px-2 py-1"
           } ${
             local.status === "focus"
               ? "bg-emerald-500/20 border-emerald-400/35 text-emerald-300 font-semibold shadow-[0_0_10px_rgba(16,185,129,0.15)]"
@@ -332,17 +311,6 @@ export function RoomStudyBar({
           title="Chọn trạng thái học tập của bạn"
           aria-label={`Trạng thái: ${currentStatusLabel}`}
         >
-          <span
-            className={`w-2 h-2 rounded-full ${
-              local.status === "focus"
-                ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"
-                : local.status === "break"
-                ? "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.8)]"
-                : local.status === "help"
-                ? "bg-rose-400 shadow-[0_0_6px_rgba(251,113,133,0.8)]"
-                : "bg-slate-400"
-            }`}
-          />
           <span>{compact ? compactStatusLabel : currentStatusLabel}</span>
           <CaretDownIcon className="w-2.5 h-2.5 text-slate-400" />
         </button>
@@ -409,16 +377,16 @@ export function RoomStudyBar({
           ref={reactionsBtnRef}
           type="button"
           onClick={toggleReactionsMenu}
-          className={`flex items-center gap-1 rounded-xl border transition-all cursor-pointer active:scale-95 ${
+          className={`flex items-center justify-center rounded-xl border border-white/10 transition-all cursor-pointer active:scale-95 shadow-sm backdrop-blur-md ${
             compact
-              ? "h-7.5 px-2 bg-white/[0.06] hover:bg-white/[0.12] border-white/10 text-yellow-400"
-              : "px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white"
+              ? "h-7.5 w-7.5 bg-white/[0.06] hover:bg-white/[0.12] text-yellow-400"
+              : "px-2 py-1 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white"
           }`}
           title="Thả cảm xúc biểu tượng"
           aria-label="Thả cảm xúc"
         >
           <SmileyIcon className="w-3.5 h-3.5 text-yellow-400 shrink-0" weight="bold" />
-          <span>{compact ? "" : "Cảm xúc"}</span>
+          {!compact && <span>Cảm xúc</span>}
         </button>
       </div>
       </div>
@@ -426,114 +394,224 @@ export function RoomStudyBar({
       {/* PORTALS: Các menu dropdown nổi thoát khỏi scroll container, không bao giờ bị cắt */}
       {showPresets && mounted && presetsPos && typeof document !== "undefined" &&
         createPortal(
-          <div
-            ref={presetsMenuRef}
-            style={{ top: `${presetsPos.top}px`, left: `${presetsPos.left}px` }}
-            className="fixed z-[100] w-44 py-1.5 glass-popover transition-all duration-150 select-none"
-          >
-            <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              {timer ? "Bắt đầu chu kỳ mới" : "Chọn chu kỳ Pomodoro"}
+          <>
+            <div
+              className="fixed inset-0 z-[95] bg-black/20"
+              onClick={() => setShowPresets(false)}
+            />
+            <div
+              ref={presetsMenuRef}
+              style={{ top: `${presetsPos.top}px`, left: `${presetsPos.left}px` }}
+              className="fixed z-[100] w-52 p-1.5 rounded-2xl border border-white/15 bg-neutral-950/88 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] transition-all duration-150 select-none overflow-hidden"
+            >
+              <div className="absolute inset-x-4 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
+
+              {/* Trạng thái & hành động nhanh khi timer đang chạy */}
+              {timer ? (
+                <>
+                  <div className="px-3 py-1.5 flex items-center justify-between border-b border-white/[0.08] mb-1">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                      {timer.phase === "focus" ? "Đang tập trung" : "Đang nghỉ ngơi"}
+                    </span>
+                    <span className={`text-[11px] font-mono font-bold ${timer.phase === "focus" ? "text-emerald-300" : "text-amber-300"}`}>
+                      {formatMeetCountdown(remainingSec)}
+                    </span>
+                  </div>
+
+                  {isTimerOwner && (
+                    <>
+                      {!isTimerExpired ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowPresets(false);
+                            setIsStopConfirmOpen(true);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl text-xs text-rose-300 hover:bg-rose-500/15 transition-colors flex items-center gap-2 cursor-pointer"
+                        >
+                          <StopIcon className="w-3.5 h-3.5 text-rose-400 shrink-0" weight="bold" />
+                          <span>Dừng Pomodoro</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowPresets(false);
+                            onStartNextPhase();
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-950 font-bold bg-emerald-400 hover:bg-emerald-300 transition-colors flex items-center gap-2 cursor-pointer shadow-sm shadow-emerald-500/25"
+                        >
+                          <PlayIcon className="w-3.5 h-3.5 shrink-0" weight="bold" />
+                          <span>{nextPhaseInfo?.phase === "focus" ? "Bắt đầu học tiếp" : "Bắt đầu nghỉ ngơi"}</span>
+                        </button>
+                      )}
+                      <div className="my-1 border-t border-white/[0.08]" />
+                    </>
+                  )}
+
+                  <div className="px-3 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-0.5">
+                    Đổi chu kỳ khác
+                  </div>
+                </>
+              ) : (
+                <div className="px-3 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider border-b border-white/[0.08] mb-1">
+                  Chọn chu kỳ Pomodoro
+                </div>
+              )}
+
+              {MEET_PRESETS.map((preset) => {
+                const isCurrentActive =
+                  Boolean(timer) &&
+                  ((timer?.phase === "focus" && timer?.durationSec === preset.focus * 60) ||
+                    (timer?.phase === "break" && timer?.durationSec === preset.break * 60));
+                return (
+                  <button
+                    key={`${preset.focus}-${preset.break}`}
+                    type="button"
+                    onClick={() => {
+                      setShowPresets(false);
+                      if (timer) {
+                        setPendingPreset(preset);
+                        setIsCycleConfirmOpen(true);
+                      } else {
+                        onStartTimer(preset);
+                      }
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-colors flex items-center justify-between cursor-pointer ${
+                      isCurrentActive
+                        ? "bg-emerald-500/15 text-emerald-300 font-semibold"
+                        : "text-zinc-200 hover:bg-white/[0.08] hover:text-white"
+                    }`}
+                  >
+                    <span>{preset.focus}p học / {preset.break}p nghỉ</span>
+                    {isCurrentActive && (
+                      <CheckIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" weight="bold" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
-            {MEET_PRESETS.map((preset) => (
-              <button
-                key={`${preset.focus}-${preset.break}`}
-                type="button"
-                onClick={() => {
-                  setShowPresets(false);
-                  if (timer) {
-                    setPendingPreset(preset);
-                    setIsCycleConfirmOpen(true);
-                  } else {
-                    onStartTimer(preset);
-                  }
-                }}
-                className="w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-white/10 hover:text-emerald-300 transition-colors flex items-center justify-between cursor-pointer"
-              >
-                <span>{preset.focus}p học / {preset.break}p nghỉ</span>
-              </button>
-            ))}
-          </div>,
+          </>,
           document.body
         )}
 
       {showStatusMenu && mounted && statusPos && typeof document !== "undefined" &&
         createPortal(
-          <div
-            ref={statusMenuRef}
-            style={{ top: `${statusPos.top}px`, left: `${statusPos.left}px` }}
-            className="fixed z-[100] w-36 py-1.5 glass-popover transition-all duration-150 select-none"
-          >
-            <button
-              type="button"
-              onClick={() => {
-                onSetStatus("focus");
-                setShowStatusMenu(false);
-              }}
-              className="w-full text-left px-3 py-1.5 text-xs text-emerald-300 hover:bg-white/10 transition-colors flex items-center gap-2 cursor-pointer"
+          <>
+            <div
+              className="fixed inset-0 z-[95] bg-black/20"
+              onClick={() => setShowStatusMenu(false)}
+            />
+            <div
+              ref={statusMenuRef}
+              style={{ top: `${statusPos.top}px`, left: `${statusPos.left}px` }}
+              className="fixed z-[100] w-44 p-1.5 rounded-2xl border border-white/15 bg-neutral-950/88 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] transition-all duration-150 select-none overflow-hidden"
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span>Tập trung</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                onSetStatus("break");
-                setShowStatusMenu(false);
-              }}
-              className="w-full text-left px-3 py-1.5 text-xs text-amber-300 hover:bg-white/10 transition-colors flex items-center gap-2 cursor-pointer"
-            >
-              <span className="w-2 h-2 rounded-full bg-amber-400" />
-              <span>Nghỉ ngơi</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                onSetStatus("help");
-                setShowStatusMenu(false);
-              }}
-              className="w-full text-left px-3 py-1.5 text-xs text-rose-300 hover:bg-white/10 transition-colors flex items-center gap-2 cursor-pointer"
-            >
-              <span className="w-2 h-2 rounded-full bg-rose-400" />
-              <span>Cần giúp</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                onSetStatus("");
-                setShowStatusMenu(false);
-              }}
-              className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10 transition-colors flex items-center gap-2 border-t border-white/10 mt-1 cursor-pointer"
-            >
-              <span className="w-2 h-2 rounded-full bg-slate-400" />
-              <span>Bình thường</span>
-            </button>
-          </div>,
+              <div className="absolute inset-x-4 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
+              <button
+                type="button"
+                onClick={() => {
+                  onSetStatus("focus");
+                  setShowStatusMenu(false);
+                }}
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-colors flex items-center justify-between cursor-pointer ${
+                  local.status === "focus"
+                    ? "bg-emerald-500/15 text-emerald-300 font-semibold"
+                    : "text-emerald-300 hover:bg-white/[0.08]"
+                }`}
+              >
+                <span className="truncate">Tập trung</span>
+                {local.status === "focus" && (
+                  <CheckIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" weight="bold" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onSetStatus("break");
+                  setShowStatusMenu(false);
+                }}
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-colors flex items-center justify-between cursor-pointer ${
+                  local.status === "break"
+                    ? "bg-amber-500/15 text-amber-300 font-semibold"
+                    : "text-amber-300 hover:bg-white/[0.08]"
+                }`}
+              >
+                <span className="truncate">Nghỉ ngơi</span>
+                {local.status === "break" && (
+                  <CheckIcon className="w-3.5 h-3.5 text-amber-400 shrink-0" weight="bold" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onSetStatus("help");
+                  setShowStatusMenu(false);
+                }}
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-colors flex items-center justify-between cursor-pointer ${
+                  local.status === "help"
+                    ? "bg-rose-500/15 text-rose-300 font-semibold"
+                    : "text-rose-300 hover:bg-white/[0.08]"
+                }`}
+              >
+                <span className="truncate">Cần giúp</span>
+                {local.status === "help" && (
+                  <CheckIcon className="w-3.5 h-3.5 text-rose-400 shrink-0" weight="bold" />
+                )}
+              </button>
+              <div className="my-1 border-t border-white/[0.08]" />
+              <button
+                type="button"
+                onClick={() => {
+                  onSetStatus("");
+                  setShowStatusMenu(false);
+                }}
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-colors flex items-center justify-between cursor-pointer ${
+                  !local.status
+                    ? "bg-white/[0.1] text-white font-semibold"
+                    : "text-zinc-300 hover:bg-white/[0.08] hover:text-white"
+                }`}
+              >
+                <span className="truncate">Bình thường</span>
+                {!local.status && (
+                  <CheckIcon className="w-3.5 h-3.5 text-white/80 shrink-0" weight="bold" />
+                )}
+              </button>
+            </div>
+          </>,
           document.body
         )}
 
       {showReactions && mounted && reactionsPos && typeof document !== "undefined" &&
         createPortal(
-          <div
-            ref={reactionsMenuRef}
-            style={{ top: `${reactionsPos.top}px`, left: `${reactionsPos.left}px` }}
-            className="fixed z-[100] p-2 glass-popover flex items-center gap-1.5 transition-all duration-150 select-none"
-          >
-            {MEET_REACTIONS.map((emoji) => (
-              <button
-                key={emoji}
-                type="button"
-                onClick={() => {
-                  onReaction(emoji);
-                  setShowReactions(false);
-                }}
-                className="w-9 h-9 rounded-xl hover:bg-white/10 active:scale-125 transition-transform flex items-center justify-center text-xl cursor-pointer"
-                title={`Thả ${emoji}`}
-                aria-label={`Thả ${emoji}`}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>,
+          <>
+            <div
+              className="fixed inset-0 z-[95] bg-black/20"
+              onClick={() => setShowReactions(false)}
+            />
+            <div
+              ref={reactionsMenuRef}
+              style={{ top: `${reactionsPos.top}px`, left: `${reactionsPos.left}px` }}
+              className="fixed z-[100] p-1.5 rounded-2xl border border-white/15 bg-neutral-950/88 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] flex items-center gap-1 transition-all duration-150 select-none overflow-hidden"
+            >
+              <div className="absolute inset-x-4 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
+              {MEET_REACTIONS.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => {
+                    onReaction(emoji);
+                    setShowReactions(false);
+                  }}
+                  className="w-9 h-9 rounded-xl hover:bg-white/[0.1] active:scale-125 transition-transform flex items-center justify-center text-xl cursor-pointer"
+                  title={`Thả ${emoji}`}
+                  aria-label={`Thả ${emoji}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </>,
           document.body
         )}
 

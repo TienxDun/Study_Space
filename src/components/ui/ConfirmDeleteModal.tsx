@@ -15,6 +15,7 @@ export interface ConfirmDeleteModalProps {
   itemName?: string;
   confirmText?: string;
   cancelText?: string;
+  confirmClassName?: string;
 }
 
 export const ConfirmDeleteModal = ({
@@ -27,6 +28,7 @@ export const ConfirmDeleteModal = ({
   itemName,
   confirmText = "Xóa",
   cancelText = "Hủy",
+  confirmClassName,
 }: ConfirmDeleteModalProps) => {
   // Bẫy Tab + Esc + trả focus do ModalShell lo chung
   return (
@@ -38,7 +40,7 @@ export const ConfirmDeleteModal = ({
       panelKey="confirm-delete-modal"
       role="alertdialog"
       ariaLabel={title}
-      backdropClassName="z-[90] bg-black/50 backdrop-blur-xs"
+      backdropClassName="z-[90] bg-black/60 backdrop-blur-md"
       panelClassName="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -50,9 +52,9 @@ export const ConfirmDeleteModal = ({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 4 }}
         transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 w-full max-w-[340px] glass-panel hover:bg-black/45 p-5 text-white select-none pointer-events-auto transform-gpu will-change-transform space-y-4 overflow-hidden"
+        className="relative z-10 w-full max-w-[320px] rounded-2xl border border-white/15 bg-neutral-950/88 shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] p-5 text-white select-none pointer-events-auto transform-gpu will-change-transform space-y-4 overflow-hidden"
       >
-        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
+        <div className="absolute inset-x-8 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none z-10" />
         {/* Content */}
         <div className="space-y-1.5">
           <h3 className="text-sm font-bold text-white tracking-tight leading-snug">
@@ -92,7 +94,9 @@ export const ConfirmDeleteModal = ({
             }}
             disabled={pending}
             aria-busy={pending || undefined}
-            className="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white shadow-sm shadow-rose-600/30 active:scale-95 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait flex items-center gap-1.5"
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm active:scale-95 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-wait flex items-center gap-1.5 ${
+              confirmClassName || "bg-rose-600 hover:bg-rose-500 shadow-rose-600/30"
+            }`}
           >
             {pending && (
               <CircleNotchIcon className="w-3.5 h-3.5 animate-spin" weight="bold" />

@@ -103,21 +103,27 @@ export function MemberSafetyMenu({
           aria-modal="true"
           aria-label={`Tùy chọn an toàn cho ${targetName}`}
           onClick={() => !submitting && setOpen(false)}
-          className="fixed inset-0 z-[190] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4"
+          className="fixed inset-0 z-[190] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-150"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl border border-white/12 bg-[#0b0f16]/98 p-4 sm:p-5 text-white shadow-[0_24px_70px_rgba(0,0,0,0.8)]"
+            className="relative w-full max-w-[320px] rounded-2xl border border-white/15 bg-neutral-950/88 p-5 text-white shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] overflow-hidden"
           >
+            {/* Mép kính bắt sáng trên đỉnh */}
+            <div
+              aria-hidden="true"
+              className="absolute inset-x-8 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none"
+            />
+
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold leading-tight break-words">
+                <h2 className="text-sm font-semibold leading-tight break-words text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
                   {confirmBlock ? "Chặn thành viên?" : targetName}
                 </h2>
                 <p className="mt-1 text-[11px] leading-relaxed text-zinc-400">
                   {confirmBlock
                     ? `Hai bạn sẽ không vào chung phòng học nhóm được nữa. Bạn sẽ rời phòng hiện tại và có thể bỏ chặn trong Cài đặt.`
-                    : "Chọn việc bạn muốn làm với thành viên này."}
+                    : "Chọn thao tác bạn muốn thực hiện với thành viên này."}
                 </p>
               </div>
               <button
@@ -125,9 +131,9 @@ export function MemberSafetyMenu({
                 onClick={() => setOpen(false)}
                 disabled={submitting}
                 aria-label="Đóng"
-                className="h-8 w-8 shrink-0 grid place-items-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-40"
+                className="h-7 w-7 shrink-0 grid place-items-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-40"
               >
-                <XIcon size={15} weight="bold" aria-hidden="true" />
+                <XIcon size={14} weight="bold" aria-hidden="true" />
               </button>
             </div>
 
@@ -137,7 +143,7 @@ export function MemberSafetyMenu({
                   type="button"
                   onClick={() => setConfirmBlock(false)}
                   disabled={submitting}
-                  className="h-9 px-3.5 rounded-xl text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-40"
+                  className="h-8.5 px-3 rounded-xl text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-40"
                 >
                   Hủy
                 </button>
@@ -145,30 +151,34 @@ export function MemberSafetyMenu({
                   type="button"
                   onClick={() => void handleBlock()}
                   disabled={submitting}
-                  className="h-9 px-4 rounded-xl bg-rose-500 text-white text-sm font-semibold hover:bg-rose-400 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-40"
+                  className="h-8.5 px-4 rounded-xl bg-rose-500 text-white text-xs font-semibold hover:bg-rose-400 active:scale-[0.98] transition-all cursor-pointer shadow-sm shadow-rose-500/25 disabled:opacity-40"
                 >
                   {submitting ? "Đang chặn…" : "Chặn"}
                 </button>
               </div>
             ) : (
-              <div className="mt-4 space-y-1.5">
+              <div className="mt-4 space-y-2">
                 <button
                   type="button"
                   onClick={() => {
                     setOpen(false);
                     setReportOpen(true);
                   }}
-                  className="flex w-full items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-zinc-200 hover:bg-white/[0.07] hover:text-white transition-colors cursor-pointer"
+                  className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] px-3.5 py-2.5 text-xs font-medium text-zinc-200 hover:text-white transition-all cursor-pointer active:scale-[0.99]"
                 >
-                  <FlagIcon size={15} weight="bold" aria-hidden="true" className="text-amber-300" />
+                  <span className="grid h-6 w-6 place-items-center rounded-lg bg-amber-400/10 text-amber-300">
+                    <FlagIcon size={14} weight="bold" aria-hidden="true" />
+                  </span>
                   <span>Báo cáo thành viên</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmBlock(true)}
-                  className="flex w-full items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-zinc-200 hover:bg-rose-500/10 hover:text-white transition-colors cursor-pointer"
+                  className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-rose-500/15 hover:border-rose-400/30 px-3.5 py-2.5 text-xs font-medium text-zinc-200 hover:text-rose-200 transition-all cursor-pointer active:scale-[0.99]"
                 >
-                  <ProhibitIcon size={15} weight="bold" aria-hidden="true" className="text-rose-300" />
+                  <span className="grid h-6 w-6 place-items-center rounded-lg bg-rose-500/15 text-rose-300">
+                    <ProhibitIcon size={14} weight="bold" aria-hidden="true" />
+                  </span>
                   <span>Chặn thành viên</span>
                 </button>
               </div>

@@ -1,12 +1,24 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, startTransition, type ReactNode } from "react";
+import { useState, useRef, useEffect, useCallback, startTransition, createContext, useContext, type ReactNode } from "react";
 import { XIcon, ArrowsInSimpleIcon, ArrowsOutSimpleIcon, CaretLeftIcon } from "@phosphor-icons/react";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { saveStorage } from "@/lib/safe-storage";
 import { cn } from "@/lib/utils";
 import { setSheetExpanded } from "./sheet-zen-tracker";
+
+export interface MobileSheetShellContextType {
+  isZenMode: boolean;
+  toggleZenMode: () => void;
+  onClose: () => void;
+}
+
+export const MobileSheetShellContext = createContext<MobileSheetShellContextType | null>(null);
+
+export function useMobileSheetShell(): MobileSheetShellContextType | null {
+  return useContext(MobileSheetShellContext);
+}
 
 interface MobileSheetShellProps {
   isOpen: boolean;
@@ -26,6 +38,7 @@ interface MobileSheetShellProps {
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
   contentScroll?: boolean;
+  hideHeader?: boolean;
   /**
    * Giữ nội dung trong DOM sau lần mở đầu. Bật vì dựng lại danh sách thẻ/ghi chú
    * mỗi lần mở là ~100ms React + DOM trên máy yếu. Tắt với bảng có media
@@ -62,6 +75,7 @@ export function MobileSheetShell({
   onSwipeRight,
   contentScroll = true,
   keepMounted = true,
+  hideHeader = false,
   hiddenStrategy,
   children,
 }: MobileSheetShellProps) {
@@ -191,87 +205,96 @@ export function MobileSheetShell({
             }`
       )}
     >
-      {/* Mép kính bắt sáng trên đỉnh tấm kính mẹ */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-12 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none"
-      />
+      <MobileSheetShellContext.Provider
+        value={{
+          isZenMode: effectiveZenMode,
+          toggleZenMode: handleToggleZenMode,
+          onClose,
+        }}
+      >
+        {/* Mép kính bắt sáng trên đỉnh tấm kính mẹ */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-12 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none"
+        />
 
-      {/* Tiêu đề & Nút thao tác dạng kính: bên trái co giãn, bên phải giữ nguyên kích thước */}
-      <div className="shrink-0 select-none">
-        <div className="flex items-center px-3.5 py-2.5 border-b border-white/[0.12] gap-2">
-          {/* Bên trái: Nút Quay lại + Tiêu đề / Bộ chuyển bảng */}
-          <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-start">
-          {/* Nút Quay lại (Back Button) khi ở Stack cấp 2 trở lên */}
-          {onBack && (
-            <button
-              type="button"
-              onClick={() => {
-                startTransition(() => {
-                  onBack();
-                });
-              }}
-              title={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
-              aria-label={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
-              className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.18] active:scale-90 border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-[background-color,border-color,transform] duration-75 shrink-0 select-none shadow-sm cursor-pointer touch-manipulation"
-            >
-              <CaretLeftIcon className="w-4 h-4" weight="bold" />
-            </button>
-          )}
+        {/* Tiêu đề & Nút thao tác dạng kính: bên trái co giãn, bên phải giữ nguyên kích thước */}
+        {!hideHeader && (
+          <div className="shrink-0 select-none">
+            <div className="flex items-center px-3.5 py-2.5 border-b border-white/[0.12] gap-2">
+              {/* Bên trái: Nút Quay lại + Tiêu đề / Bộ chuyển bảng */}
+              <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-start">
+              {/* Nút Quay lại (Back Button) khi ở Stack cấp 2 trở lên */}
+              {onBack && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    startTransition(() => {
+                      onBack();
+                    });
+                  }}
+                  title={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
+                  aria-label={backLabel ? `Quay lại ${backLabel}` : "Quay lại"}
+                  className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.18] active:scale-90 border border-white/15 flex items-center justify-center text-white/90 hover:text-white transition-[background-color,border-color,transform] duration-75 shrink-0 select-none shadow-sm cursor-pointer touch-manipulation"
+                >
+                  <CaretLeftIcon className="w-4 h-4" weight="bold" />
+                </button>
+              )}
 
-          {typeof title === "string" ? (
-            <h3 className="min-w-0 flex-1 text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate text-left">
-            {title}
-            </h3>
-          ) : (
-            <div className="min-w-0 flex-1 flex items-center">{title}</div>
-          )}
+              {typeof title === "string" ? (
+                <h3 className="min-w-0 flex-1 text-sm font-semibold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] truncate text-left">
+                {title}
+                </h3>
+              ) : (
+                <div className="min-w-0 flex-1 flex items-center">{title}</div>
+              )}
 
+              </div>
+
+              {/* Nửa bên phải: Nút thao tác mở rộng + Zen Mode + Đóng */}
+              <div className="flex items-center justify-end gap-1.5 shrink-0">
+                {headerRight}
+
+                {/* Nút chuyển chế độ Full-Screen Zen Overlay / Khay đáy */}
+                {allowZenMode && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      startTransition(() => {
+                        handleToggleZenMode();
+                      });
+                    }}
+                    title={effectiveZenMode ? "Thu gọn về dạng khay đáy" : "Mở rộng không gian Zen (Toàn màn hình)"}
+                    aria-label="Chuyển chế độ xem"
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-[background-color,border-color,transform] duration-75 shadow-sm cursor-pointer touch-manipulation"
+                  >
+                    <span className={cn("inline-flex transition-transform duration-300 ease-out", effectiveZenMode ? "rotate-180 scale-105" : "rotate-0 scale-100")}>
+                      {effectiveZenMode ? (
+                        <ArrowsInSimpleIcon className="w-3.5 h-3.5" weight="bold" />
+                      ) : (
+                        <ArrowsOutSimpleIcon className="w-3.5 h-3.5" weight="bold" />
+                      )}
+                    </span>
+                  </button>
+                )}
+
+                {/* Nút Đóng */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    startTransition(() => {
+                      onClose();
+                    });
+                  }}
+                  aria-label={typeof title === "string" ? `Đóng ${title}` : "Đóng"}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-[background-color,border-color,transform] duration-75 shadow-sm cursor-pointer touch-manipulation"
+                >
+                  <XIcon className="w-4 h-4" weight="bold" />
+                </button>
+              </div>
+            </div>
           </div>
-
-          {/* Nửa bên phải: Nút thao tác mở rộng + Zen Mode + Đóng */}
-          <div className="flex items-center justify-end gap-1.5 shrink-0">
-            {headerRight}
-
-            {/* Nút chuyển chế độ Full-Screen Zen Overlay / Khay đáy */}
-            {allowZenMode && (
-              <button
-                type="button"
-                onClick={() => {
-                  startTransition(() => {
-                    handleToggleZenMode();
-                  });
-                }}
-                title={effectiveZenMode ? "Thu gọn về dạng khay đáy" : "Mở rộng không gian Zen (Toàn màn hình)"}
-                aria-label="Chuyển chế độ xem"
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-[background-color,border-color,transform] duration-75 shadow-sm cursor-pointer touch-manipulation"
-              >
-                <span className={cn("inline-flex transition-transform duration-300 ease-out", effectiveZenMode ? "rotate-180 scale-105" : "rotate-0 scale-100")}>
-                  {effectiveZenMode ? (
-                    <ArrowsInSimpleIcon className="w-3.5 h-3.5" weight="bold" />
-                  ) : (
-                    <ArrowsOutSimpleIcon className="w-3.5 h-3.5" weight="bold" />
-                  )}
-                </span>
-              </button>
-            )}
-
-            {/* Nút Đóng */}
-            <button
-              type="button"
-              onClick={() => {
-                startTransition(() => {
-                  onClose();
-                });
-              }}
-              aria-label={typeof title === "string" ? `Đóng ${title}` : "Đóng"}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-[background-color,border-color,transform] duration-75 shadow-sm cursor-pointer touch-manipulation"
-            >
-              <XIcon className="w-4 h-4" weight="bold" />
-            </button>
-          </div>
-        </div>
-      </div>
+        )}
 
       {/* Nội dung cuộn bên trong - nhận diện vuốt ở toàn bộ 100% diện tích gồm cả khoảng trống */}
       <div
@@ -291,6 +314,7 @@ export function MobileSheetShell({
           {footer}
         </div>
       )}
+      </MobileSheetShellContext.Provider>
     </ModalShell>
   );
 }

@@ -128,7 +128,7 @@ export function BlockedUsersDialog({
       panelKey="blocked-users-dialog"
       role="dialog"
       ariaLabel="Danh sách người đã chặn"
-      backdropClassName="z-[110] bg-black/60 backdrop-blur-xs"
+      backdropClassName="z-[110] bg-black/80 backdrop-blur-sm"
       panelClassName="fixed inset-0 z-[120] flex items-center justify-center p-4 pointer-events-none"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -139,7 +139,7 @@ export function BlockedUsersDialog({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97, y: 4 }}
         transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 w-full max-w-[380px] max-h-[min(520px,calc(100vh-2rem))] overflow-y-auto custom-study-scroll glass-panel hover:bg-black/45 p-4 text-white select-none pointer-events-auto rounded-3xl border border-white/10 shadow-2xl space-y-3"
+        className="relative z-10 w-full max-w-[380px] max-h-[min(520px,calc(100vh-2rem))] overflow-y-auto custom-study-scroll bg-neutral-950/95 backdrop-blur-2xl p-4 text-white select-none pointer-events-auto rounded-3xl border border-white/15 shadow-2xl space-y-3"
       >
         <div className="flex items-center justify-between pb-2 border-b border-white/10">
           <div className="flex items-center gap-2.5">

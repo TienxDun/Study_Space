@@ -21,7 +21,6 @@ import {
   SquaresFourIcon,
   PresentationIcon,
   SidebarSimpleIcon,
-  CaretDownIcon,
   DotsThreeVerticalIcon,
   CheckIcon,
 } from "@phosphor-icons/react";
@@ -93,28 +92,28 @@ export const StudyRoomView = ({
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [layoutMode, setLayoutMode] = useState<RoomLayoutMode>("grid");
   const [pinnedTrackId, setPinnedTrackId] = useState<string | null>(null);
-  const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
-  const layoutMenuRef = useRef<HTMLDivElement>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
   // Đóng dropdown khi bấm ra ngoài
   useEffect(() => {
-    if (!isLayoutMenuOpen && !isMoreMenuOpen) return;
+    if (!isMoreMenuOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
-      if (layoutMenuRef.current && !layoutMenuRef.current.contains(target)) {
-        setIsLayoutMenuOpen(false);
-      }
       if (moreMenuRef.current && !moreMenuRef.current.contains(target)) {
         setIsMoreMenuOpen(false);
       }
     };
     document.addEventListener("pointerdown", handleClickOutside);
     return () => document.removeEventListener("pointerdown", handleClickOutside);
-  }, [isLayoutMenuOpen, isMoreMenuOpen]);
+  }, [isMoreMenuOpen]);
 
   const [kickTarget, setKickTarget] = useState<{ identity: string; name: string } | null>(null);
+  const [coHostTarget, setCoHostTarget] = useState<{
+    identity: string;
+    name: string;
+    isCoHost: boolean;
+  } | null>(null);
   const [isHostControlsOpen, setIsHostControlsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isLockedState, setIsLockedState] = useState(initialIsLocked);
@@ -210,6 +209,7 @@ export const StudyRoomView = ({
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
     } finally {
+      setCoHostTarget(null);
       endMemberAction();
     }
   };
@@ -244,6 +244,14 @@ export const StudyRoomView = ({
     ],
     { onlySubscribed: false }
   );
+
+  // Tự động chuyển về Lưới đều nếu thành viên được ghim rời phòng
+  useEffect(() => {
+    if (pinnedTrackId && !tracks.some((t: any) => getTrackReferenceId(t) === pinnedTrackId)) {
+      setPinnedTrackId(null);
+      setLayoutMode("grid");
+    }
+  }, [tracks, pinnedTrackId]);
   const { chatMessages, send } = useChat();
   const [chatOpen, setChatOpen] = useState(false);
   const [seenCount, setSeenCount] = useState(0);
@@ -298,6 +306,7 @@ export const StudyRoomView = ({
   const handleTogglePinTrack = (trackId: string) => {
     if (pinnedTrackId === trackId) {
       setPinnedTrackId(null);
+      setLayoutMode("grid");
     } else {
       setPinnedTrackId(trackId);
       if (layoutMode === "grid") {
@@ -318,7 +327,9 @@ export const StudyRoomView = ({
         isLocalHost={isHost}
         onMute={handleMuteParticipant}
         onKick={(id: string, name: string) => setKickTarget({ identity: id, name })}
-        onToggleCoHost={handleToggleCoHost}
+        onToggleCoHost={(id: string, name: string, isCoHost: boolean) =>
+          setCoHostTarget({ identity: id, name, isCoHost })
+        }
         pendingAction={pendingAction}
         isPinned={isPinned}
         onTogglePin={() => handleTogglePinTrack(trackId)}
@@ -372,75 +383,67 @@ export const StudyRoomView = ({
             <span className="block h-1 rounded-full transition-all duration-200 ease-out w-10 bg-white/30 group-hover/header:w-16 group-hover/header:bg-white/70" />
           </div>
         )}
-        <div className="flex items-center gap-2 min-w-0">
-          <h2 className="text-sm font-bold truncate">Phòng: {roomName}</h2>
-          <span className="text-[11px] text-slate-400 shrink-0">
-            {room.numParticipants} người
-          </span>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <h2
+            className="text-sm font-bold text-white tracking-tight truncate max-w-[140px] sm:max-w-[200px]"
+            title={roomName}
+          >
+            {roomName}
+          </h2>
 
-          {typeof remainingMinutes === "number" && remainingMinutes < 300 && (
-            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-semibold border border-amber-400/30">
-              Còn ~{remainingMinutes}p tháng này
-            </span>
-          )}
+          <div className="h-3 w-px bg-white/15 shrink-0" />
 
           <RoomSessionTimer
             sessionMaxMinutes={sessionMaxMinutes}
             onExpire={handleSessionExpire}
+            participantsCount={room.numParticipants}
+            compact
           />
 
-          {isFullscreen && (
-            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold border border-emerald-400/30">
-              Toàn màn hình
+          {typeof remainingMinutes === "number" && remainingMinutes < 300 && (
+            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 text-[10px] font-medium border border-amber-400/25 shrink-0">
+              ~{remainingMinutes}p
             </span>
           )}
         </div>
+
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Menu 1: Chọn bố cục phòng học */}
-          <div ref={layoutMenuRef} className="relative">
+          {/* Menu tiện ích & bố cục phòng học (hợp nhất chuẩn Mobile) */}
+          <div ref={moreMenuRef} className="relative">
             <button
               type="button"
               onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => {
-                setIsLayoutMenuOpen((v) => !v);
-                setIsMoreMenuOpen(false);
-              }}
-              className={`inline-flex items-center gap-1.5 h-8 px-2.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer select-none active:scale-95 ${
-                isLayoutMenuOpen
+              onClick={() => setIsMoreMenuOpen((v) => !v)}
+              className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all cursor-pointer select-none active:scale-95 ${
+                isMoreMenuOpen
                   ? "bg-white/20 border-white/30 text-white shadow-sm"
                   : "bg-white/10 hover:bg-white/15 border-white/15 text-white/90 hover:text-white"
               }`}
-              title="Thay đổi bố cục phòng học"
-              aria-label="Thay đổi bố cục"
-              aria-expanded={isLayoutMenuOpen}
+              title="Tiện ích & Bố cục phòng học"
+              aria-label="Tiện ích phòng"
+              aria-expanded={isMoreMenuOpen}
             >
-              {layoutMode === "grid" ? (
-                <SquaresFourIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" weight="bold" />
-              ) : layoutMode === "speaker" ? (
-                <PresentationIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" weight="bold" />
-              ) : (
-                <SidebarSimpleIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" weight="bold" />
-              )}
-              <span className="hidden sm:inline">
-                {layoutMode === "grid" ? "Lưới đều" : layoutMode === "speaker" ? "Tiêu điểm" : "Thanh bên"}
-              </span>
-              <CaretDownIcon className={`w-3 h-3 text-white/60 transition-transform duration-150 ${isLayoutMenuOpen ? "rotate-180" : ""}`} />
+              <DotsThreeVerticalIcon className="w-4 h-4 text-emerald-400" weight="bold" />
             </button>
 
-            {isLayoutMenuOpen && (
+            {isMoreMenuOpen && (
               <div
                 onPointerDown={(e) => e.stopPropagation()}
-                className="absolute right-0 top-full mt-1.5 z-50 w-52 p-1.5 glass-popover flex flex-col gap-1 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-150"
+                className="absolute right-0 top-full mt-1.5 z-50 w-52 p-1.5 rounded-2xl border border-white/15 bg-neutral-950/88 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] flex flex-col gap-1 select-none overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150"
               >
-                <div className="px-2.5 py-1 text-[10px] font-bold text-white/50 uppercase tracking-wider">
-                  Bố cục phòng học
+                <div className="absolute inset-x-4 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
+
+                {/* Phần 1: Bố cục hiển thị */}
+                <div className="px-2.5 py-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider border-b border-white/[0.08] mb-0.5">
+                  Bố cục hiển thị
                 </div>
+
                 <button
                   type="button"
                   onClick={() => {
                     setLayoutMode("grid");
                     setPinnedTrackId(null);
-                    setIsLayoutMenuOpen(false);
+                    setIsMoreMenuOpen(false);
                   }}
                   className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                     layoutMode === "grid" && !pinnedTrackId
@@ -452,14 +455,16 @@ export const StudyRoomView = ({
                     <SquaresFourIcon className="w-4 h-4 text-emerald-400 shrink-0" weight="bold" />
                     <span>Lưới đều</span>
                   </div>
-                  {layoutMode === "grid" && !pinnedTrackId && <CheckIcon className="w-3.5 h-3.5 text-emerald-400" weight="bold" />}
+                  {layoutMode === "grid" && !pinnedTrackId && (
+                    <CheckIcon className="w-3.5 h-3.5 text-emerald-400" weight="bold" />
+                  )}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => {
                     setLayoutMode("speaker");
-                    setIsLayoutMenuOpen(false);
+                    setIsMoreMenuOpen(false);
                   }}
                   className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                     layoutMode === "speaker"
@@ -471,14 +476,16 @@ export const StudyRoomView = ({
                     <PresentationIcon className="w-4 h-4 text-emerald-400 shrink-0" weight="bold" />
                     <span>Tiêu điểm</span>
                   </div>
-                  {layoutMode === "speaker" && <CheckIcon className="w-3.5 h-3.5 text-emerald-400" weight="bold" />}
+                  {layoutMode === "speaker" && (
+                    <CheckIcon className="w-3.5 h-3.5 text-emerald-400" weight="bold" />
+                  )}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => {
                     setLayoutMode("sidebar");
-                    setIsLayoutMenuOpen(false);
+                    setIsMoreMenuOpen(false);
                   }}
                   className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                     layoutMode === "sidebar"
@@ -490,40 +497,14 @@ export const StudyRoomView = ({
                     <SidebarSimpleIcon className="w-4 h-4 text-emerald-400 shrink-0" weight="bold" />
                     <span>Thanh bên</span>
                   </div>
-                  {layoutMode === "sidebar" && <CheckIcon className="w-3.5 h-3.5 text-emerald-400" weight="bold" />}
+                  {layoutMode === "sidebar" && (
+                    <CheckIcon className="w-3.5 h-3.5 text-emerald-400" weight="bold" />
+                  )}
                 </button>
-              </div>
-            )}
-          </div>
 
-          {/* Menu 2: Tùy chọn khác */}
-          <div ref={moreMenuRef} className="relative">
-            <button
-              type="button"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => {
-                setIsMoreMenuOpen((v) => !v);
-                setIsLayoutMenuOpen(false);
-              }}
-              className={`inline-flex items-center justify-center h-8 w-8 rounded-xl border text-xs font-semibold transition-all cursor-pointer select-none active:scale-95 ${
-                isMoreMenuOpen
-                  ? "bg-white/20 border-white/30 text-white shadow-sm"
-                  : "bg-white/10 hover:bg-white/15 border-white/15 text-white/90 hover:text-white"
-              }`}
-              title="Tùy chọn khác"
-              aria-label="Tùy chọn khác"
-              aria-expanded={isMoreMenuOpen}
-            >
-              <DotsThreeVerticalIcon className="w-4 h-4" weight="bold" />
-            </button>
-
-            {isMoreMenuOpen && (
-              <div
-                onPointerDown={(e) => e.stopPropagation()}
-                className="absolute right-0 top-full mt-1.5 z-50 w-52 p-1.5 glass-popover flex flex-col gap-1 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-150"
-              >
-                <div className="px-2.5 py-1 text-[10px] font-bold text-white/50 uppercase tracking-wider">
-                  Tùy chọn phòng
+                {/* Phần 2: Tiện ích phòng */}
+                <div className="px-2.5 py-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider border-y border-white/[0.08] my-0.5">
+                  Tiện ích phòng
                 </div>
 
                 <button
@@ -547,21 +528,24 @@ export const StudyRoomView = ({
                   className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium text-white/85 hover:text-white hover:bg-white/10 transition-colors cursor-pointer text-left"
                 >
                   <ClockCounterClockwiseIcon className="w-4 h-4 text-sky-400 shrink-0" />
-                  <span>Lịch sử các phiên học</span>
+                  <span>Lịch sử phòng học</span>
                 </button>
 
                 {(isHost || isCoHost) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsHostControlsOpen(true);
-                      setIsMoreMenuOpen(false);
-                    }}
-                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-bold text-amber-300 hover:text-amber-200 hover:bg-amber-500/15 transition-colors cursor-pointer text-left border-t border-white/10 mt-0.5 pt-2"
-                  >
-                    <ShieldCheckIcon className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Quản lý phòng</span>
-                  </button>
+                  <>
+                    <div className="my-0.5 border-t border-white/[0.08]" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsHostControlsOpen(true);
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-bold text-amber-300 hover:text-amber-200 hover:bg-amber-500/15 transition-colors cursor-pointer text-left"
+                    >
+                      <ShieldCheckIcon className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>Quản lý phòng</span>
+                    </button>
+                  </>
                 )}
               </div>
             )}
@@ -570,9 +554,10 @@ export const StudyRoomView = ({
           {/* Nút Toàn màn hình */}
           {onToggleFullscreen && (
             <button
+              type="button"
               onPointerDown={(e) => e.stopPropagation()}
               onClick={onToggleFullscreen}
-              className="inline-flex items-center justify-center h-8 w-8 rounded-xl bg-white/10 hover:bg-white/15 active:scale-95 border border-white/15 text-white/90 hover:text-white transition-all cursor-pointer"
+              className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/10 hover:bg-white/15 active:scale-95 border border-white/15 text-white/90 hover:text-white transition-all cursor-pointer"
               title={isFullscreen ? "Thu nhỏ" : "Toàn màn hình"}
               aria-label={isFullscreen ? "Thu nhỏ" : "Toàn màn hình"}
             >
@@ -586,9 +571,10 @@ export const StudyRoomView = ({
 
           {/* Nút Rời phòng */}
           <button
+            type="button"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => setIsLeaveConfirmOpen(true)}
-            className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 active:scale-95 border border-rose-400/30 text-rose-200 text-xs font-bold transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full bg-rose-500/15 hover:bg-rose-500/25 active:scale-95 border border-rose-400/30 text-rose-200 text-xs font-semibold transition-all cursor-pointer"
             title="Rời phòng học"
             aria-label="Rời phòng"
           >
@@ -624,14 +610,14 @@ export const StudyRoomView = ({
 
             if (layoutMode === "speaker" && mainTrack) {
               return (
-                <div className="flex flex-col gap-2 h-full min-h-0">
-                  <div className="flex-1 min-h-0 w-full rounded-2xl">
+                <div className="flex flex-col gap-2 h-full min-h-0 animate-in fade-in-50 duration-300 ease-out">
+                  <div className="flex-1 min-h-0 w-full rounded-2xl transition-all duration-300 ease-out animate-in zoom-in-[0.98]">
                     {renderParticipantTile(mainTrack, false)}
                   </div>
                   {otherTracks.length > 0 && (
-                    <div className="h-28 sm:h-32 shrink-0 flex gap-2 overflow-x-auto custom-study-scroll pb-1 pt-2">
+                    <div className="h-28 sm:h-32 shrink-0 flex gap-2 overflow-x-auto custom-study-scroll pb-1 pt-2 animate-in slide-in-from-bottom-2 fade-in-50 duration-300 ease-out">
                       {otherTracks.map((track) => (
-                        <div key={getTrackReferenceId(track)} className="h-full aspect-[4/3] shrink-0">
+                        <div key={getTrackReferenceId(track)} className="h-full aspect-[4/3] shrink-0 transition-transform duration-200">
                           {renderParticipantTile(track, true)}
                         </div>
                       ))}
@@ -643,14 +629,14 @@ export const StudyRoomView = ({
 
             if (layoutMode === "sidebar" && mainTrack) {
               return (
-                <div className="flex flex-row gap-2 h-full min-h-0">
-                  <div className="flex-1 min-w-0 h-full rounded-2xl">
+                <div className="flex flex-row gap-2 h-full min-h-0 animate-in fade-in-50 duration-300 ease-out">
+                  <div className="flex-1 min-w-0 h-full rounded-2xl transition-all duration-300 ease-out animate-in zoom-in-[0.98]">
                     {renderParticipantTile(mainTrack, false)}
                   </div>
                   {otherTracks.length > 0 && (
-                    <div className="w-36 sm:w-48 shrink-0 flex flex-col gap-2 overflow-y-auto custom-study-scroll pr-1 pt-2">
+                    <div className="w-36 sm:w-48 shrink-0 flex flex-col gap-2 overflow-y-auto custom-study-scroll pr-1 pb-1 animate-in slide-in-from-right-2 fade-in-50 duration-300 ease-out">
                       {otherTracks.map((track) => (
-                        <div key={getTrackReferenceId(track)} className="w-full aspect-[4/3] shrink-0">
+                        <div key={getTrackReferenceId(track)} className="w-full aspect-[4/3] shrink-0 transition-transform duration-200">
                           {renderParticipantTile(track, true)}
                         </div>
                       ))}
@@ -663,7 +649,7 @@ export const StudyRoomView = ({
             // Mặc định: Lưới đều
             return (
               <div
-                className={`grid gap-2 h-full auto-rows-fr ${
+                className={`grid gap-2 h-full auto-rows-fr animate-in fade-in-50 zoom-in-[0.99] duration-300 ease-out ${
                   tracks.length <= 1
                     ? "grid-cols-1"
                     : tracks.length <= 4
@@ -725,6 +711,30 @@ export const StudyRoomView = ({
         description={`Bạn có chắc muốn mời "${kickTarget?.name}" rời khỏi phòng học này không?`}
         confirmText="Mời rời phòng"
         cancelText="Hủy"
+      />
+
+      {/* Hộp thoại xác nhận bổ nhiệm hoặc hủy Phó phòng */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(coHostTarget)}
+        pending={pendingAction?.type === "co-host"}
+        onClose={() => {
+          if (pendingActionRef.current) return;
+          setCoHostTarget(null);
+        }}
+        onConfirm={() => coHostTarget && handleToggleCoHost(coHostTarget.identity)}
+        title={coHostTarget?.isCoHost ? "Hủy quyền Phó phòng" : "Bổ nhiệm Phó phòng"}
+        description={
+          coHostTarget?.isCoHost
+            ? `Bạn có chắc muốn hủy quyền Phó phòng của "${coHostTarget?.name}" không?`
+            : `Bạn có chắc muốn bổ nhiệm "${coHostTarget?.name}" làm Phó phòng không? Phó phòng có thể hỗ trợ quản lý phòng học và tắt micro thành viên khác.`
+        }
+        confirmText={coHostTarget?.isCoHost ? "Hủy quyền" : "Bổ nhiệm"}
+        cancelText="Hủy"
+        confirmClassName={
+          coHostTarget?.isCoHost
+            ? "bg-rose-600 hover:bg-rose-500 shadow-rose-600/30"
+            : "bg-sky-600 hover:bg-sky-500 shadow-sky-600/30"
+        }
       />
 
       {/* Modal Quản trị phòng học */}

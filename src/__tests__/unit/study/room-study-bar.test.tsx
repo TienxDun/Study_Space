@@ -33,7 +33,7 @@ describe("RoomStudyBar UI tests", () => {
     expect(html).toContain("Cảm xúc");
   });
 
-  it("renders active Pomodoro focus timer with countdown and stop button for owner", () => {
+  it("renders active Pomodoro focus timer with countdown for owner", () => {
     const html = renderToString(
       <RoomStudyBar
         {...defaultProps}
@@ -49,11 +49,11 @@ describe("RoomStudyBar UI tests", () => {
         isTimerOwner={true}
       />
     );
-    expect(html).toContain("Tập trung 24:59");
-    expect(html).toContain("Dừng đồng hồ");
+    expect(html).toContain("24:59");
+    expect(html).toContain("Chạm để đổi chu kỳ hoặc dừng");
   });
 
-  it("does not render stop button when user is not the timer owner", () => {
+  it("renders active Pomodoro focus timer with countdown for non-owners", () => {
     const html = renderToString(
       <RoomStudyBar
         {...defaultProps}
@@ -69,11 +69,11 @@ describe("RoomStudyBar UI tests", () => {
         isTimerOwner={false}
       />
     );
-    expect(html).toContain("Tập trung 24:59");
-    expect(html).not.toContain("Dừng đồng hồ");
+    expect(html).toContain("24:59");
+    expect(html).toContain("Chạm để đổi chu kỳ hoặc dừng");
   });
 
-  it("renders next phase button when timer reaches 00:00 for owner", () => {
+  it("renders 00:00 when timer completes", () => {
     const html = renderToString(
       <RoomStudyBar
         {...defaultProps}
@@ -89,8 +89,7 @@ describe("RoomStudyBar UI tests", () => {
         isTimerOwner={true}
       />
     );
-    expect(html).toContain("Tập trung 00:00");
-    expect(html).toContain("Nghỉ");
+    expect(html).toContain("00:00");
   });
 
   it("renders raised hand state and goal text", () => {
@@ -141,6 +140,7 @@ describe("RoomStudyBar UI tests", () => {
         isTimerOwner={false}
       />
     );
-    expect(html).toContain("Đổi chu kỳ Pomodoro");
+    expect(html).toContain("20:00");
+    expect(html).toContain("Chạm để đổi chu kỳ hoặc dừng");
   });
 });

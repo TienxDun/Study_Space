@@ -82,4 +82,22 @@ describe("ConfirmDeleteModal chế độ chờ", () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it("hỗ trợ tùy biến confirmClassName cho thao tác tích cực (bổ nhiệm)", () => {
+    act(() => {
+      root.render(
+        <ConfirmDeleteModal
+          isOpen
+          onClose={vi.fn()}
+          onConfirm={vi.fn()}
+          confirmText="Bổ nhiệm"
+          confirmClassName="bg-sky-600 hover:bg-sky-500 shadow-sky-600/30"
+        />
+      );
+    });
+
+    const button = findButton("Bổ nhiệm");
+    expect(button?.className).toContain("bg-sky-600");
+    expect(button?.className).not.toContain("bg-rose-600");
+  });
 });

@@ -95,6 +95,13 @@ export const MobileRoomsWidget = memo(function MobileRoomsWidget({
       onPreJoinSubmit={session.handlePreJoinSubmit}
       onPreJoinCancel={session.handlePreJoinCancel}
       initialMedia={session.initialMedia}
+      handleCopyLobbyInvite={session.handleCopyLobbyInvite}
+      userRole={session.userRole}
+      isHost={session.isHost}
+      isCoHost={session.isCoHost}
+      initialIsLocked={session.isRoomLocked}
+      initialHasPassword={session.roomHasPassword}
+      getIdToken={getToken}
     />
   );
 });

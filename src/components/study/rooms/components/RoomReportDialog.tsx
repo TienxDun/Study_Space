@@ -86,21 +86,29 @@ export function RoomReportDialog({
       aria-modal="true"
       aria-label={`Báo cáo ${targetName}`}
       onClick={onClose}
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-150"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-150"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full sm:max-w-md max-h-[88dvh] overflow-y-auto custom-study-scroll rounded-t-2xl sm:rounded-2xl border border-white/12 bg-[#0b0f16]/98 p-4 sm:p-5 text-white shadow-[0_24px_70px_rgba(0,0,0,0.8)]"
+        className="relative w-full max-w-[340px] max-h-[90dvh] overflow-y-auto custom-study-scroll rounded-2xl border border-white/15 bg-neutral-950/88 p-4.5 text-white shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)]"
       >
-        <div className="flex items-start justify-between gap-3">
+        {/* Mép kính bắt sáng trên đỉnh */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-8 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none"
+        />
+
+        <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
           <div className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-400/10 border border-amber-400/25 text-amber-300">
-              <FlagIcon size={17} weight="fill" aria-hidden="true" />
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-400/10 text-amber-300">
+              <FlagIcon size={16} weight="fill" aria-hidden="true" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold leading-tight">Báo cáo thành viên</h2>
-              <p className="text-[11px] text-zinc-400 leading-relaxed break-words">
-                {targetName} · chỉ quản trị viên ZenStudy xem được.
+              <h2 className="text-sm font-semibold leading-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
+                Báo cáo thành viên
+              </h2>
+              <p className="text-[11px] text-zinc-400 leading-snug">
+                {targetName} · ZenStudy sẽ kiểm duyệt
               </p>
             </div>
           </div>
@@ -109,26 +117,26 @@ export function RoomReportDialog({
             onClick={onClose}
             disabled={submitting}
             aria-label="Đóng"
-            className="h-8 w-8 shrink-0 grid place-items-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-40"
+            className="h-7 w-7 shrink-0 grid place-items-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-40"
           >
-            <XIcon size={15} weight="bold" aria-hidden="true" />
+            <XIcon size={14} weight="bold" aria-hidden="true" />
           </button>
         </div>
 
-        <fieldset className="mt-4">
-          <legend className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-            Lý do báo cáo
+        <fieldset className="mt-3">
+          <legend className="text-xs font-medium text-zinc-400 mb-1">
+            Chọn lý do:
           </legend>
-          <div className="mt-2 space-y-1.5">
+          <div className="space-y-0.5">
             {ROOM_REPORT_REASONS.map((item) => {
               const checked = reason === item.value;
               return (
                 <label
                   key={item.value}
-                  className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition-colors cursor-pointer focus-within:ring-2 focus-within:ring-white/40 ${
+                  className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors cursor-pointer select-none ${
                     checked
-                      ? "border-emerald-400/50 bg-emerald-500/10 text-white"
-                      : "border-white/10 bg-white/[0.03] text-zinc-300 hover:bg-white/[0.06] hover:text-white"
+                      ? "bg-emerald-500/10 text-emerald-300 font-medium"
+                      : "text-zinc-300 hover:bg-white/[0.04] hover:text-white"
                   }`}
                 >
                   <input
@@ -141,41 +149,39 @@ export function RoomReportDialog({
                   />
                   <span
                     aria-hidden="true"
-                    className={`h-3.5 w-3.5 shrink-0 rounded-full border transition-colors ${
-                      checked ? "border-emerald-400 bg-emerald-400/80" : "border-white/30"
+                    className={`h-4 w-4 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
+                      checked
+                        ? "border-emerald-400 bg-emerald-500"
+                        : "border-zinc-500 bg-transparent"
                     }`}
-                  />
-                  <span className="flex-1">{item.label}</span>
+                  >
+                    {checked && <span className="h-1.5 w-1.5 rounded-full bg-slate-950" />}
+                  </span>
+                  <span className="flex-1 text-[13px]">{item.label}</span>
                 </label>
               );
             })}
           </div>
         </fieldset>
 
-        <div className="mt-4">
-          <label
-            htmlFor={`${groupName}-detail`}
-            className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400"
-          >
-            Ghi chú thêm (không bắt buộc)
-          </label>
+        <div className="mt-3">
           <textarea
             id={`${groupName}-detail`}
             value={detail}
             onChange={(e) => setDetail(e.target.value)}
             maxLength={500}
             rows={2}
-            placeholder="Điều gì đã xảy ra trong phòng?"
-            className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/40"
+            placeholder="Ghi chú thêm (không bắt buộc)..."
+            className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-white/25 focus:ring-1 focus:ring-white/20 transition-all"
           />
         </div>
 
-        <div className="mt-4 flex items-center justify-end gap-2">
+        <div className="mt-3.5 flex items-center justify-end gap-2 pt-2.5 border-t border-white/[0.08]">
           <button
             type="button"
             onClick={onClose}
             disabled={submitting}
-            className="h-9 px-3.5 rounded-xl text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-40"
+            className="h-8.5 px-3.5 rounded-xl text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-40"
           >
             Hủy
           </button>
@@ -183,7 +189,7 @@ export function RoomReportDialog({
             type="button"
             onClick={() => void handleSubmit()}
             disabled={!reason || submitting}
-            className="h-9 px-4 rounded-xl bg-emerald-500 text-slate-950 text-sm font-semibold hover:bg-emerald-400 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="h-8.5 px-4 rounded-xl bg-emerald-500 text-slate-950 text-xs font-semibold hover:bg-emerald-400 active:scale-[0.98] transition-all cursor-pointer shadow-sm shadow-emerald-500/25 disabled:opacity-35 disabled:cursor-not-allowed"
           >
             {submitting ? "Đang gửi…" : "Gửi báo cáo"}
           </button>

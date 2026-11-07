@@ -170,16 +170,19 @@ function MobileRoomsSheetBase({
           backLabel={backLabel}
           sheetId="rooms"
           keepMounted={false}
+          hideHeader
           title={
             <span className="text-sm font-bold text-white tracking-tight truncate">
               {joinedRoom}
             </span>
           }
           heightClassName="h-[84dvh] max-h-[88dvh]"
+          contentScroll={false}
         >
           <MobileRoomView
             roomName={joinedRoom}
             onLeave={handleLeave}
+            onClose={onClose}
             remainingMinutes={remainingMinutes}
             sessionMaxMinutes={sessionMaxMinutes}
             audioDeviceId={initialMedia.audioDeviceId}

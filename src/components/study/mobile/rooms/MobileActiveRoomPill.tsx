@@ -41,46 +41,43 @@ export function MobileActiveRoomPill({
       aria-label="Phòng học đang hoạt động"
       className="fixed bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] left-1/2 -translate-x-1/2 w-[calc(100vw-8.5rem)] max-w-[320px] z-40 sm:hidden pointer-events-auto select-none transition-all duration-300 ease-out animate-in slide-in-from-bottom-2"
     >
-      <div className="lg-bar h-11 px-3 rounded-full overflow-hidden flex items-center justify-between gap-1.5 select-none transition-all">
+      <div className="lg-bar relative h-10.5 px-3 rounded-full flex items-center justify-between gap-2 overflow-hidden select-none transition-all shadow-lg">
         {/* Vùng chạm mở lại phòng học */}
         <button
           type="button"
           onClick={onReopen}
-          className="flex-1 min-w-0 flex items-center gap-1.5 text-left active:scale-[0.98] transition-transform cursor-pointer"
+          className="flex-1 min-w-0 h-full flex items-center gap-2 text-left active:scale-[0.98] transition-transform cursor-pointer group pr-8"
           title="Chạm để mở lại phòng học"
         >
-          <span className="relative flex h-2 w-2 shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-          </span>
+          <UsersIcon className="w-4 h-4 text-white/80 group-hover:text-white transition-colors shrink-0" weight="bold" />
 
-          <UsersIcon className="w-4 h-4 text-emerald-400 shrink-0" />
-
-          <div className="min-w-0 flex-1 flex items-center gap-1">
-            <span className="text-xs font-bold text-white truncate min-w-0 flex-1">
+          <div className="min-w-0 flex-1 truncate">
+            <span className="text-xs font-semibold text-white truncate block group-hover:text-white/90 transition-colors">
               {roomName}
             </span>
             <span className="sr-only">(Đang học)</span>
+            <span className="sr-only">Mở lại</span>
           </div>
-
-          <span className="lg-pill relative h-7 w-7 min-[400px]:w-auto min-[400px]:px-2.5 rounded-full flex items-center justify-center min-[400px]:gap-1 text-[11px] font-semibold text-emerald-300 shrink-0 cursor-pointer">
-            <span className="hidden min-[400px]:inline">Mở lại</span>
-            <CaretUpIcon className="w-3 h-3" />
-          </span>
         </button>
 
-        {/* Nút rời phòng nhanh dạng viên thuốc kính lỏng cảnh báo */}
+        {/* Icon mũi tên ^ nảy ở chính giữa thanh để thu hút người dùng */}
+        <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none flex items-center justify-center text-white/60 group-hover:text-white transition-colors">
+          <CaretUpIcon className="w-4 h-4 animate-bounce text-white/70" weight="bold" />
+        </div>
+
+        {/* Nút rời phòng dạng icon tròn nhỏ gọn như nút gác máy iOS */}
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             setIsLeaveConfirmOpen(true);
           }}
-          className="h-7 px-2.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 active:scale-95 border border-rose-400/30 text-rose-300 text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer shrink-0 shadow-sm"
+          className="w-7 h-7 rounded-full bg-rose-500/15 hover:bg-rose-500/25 active:bg-rose-500/35 active:scale-90 border border-rose-400/20 text-rose-300 hover:text-rose-200 flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-sm"
           title="Rời phòng"
+          aria-label="Rời phòng"
         >
-          <SignOutIcon className="w-3.5 h-3.5" />
-          <span>Rời</span>
+          <SignOutIcon className="w-3.5 h-3.5" weight="bold" />
+          <span className="sr-only">Rời</span>
         </button>
       </div>
 

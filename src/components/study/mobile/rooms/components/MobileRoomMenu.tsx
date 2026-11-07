@@ -62,14 +62,16 @@ export const MobileRoomMenu = memo(function MobileRoomMenu({
         <>
           {/* Backdrop bắt chạm ra ngoài để đóng */}
           <div
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 z-40 bg-black/20"
             onClick={onClose}
           />
 
           {/* Menu popup tiện ích & bố cục */}
-          <div className="absolute right-0 top-full mt-1.5 z-50 w-52 py-1.5 rounded-2xl surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] select-none">
+          <div className="absolute right-0 top-full mt-1.5 z-50 w-52 p-1.5 rounded-2xl border border-white/15 bg-neutral-950/88 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] select-none overflow-hidden">
+            <div className="absolute inset-x-4 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
+
             {/* Phần 1: Bố cục hiển thị */}
-            <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-white/[0.08] mb-1">
+            <div className="px-3 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider border-b border-white/[0.08] mb-1">
               Bố cục hiển thị
             </div>
 
@@ -79,7 +81,7 @@ export const MobileRoomMenu = memo(function MobileRoomMenu({
                 onSelectLayout("grid");
                 onClose();
               }}
-              className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-white/10 hover:text-white transition-colors flex items-center justify-between cursor-pointer"
+              className="w-full text-left px-3 py-2 rounded-xl text-xs text-zinc-200 hover:bg-white/[0.08] hover:text-white transition-colors flex items-center justify-between cursor-pointer"
             >
               <div className="flex items-center gap-2">
                 <SquaresFourIcon className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -96,7 +98,7 @@ export const MobileRoomMenu = memo(function MobileRoomMenu({
                 onSelectLayout("speaker");
                 onClose();
               }}
-              className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-white/10 hover:text-white transition-colors flex items-center justify-between cursor-pointer"
+              className="w-full text-left px-3 py-2 rounded-xl text-xs text-zinc-200 hover:bg-white/[0.08] hover:text-white transition-colors flex items-center justify-between cursor-pointer"
             >
               <div className="flex items-center gap-2">
                 <PresentationIcon className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -108,7 +110,7 @@ export const MobileRoomMenu = memo(function MobileRoomMenu({
             </button>
 
             {/* Phần 2: Tiện ích phòng */}
-            <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-y border-white/[0.08] my-1">
+            <div className="px-3 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider border-y border-white/[0.08] my-1">
               Tiện ích phòng
             </div>
 
@@ -118,7 +120,7 @@ export const MobileRoomMenu = memo(function MobileRoomMenu({
                 onCopyInvite();
                 setTimeout(onClose, 900);
               }}
-              className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2 cursor-pointer"
+              className="w-full text-left px-3 py-2 rounded-xl text-xs text-zinc-200 hover:bg-white/[0.08] hover:text-white transition-colors flex items-center gap-2 cursor-pointer"
             >
               {copied ? (
                 <CheckIcon className="w-4 h-4 text-emerald-400 shrink-0" weight="bold" />
@@ -136,24 +138,27 @@ export const MobileRoomMenu = memo(function MobileRoomMenu({
                 onClose();
                 onOpenHistory();
               }}
-              className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2 cursor-pointer"
+              className="w-full text-left px-3 py-2 rounded-xl text-xs text-zinc-200 hover:bg-white/[0.08] hover:text-white transition-colors flex items-center gap-2 cursor-pointer"
             >
               <ClockCounterClockwiseIcon className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Lịch sử phòng</span>
+              <span>Lịch sử phòng học</span>
             </button>
 
             {canModerate && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onOpenHostControls();
-                }}
-                className="w-full text-left px-3 py-2 text-xs text-amber-300 hover:bg-amber-500/15 transition-colors flex items-center gap-2 cursor-pointer border-t border-white/[0.08] mt-1 pt-2"
-              >
-                <ShieldCheckIcon className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Quản lý phòng</span>
-              </button>
+              <>
+                <div className="my-1 border-t border-white/[0.08]" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenHostControls();
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-xs text-amber-300 hover:bg-amber-500/15 transition-colors flex items-center gap-2 cursor-pointer"
+                >
+                  <ShieldCheckIcon className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>Quản lý phòng</span>
+                </button>
+              </>
             )}
           </div>
         </>

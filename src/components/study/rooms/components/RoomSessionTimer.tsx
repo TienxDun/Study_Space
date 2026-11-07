@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { UsersIcon, TimerIcon } from "@phosphor-icons/react";
 
 interface RoomSessionTimerProps {
   sessionMaxMinutes?: number;
   onExpire: () => void;
   compact?: boolean;
+  participantsCount?: number;
 }
 
 export function formatSessionCountdown(seconds: number): string {
@@ -30,6 +32,7 @@ export function RoomSessionTimer({
   sessionMaxMinutes = 120,
   onExpire,
   compact = false,
+  participantsCount,
 }: RoomSessionTimerProps) {
   // Mốc thời gian vào phòng (epoch ms), cố định trong suốt phiên kết nối
   const [joinedAt] = useState(() => Date.now());
@@ -61,24 +64,45 @@ export function RoomSessionTimer({
   if (compact) {
     return (
       <div
-        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/10 text-[10px] tabular-nums shrink-0 shadow-sm"
-        title={`Đã học ${formatElapsed(elapsedSec)} • Hạn phiên còn ${formatSessionCountdown(remainingSec)}`}
+        className="inline-flex items-center gap-2 text-[11px] tabular-nums shrink-0 select-none"
+        title={
+          typeof participantsCount === "number"
+            ? `${participantsCount} người trong phòng • Đã học ${formatElapsed(elapsedSec)} • Hạn phiên còn ${formatSessionCountdown(remainingSec)}`
+            : `Đã học ${formatElapsed(elapsedSec)} • Hạn phiên còn ${formatSessionCountdown(remainingSec)}`
+        }
       >
-        <span className="font-semibold text-emerald-300">
-          {formatElapsed(elapsedSec)}
-        </span>
-        <span className="text-white/20">•</span>
-        <span
-          className={`font-medium ${
-            isUrgent
-              ? "text-rose-300 font-bold animate-pulse"
-              : isWarning
-              ? "text-amber-300 font-semibold"
-              : "text-slate-300"
-          }`}
-        >
-          {formatSessionCountdown(remainingSec)}
-        </span>
+        {/* Số người trong phòng */}
+        {typeof participantsCount === "number" && (
+          <>
+            <div className="flex items-center gap-1.5 text-slate-300">
+              <UsersIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" weight="bold" />
+              <span className="font-semibold">{participantsCount}</span>
+            </div>
+            <div className="h-3 w-px bg-white/15 shrink-0" />
+          </>
+        )}
+
+        {/* Thời gian đã học */}
+        <div className="flex items-center gap-1.5 text-emerald-300">
+          <TimerIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" weight="bold" />
+          <span className="font-semibold font-mono tracking-tight">
+            {formatElapsed(elapsedSec)}
+          </span>
+        </div>
+
+        {/* Cảnh báo khi phòng sắp hết hạn (<= 5 phút) */}
+        {(isWarning || isUrgent) && (
+          <>
+            <span className="text-white/20">•</span>
+            <span
+              className={`font-semibold font-mono ${
+                isUrgent ? "text-rose-400 animate-pulse" : "text-amber-300"
+              }`}
+            >
+              còn {formatSessionCountdown(remainingSec)}
+            </span>
+          </>
+        )}
       </div>
     );
   }

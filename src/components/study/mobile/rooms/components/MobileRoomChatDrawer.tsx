@@ -67,11 +67,11 @@ export const MobileRoomChatDrawer = memo(function MobileRoomChatDrawer({
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const sendingRef = useRef(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const chatListRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (isOpen && chatListRef.current) {
+      chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
     }
   }, [chatMessages, isOpen]);
 
@@ -93,7 +93,8 @@ export const MobileRoomChatDrawer = memo(function MobileRoomChatDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="absolute inset-x-0 bottom-0 h-[65%] surface-frost border-t border-white/25 rounded-t-3xl shadow-[0_-16px_50px_rgba(0,0,0,0.85)] flex flex-col z-30 animate-in slide-in-from-bottom duration-250 ease-out">
+    <div className="absolute inset-x-0 bottom-0 h-[65%] border-t border-white/20 bg-neutral-950/92 backdrop-blur-xl rounded-t-[28px] shadow-[0_-16px_50px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.2)] flex flex-col z-30 animate-in slide-in-from-bottom duration-250 ease-out overflow-hidden">
+      <div className="absolute inset-x-12 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
       {/* Header Chat */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-2">
@@ -114,7 +115,7 @@ export const MobileRoomChatDrawer = memo(function MobileRoomChatDrawer({
       </div>
 
       {/* Danh sách tin nhắn */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-3.5 space-y-2.5 custom-study-scroll select-text">
+      <div ref={chatListRef} className="flex-1 min-h-0 overflow-y-auto p-3.5 space-y-2.5 custom-study-scroll select-text">
         {chatMessages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-4">
             <p className="text-xs text-slate-400">Chưa có tin nhắn nào.</p>
@@ -131,7 +132,6 @@ export const MobileRoomChatDrawer = memo(function MobileRoomChatDrawer({
             />
           ))
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Ô nhập tin nhắn */}

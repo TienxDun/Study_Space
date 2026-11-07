@@ -710,4 +710,12 @@
   object-fit: cover;
 }
 
+/* Ẩn chỉ báo chất lượng kết nối LiveKit (cột sóng mạng) */
+.lk-connection-quality,
+.connection-quality,
+.lk-participant-tile .lk-connection-quality,
+.lk-participant-tile .connection-quality {
+  display: none;
+}
+
 

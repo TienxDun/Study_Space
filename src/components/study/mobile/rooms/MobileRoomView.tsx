@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, memo } from "react";
+import { useState, useRef, useEffect, useCallback, startTransition, memo } from "react";
 import {
   useChat,
   useRoomContext,
@@ -16,8 +16,12 @@ import {
   CircleNotchIcon,
   LinkSimpleIcon,
   CheckIcon,
+  ArrowsInSimpleIcon,
+  ArrowsOutSimpleIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import type { PomodoroSoundType } from "@/components/study/study-sound";
 import { RoomSessionTimer } from "../../rooms/components/RoomSessionTimer";
@@ -28,6 +32,7 @@ import { MEET_ATTR } from "../../rooms/utils/meet-protocol";
 import { applyChosenDevices } from "../../rooms/utils/room-devices";
 import { RoomHostControlsModal } from "../../rooms/components/RoomHostControlsModal";
 import { RoomHistoryModal } from "../../rooms/components/RoomHistoryModal";
+import { useMobileSheetShell } from "../sheets/core";
 import {
   MobileParticipantTile,
   type PendingActionType,
@@ -41,6 +46,7 @@ export type MobileRoomLayoutMode = "grid" | "speaker";
 interface MobileRoomViewProps {
   roomName: string;
   onLeave: () => void;
+  onClose?: () => void;
   remainingMinutes?: number | null;
   sessionMaxMinutes?: number;
   audioDeviceId?: string;
@@ -62,6 +68,7 @@ interface MobileRoomViewProps {
 function MobileRoomViewBase({
   roomName,
   onLeave,
+  onClose,
   remainingMinutes,
   sessionMaxMinutes = 120,
   audioDeviceId,
@@ -76,10 +83,17 @@ function MobileRoomViewBase({
   getIdToken,
 }: MobileRoomViewProps) {
   const room = useRoomContext();
+  const sheetShell = useMobileSheetShell();
+  const handleCloseSheet = onClose || sheetShell?.onClose;
   const studyState = useMeetStudyState({ soundEnabled, soundType });
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [canShareScreen, setCanShareScreen] = useState(false);
   const [kickTarget, setKickTarget] = useState<{ identity: string; name: string } | null>(null);
+  const [coHostTarget, setCoHostTarget] = useState<{
+    identity: string;
+    name: string;
+    isCoHost: boolean;
+  } | null>(null);
   const [isHostControlsOpen, setIsHostControlsOpen] = useState(false);
   const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -107,11 +121,19 @@ function MobileRoomViewBase({
   const handleTogglePinTrack = useCallback((trackId: string) => {
     setPinnedTrackId((prev) => {
       if (prev === trackId) {
+        setLayoutMode("grid");
         return null;
       }
       setLayoutMode("speaker");
       return trackId;
     });
+  }, []);
+
+  const handleSelectLayout = useCallback((mode: MobileRoomLayoutMode) => {
+    setLayoutMode(mode);
+    if (mode === "grid") {
+      setPinnedTrackId(null);
+    }
   }, []);
 
   const handleMuteParticipant = useCallback(
@@ -195,6 +217,7 @@ function MobileRoomViewBase({
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
       } finally {
+        setCoHostTarget(null);
         endMemberAction();
       }
     },
@@ -204,6 +227,13 @@ function MobileRoomViewBase({
   const handleSelectKickTarget = useCallback((identity: string, name: string) => {
     setKickTarget({ identity, name });
   }, []);
+
+  const handleSelectCoHostTarget = useCallback(
+    (identity: string, name: string, isCoHost: boolean) => {
+      setCoHostTarget({ identity, name, isCoHost });
+    },
+    []
+  );
 
   // Kích hoạt đúng mic/cam
   useEffect(() => {
@@ -246,6 +276,14 @@ function MobileRoomViewBase({
     ],
     { onlySubscribed: false }
   );
+
+  // Tự động chuyển về Lưới đều nếu thành viên được ghim rời phòng
+  useEffect(() => {
+    if (pinnedTrackId && !tracks.some((t) => getTrackReferenceId(t) === pinnedTrackId)) {
+      setPinnedTrackId(null);
+      setLayoutMode("grid");
+    }
+  }, [tracks, pinnedTrackId]);
 
   const videoColumns = tracks.length <= 2 ? 1 : 2;
   const videoRows = Math.max(1, Math.ceil(tracks.length / videoColumns));
@@ -332,43 +370,86 @@ function MobileRoomViewBase({
         className="mx-3 mt-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-medium cursor-pointer text-center shrink-0 z-30"
       />
 
-      {/* Thanh trạng thái phụ: số người, timer phiên và tiện ích phòng */}
-      <div className="flex items-center justify-between px-3.5 py-1.5 text-xs border-b border-white/[0.08] shrink-0 bg-transparent gap-2">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <div
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/10 text-slate-200 text-[11px] font-medium shrink-0 shadow-sm"
-            title={`${room.numParticipants} thành viên đang trong phòng`}
+      {/* Thanh tiêu đề hợp nhất (Dòng 1): Tên phòng + Capsule Thời gian & Số người + Menu phòng + Zen Mode + Đóng */}
+      <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-white/[0.12] shrink-0 bg-transparent gap-2 select-none">
+        {/* Bên trái: Tên phòng + Vạch ngăn + Capsule số người & thời gian + badge còn lại */}
+        <div className="flex items-center gap-2.5 min-w-0 flex-1 justify-start">
+          <h2
+            className="text-sm font-bold text-white tracking-tight truncate max-w-[120px] sm:max-w-[160px]"
+            title={roomName}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-            <span className="tabular-nums font-semibold">{room.numParticipants}</span>
-            <span className="text-slate-400 text-[10px]">bạn</span>
-          </div>
+            {roomName}
+          </h2>
+
+          <div className="h-3 w-px bg-white/15 shrink-0" />
 
           <RoomSessionTimer
             sessionMaxMinutes={sessionMaxMinutes}
             onExpire={handleSessionExpire}
+            participantsCount={room.numParticipants}
             compact
           />
+
           {typeof remainingMinutes === "number" && remainingMinutes < 300 && (
-            <span className="text-[10px] text-amber-300 bg-amber-500/15 border border-amber-400/25 px-2 py-0.5 rounded-full shrink-0 font-medium">
+            <span className="text-[10px] text-amber-300 bg-amber-500/15 border border-amber-400/25 px-1.5 py-0.5 rounded-full shrink-0 font-medium">
               ~{remainingMinutes}p
             </span>
           )}
         </div>
 
-        {/* Cụm 1 nút tiện ích phòng duy nhất */}
-        <MobileRoomMenu
-          isOpen={isRoomMenuOpen}
-          onToggle={() => setIsRoomMenuOpen((v) => !v)}
-          onClose={() => setIsRoomMenuOpen(false)}
-          layoutMode={layoutMode}
-          onSelectLayout={setLayoutMode}
-          onCopyInvite={handleCopyInviteLink}
-          copied={copied}
-          onOpenHistory={() => setIsHistoryOpen(true)}
-          onOpenHostControls={() => setIsHostControlsOpen(true)}
-          canModerate={isHost || isCoHost}
-        />
+        {/* Bên phải: Nút Tiện ích phòng (⋮) + Nút Zen mode + Nút Đóng */}
+        <div className="flex items-center justify-end gap-1.5 shrink-0">
+          <MobileRoomMenu
+            isOpen={isRoomMenuOpen}
+            onToggle={() => setIsRoomMenuOpen((v) => !v)}
+            onClose={() => setIsRoomMenuOpen(false)}
+            layoutMode={layoutMode}
+            onSelectLayout={handleSelectLayout}
+            onCopyInvite={handleCopyInviteLink}
+            copied={copied}
+            onOpenHistory={() => setIsHistoryOpen(true)}
+            onOpenHostControls={() => setIsHostControlsOpen(true)}
+            canModerate={isHost || isCoHost}
+          />
+
+          {sheetShell && (
+            <button
+              type="button"
+              onClick={() => {
+                startTransition(() => {
+                  sheetShell.toggleZenMode();
+                });
+              }}
+              title={sheetShell.isZenMode ? "Thu gọn về dạng khay đáy" : "Mở rộng không gian Zen (Toàn màn hình)"}
+              aria-label="Chuyển chế độ xem"
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-[background-color,border-color,transform] duration-75 shadow-sm cursor-pointer touch-manipulation"
+            >
+              <span className={cn("inline-flex transition-transform duration-300 ease-out", sheetShell.isZenMode ? "rotate-180 scale-105" : "rotate-0 scale-100")}>
+                {sheetShell.isZenMode ? (
+                  <ArrowsInSimpleIcon className="w-3.5 h-3.5" weight="bold" />
+                ) : (
+                  <ArrowsOutSimpleIcon className="w-3.5 h-3.5" weight="bold" />
+                )}
+              </span>
+            </button>
+          )}
+
+          {handleCloseSheet && (
+            <button
+              type="button"
+              onClick={() => {
+                startTransition(() => {
+                  handleCloseSheet();
+                });
+              }}
+              aria-label={`Đóng ${roomName}`}
+              title="Đóng bảng"
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-[background-color,border-color,transform] duration-75 shadow-sm cursor-pointer touch-manipulation"
+            >
+              <XIcon className="w-4 h-4" weight="bold" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Thanh tương tác học tập di động: Pomodoro, Trạng thái, Mục tiêu */}
@@ -432,7 +513,11 @@ function MobileRoomViewBase({
             return (
               <div
                 key={trackId}
-                className={`relative w-full h-full min-h-0 min-w-0 rounded-2xl border border-white/15 bg-white/[0.04] shadow-md ${
+                className={`relative w-full h-full min-h-0 min-w-0 rounded-2xl border bg-white/[0.04] transition-all duration-300 ease-out ${
+                  isPinned
+                    ? "border-emerald-400/50 shadow-[0_0_12px_rgba(52,211,153,0.12)]"
+                    : "border-white/15 shadow-md"
+                } ${
                   isHandRaised ? "z-20" : "z-0"
                 }`}
               >
@@ -450,7 +535,7 @@ function MobileRoomViewBase({
                   roomName={roomName}
                   onMute={handleMuteParticipant}
                   onKick={handleSelectKickTarget}
-                  onToggleCoHost={handleToggleCoHost}
+                  onToggleCoHost={handleSelectCoHostTarget}
                   onBlocked={handleBlockedMember}
                   isPinned={isPinned}
                   onTogglePin={() => handleTogglePinTrack(trackId)}
@@ -465,17 +550,17 @@ function MobileRoomViewBase({
           const mainTrack = screenShareTrack || pinnedTrack || tracks[0];
           const otherTracks = tracks.filter((t) => getTrackReferenceId(t) !== getTrackReferenceId(mainTrack));
 
-          // Chế độ Tiêu điểm (Speaker)
+          // Chế độ Tiêu điểm (Speaker) khi ghim màn hình hoặc chọn tiêu điểm
           if (layoutMode === "speaker" && mainTrack) {
             return (
-              <div className="flex flex-col gap-2 h-full w-full min-h-0">
-                <div className="flex-1 min-h-0 w-full rounded-2xl">
+              <div className="flex flex-col gap-2 h-full w-full min-h-0 animate-in fade-in-50 duration-300 ease-out">
+                <div className="flex-1 min-h-0 w-full rounded-2xl transition-all duration-300 ease-out animate-in zoom-in-[0.98]">
                   {renderParticipantTile(mainTrack, false)}
                 </div>
                 {otherTracks.length > 0 && (
-                  <div className="h-24 shrink-0 flex gap-2 overflow-x-auto custom-study-scroll pb-1 pt-2">
+                  <div className="h-24 shrink-0 flex gap-2 overflow-x-auto custom-study-scroll pb-1 pt-2 animate-in slide-in-from-bottom-2 fade-in-50 duration-300 ease-out">
                     {otherTracks.map((track) => (
-                      <div key={getTrackReferenceId(track)} className="h-full aspect-[4/3] shrink-0">
+                      <div key={getTrackReferenceId(track)} className="h-full aspect-[4/3] shrink-0 transition-transform duration-200">
                         {renderParticipantTile(track, true)}
                       </div>
                     ))}
@@ -488,7 +573,7 @@ function MobileRoomViewBase({
           // Chế độ Lưới đều (Grid)
           return (
             <div
-              className={`w-full h-full overflow-y-auto custom-study-scroll rounded-2xl grid gap-2 p-1 ${
+              className={`w-full h-full overflow-y-auto custom-study-scroll rounded-2xl grid gap-2 p-1 animate-in fade-in-50 zoom-in-[0.99] duration-300 ease-out ${
                 videoColumns === 2 && tracks.length % 2 === 1
                   ? "[&>*:last-child]:col-span-2"
                   : ""
@@ -557,6 +642,30 @@ function MobileRoomViewBase({
         description={`Bạn có chắc muốn mời "${kickTarget?.name}" rời khỏi phòng học này không?`}
         confirmText="Mời rời phòng"
         cancelText="Hủy"
+      />
+
+      {/* Hộp thoại xác nhận bổ nhiệm hoặc hủy Phó phòng */}
+      <ConfirmDeleteModal
+        isOpen={Boolean(coHostTarget)}
+        pending={pendingAction?.type === "co-host"}
+        onClose={() => {
+          if (pendingActionRef.current) return;
+          setCoHostTarget(null);
+        }}
+        onConfirm={() => coHostTarget && handleToggleCoHost(coHostTarget.identity)}
+        title={coHostTarget?.isCoHost ? "Hủy quyền Phó phòng" : "Bổ nhiệm Phó phòng"}
+        description={
+          coHostTarget?.isCoHost
+            ? `Bạn có chắc muốn hủy quyền Phó phòng của "${coHostTarget?.name}" không?`
+            : `Bạn có chắc muốn bổ nhiệm "${coHostTarget?.name}" làm Phó phòng không? Phó phòng có thể hỗ trợ quản lý phòng học và tắt micro thành viên khác.`
+        }
+        confirmText={coHostTarget?.isCoHost ? "Hủy quyền" : "Bổ nhiệm"}
+        cancelText="Hủy"
+        confirmClassName={
+          coHostTarget?.isCoHost
+            ? "bg-rose-600 hover:bg-rose-500 shadow-rose-600/30"
+            : "bg-sky-600 hover:bg-sky-500 shadow-sky-600/30"
+        }
       />
 
       {/* Modal Quản trị phòng học */}

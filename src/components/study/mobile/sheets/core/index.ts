@@ -1,4 +1,9 @@
-export { MobileSheetShell } from "./MobileSheetShell";
+export {
+  MobileSheetShell,
+  MobileSheetShellContext,
+  useMobileSheetShell,
+  type MobileSheetShellContextType,
+} from "./MobileSheetShell";
 export { SheetGlassSkeleton } from "./SheetGlassSkeleton";
 export {
   setSheetExpanded,
