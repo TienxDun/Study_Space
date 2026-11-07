@@ -402,6 +402,8 @@ export function useStudySpaceState() {
 
       isStatsOpen: panelState.isStatsOpen,
       setIsStatsOpen: panelState.setIsStatsOpen,
+      bringPanelToFront: panelState.bringPanelToFront,
+      getPanelZIndex: panelState.getPanelZIndex,
 
       // Mobile Navigation & Sheets
       isMoreOpen: panelState.isMoreOpen,

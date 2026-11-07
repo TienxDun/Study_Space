@@ -17,6 +17,8 @@ export function isNoteActive(note: StudyNote): boolean {
 export interface StudyNotesWidgetProps {
   isOpen: boolean;
   onClose: () => void;
+  zIndex?: number;
+  onFocus?: () => void;
 }
 
 export interface ActiveFormats {

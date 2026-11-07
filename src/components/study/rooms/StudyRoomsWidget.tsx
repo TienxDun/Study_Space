@@ -35,6 +35,8 @@ export interface StudyRoomsWidgetProps {
   backLabel?: string;
   soundEnabled?: boolean;
   soundType?: PomodoroSoundType;
+  zIndex?: number;
+  onFocus?: () => void;
 }
 
 /**
@@ -49,6 +51,8 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
   backLabel,
   soundEnabled,
   soundType,
+  zIndex = 70,
+  onFocus,
 }: StudyRoomsWidgetProps) {
   const {
     user,
@@ -288,7 +292,10 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="hidden sm:block fixed inset-0 z-[70] pointer-events-none overflow-hidden">
+        <div
+          style={{ zIndex: isFullscreen ? 90 : zIndex }}
+          className="hidden sm:block fixed inset-0 pointer-events-none overflow-hidden"
+        >
           <motion.div
             ref={panelRef}
             key="rooms-panel"
@@ -297,6 +304,7 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
             dragListener={false}
             dragMomentum={false}
             dragElastic={0}
+            onPointerDownCapture={onFocus}
             onDragStart={() => setIsDragging(true)}
             onDragEnd={(_, info) => {
               if (isFullscreen) return;
@@ -330,6 +338,7 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
                     y: 0,
                     width: "100vw",
                     height: "100vh",
+                    zIndex: 90,
                   }
                 : {
                     top: 0,
@@ -338,6 +347,7 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
                     y: roomPos.y,
                     width: session.token ? roomSize.width : 400,
                     height: session.token ? roomSize.height : "auto",
+                    zIndex,
                   }
             }
             className={`hidden sm:flex pointer-events-auto fixed flex-col select-none will-change-transform ${
@@ -345,7 +355,7 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
             } ${
               isFullscreen
                 ? "inset-0 w-screen h-screen rounded-none bg-neutral-950/95 backdrop-blur-3xl z-[90] border-none shadow-none"
-                : `min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] rounded-3xl bg-black/60 hover:bg-black/65 backdrop-blur-2xl border overflow-hidden z-[70] ${
+                : `min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] rounded-3xl bg-black/60 hover:bg-black/65 backdrop-blur-2xl border overflow-hidden ${
                     isDragging
                       ? "shadow-[0_30px_80px_rgba(0,0,0,0.65)] ring-2 ring-emerald-500/40 cursor-grabbing border-white/15"
                       : "shadow-[0_20px_50px_rgba(0,0,0,0.6)] border-white/15"

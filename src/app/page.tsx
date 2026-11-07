@@ -128,8 +128,11 @@ export default function StudySpacePage() {
   const handleOpenRooms = useCallback(() => {
     if (!state.systemFlags.roomsEnabled) return;
     if (state.isMobile) state.mobileOpenRoot("rooms", "Phòng học nhóm");
-    else state.setIsRoomsOpen(true);
-  }, [state.systemFlags.roomsEnabled, state.isMobile, state.mobileOpenRoot, state.setIsRoomsOpen]);
+    else {
+      state.setIsRoomsOpen(true);
+      state.bringPanelToFront("rooms");
+    }
+  }, [state.systemFlags.roomsEnabled, state.isMobile, state.mobileOpenRoot, state.setIsRoomsOpen, state.bringPanelToFront]);
 
   const handleCloseShortcuts = useCallback(
     () => state.setIsShortcutsHelpOpen(false),
@@ -306,6 +309,8 @@ export default function StudySpacePage() {
         backLabel={state.isMobile && state.mobileCanGoBack ? state.mobilePrevScreen?.title : undefined}
         soundEnabled={state.soundEnabled}
         soundType={state.soundType}
+        zIndex={state.getPanelZIndex("rooms")}
+        onFocus={() => state.bringPanelToFront("rooms")}
       />
 
       {/* Bảng danh sách phím tắt (Tải động khi được kích hoạt bởi phím ? hoặc sự kiện) */}

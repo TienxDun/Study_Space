@@ -8,6 +8,8 @@ export type {
 export interface StudyTasksWidgetProps {
   isOpen: boolean;
   onClose: () => void;
+  zIndex?: number;
+  onFocus?: () => void;
 }
 
 export type ViewMode = "board" | "list";

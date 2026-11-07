@@ -39,6 +39,8 @@ const getCenterPos = (w: number, h: number) => {
 export const StudyNotesWidget = ({
   isOpen,
   onClose,
+  zIndex = 45,
+  onFocus,
 }: StudyNotesWidgetProps) => {
   const {
     sortedNotes,
@@ -264,7 +266,8 @@ export const StudyNotesWidget = ({
         {isOpen && (
           <div
             ref={dragContainerRef}
-            className="hidden sm:block fixed inset-0 z-[45] pointer-events-none overflow-hidden"
+            style={{ zIndex }}
+            className="hidden sm:block fixed inset-0 pointer-events-none overflow-hidden"
           >
             {/* Window Container */}
             <motion.div
@@ -276,6 +279,7 @@ export const StudyNotesWidget = ({
               dragMomentum={false}
               dragElastic={0}
               onDragStart={() => setIsDragging(true)}
+              onPointerDownCapture={onFocus}
               onDragEnd={(_, info) => {
                 setIsDragging(false);
                 // Chỗ mới = chỗ cũ + đoạn vừa kéo, rồi kéo vào trong màn hình
@@ -306,8 +310,9 @@ export const StudyNotesWidget = ({
                 y: compactPos.y,
                 width: compactSize.width,
                 height: compactSize.height,
+                zIndex,
               }}
-              className={`hidden sm:flex pointer-events-auto fixed min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] flex-col rounded-3xl backdrop-blur-2xl border overflow-hidden select-none transform-gpu will-change-transform z-[45] group/compact ${
+              className={`hidden sm:flex pointer-events-auto fixed min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] flex-col rounded-3xl backdrop-blur-2xl border overflow-hidden select-none transform-gpu will-change-transform group/compact ${
                 isDragging
                   ? "shadow-[0_30px_80px_rgba(0,0,0,0.65)] ring-2 ring-emerald-500/40 cursor-grabbing"
                   : "transition-colors duration-150"

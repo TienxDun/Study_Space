@@ -104,6 +104,8 @@ export const StudyDesktopLayout = React.memo(function StudyDesktopLayout({
     setIsCommandOpen,
     commandActions,
     systemFlags,
+    bringPanelToFront,
+    getPanelZIndex,
   } = state;
 
   return (
@@ -159,7 +161,13 @@ export const StudyDesktopLayout = React.memo(function StudyDesktopLayout({
           onToggleEmbed={handleToggleEmbed}
           isRoomsOpen={isRoomsOpen}
           roomsEnabled={systemFlags.roomsEnabled}
-          onToggleRooms={() => setIsRoomsOpen((prev) => !prev)}
+          onToggleRooms={() => {
+            setIsRoomsOpen((prev) => {
+              const next = !prev;
+              if (next) bringPanelToFront("rooms");
+              return next;
+            });
+          }}
         />
       </div>
 
@@ -167,12 +175,16 @@ export const StudyDesktopLayout = React.memo(function StudyDesktopLayout({
       <StudyTasksWidget
         isOpen={isTasksOpen}
         onClose={() => setIsTasksOpen(false)}
+        zIndex={getPanelZIndex("tasks")}
+        onFocus={() => bringPanelToFront("tasks")}
       />
 
       {/* Notes Widget */}
       <StudyNotesWidget
         isOpen={isNotesOpen}
         onClose={() => setIsNotesOpen(false)}
+        zIndex={getPanelZIndex("notes")}
+        onFocus={() => bringPanelToFront("notes")}
       />
 
       {/* Scene Selector Widget */}

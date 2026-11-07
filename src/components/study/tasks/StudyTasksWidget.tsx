@@ -13,7 +13,12 @@ import { CardDetailModal } from "./components/CardDetailModal";
 
 export { getDeadlineStatus };
 
-export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => {
+export const StudyTasksWidget = ({
+  isOpen,
+  onClose,
+  zIndex = 60,
+  onFocus,
+}: StudyTasksWidgetProps) => {
   const {
     boards,
     setActiveBoardId,
@@ -164,7 +169,10 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
     <>
       <AnimatePresence>
         {isOpen && (
-          <div className="hidden sm:flex fixed inset-x-0 top-16 bottom-24 z-[60] items-center justify-center px-3 sm:px-6 pointer-events-none">
+          <div
+            style={{ zIndex }}
+            className="hidden sm:flex fixed inset-x-0 top-16 bottom-24 items-center justify-center px-3 sm:px-6 pointer-events-none"
+          >
             {/* Backdrop */}
             <motion.div
               key="tasks-widget-backdrop"
@@ -186,6 +194,7 @@ export const StudyTasksWidget = ({ isOpen, onClose }: StudyTasksWidgetProps) => 
               aria-modal="true"
               aria-label="Quản lý công việc Kanban"
               tabIndex={-1}
+              onPointerDownCapture={onFocus}
               initial={{ opacity: 0, scale: 0.97, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97, y: 8 }}
