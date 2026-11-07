@@ -284,21 +284,22 @@ export default function StudySpacePage() {
         onBack={state.isMobile && state.mobileCanGoBack ? state.handleMobileBack : undefined}
         backLabel={state.isMobile && state.mobileCanGoBack ? state.mobilePrevScreen?.title : undefined}
         hasEntered={state.isMobile ? hasEntered : true}
+        isHidden={state.isMobile && state.isAnyMobileSheetOpen}
       />
 
-      {/* Đài phát video YouTube & Spotify (Dùng chung cho cả 2 layout) */}
-      <StudyEmbedPlayerWidget
-        isOpen={state.isEmbedPlayerOpen}
-        onClose={state.handleCloseEmbed}
-        onBack={state.isMobile && state.mobileCanGoBack ? state.handleMobileBack : undefined}
-        backLabel={state.isMobile && state.mobileCanGoBack ? state.mobilePrevScreen?.title : undefined}
-        onOpen={state.handleOpenEmbedRoot}
-        onPipModeChange={state.setIsPipActive}
-        activeItem={state.externalActiveItem}
-        onStreamActiveChange={state.setIsExternalStreamActive}
-        onActiveItemChange={state.setExternalActiveItem}
-        isZenMode={state.isZenMode}
-      />
+      {/* Đài phát video YouTube & Spotify cho Desktop */}
+      {!state.isMobile && (
+        <StudyEmbedPlayerWidget
+          isOpen={state.isEmbedPlayerOpen}
+          onClose={state.handleCloseEmbed}
+          onOpen={state.handleOpenEmbedRoot}
+          onPipModeChange={state.setIsPipActive}
+          activeItem={state.externalActiveItem}
+          onStreamActiveChange={state.setIsExternalStreamActive}
+          onActiveItemChange={state.setExternalActiveItem}
+          isZenMode={state.isZenMode}
+        />
+      )}
 
       {/* Phòng học nhóm LiveKit WebRTC (Dùng chung) */}
       <StudyRoomsWidget

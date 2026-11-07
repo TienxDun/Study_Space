@@ -15,6 +15,7 @@ export interface StudyMusicPlayerProps {
   onBack?: () => void;
   backLabel?: string;
   hasEntered?: boolean;
+  isHidden?: boolean;
 }
 
 export type { Track, MoodType, StudyEmbedItem };

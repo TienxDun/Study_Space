@@ -33,10 +33,17 @@ export const StudyMusicPlayer = memo(function StudyMusicPlayer({
   onBack,
   backLabel,
   hasEntered = true,
+  isHidden = false,
 }: StudyMusicPlayerProps) {
   const [internalIsMixerOpen, setInternalIsMixerOpen] = useState(false);
   const [activeMixerTab, setActiveMixerTab] = useState<MixerTab>("ambience");
   const [isMounted, setIsMounted] = useState(false);
+
+  const [hasRevealedIsland, setHasRevealedIsland] = useState(false);
+  useEffect(() => {
+    if (hasEntered && !isHidden) setHasRevealedIsland(true);
+  }, [hasEntered, isHidden]);
+  const islandRevealDelay = !hasRevealedIsland && hasEntered ? 0.34 : 0;
 
   useEffect(() => {
     setIsMounted(true);
@@ -236,9 +243,9 @@ export const StudyMusicPlayer = memo(function StudyMusicPlayer({
       {!isShowingExternalStream && (
         <motion.div
           animate={{
-            opacity: isZenMode ? 0 : 1,
-            y: isZenMode ? 32 : 0,
-            pointerEvents: isZenMode ? "none" : "auto",
+            opacity: isZenMode || isHidden ? 0 : 1,
+            y: isZenMode || isHidden ? 32 : 0,
+            pointerEvents: isZenMode || isHidden ? "none" : "auto",
           }}
           transition={{ duration: 0.25, ease: "easeOut" }}
           className="fixed bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+1rem)] left-3 sm:bottom-3.5 sm:left-3.5 z-40 hidden sm:block max-w-[calc(50vw-24px)] sm:max-w-xs md:max-w-sm select-none"
@@ -298,16 +305,30 @@ export const StudyMusicPlayer = memo(function StudyMusicPlayer({
       {/* 2. Playback Controller Island: Căn giữa đáy màn hình (Thuần túy không viền không hộp) */}
       <motion.div
         id="tour-music-player"
-        initial={{ opacity: 0, y: 35 }}
-        animate={{
-          opacity: isZenMode ? 0 : hasEntered ? 1 : 0,
-          y: isZenMode ? 32 : hasEntered ? 0 : 35,
-          pointerEvents: isZenMode || !hasEntered ? "none" : "auto",
-        }}
-        transition={{
-          duration: 0.55,
-          delay: hasEntered ? 0.34 : 0,
-          ease: [0.16, 1, 0.3, 1],
+        initial={{ opacity: 0, y: 35, visibility: "hidden" }}
+        animate={isZenMode || isHidden || !hasEntered ? "off" : "on"}
+        variants={{
+          on: {
+            opacity: 1,
+            y: 0,
+            visibility: "visible",
+            pointerEvents: "auto",
+            transition: {
+              duration: 0.55,
+              delay: islandRevealDelay,
+              ease: [0.16, 1, 0.3, 1],
+            },
+          },
+          off: {
+            opacity: 0,
+            y: 32,
+            pointerEvents: "none",
+            transition: {
+              duration: isHidden ? 0.25 : 0.55,
+              ease: "easeIn",
+            },
+            transitionEnd: { visibility: "hidden" },
+          },
         }}
         className={`fixed z-40 select-none will-change-transform transition-[bottom] duration-300 ease-out ${
           isShowingExternalStream && externalStreamItem
@@ -371,9 +392,9 @@ export const StudyMusicPlayer = memo(function StudyMusicPlayer({
         const dockContent = (
           <motion.div
             animate={{
-              opacity: isZenMode ? 0 : 1,
-              y: isZenMode ? 28 : 0,
-              pointerEvents: isZenMode ? "none" : "auto",
+              opacity: isZenMode || isHidden ? 0 : 1,
+              y: isZenMode || isHidden ? 28 : 0,
+              pointerEvents: isZenMode || isHidden ? "none" : "auto",
             }}
             transition={{ duration: 0.22, ease: "easeOut" }}
             className="fixed bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+1rem)] right-3 sm:bottom-3.5 sm:right-3.5 z-40 hidden sm:block"

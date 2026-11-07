@@ -18,6 +18,7 @@ import {
   loadStatsSheet,
   loadMoreSheet,
   loadChatSheet,
+  loadRadioSheet,
   scheduleIdlePreloadMobileSheets,
 } from "@/components/study/mobile/sheets/sheet-preloader";
 import { SheetGlassSkeleton } from "@/components/study/mobile/sheets/SheetGlassSkeleton";
@@ -51,6 +52,10 @@ const MobileMoreSheet = dynamic(
 const MobileChatSheet = dynamic(
   () => loadChatSheet().then((mod) => mod.MobileChatSheet),
   { ssr: false, loading: () => <SheetGlassSkeleton title="Trợ lý AI" /> }
+);
+const MobileRadioSheet = dynamic(
+  () => loadRadioSheet().then((mod) => mod.MobileRadioSheet),
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Đài phát thanh" /> }
 );
 
 interface StudyMobileLayoutProps {
@@ -120,6 +125,10 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
     handleOpenRadioRoot,
     handleOpenStatsRoot,
     systemFlags,
+    handleCloseEmbed,
+    externalActiveItem,
+    setIsExternalStreamActive,
+    setExternalActiveItem,
   } = state;
 
   // Chỉ mount các bảng chức năng khi người dùng mở lần đầu để tiết kiệm RAM tối đa cho mobile.
@@ -132,6 +141,7 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
   if (isStatsOpen) mountedSheetsRef.current.stats = true;
   if (isChatOpen) mountedSheetsRef.current.chat = true;
   if (isMoreOpen) mountedSheetsRef.current.more = true;
+  if (isEmbedPlayerOpen || Boolean(externalActiveItem)) mountedSheetsRef.current.radio = true;
   const mountedSheets = mountedSheetsRef.current;
 
   // Lên lịch nạp ngầm các bảng chức năng khi CPU rảnh rỗi (sau khi màn hình chính đã tải xong)
@@ -310,6 +320,23 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
               onClose={handleMobileCloseAllSheets}
               onBack={mobileCanGoBack ? handleMobileBack : undefined}
               backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+            />
+          </MobilePerfProbe>
+        </ErrorBoundary>
+      )}
+
+      {/* Radio Sheet */}
+      {mountedSheets.radio && (
+        <ErrorBoundary>
+          <MobilePerfProbe name="sheet:radio">
+            <MobileRadioSheet
+              isOpen={isEmbedPlayerOpen}
+              onClose={handleCloseEmbed}
+              onBack={mobileCanGoBack ? handleMobileBack : undefined}
+              backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+              activeItem={externalActiveItem}
+              onStreamActiveChange={setIsExternalStreamActive}
+              onActiveItemChange={setExternalActiveItem}
             />
           </MobilePerfProbe>
         </ErrorBoundary>

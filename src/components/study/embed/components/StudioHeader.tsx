@@ -28,9 +28,11 @@ export function StudioHeader({ onClose }: StudioHeaderProps) {
 
       <div className="flex items-center gap-2">
         <button
+          type="button"
           onClick={onClose}
-          className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+          className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all shadow-sm cursor-pointer"
           title="Đóng (Esc)"
+          aria-label="Đóng (Esc)"
         >
           <XIcon className="w-4 h-4" />
         </button>

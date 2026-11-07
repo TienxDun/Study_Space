@@ -166,8 +166,8 @@ export function MobileSheetShell({
       panelClassName={cn(
         "fixed z-50 flex flex-col text-white overflow-hidden sm:hidden transform-gpu will-change-transform sheet-motion-panel",
         isZenMode
-          ? "inset-x-2 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] max-h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] rounded-[32px] surface-frost border shadow-[0_12px_28px_rgba(0,0,0,0.7),inset_0_1px_1.5px_rgba(255,255,255,0.25)]"
-          : `inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] rounded-[28px] surface-frost border shadow-[0_10px_24px_rgba(0,0,0,0.65),inset_0_1px_1.5px_rgba(255,255,255,0.2)] ${
+          ? "inset-x-2 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] max-h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] rounded-[32px] bg-neutral-950/94 backdrop-blur-xl border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]"
+          : `inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] rounded-[28px] bg-neutral-950/90 backdrop-blur-lg border border-white/[0.16] shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.2)] ${
               heightClassName || maxHeightClassName || "h-[68dvh] max-h-[72dvh]"
             }`
       )}
