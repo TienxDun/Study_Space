@@ -120,7 +120,7 @@ export const MobileMixerSheet = memo(function MobileMixerSheet({
       sheetId="mixer"
       title="Âm thanh & Nhạc Chill"
       panelRef={mobileSheetRef}
-      heightClassName="h-[80dvh] max-h-[85dvh]"
+      heightClassName="h-[68dvh] max-h-[72dvh]"
       onSwipeLeft={() => onTabChange("ambience")}
       onSwipeRight={() => onTabChange("music")}
       footer={
@@ -156,7 +156,7 @@ export const MobileMixerSheet = memo(function MobileMixerSheet({
       }
     >
       {/* Nội dung Tab cuộn mượt mà - hỗ trợ vuốt ở cả nội dung lẫn khoảng trống */}
-      <div className="flex-1 px-3 pt-2 pb-3 space-y-4">
+      <div className="flex-1 px-3 pt-2 pb-3 space-y-3">
         {tabContent}
         {/* Nút tắt hết cho mobile: nằm góc phải bên dưới, dễ bấm bằng tay phải */}
         {activeTab === "ambience" && activeCount > 0 && (

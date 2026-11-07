@@ -1,17 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   CheckCircleIcon,
   CheckIcon,
   CircleNotchIcon,
-  ShieldCheckIcon,
   TrashIcon,
-  WarningOctagonIcon,
 } from "@phosphor-icons/react";
 import { ModalShell } from "@/components/ui/ModalShell";
+import { cn } from "@/lib/utils";
 import {
   DeleteAccountError,
   deleteAccount,
@@ -25,12 +23,6 @@ const STEP_LABELS: Record<DeleteAccountStep, string> = {
   server: "Đang xoá dữ liệu và tài khoản…",
   local: "Đang dọn dữ liệu trên thiết bị…",
 };
-
-const DELETED_ITEMS = [
-  "Ghi chú, việc cần làm, cài đặt và thống kê tập trung.",
-  "Lịch sử trò chuyện với trợ lý AI.",
-  "Tư cách chủ phòng và đồng host ở phòng học nhóm.",
-];
 
 interface DeleteAccountDialogProps {
   isOpen: boolean;
@@ -108,37 +100,39 @@ export function DeleteAccountDialog({
       exit={{ opacity: 0 }}
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.97, y: 8 }}
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.97, y: 4 }}
+        exit={{ opacity: 0, scale: 0.96, y: 4 }}
         transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 w-full max-w-[400px] max-h-[min(600px,calc(100vh-2rem))] overflow-y-auto custom-study-scroll glass-panel hover:bg-black/45 p-5 text-white select-none pointer-events-auto"
+        className="relative z-10 w-full max-w-[365px] glass-panel hover:bg-black/45 p-4.5 sm:p-5 text-white select-none pointer-events-auto transform-gpu will-change-transform space-y-3.5 overflow-hidden rounded-[26px] shadow-2xl"
       >
+        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
+
         {phase === "done" ? (
           <motion.div
             initial={reduceMotion ? false : { opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="space-y-4 py-1"
+            className="space-y-4 py-2"
           >
-            <div className="flex flex-col items-center text-center gap-3">
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-500/[0.14] text-emerald-300">
+            <div className="flex flex-col items-center text-center gap-2.5">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
                 <CheckCircleIcon className="h-6 w-6" weight="fill" />
               </span>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <h3 className="text-base font-bold tracking-tight text-white">
                   Đã xoá tài khoản
                 </h3>
-                <p className="text-[12.5px] leading-relaxed text-slate-400">
-                  Dữ liệu học tập, lịch sử trò chuyện và tài khoản ZenStudy đã bị xoá.
-                  Tài khoản Google của bạn vẫn còn nguyên.
+                <p className="text-xs leading-relaxed text-slate-300">
+                  Dữ liệu cá nhân trên ZenStudy đã được dọn sạch hoàn toàn.
+                  Tài khoản Google của bạn vẫn an toàn.
                 </p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => window.location.assign("/")}
-              className="w-full rounded-xl border border-white/10 bg-white/[0.06] py-2.5 text-xs font-semibold text-white transition-colors hover:bg-white/[0.1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/50 cursor-pointer"
+              className="w-full rounded-xl bg-white/[0.08] hover:bg-white/15 active:scale-[0.98] border border-white/10 py-2.5 text-xs font-semibold text-white transition-all cursor-pointer"
             >
               Về trang chủ
             </button>
@@ -148,69 +142,46 @@ export function DeleteAccountDialog({
             variants={container}
             initial="hidden"
             animate="show"
-            className="space-y-4"
+            className="space-y-3.5"
           >
-            <motion.header variants={item} className="flex items-start gap-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-rose-400/25 bg-rose-500/[0.12] text-rose-300">
-                <WarningOctagonIcon className="h-[18px] w-[18px]" weight="fill" />
-              </span>
-              <div className="min-w-0 space-y-1 pt-0.5">
-                <h3 className="text-[17px] font-bold leading-snug tracking-tight text-white">
-                  Xoá tài khoản ZenStudy?
-                </h3>
-                <p className="text-[13px] leading-relaxed text-slate-400">
-                  Thao tác này không thể hoàn tác. Dữ liệu sau sẽ bị xoá vĩnh viễn:
-                </p>
-              </div>
+            {/* Header: Tiêu đề gọn gàng */}
+            <motion.header variants={item}>
+              <h3 className="text-[16px] font-bold leading-tight tracking-tight text-white">
+                Xoá tài khoản ZenStudy?
+              </h3>
             </motion.header>
 
-            <motion.ul variants={item} className="space-y-2">
-              {DELETED_ITEMS.map((text) => (
-                <li key={text} className="flex items-start gap-2.5">
-                  <span
-                    aria-hidden="true"
-                    className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-rose-300/80"
-                  />
-                  <span className="text-[13px] leading-relaxed text-slate-300">{text}</span>
+            {/* Nội dung xác nhận: dạng typography phẳng, xoá bỏ hoàn toàn nested box */}
+            <motion.div variants={item} className="space-y-2 text-xs leading-relaxed text-slate-300">
+              <p>
+                Toàn bộ dữ liệu của{" "}
+                <span className="font-semibold text-white">
+                  {accountEmail || "tài khoản này"}
+                </span>{" "}
+                sẽ bị xoá vĩnh viễn và không thể khôi phục:
+              </p>
+              <ul className="space-y-1.5 pl-1 text-slate-300/90">
+                <li className="flex items-center gap-2">
+                  <span className="h-1 w-1 rounded-full bg-rose-400 shrink-0" />
+                  <span>Nhiệm vụ, ghi chú, thống kê và cài đặt</span>
                 </li>
-              ))}
-            </motion.ul>
-
-            {accountEmail && (
-              <motion.div
-                variants={item}
-                className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2"
-              >
-                <span className="shrink-0 text-[11.5px] text-slate-500">Tài khoản</span>
-                <span
-                  className="min-w-0 truncate text-[12px] font-medium text-slate-200"
-                  title={accountEmail}
-                >
-                  {accountEmail}
-                </span>
-              </motion.div>
-            )}
-
-            <motion.div
-              variants={item}
-              className="flex items-start gap-2.5 rounded-xl border border-emerald-400/20 bg-emerald-500/[0.07] px-3 py-2.5"
-            >
-              <ShieldCheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
-              <div className="space-y-0.5">
-                <p className="text-[13px] leading-relaxed text-emerald-50/90">
-                  Tài khoản Google của bạn vẫn được giữ nguyên.
-                </p>
-                <p className="text-[11.5px] leading-relaxed text-emerald-100/70">
-                  Không cần chọn lại tài khoản Google.
-                </p>
-              </div>
+                <li className="flex items-center gap-2">
+                  <span className="h-1 w-1 rounded-full bg-rose-400 shrink-0" />
+                  <span>Toàn bộ lịch sử trò chuyện cùng Trợ lý AI</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="h-1 w-1 rounded-full bg-rose-400 shrink-0" />
+                  <span>Quyền chủ phòng và phòng học nhóm</span>
+                </li>
+              </ul>
             </motion.div>
 
+            {/* Báo lỗi nếu có */}
             {error && (
               <motion.p
                 variants={item}
                 role="alert"
-                className="rounded-xl border border-rose-400/25 bg-rose-500/[0.08] px-3 py-2.5 text-[12px] leading-relaxed text-rose-200"
+                className="rounded-xl border border-rose-400/25 bg-rose-500/[0.1] px-3 py-2 text-xs leading-relaxed text-rose-200"
               >
                 {error}
               </motion.p>
@@ -224,30 +195,31 @@ export function DeleteAccountDialog({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.18 }}
-                  className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3"
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 space-y-2.5"
                 >
                   <div
-                    className="flex items-center gap-2 text-[12.5px] font-medium text-slate-200"
+                    className="flex items-center gap-2 text-xs font-medium text-slate-200"
                     aria-live="polite"
                   >
                     <CircleNotchIcon
-                      className="h-4 w-4 shrink-0 animate-spin text-rose-300"
+                      className="h-4 w-4 shrink-0 animate-spin text-rose-400"
                       weight="bold"
                     />
                     <span>{step ? STEP_LABELS[step] : "Đang chuẩn bị…"}</span>
                   </div>
-                  <div className="mt-2.5 flex gap-1" aria-hidden="true">
+                  <div className="flex gap-1" aria-hidden="true">
                     {STEPS.map((s, index) => (
                       <span
                         key={s}
-                        className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                          index <= activeStep ? "bg-rose-400/80" : "bg-white/10"
-                        }`}
+                        className={cn(
+                          "h-1 flex-1 rounded-full transition-colors duration-300",
+                          index <= activeStep ? "bg-rose-400" : "bg-white/10"
+                        )}
                       />
                     ))}
                   </div>
-                  <p className="mt-2 text-[11.5px] leading-relaxed text-slate-500">
-                    Bạn đừng đóng tab này cho tới khi xong nhé.
+                  <p className="text-[11px] leading-relaxed text-slate-400">
+                    Vui lòng không đóng tab cho đến khi hoàn tất.
                   </p>
                 </motion.div>
               ) : (
@@ -257,15 +229,12 @@ export function DeleteAccountDialog({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.14 }}
-                  className="space-y-3.5"
+                  className="space-y-3"
                 >
+                  {/* Checkbox xác nhận phẳng, tối giản không lồng viền hộp */}
                   <label
                     htmlFor="delete-account-ack"
-                    className={`flex cursor-pointer items-start gap-2.5 rounded-xl border px-3 py-2.5 transition-colors ${
-                      acknowledged
-                        ? "border-rose-400/30 bg-rose-500/[0.08]"
-                        : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"
-                    }`}
+                    className="flex cursor-pointer items-center gap-2.5 py-1 text-xs text-slate-300 hover:text-white transition-colors select-none"
                   >
                     <input
                       id="delete-account-ack"
@@ -276,35 +245,26 @@ export function DeleteAccountDialog({
                     />
                     <span
                       aria-hidden="true"
-                      className={`mt-px grid h-4 w-4 shrink-0 place-items-center rounded-[5px] border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-rose-300/60 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-black/40 ${
+                      className={cn(
+                        "grid h-4 w-4 shrink-0 place-items-center rounded-[5px] border transition-colors",
                         acknowledged
-                          ? "border-rose-400 bg-rose-500 text-white"
-                          : "border-white/25 bg-transparent text-transparent"
-                      }`}
+                          ? "border-rose-500 bg-rose-600 text-white"
+                          : "border-white/30 bg-white/[0.04] text-transparent hover:border-white/50"
+                      )}
                     >
                       <CheckIcon className="h-2.5 w-2.5" weight="bold" />
                     </span>
-                    <span className="text-[13px] leading-relaxed text-slate-300">
-                      Tôi hiểu dữ liệu sẽ bị xoá vĩnh viễn và không thể khôi phục.
+                    <span className="leading-snug">
+                      Tôi hiểu và đồng ý xoá vĩnh viễn dữ liệu.
                     </span>
                   </label>
 
-                  <p className="text-[12px] leading-relaxed text-slate-500">
-                    Không xoá được tại đây?{" "}
-                    <Link
-                      href="/account-deletion/"
-                      className="font-medium text-slate-300 underline underline-offset-2 transition-colors hover:text-white"
-                      onClick={onClose}
-                    >
-                      Xoá tài khoản trên web
-                    </Link>
-                  </p>
-
-                  <div className="flex items-center justify-end gap-2">
+                  {/* Footer: Cụm nút bấm thao tác */}
+                  <div className="flex items-center justify-end gap-2 pt-1">
                     <button
                       type="button"
                       onClick={onClose}
-                      className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-[12.5px] font-semibold text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 cursor-pointer"
+                      className="rounded-xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.1] active:scale-95 px-3.5 py-2 text-xs font-semibold text-slate-300 transition-all cursor-pointer"
                     >
                       Ở lại
                     </button>
@@ -312,7 +272,7 @@ export function DeleteAccountDialog({
                       type="button"
                       onClick={() => void handleConfirm()}
                       disabled={!acknowledged}
-                      className="flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2.5 text-[12.5px] font-bold text-white shadow-sm shadow-rose-950/40 transition-all hover:bg-rose-500 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/70 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-rose-600 disabled:active:scale-100 cursor-pointer"
+                      className="flex items-center gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-95 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-rose-950/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none cursor-pointer"
                     >
                       <TrashIcon className="h-3.5 w-3.5" weight="bold" />
                       Xoá vĩnh viễn

@@ -27,35 +27,35 @@ import { SheetGlassSkeleton } from "@/components/study/mobile/sheets/SheetGlassS
 // vừa nạp ngầm trong nền để khi bấm mở là có sẵn 100% không độ trễ
 const MobileTasksSheet = dynamic(
   () => loadTasksSheet().then((mod) => mod.MobileTasksSheet),
-  { ssr: false, loading: () => <SheetGlassSkeleton title="Công việc" /> }
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Công việc" sheetId="tasks" /> }
 );
 const MobileNotesSheet = dynamic(
   () => loadNotesSheet().then((mod) => mod.MobileNotesSheet),
-  { ssr: false, loading: () => <SheetGlassSkeleton title="Ghi chú" /> }
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Ghi chú" sheetId="notes" /> }
 );
 const MobileSceneSheet = dynamic(
   () => loadSceneSheet().then((mod) => mod.MobileSceneSheet),
-  { ssr: false, loading: () => <SheetGlassSkeleton title="Không gian" /> }
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Không gian" sheetId="scenes" /> }
 );
 const MobileSettingsSheet = dynamic(
   () => loadSettingsSheet().then((mod) => mod.MobileSettingsSheet),
-  { ssr: false, loading: () => <SheetGlassSkeleton title="Cài đặt" /> }
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Cài đặt" sheetId="settings" /> }
 );
 const MobileFocusStatsSheet = dynamic(
   () => loadStatsSheet().then((mod) => mod.MobileFocusStatsSheet),
-  { ssr: false, loading: () => <SheetGlassSkeleton title="Thống kê" /> }
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Thống kê" sheetId="stats" /> }
 );
 const MobileMoreSheet = dynamic(
   () => loadMoreSheet().then((mod) => mod.MobileMoreSheet),
-  { ssr: false, loading: () => <SheetGlassSkeleton title="Thêm" /> }
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Thêm" sheetId="more" /> }
 );
 const MobileChatSheet = dynamic(
   () => loadChatSheet().then((mod) => mod.MobileChatSheet),
-  { ssr: false, loading: () => <SheetGlassSkeleton title="Trợ lý AI" /> }
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Trợ lý AI" sheetId="chat" /> }
 );
 const MobileRadioSheet = dynamic(
   () => loadRadioSheet().then((mod) => mod.MobileRadioSheet),
-  { ssr: false, loading: () => <SheetGlassSkeleton title="Đài phát thanh" /> }
+  { ssr: false, loading: () => <SheetGlassSkeleton title="Đài phát thanh" sheetId="radio" /> }
 );
 
 interface StudyMobileLayoutProps {

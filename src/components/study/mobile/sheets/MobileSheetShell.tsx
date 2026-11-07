@@ -6,6 +6,7 @@ import { ModalShell } from "@/components/ui/ModalShell";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { saveStorage } from "@/lib/safe-storage";
 import { cn } from "@/lib/utils";
+import { setSheetExpanded } from "./sheet-zen-tracker";
 
 interface MobileSheetShellProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface MobileSheetShellProps {
   maxHeightClassName?: string;
   heightClassName?: string;
   defaultZenMode?: boolean;
+  allowZenMode?: boolean;
   footer?: ReactNode;
   footerClassName?: string;
   panelRef?: React.Ref<HTMLDivElement>;
@@ -51,6 +53,7 @@ export function MobileSheetShell({
   maxHeightClassName,
   heightClassName,
   defaultZenMode = false,
+  allowZenMode = true,
   footer,
   footerClassName,
   panelRef,
@@ -84,6 +87,7 @@ export function MobileSheetShell({
 
   const [isZenMode, setIsZenMode] = useState<boolean>(defaultZenMode);
   const localPanelRef = useRef<HTMLDivElement | null>(null);
+  const effectiveZenMode = allowZenMode ? isZenMode : false;
 
   // Khi mở bảng, đồng bộ chế độ xem theo lựa chọn đã lưu của người dùng
   useEffect(() => {
@@ -91,6 +95,18 @@ export function MobileSheetShell({
       setIsZenMode(getSavedZenMode());
     }
   }, [isOpen, getSavedZenMode]);
+
+  // Đồng bộ trạng thái mở rộng toàn màn hình để ẩn MobileTopBar tránh nhìn xuyên thấu
+  useEffect(() => {
+    if (isOpen && effectiveZenMode) {
+      setSheetExpanded(effectiveSheetId, true);
+      return () => {
+        setSheetExpanded(effectiveSheetId, false);
+      };
+    } else {
+      setSheetExpanded(effectiveSheetId, false);
+    }
+  }, [isOpen, effectiveZenMode, effectiveSheetId]);
 
   const handleToggleZenMode = () => {
     if (localPanelRef.current) {
@@ -158,16 +174,16 @@ export function MobileSheetShell({
       panelRef={setCombinedRef}
       ariaLabel={typeof title === "string" ? title : sheetId || "Bảng điều khiển"}
       keepMounted={keepMounted}
-      initial={{ opacity: 0, y: 80 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: "100%", transition: { duration: 0.22, ease: [0.32, 0, 0.67, 0] } }}
-      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      exit={{ opacity: 0, y: 8, transition: { duration: 0.15, ease: [0.32, 0, 0.67, 0] } }}
+      transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
       backdropClassName="sm:hidden"
       panelClassName={cn(
         "fixed z-50 flex flex-col text-white overflow-hidden sm:hidden transform-gpu will-change-transform sheet-motion-panel",
-        isZenMode
-          ? "inset-x-2 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] max-h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] rounded-[32px] bg-neutral-950/94 backdrop-blur-xl border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]"
-          : `inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] rounded-[28px] bg-neutral-950/90 backdrop-blur-lg border border-white/[0.16] shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.2)] ${
+        effectiveZenMode
+          ? "inset-x-2 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[calc(100dvh-var(--app-safe-top)-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] max-h-[calc(100dvh-var(--app-safe-top)-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] rounded-[32px] bg-neutral-950/94 backdrop-blur-xl border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]"
+          : `inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] rounded-[28px] bg-neutral-950/90 backdrop-blur-lg border border-white/[0.16] shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.2)] max-h-[calc(100dvh-var(--app-safe-top)-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] ${
               heightClassName || maxHeightClassName || "h-[68dvh] max-h-[72dvh]"
             }`
       )}
@@ -215,25 +231,27 @@ export function MobileSheetShell({
             {headerRight}
 
             {/* Nút chuyển chế độ Full-Screen Zen Overlay / Khay đáy */}
-            <button
-              type="button"
-              onClick={() => {
-                startTransition(() => {
-                  handleToggleZenMode();
-                });
-              }}
-              title={isZenMode ? "Thu gọn về dạng khay đáy" : "Mở rộng không gian Zen (Toàn màn hình)"}
-              aria-label="Chuyển chế độ xem"
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-[background-color,border-color,transform] duration-75 shadow-sm cursor-pointer touch-manipulation"
-            >
-              <span className={cn("inline-flex transition-transform duration-300 ease-out", isZenMode ? "rotate-180 scale-105" : "rotate-0 scale-100")}>
-                {isZenMode ? (
-                  <ArrowsInSimpleIcon className="w-3.5 h-3.5" weight="bold" />
-                ) : (
-                  <ArrowsOutSimpleIcon className="w-3.5 h-3.5" weight="bold" />
-                )}
-              </span>
-            </button>
+            {allowZenMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  startTransition(() => {
+                    handleToggleZenMode();
+                  });
+                }}
+                title={effectiveZenMode ? "Thu gọn về dạng khay đáy" : "Mở rộng không gian Zen (Toàn màn hình)"}
+                aria-label="Chuyển chế độ xem"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-[background-color,border-color,transform] duration-75 shadow-sm cursor-pointer touch-manipulation"
+              >
+                <span className={cn("inline-flex transition-transform duration-300 ease-out", effectiveZenMode ? "rotate-180 scale-105" : "rotate-0 scale-100")}>
+                  {effectiveZenMode ? (
+                    <ArrowsInSimpleIcon className="w-3.5 h-3.5" weight="bold" />
+                  ) : (
+                    <ArrowsOutSimpleIcon className="w-3.5 h-3.5" weight="bold" />
+                  )}
+                </span>
+              </button>
+            )}
 
             {/* Nút Đóng */}
             <button

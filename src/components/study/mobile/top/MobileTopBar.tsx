@@ -12,6 +12,8 @@ import {
 import { ZenStudyLogo } from "@/components/study/brand/ZenStudyLogo";
 import { isNativeApp } from "@/lib/google-sign-in";
 import { yieldToPaint } from "@/components/study/mobile/perf/yieldToPaint";
+import { cn } from "@/lib/utils";
+import { isAnySheetExpanded } from "@/components/study/mobile/sheets/sheet-zen-tracker";
 
 interface MobileTopBarProps {
   isZenMode: boolean;
@@ -35,8 +37,19 @@ export const MobileTopBar = React.memo(function MobileTopBar({
 }: MobileTopBarProps) {
   const [time, setTime] = useState("");
   const [canShowFullscreen, setCanShowFullscreen] = useState(true);
+  const [isSheetExpanded, setIsSheetExpanded] = useState(() => isAnySheetExpanded());
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didLongPressRef = useRef(false);
+
+  // Lắng nghe sự kiện mở rộng toàn màn hình (Zen Mode) của các Sheet để ẩn thanh Top Bar
+  useEffect(() => {
+    const handleExpanded = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      setIsSheetExpanded(Boolean(detail?.isExpanded));
+    };
+    window.addEventListener("zenstudy:mobile-sheet-expanded", handleExpanded);
+    return () => window.removeEventListener("zenstudy:mobile-sheet-expanded", handleExpanded);
+  }, []);
 
   useEffect(() => {
     if (isNativeApp()) {
@@ -76,23 +89,33 @@ export const MobileTopBar = React.memo(function MobileTopBar({
     return () => clearInterval(id);
   }, []);
 
+  const isHidden = isZenMode || isSheetExpanded;
+
   if (isZenMode) return null;
 
   return (
     <motion.header
       initial={{ opacity: 0, y: 25 }}
       animate={{
-        opacity: hasEntered ? 1 : 0,
-        y: hasEntered ? 0 : 25,
+        opacity: hasEntered && !isHidden ? 1 : 0,
+        y: hasEntered && !isHidden ? 0 : 25,
       }}
       transition={{
-        duration: 0.5,
-        delay: hasEntered ? 0.08 : 0,
+        duration: 0.25,
+        delay: hasEntered && !isHidden ? 0.08 : 0,
         ease: [0.16, 1, 0.3, 1],
       }}
-      className="fixed top-0 inset-x-0 z-40 sm:hidden pt-safe pointer-events-none"
+      className={cn(
+        "fixed top-0 inset-x-0 z-40 sm:hidden pt-safe pointer-events-none transition-opacity",
+        isHidden && "pointer-events-none opacity-0"
+      )}
     >
-      <div className="relative flex items-center justify-between px-4 h-14 pointer-events-auto">
+      <div
+        className={cn(
+          "relative flex items-center justify-between px-4 h-14 pointer-events-auto",
+          isHidden && "pointer-events-none"
+        )}
+      >
         <Link
           href="/"
           aria-label="ZenStudy"

@@ -7,12 +7,14 @@ import {
   CircleNotchIcon,
   SignOutIcon,
   TrashIcon,
+  CaretRightIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/use-auth";
 import { cloudConfigured, syncNow } from "@/lib/simple-cloud-sync";
 import { GoogleIcon } from "@/components/study/auth/components/GoogleIcon";
 import { DeleteAccountDialog } from "@/components/study/auth/components/DeleteAccountDialog";
+import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 
 // Thẻ tài khoản RIÊNG cho bảng Thêm trên mobile.
 // Tinh gọn hiện đại: Avatar + Thông tin bên trái; Cụm nút tròn Đồng bộ & Đăng xuất bên phải.
@@ -21,6 +23,7 @@ export function MobileAccountCard() {
   const [avatarError, setAvatarError] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
   useEffect(() => {
     setAvatarError(false);
@@ -52,6 +55,11 @@ export function MobileAccountCard() {
     }
   };
 
+  const handleSignOutClick = () => {
+    if (isSigningOut) return;
+    setIsLogoutConfirmOpen(true);
+  };
+
   if (loading) {
     return (
       <div
@@ -70,47 +78,49 @@ export function MobileAccountCard() {
 
   if (!user) {
     return (
-      <button
-        onClick={signIn}
-        disabled={isSigningIn}
-        className="min-h-[48px] w-full flex items-center justify-center gap-2 px-4 rounded-2xl bg-white text-slate-950 text-sm font-bold active:scale-[0.98] disabled:opacity-60 cursor-pointer touch-manipulation"
-      >
-        {isSigningIn ? (
-          <CircleNotchIcon className="w-4 h-4 animate-spin" />
-        ) : (
-          <GoogleIcon />
-        )}
-        Đăng nhập bằng Google
-      </button>
+      <div className="rounded-2xl bg-white/[0.035] border border-white/[0.08] p-2 shadow-sm">
+        <button
+          onClick={signIn}
+          disabled={isSigningIn}
+          className="min-h-[46px] w-full flex items-center justify-center gap-2 px-4 rounded-xl bg-white text-slate-950 text-xs font-bold active:scale-[0.98] disabled:opacity-60 cursor-pointer touch-manipulation shadow-sm transition-transform"
+        >
+          {isSigningIn ? (
+            <CircleNotchIcon className="w-4 h-4 animate-spin" />
+          ) : (
+            <GoogleIcon />
+          )}
+          Đăng nhập bằng Google
+        </button>
+      </div>
     );
   }
 
   return (
-    <div>
-      <div className="min-h-[48px] flex items-center gap-3 px-3">
-        <div className="relative w-11 h-11 shrink-0">
-          <span className="absolute inset-0 w-full h-full rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-base font-bold flex items-center justify-center">
+    <div className="rounded-2xl bg-white/[0.035] border border-white/[0.08] overflow-hidden divide-y divide-white/[0.06] shadow-sm">
+      <div className="min-h-[52px] flex items-center gap-3 p-3">
+        <div className="relative w-10 h-10 shrink-0">
+          <span className="absolute inset-0 w-full h-full rounded-xl bg-emerald-500/20 text-emerald-300 text-sm font-bold flex items-center justify-center">
             {(user.displayName || user.email || "U")[0].toUpperCase()}
           </span>
           {user.photoURL && !avatarError && (
             <Image
               src={user.photoURL}
               alt={user.displayName || "Avatar"}
-              width={44}
-              height={44}
+              width={40}
+              height={40}
               unoptimized
               priority
               referrerPolicy="no-referrer"
-              className="absolute inset-0 w-full h-full rounded-2xl object-cover border border-white/20"
+              className="absolute inset-0 w-full h-full rounded-xl object-cover"
               onError={() => setAvatarError(true)}
             />
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-white truncate" title={user.displayName || undefined}>
+          <p className="text-[13.5px] font-semibold text-white truncate" title={user.displayName || undefined}>
             {user.displayName || "Học viên ZenStudy"}
           </p>
-          <p className="text-xs text-slate-400 truncate" title={user.email || undefined}>
+          <p className="text-xs text-white/50 truncate" title={user.email || undefined}>
             {user.email}
           </p>
         </div>
@@ -123,27 +133,27 @@ export function MobileAccountCard() {
             aria-busy={isSyncing || undefined}
             title={isSyncing ? "Đang đồng bộ…" : "Đồng bộ dữ liệu"}
             aria-label={isSyncing ? "Đang đồng bộ dữ liệu" : "Đồng bộ dữ liệu"}
-            className="w-10 h-10 grid place-items-center rounded-full border border-white/10 text-slate-300 hover:text-sky-300 hover:border-sky-400/30 active:scale-95 disabled:opacity-60 disabled:cursor-wait transition-colors cursor-pointer touch-manipulation"
+            className="w-9 h-9 grid place-items-center rounded-xl bg-white/[0.06] text-white/70 hover:text-sky-300 hover:bg-sky-500/15 active:scale-95 disabled:opacity-60 disabled:cursor-wait transition-colors cursor-pointer touch-manipulation"
           >
             {isSyncing ? (
-              <CircleNotchIcon className="w-[18px] h-[18px] text-sky-400 animate-spin" weight="bold" />
+              <CircleNotchIcon className="w-4 h-4 text-sky-400 animate-spin" weight="bold" />
             ) : (
-              <ArrowsClockwiseIcon className="w-[18px] h-[18px]" />
+              <ArrowsClockwiseIcon className="w-4 h-4" />
             )}
           </button>
           <button
             type="button"
-            onClick={() => void signOut()}
+            onClick={handleSignOutClick}
             disabled={isSigningOut}
             aria-busy={isSigningOut || undefined}
             title={isSigningOut ? "Đang đăng xuất…" : "Đăng xuất"}
             aria-label={isSigningOut ? "Đang đăng xuất" : "Đăng xuất"}
-            className="w-10 h-10 grid place-items-center rounded-full border border-white/10 text-slate-300 hover:text-rose-200 hover:border-rose-400/30 active:scale-95 disabled:opacity-60 disabled:cursor-wait transition-colors cursor-pointer touch-manipulation"
+            className="w-9 h-9 grid place-items-center rounded-xl bg-white/[0.06] text-white/70 hover:text-rose-200 hover:bg-rose-500/15 active:scale-95 disabled:opacity-60 disabled:cursor-wait transition-colors cursor-pointer touch-manipulation"
           >
             {isSigningOut ? (
-              <CircleNotchIcon className="w-[18px] h-[18px] animate-spin" weight="bold" />
+              <CircleNotchIcon className="w-4 h-4 animate-spin" weight="bold" />
             ) : (
-              <SignOutIcon className="w-[18px] h-[18px]" />
+              <SignOutIcon className="w-4 h-4" />
             )}
           </button>
         </div>
@@ -156,22 +166,40 @@ export function MobileAccountCard() {
             setIsDeleteOpen(true);
           });
         }}
-        className="group mt-1.5 w-full min-h-[46px] flex items-center gap-3 px-3 py-1 rounded-2xl bg-white/[0.04] hover:bg-rose-500/[0.08] active:bg-rose-500/[0.12] active:scale-[0.97] border border-white/[0.08] hover:border-rose-400/25 transition-[background-color,border-color,transform] duration-75 text-left select-none cursor-pointer touch-manipulation"
+        className="group w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-rose-500/[0.08] active:bg-rose-500/[0.12] transition-colors text-left select-none cursor-pointer touch-manipulation"
       >
-        <span className="w-9 h-9 rounded-xl bg-white/[0.08] border border-white/[0.15] flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
-          <TrashIcon className="w-5 h-5 text-rose-300" />
+        <span className="w-8 h-8 rounded-xl bg-rose-500/12 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+          <TrashIcon className="w-4 h-4 text-rose-300" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[13px] font-medium text-rose-200 group-hover:text-rose-100 tracking-tight">
+          <span className="block text-[13.5px] font-medium text-rose-200/90 group-hover:text-rose-100 tracking-tight">
             Xoá tài khoản
           </span>
         </span>
+        <CaretRightIcon className="w-4 h-4 text-rose-300/30 group-hover:text-rose-300/60 transition-colors shrink-0" weight="bold" />
       </button>
 
       <DeleteAccountDialog
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
         accountEmail={user.email}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={isLogoutConfirmOpen}
+        pending={isSigningOut}
+        onClose={() => {
+          if (isSigningOut) return;
+          setIsLogoutConfirmOpen(false);
+        }}
+        onConfirm={async () => {
+          await signOut();
+          setIsLogoutConfirmOpen(false);
+        }}
+        title="Đăng xuất khỏi ZenStudy?"
+        description="Dữ liệu đã đồng bộ vẫn còn trên đám mây, nhưng dữ liệu trên thiết bị này sẽ bị xoá. Nếu đang offline, thay đổi chưa đồng bộ có thể mất."
+        confirmText="Đăng xuất"
+        cancelText="Ở lại"
       />
     </div>
   );

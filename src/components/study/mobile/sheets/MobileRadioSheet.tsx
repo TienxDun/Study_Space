@@ -20,6 +20,7 @@ import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { ensureYouTubeJsApi, sendYouTubeCommand } from "@/lib/youtube-remote";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { saveStorage } from "@/lib/safe-storage";
+import { setSheetExpanded } from "./sheet-zen-tracker";
 import { cn } from "@/lib/utils";
 
 export interface MobileRadioSheetProps {
@@ -80,6 +81,18 @@ export const MobileRadioSheet = React.memo(function MobileRadioSheet({
       } catch {}
     }
   }, [isOpen]);
+
+  // Đồng bộ trạng thái mở rộng toàn màn hình để ẩn MobileTopBar tránh nhìn xuyên thấu
+  useEffect(() => {
+    if (isOpen && isZenMode) {
+      setSheetExpanded("embed", true);
+      return () => {
+        setSheetExpanded("embed", false);
+      };
+    } else {
+      setSheetExpanded("embed", false);
+    }
+  }, [isOpen, isZenMode]);
 
   // 2. Logic dữ liệu kênh và luồng phát
   const {
@@ -160,19 +173,19 @@ export const MobileRadioSheet = React.memo(function MobileRadioSheet({
 
       {/* Khung Sheet chuẩn Liquid Glass cho Mobile */}
       <motion.div
-        initial={{ opacity: 0, y: 80 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={
           isOpen
             ? { opacity: 1, y: 0 }
-            : { opacity: 0, y: "100%", transition: { duration: 0.22, ease: [0.32, 0, 0.67, 0] } }
+            : { opacity: 0, y: 8, transition: { duration: 0.15, ease: [0.32, 0, 0.67, 0] } }
         }
-        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
         style={!isOpen ? { pointerEvents: "none" } : undefined}
         className={cn(
           "fixed z-50 flex flex-col text-white overflow-hidden sm:hidden transform-gpu will-change-transform",
           isZenMode
-            ? "inset-x-2 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] max-h-[calc(100dvh-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] rounded-[32px] bg-neutral-950/94 backdrop-blur-xl border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]"
-            : "inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[72dvh] max-h-[72dvh] rounded-[28px] bg-neutral-950/90 backdrop-blur-lg border border-white/[0.16] shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.2)]"
+            ? "inset-x-2 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[calc(100dvh-var(--app-safe-top)-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] max-h-[calc(100dvh-var(--app-safe-top)-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] rounded-[32px] bg-neutral-950/94 backdrop-blur-xl border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]"
+            : "inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[72dvh] max-h-[calc(100dvh-var(--app-safe-top)-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] rounded-[28px] bg-neutral-950/90 backdrop-blur-lg border border-white/[0.16] shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.2)]"
         )}
       >
         {/* Mép kính bắt sáng trên đỉnh tấm kính mẹ */}
