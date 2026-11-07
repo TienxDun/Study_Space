@@ -264,11 +264,11 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
             <button
               type="button"
               onClick={() => promptDeleteCard(selectedCard)}
-              className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-rose-500/20 active:scale-90 border border-white/15 hover:border-rose-500/30 flex items-center justify-center text-slate-300 hover:text-rose-400 transition-all shadow-sm cursor-pointer"
+              className="w-8 h-8 rounded-full bg-rose-500/10 hover:bg-rose-500/20 active:bg-rose-500/25 active:scale-90 border border-rose-500/25 hover:border-rose-500/40 flex items-center justify-center text-rose-400 hover:text-rose-300 transition-all shadow-sm cursor-pointer"
               title="Xóa nhiệm vụ này"
               aria-label="Xóa nhiệm vụ này"
             >
-              <TrashIcon className="w-4 h-4" />
+              <TrashIcon className="w-4 h-4" weight="bold" />
             </button>
           ) : (
             <button

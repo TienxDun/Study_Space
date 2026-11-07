@@ -29,6 +29,7 @@ import { NoteChatPromptMenu } from "../../notes/components/NoteChatPromptMenu";
 import { MobileSheetShell } from "./MobileSheetShell";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { MobileNoteBubbleMenu } from "./MobileNoteBubbleMenu";
+import { MobileBubbleMenuOverlay } from "./MobileBubbleMenuOverlay";
 import { SyncStatusBadge } from "@/components/study/sync/SyncStatusBadge";
 
 interface MobileNotesSheetProps {
@@ -81,7 +82,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
   const [showAiPromptMenu, setShowAiPromptMenu] = useState(false);
 
   const [showDetailMoreMenu, setShowDetailMoreMenu] = useState(false);
-  const detailMoreMenuRef = useRef<HTMLDivElement>(null);
+  const detailMoreMenuRef = useRef<HTMLButtonElement>(null);
 
   const titleInputRef = useRef<HTMLTextAreaElement>(null);
   const aiPromptTriggerRef = useRef<HTMLButtonElement>(null);
@@ -152,16 +153,16 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
     setShowDetailMoreMenu(false);
   }, [searchQuery, isSearchOpen, isOpen]);
 
-  // Đóng menu tùy chọn chi tiết khi bấm ra ngoài
+  // Đóng menu tùy chọn chi tiết khi nhấn phím Escape (chạm ngoài đã do MobileBubbleMenuOverlay xử lý)
   useEffect(() => {
     if (!showDetailMoreMenu) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (detailMoreMenuRef.current && !detailMoreMenuRef.current.contains(e.target as Node)) {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
         setShowDetailMoreMenu(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [showDetailMoreMenu]);
 
   // Tìm kiếm ghi chú theo tiêu đề hoặc nội dung (useDeferredValue giúp gõ phím không bị nghẽn INP)
@@ -272,8 +273,9 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
           currentEditingNote ? (
             <div className="flex items-center gap-1.5 shrink-0">
               {/* Nút Tùy chọn Thêm `...` (Ghim, Sao chép, Xóa) */}
-              <div className="relative" ref={detailMoreMenuRef}>
+              <div className="relative">
                 <button
+                  ref={detailMoreMenuRef}
                   type="button"
                   onClick={() => setShowDetailMoreMenu((prev) => !prev)}
                   title="Tùy chọn ghi chú"
@@ -286,8 +288,13 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                   <DotsThreeIcon className="w-4 h-4" weight="bold" />
                 </button>
 
-                {showDetailMoreMenu && (
-                  <div className="absolute right-0 top-full mt-1.5 w-48 p-1.5 rounded-2xl surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] z-50 text-white text-xs space-y-0.5 select-none animate-in fade-in zoom-in-95 duration-150">
+                <MobileBubbleMenuOverlay
+                  isOpen={showDetailMoreMenu}
+                  onClose={() => setShowDetailMoreMenu(false)}
+                  anchorRef={detailMoreMenuRef}
+                  menuKey={`note-detail-more-${currentEditingNote.id}`}
+                >
+                  <div className="flex flex-col space-y-0.5">
                     {/* Mục Ghim */}
                     <button
                       type="button"
@@ -295,10 +302,10 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                         handleTogglePin(currentEditingNote.id);
                         setShowDetailMoreMenu(false);
                       }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left hover:bg-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-left hover:bg-white/10 text-white/80 hover:text-white transition-colors cursor-pointer group/item"
                     >
                       <PushPinIcon
-                        className={`w-3.5 h-3.5 ${currentEditingNote.isPinned ? "text-amber-400" : "text-white/60"}`}
+                        className={`w-4 h-4 ${currentEditingNote.isPinned ? "text-amber-400" : "text-white/60"}`}
                         weight={currentEditingNote.isPinned ? "fill" : "regular"}
                       />
                       <span>{currentEditingNote.isPinned ? "Bỏ ghim ghi chú" : "Ghim lên đầu"}</span>
@@ -313,9 +320,9 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                         toast.success("Đã sao chép nội dung ghi chú");
                         setShowDetailMoreMenu(false);
                       }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left hover:bg-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-left hover:bg-white/10 text-white/80 hover:text-white transition-colors cursor-pointer group/item"
                     >
-                      <CopyIcon className="w-3.5 h-3.5 text-white/60" />
+                      <CopyIcon className="w-4 h-4 text-white/60" />
                       <span>Sao chép nội dung</span>
                     </button>
 
@@ -328,13 +335,13 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                         setShowDetailMoreMenu(false);
                         promptDeleteNote(currentEditingNote);
                       }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-rose-300 hover:text-rose-200 hover:bg-rose-500/15 transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-left text-rose-300 hover:text-rose-200 hover:bg-rose-500/15 transition-colors cursor-pointer group/item"
                     >
-                      <TrashIcon className="w-3.5 h-3.5 text-rose-400" />
+                      <TrashIcon className="w-4 h-4 text-rose-400" />
                       <span>Xóa ghi chú này</span>
                     </button>
                   </div>
-                )}
+                </MobileBubbleMenuOverlay>
               </div>
             </div>
           ) : (

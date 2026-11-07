@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   SparkleIcon,
   LightbulbIcon,
@@ -132,27 +133,17 @@ export function NoteChatPromptMenu({
     return () => window.removeEventListener("resize", updateCoords);
   }, [isOpen, triggerRef]);
 
-  // Đóng menu khi bấm ra ngoài hoặc nhấn Esc
+  // Đóng menu khi nhấn Esc
   useEffect(() => {
     if (!isOpen) return;
-    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
-      const target = e.target as Node;
-      if (menuRef.current?.contains(target)) return;
-      if (triggerRef?.current?.contains(target)) return;
-      onClose();
-    };
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-    document.addEventListener("mousedown", handleOutsideClick);
-    document.addEventListener("touchstart", handleOutsideClick);
     document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-      document.removeEventListener("touchstart", handleOutsideClick);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, onClose, triggerRef]);
+  }, [isOpen, onClose]);
 
   const handleTriggerAction = (action: PromptAction) => {
     if (!activeNote) return;
@@ -175,40 +166,52 @@ export function NoteChatPromptMenu({
     );
   };
 
-  if (!isOpen || !coords || typeof document === "undefined" || !document.body) return null;
+  if (typeof document === "undefined" || !document.body) return null;
 
   return createPortal(
-    <div className="select-none">
-      {/* Lớp nền mờ tối phủ toàn màn hình bắt chạm để đóng */}
-      <div
-        className="fixed inset-0 z-[70] bg-black/45 animate-in fade-in duration-150 cursor-pointer touch-none"
-        onPointerDown={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onClose();
-        }}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onClose();
-        }}
-        role="button"
-        tabIndex={-1}
-        aria-label="Đóng menu hỏi AI"
-      />
+    <AnimatePresence>
+      {isOpen && coords && (
+        <div className="select-none">
+          {/* Lớp nền mờ tối phủ toàn màn hình bắt chạm để đóng */}
+          <motion.div
+            key="note-chat-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16 }}
+            className="fixed inset-0 z-[70] bg-black/45 cursor-pointer touch-none"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
+            role="button"
+            tabIndex={-1}
+            aria-label="Đóng menu hỏi AI"
+          />
 
-      {/* Menu Kính mờ (Frosted Glass) */}
-      <div
-        ref={menuRef}
-        style={{ top: coords.top, right: coords.right }}
-        className={`fixed z-[71] w-[min(320px,calc(100vw-24px))] sm:w-[340px] p-1.5 rounded-2xl border select-none animate-in fade-in zoom-in-95 duration-150 ${
-          isLight
-            ? "bg-white/95 backdrop-blur-xl border-slate-200 text-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.18)]"
-            : "surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] text-white"
-        }`}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
-      >
+          {/* Menu Kính mờ (Frosted Glass) */}
+          <motion.div
+            key="note-chat-popover"
+            ref={menuRef}
+            initial={{ opacity: 0, scale: 0.95, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -4 }}
+            transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+            style={{ top: coords.top, right: coords.right }}
+            className={`fixed z-[71] w-[min(320px,calc(100vw-24px))] sm:w-[340px] p-1.5 rounded-2xl border select-none ${
+              isLight
+                ? "bg-white/95 backdrop-blur-xl border-slate-200 text-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.18)]"
+                : "surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] text-white"
+            }`}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
         {/* Header menu */}
         <div
           className={`px-2.5 pt-1.5 pb-2 border-b flex items-center justify-between ${
@@ -282,8 +285,10 @@ export function NoteChatPromptMenu({
             );
           })}
         </div>
-      </div>
-    </div>,
-    document.body
+      </motion.div>
+    </div>
+  )}
+</AnimatePresence>,
+document.body
   );
 }

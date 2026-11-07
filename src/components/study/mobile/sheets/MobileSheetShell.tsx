@@ -84,27 +84,12 @@ export function MobileSheetShell({
 
   const [isZenMode, setIsZenMode] = useState<boolean>(defaultZenMode);
   const localPanelRef = useRef<HTMLDivElement | null>(null);
-  const touchStartY = useRef<number | null>(null);
-  const isDraggingDown = useRef(false);
-  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [isClosingByDrag, setIsClosingByDrag] = useState(false);
 
-  // Khi mở bảng, đồng bộ chế độ xem theo lựa chọn đã lưu của người dùng và reset chuyển động
+  // Khi mở bảng, đồng bộ chế độ xem theo lựa chọn đã lưu của người dùng
   useEffect(() => {
     if (isOpen) {
-      setIsClosingByDrag(false);
       setIsZenMode(getSavedZenMode());
-      if (closeTimerRef.current) {
-        clearTimeout(closeTimerRef.current);
-        closeTimerRef.current = null;
-      }
     }
-    return () => {
-      if (closeTimerRef.current) {
-        clearTimeout(closeTimerRef.current);
-        closeTimerRef.current = null;
-      }
-    };
   }, [isOpen, getSavedZenMode]);
 
   const handleToggleZenMode = () => {
@@ -124,119 +109,10 @@ export function MobileSheetShell({
     });
   };
 
-  // Hợp nhất ref bên ngoài và ref nội bộ để điều khiển trực tiếp chuyển động trượt
+  // Hợp nhất ref bên ngoài và ref nội bộ
   const setCombinedRef = (el: HTMLDivElement | null) => {
     localPanelRef.current = el;
     assignRef(panelRef, el);
-  };
-
-  // Kéo xuống đóng bảng hoặc vuốt lên phóng to toàn màn hình
-  const handleTouchStart = (e: React.TouchEvent) => {
-    // Không kích hoạt kéo vuốt nếu người dùng chạm vào các nút chức năng trên header
-    const target = e.target as Node | null;
-    const targetEl = target instanceof Element ? target : target?.parentElement;
-    if (targetEl?.closest("button") || targetEl?.closest("input") || targetEl?.closest("a")) return;
-
-    const touch = e.touches[0];
-    if (!touch) return;
-
-    touchStartY.current = touch.clientY;
-    isDraggingDown.current = true;
-    if (localPanelRef.current) {
-      localPanelRef.current.style.transition = "none";
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDraggingDown.current || touchStartY.current === null) return;
-    const touch = e.touches[0];
-    if (!touch) return;
-
-    const diff = touch.clientY - touchStartY.current;
-    if (diff > 0) {
-      // Kéo xuống dưới: bám sát 1:1 theo ngón tay
-      if (localPanelRef.current) {
-        localPanelRef.current.style.transform = `translateY(${diff}px)`;
-        localPanelRef.current.style.opacity = `${Math.max(0.3, 1 - diff / (window.innerHeight || 800))}`;
-      }
-    } else {
-      // Kéo lên trên: độ đàn hồi co giãn nhẹ (rubber-band)
-      if (localPanelRef.current) {
-        const resistance = !isZenMode ? diff * 0.35 : 0;
-        localPanelRef.current.style.transform = `translateY(${resistance}px)`;
-        localPanelRef.current.style.opacity = "1";
-      }
-    }
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!isDraggingDown.current || touchStartY.current === null) return;
-    const touch = e.changedTouches[0] || e.touches[0];
-    const diff = touch ? touch.clientY - touchStartY.current : 0;
-    isDraggingDown.current = false;
-    touchStartY.current = null;
-
-    // 1. Vuốt lên trên (diff < -35px): Phóng to bảng thành Zen Mode
-    if (diff < -35) {
-      if (!isZenMode) {
-        if (localPanelRef.current) {
-          localPanelRef.current.style.removeProperty("transform");
-          localPanelRef.current.style.removeProperty("transition");
-        }
-        handleToggleZenMode();
-        return;
-      } else {
-        if (localPanelRef.current) {
-          localPanelRef.current.style.transition =
-            "transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)";
-          localPanelRef.current.style.transform = "translateY(0px)";
-        }
-        return;
-      }
-    }
-
-    // 2. Vuốt xuống dưới (diff >= 55px):
-    // Người dùng vuốt xuống: bảng trượt thẳng xuống dưới để tắt dứt khoát, không bao giờ nảy ngược lên!
-    if (diff >= 55) {
-      setIsClosingByDrag(true);
-      if (localPanelRef.current) {
-        localPanelRef.current.style.transition =
-          "transform 0.18s cubic-bezier(0.32, 0, 0.67, 0), opacity 0.16s ease-out";
-        localPanelRef.current.style.transform = "translateY(100vh)";
-        localPanelRef.current.style.opacity = "0";
-      }
-      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-      closeTimerRef.current = setTimeout(() => {
-        // Trước khi unmount, ép ẩn hoàn toàn panel để AnimatePresence không thể flash lại vị trí y=0
-        if (localPanelRef.current) {
-          localPanelRef.current.style.setProperty("display", "none", "important");
-          localPanelRef.current.style.setProperty("visibility", "hidden", "important");
-          localPanelRef.current.style.setProperty("opacity", "0", "important");
-          localPanelRef.current.style.setProperty("transform", "translateY(100vh)", "important");
-        }
-        onClose();
-      }, 180);
-      return;
-    }
-
-    // Chưa đủ ngưỡng vuốt xuống (< 55px) -> Đàn hồi bật nảy nhẹ về vị trí ban đầu
-    if (localPanelRef.current) {
-      localPanelRef.current.style.transition =
-        "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease-out";
-      localPanelRef.current.style.transform = "translateY(0px)";
-      localPanelRef.current.style.opacity = "1";
-    }
-  };
-
-  const handleTouchCancel = () => {
-    isDraggingDown.current = false;
-    touchStartY.current = null;
-    if (localPanelRef.current) {
-      localPanelRef.current.style.transition =
-        "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease-out";
-      localPanelRef.current.style.transform = "translateY(0px)";
-      localPanelRef.current.style.opacity = "1";
-    }
   };
 
   // Cử chỉ vuốt ngang trái / phải bao phủ 100% diện tích nội dung & khoảng trống
@@ -284,11 +160,7 @@ export function MobileSheetShell({
       keepMounted={keepMounted}
       initial={{ opacity: 0, y: 80 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={
-        isClosingByDrag
-          ? { opacity: 0, y: "100%", transition: { duration: 0 } }
-          : { opacity: 0, y: "100%", transition: { duration: 0.22, ease: [0.32, 0, 0.67, 0] } }
-      }
+      exit={{ opacity: 0, y: "100%", transition: { duration: 0.22, ease: [0.32, 0, 0.67, 0] } }}
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
       backdropClassName="sm:hidden"
       panelClassName={cn(
@@ -306,25 +178,9 @@ export function MobileSheetShell({
         className="absolute inset-x-12 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none"
       />
 
-      {/* Vùng kéo gạt trên đỉnh & Tiêu đề: hỗ trợ ngón tay kéo xuống 1:1 mượt mà để đóng bảng */}
-      <div
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchCancel}
-        className="shrink-0 select-none cursor-grab active:cursor-grabbing touch-none"
-      >
-        {/* Thanh nắm tay kéo (Pill Handle) tối giản chuẩn Apple Sheet */}
-        <div className="pt-2.5 pb-1 flex items-center justify-center">
-          <span
-            aria-hidden="true"
-            className="h-1.5 w-12 rounded-full bg-white/30 hover:bg-white/50 active:bg-white/60 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.4)]"
-          />
-        </div>
-
-
-        {/* Tiêu đề & Nút thao tác dạng kính: bên trái co giãn, bên phải giữ nguyên kích thước */}
-        <div className="flex items-center px-3.5 pb-2.5 pt-0.5 border-b border-white/[0.12] gap-2">
+      {/* Tiêu đề & Nút thao tác dạng kính: bên trái co giãn, bên phải giữ nguyên kích thước */}
+      <div className="shrink-0 select-none">
+        <div className="flex items-center px-3.5 py-2.5 border-b border-white/[0.12] gap-2">
           {/* Bên trái: Nút Quay lại + Tiêu đề / Bộ chuyển bảng */}
           <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-start">
           {/* Nút Quay lại (Back Button) khi ở Stack cấp 2 trở lên */}

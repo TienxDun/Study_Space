@@ -73,7 +73,6 @@ export const CardDetailModal = React.memo(function CardDetailModal({
   const [dueDateCoords, setDueDateCoords] = useState<{ top: number; right: number } | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const touchStartY = useRef<number | null>(null);
 
   // Đồng bộ vị trí hiển thị dropdown trạng thái
   useEffect(() => {
@@ -114,24 +113,6 @@ export const CardDetailModal = React.memo(function CardDetailModal({
     window.addEventListener("resize", updateCoords);
     return () => window.removeEventListener("resize", updateCoords);
   }, [isDueDatePopoverOpen]);
-
-  // Kéo vuốt xuống ở đỉnh để đóng sheet nhanh trên mobile
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const target = e.target as Node | null;
-    const targetEl = target instanceof Element ? target : target?.parentElement;
-    if (targetEl?.closest("button") || targetEl?.closest("input") || targetEl?.closest("a")) return;
-    const touch = e.touches[0];
-    if (touch) touchStartY.current = touch.clientY;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartY.current === null) return;
-    const touch = e.changedTouches[0] || e.touches[0];
-    if (touch && touch.clientY - touchStartY.current > 50) {
-      handleCloseDetail();
-    }
-    touchStartY.current = null;
-  };
 
   // Tự động co giãn ô mô tả chi tiết theo độ dài nội dung
   const autoResizeDescription = useCallback(() => {
@@ -252,58 +233,70 @@ export const CardDetailModal = React.memo(function CardDetailModal({
         </button>
 
         {/* Status Dropdown Menu (Portal ra document.body để mờ toàn màn hình) */}
-        {isStatusDropdownOpen &&
-          statusCoords &&
-          typeof document !== "undefined" &&
+        {typeof document !== "undefined" &&
           document.body &&
           createPortal(
-            <div className="select-none">
-              {/* Lớp nền mờ tối phủ toàn màn hình bắt chạm để đóng */}
-              <div
-                className="fixed inset-0 z-[70] bg-black/45 animate-in fade-in duration-150 cursor-pointer touch-none"
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsStatusDropdownOpen(false);
-                }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsStatusDropdownOpen(false);
-                }}
-                role="button"
-                tabIndex={-1}
-                aria-label="Đóng danh sách trạng thái"
-              />
-              <div
-                style={{ top: statusCoords.top, left: statusCoords.left }}
-                className="fixed z-[71] w-48 p-1.5 rounded-2xl surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] max-h-48 overflow-y-auto custom-study-scroll space-y-0.5 select-none animate-in fade-in zoom-in-95 duration-150"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {currentBoard.columns.map((col) => {
-                  const isActive = selectedCard.columnId === col.id;
-                  return (
-                    <button
-                      key={col.id}
-                      type="button"
-                      onClick={() => {
-                        handleMoveCard(selectedCard.id, col.id);
-                        setIsStatusDropdownOpen(false);
-                      }}
-                      className={`w-full px-2.5 py-1.5 rounded-xl text-xs font-medium text-left transition-all flex items-center justify-between cursor-pointer ${
-                        isActive
-                          ? "bg-sky-500/20 text-sky-300 font-bold border border-sky-400/30"
-                          : "text-slate-300 hover:bg-white/10 hover:text-white"
-                      }`}
-                    >
-                      <span className="truncate">{col.title}</span>
-                      {isActive && <CheckIcon className="w-3.5 h-3.5 text-sky-400 shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>,
+            <AnimatePresence>
+              {isStatusDropdownOpen && statusCoords && (
+                <div className="select-none">
+                  {/* Lớp nền mờ tối phủ toàn màn hình bắt chạm để đóng */}
+                  <motion.div
+                    key="status-dropdown-backdrop"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.16 }}
+                    className="fixed inset-0 z-[70] bg-black/45 cursor-pointer touch-none"
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsStatusDropdownOpen(false);
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsStatusDropdownOpen(false);
+                    }}
+                    role="button"
+                    tabIndex={-1}
+                    aria-label="Đóng danh sách trạng thái"
+                  />
+                  <motion.div
+                    key="status-dropdown-menu"
+                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                    transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                    style={{ top: statusCoords.top, left: statusCoords.left }}
+                    className="fixed z-[71] w-48 p-1.5 rounded-2xl surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] max-h-48 overflow-y-auto custom-study-scroll space-y-0.5 select-none"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {currentBoard.columns.map((col) => {
+                      const isActive = selectedCard.columnId === col.id;
+                      return (
+                        <button
+                          key={col.id}
+                          type="button"
+                          onClick={() => {
+                            handleMoveCard(selectedCard.id, col.id);
+                            setIsStatusDropdownOpen(false);
+                          }}
+                          className={`w-full px-2.5 py-1.5 rounded-xl text-xs font-medium text-left transition-all flex items-center justify-between cursor-pointer ${
+                            isActive
+                              ? "bg-sky-500/20 text-sky-300 font-bold border border-sky-400/30"
+                              : "text-slate-300 hover:bg-white/10 hover:text-white"
+                          }`}
+                        >
+                          <span className="truncate">{col.title}</span>
+                          {isActive && <CheckIcon className="w-3.5 h-3.5 text-sky-400 shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>,
             document.body
           )}
       </div>
@@ -400,35 +393,45 @@ export const CardDetailModal = React.memo(function CardDetailModal({
         )}
 
         {/* Due Date Popover (Portal ra document.body để mờ toàn màn hình) */}
-        {isDueDatePopoverOpen &&
-          dueDateCoords &&
-          typeof document !== "undefined" &&
+        {typeof document !== "undefined" &&
           document.body &&
           createPortal(
-            <div className="select-none">
-              {/* Lớp nền mờ tối phủ toàn màn hình bắt chạm để đóng */}
-              <div
-                className="fixed inset-0 z-[70] bg-black/45 animate-in fade-in duration-150 cursor-pointer touch-none"
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsDueDatePopoverOpen(false);
-                }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsDueDatePopoverOpen(false);
-                }}
-                role="button"
-                tabIndex={-1}
-                aria-label="Đóng chọn hạn chót"
-              />
-              <div
-                style={{ top: dueDateCoords.top, right: dueDateCoords.right }}
-                className="fixed z-[71] w-[min(20rem,calc(100vw-24px))] sm:w-80 p-3.5 rounded-2xl surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] space-y-3 select-none animate-in fade-in zoom-in-95 duration-150"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-              >
+            <AnimatePresence>
+              {isDueDatePopoverOpen && dueDateCoords && (
+                <div className="select-none">
+                  {/* Lớp nền mờ tối phủ toàn màn hình bắt chạm để đóng */}
+                  <motion.div
+                    key="duedate-popover-backdrop"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.16 }}
+                    className="fixed inset-0 z-[70] bg-black/45 cursor-pointer touch-none"
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDueDatePopoverOpen(false);
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDueDatePopoverOpen(false);
+                    }}
+                    role="button"
+                    tabIndex={-1}
+                    aria-label="Đóng chọn hạn chót"
+                  />
+                  <motion.div
+                    key="duedate-popover-menu"
+                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                    transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                    style={{ top: dueDateCoords.top, right: dueDateCoords.right }}
+                    className="fixed z-[71] w-[min(20rem,calc(100vw-24px))] sm:w-80 p-3.5 rounded-2xl surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] space-y-3 select-none"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                     Hạn chót
@@ -584,10 +587,12 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                     );
                   })}
                 </div>
-              </div>
-            </div>,
-            document.body
+              </motion.div>
+            </div>
           )}
+        </AnimatePresence>,
+        document.body
+      )}
       </div>
     </div>
   );
@@ -847,24 +852,8 @@ export const CardDetailModal = React.memo(function CardDetailModal({
           className="absolute inset-x-12 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none z-10"
         />
 
-        {/* Thanh nắm tay kéo (Pill Handle) chuẩn Mobile Sheet */}
-        <div
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          className="pt-2.5 pb-1 flex items-center justify-center sm:hidden shrink-0 select-none cursor-grab active:cursor-grabbing touch-none"
-        >
-          <span
-            aria-hidden="true"
-            className="h-1.5 w-12 rounded-full bg-white/30 hover:bg-white/50 active:bg-white/60 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.4)]"
-          />
-        </div>
-
         {/* Header: Title, Board Info & Action Bar */}
-        <div
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          className="px-3.5 sm:px-6 pt-1 sm:pt-5 pb-2.5 border-b border-white/[0.12] space-y-2.5 bg-white/[0.01]"
-        >
+        <div className="px-3.5 sm:px-6 py-2.5 sm:pt-5 border-b border-white/[0.12] space-y-2.5 bg-white/[0.01]">
           <div className="flex items-center justify-between gap-2.5 sm:gap-3">
             {/* Nút Quay lại cho Mobile / Stack Navigation */}
             {onBack && (
