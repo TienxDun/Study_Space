@@ -123,7 +123,7 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
       if (typeof navigator !== "undefined" && navigator.vibrate) {
         try {
           navigator.vibrate(30);
-        } catch {}
+        } catch { }
       }
       setActiveMenuNoteId(noteId);
     }, 450);
@@ -278,11 +278,10 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                   onClick={() => setShowDetailMoreMenu((prev) => !prev)}
                   title="Tùy chọn ghi chú"
                   aria-label="Tùy chọn ghi chú"
-                  className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
-                    showDetailMoreMenu
+                  className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all active:scale-90 cursor-pointer ${showDetailMoreMenu
                       ? "bg-white/20 border-white/30 text-white"
                       : "bg-white/10 hover:bg-white/15 border-white/15 text-white/70 hover:text-white"
-                  }`}
+                    }`}
                 >
                   <DotsThreeIcon className="w-4 h-4" weight="bold" />
                 </button>
@@ -344,11 +343,10 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                 type="button"
                 onClick={() => setIsSearchOpen((prev) => !prev)}
                 aria-label="Tìm kiếm ghi chú"
-                className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all active:scale-90 ${
-                  isSearchOpen || searchQuery
+                className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all active:scale-90 ${isSearchOpen || searchQuery
                     ? "bg-white/20 border-white/30 text-white"
                     : "bg-white/10 hover:bg-white/15 border-white/15 text-white/80 hover:text-white"
-                }`}
+                  }`}
               >
                 <MagnifyingGlassIcon className="w-4 h-4" />
               </button>
@@ -411,11 +409,10 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                       onClick={() => richExec("bold")}
                       aria-label="In đậm"
                       title="In đậm (Bold)"
-                      className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shrink-0 ${
-                        richActiveFormats.bold
+                      className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shrink-0 ${richActiveFormats.bold
                           ? "bg-white text-slate-950 font-bold shadow-sm"
                           : "text-slate-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/10"
-                      }`}
+                        }`}
                     >
                       <TextBIcon className="w-3.5 h-3.5" weight="bold" />
                     </button>
@@ -424,11 +421,10 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                       onClick={() => richExec("italic")}
                       aria-label="In nghiêng"
                       title="In nghiêng (Italic)"
-                      className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shrink-0 ${
-                        richActiveFormats.italic
+                      className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shrink-0 ${richActiveFormats.italic
                           ? "bg-white text-slate-950 font-bold shadow-sm"
                           : "text-slate-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/10"
-                      }`}
+                        }`}
                     >
                       <TextItalicIcon className="w-3.5 h-3.5" weight="bold" />
                     </button>
@@ -437,11 +433,10 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                       onClick={() => richExec("strikeThrough")}
                       aria-label="Gạch ngang"
                       title="Gạch ngang chữ (Strikethrough)"
-                      className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shrink-0 ${
-                        richActiveFormats.strikethrough
+                      className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shrink-0 ${richActiveFormats.strikethrough
                           ? "bg-white text-slate-950 font-bold shadow-sm"
                           : "text-slate-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/10"
-                      }`}
+                        }`}
                     >
                       <TextStrikethroughIcon className="w-3.5 h-3.5" weight="bold" />
                     </button>
@@ -450,11 +445,10 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                       onClick={richChecklist}
                       aria-label="Việc cần làm"
                       title="Việc cần làm (Checklist)"
-                      className={`h-8 px-2.5 rounded-xl flex items-center gap-1 transition-all active:scale-90 cursor-pointer shrink-0 text-xs ${
-                        richActiveFormats.todo
+                      className={`h-8 px-2.5 rounded-xl flex items-center gap-1 transition-all active:scale-90 cursor-pointer shrink-0 text-xs ${richActiveFormats.todo
                           ? "bg-emerald-400 text-slate-950 font-bold shadow-sm"
                           : "text-slate-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/10"
-                      }`}
+                        }`}
                     >
                       <CheckSquareIcon className="w-3.5 h-3.5" weight="bold" />
                     </button>
@@ -463,11 +457,10 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                       onClick={richHighlight}
                       aria-label="Tô sáng"
                       title="Tô sáng dạ quang (Highlight)"
-                      className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shrink-0 ${
-                        richActiveFormats.highlight
+                      className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shrink-0 ${richActiveFormats.highlight
                           ? "bg-amber-400 text-slate-950 font-bold shadow-sm"
                           : "text-slate-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/10"
-                      }`}
+                        }`}
                     >
                       <HighlighterIcon className="w-3.5 h-3.5" weight="bold" />
                     </button>
@@ -489,19 +482,17 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                         ref={aiPromptTriggerRef}
                         type="button"
                         onClick={() => setShowAiPromptMenu((prev) => !prev)}
-                        className={`flex items-center gap-1 h-8 px-2.5 rounded-xl text-[11px] font-medium transition-all border active:scale-95 cursor-pointer ${
-                          showAiPromptMenu
+                        className={`flex items-center gap-1 h-8 px-2.5 rounded-xl text-[11px] font-medium transition-all border active:scale-95 cursor-pointer ${showAiPromptMenu
                             ? "bg-white/15 border-white/25 text-emerald-300 shadow-sm"
                             : "bg-white/5 hover:bg-white/10 border-white/10 text-emerald-400 hover:text-emerald-300"
-                        }`}
+                          }`}
                         title="Gửi nội dung ghi chú vào Trợ lý AI"
                       >
                         <SparkleIcon weight="fill" className="w-3 h-3 text-emerald-400 shrink-0" />
                         <span className="whitespace-nowrap">Hỏi AI</span>
                         <CaretDownIcon
-                          className={`w-2.5 h-2.5 opacity-60 transition-transform duration-200 ${
-                            showAiPromptMenu ? "rotate-180" : ""
-                          }`}
+                          className={`w-2.5 h-2.5 opacity-60 transition-transform duration-200 ${showAiPromptMenu ? "rotate-180" : ""
+                            }`}
                         />
                       </button>
                       <NoteChatPromptMenu
@@ -649,13 +640,11 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
                         onTouchEnd={cancelLongPress}
                         onTouchCancel={cancelLongPress}
                         style={{ "--stagger-idx": Math.min(idx, 10) } as React.CSSProperties}
-                        className={`group p-3.5 rounded-2xl border transition-all select-none sheet-stagger-item ${
-                          isMenuOpen ? "relative z-30" : "relative z-0"
-                        } ${
-                          note.isPinned
+                        className={`group p-3.5 rounded-2xl border transition-all select-none sheet-stagger-item ${isMenuOpen ? "relative z-30" : "relative z-0"
+                          } ${note.isPinned
                             ? "bg-amber-500/[0.08] hover:bg-amber-500/[0.12] border-amber-400/25 shadow-[0_4px_20px_rgba(245,158,11,0.06)]"
                             : "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.08] shadow-sm"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           {/* Thân thẻ: Bấm vào để mở xem & chỉnh sửa ghi chú */}

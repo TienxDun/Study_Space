@@ -173,16 +173,16 @@ export const SoundMixerWidget = ({
           onSwipeRight={() => setActiveTab("music")}
         headerRight={undefined}
         footer={
-          /* Bộ chuyển Tab lớn công thái học Thumb-Zone ghim ở đáy - Glassmorphism Style */
+          /* Thanh gạt chuyển Tab công thái học (Segmented Control) tinh gọn ở đáy */
           <div className="p-2.5 select-none">
-            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-black/40 border border-white/[0.1] shadow-inner backdrop-blur-md">
+            <div className="grid grid-cols-2 p-1 rounded-2xl bg-black/40 border border-white/10">
               <button
                 type="button"
                 onClick={() => setActiveTab("music")}
-                className={`py-2 rounded-xl text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer backdrop-blur-md border ${
+                className={`py-2 rounded-xl text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer ${
                   activeTab === "music"
-                    ? "bg-white/20 border-white/30 text-white font-semibold shadow-sm"
-                    : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white font-medium"
+                    ? "bg-white/15 text-white font-semibold shadow-sm"
+                    : "text-white/60 hover:text-white font-medium"
                 }`}
               >
                 <MusicNotesIcon className="w-4 h-4" />
@@ -191,10 +191,10 @@ export const SoundMixerWidget = ({
               <button
                 type="button"
                 onClick={() => setActiveTab("ambience")}
-                className={`py-2 rounded-xl text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer backdrop-blur-md border ${
+                className={`py-2 rounded-xl text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer ${
                   activeTab === "ambience"
-                    ? "bg-white/20 border-white/30 text-white font-semibold shadow-sm"
-                    : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white font-medium"
+                    ? "bg-white/15 text-white font-semibold shadow-sm"
+                    : "text-white/60 hover:text-white font-medium"
                 }`}
               >
                 <CloudRainIcon className="w-4 h-4" />

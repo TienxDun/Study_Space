@@ -52,18 +52,26 @@ export function MobileBubbleMenuOverlay({
     <AnimatePresence>
       {isOpen && anchor && (
         <>
-          {/* Lớp nền trong suốt bắt chạm ngoài menu để tự đóng */}
+          {/* Lớp nền mờ tối phủ toàn màn hình bắt chạm ngoài menu để tự đóng */}
           <motion.div
             key={`${menuKey}-backdrop`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] bg-black/45"
-            onClick={(e) => {
+            className="fixed inset-0 z-[70] bg-black/45 cursor-pointer touch-none"
+            onPointerDown={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               onClose();
             }}
-            aria-hidden="true"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
+            role="button"
+            tabIndex={-1}
+            aria-label="Đóng menu tùy chọn"
           />
 
           {/* Khung menu thả xuống phong cách kính mờ tối giản & hiện đại */}
@@ -75,6 +83,7 @@ export function MobileBubbleMenuOverlay({
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
             style={{ top: anchor.top, right: anchor.right }}
             className="fixed z-[71] w-max min-w-[210px] max-w-[calc(100vw-1.5rem)] p-1.5 rounded-2xl surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] text-white select-none"
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
           >
             {children}

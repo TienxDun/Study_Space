@@ -4,34 +4,25 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { LiveKitRoom } from "@livekit/components-react";
 import "@livekit/components-styles";
-import {
-  UsersIcon,
-  XIcon,
-  CircleNotchIcon,
-  ArrowClockwiseIcon,
-  SignInIcon,
-  LockKeyIcon,
-  KeyIcon,
-  VideoCameraIcon,
-  LinkSimpleIcon,
-} from "@phosphor-icons/react";
-import { toast } from "sonner";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
-import { trackEvent } from "@/lib/analytics";
 import { useFloatingSize } from "@/lib/use-floating-size";
-import { useAuth, GoogleIcon } from "@/components/study/auth";
+import { useAuth } from "@/components/study/auth";
 import { useIsMobile } from "@/components/study/mobile/hooks/useIsMobile";
 import { MobileRoomsSheet } from "@/components/study/mobile/sheets/MobileRoomsSheet";
 import type { PomodoroSoundType } from "@/components/study/study-sound";
 import { StudyRoomView } from "./components/StudyRoomView";
-import { RoomPreJoinView, type PreJoinChoices } from "./components/RoomPreJoinView";
-import { RoomExitNotice } from "./components/RoomExitNotice";
+import { RoomPreJoinView } from "./components/RoomPreJoinView";
+import { RoomLobbyView } from "./components/RoomLobbyView";
 import {
-  DISCONNECT_REASON_CLIENT_INITIATED,
-  getRoomExitNotice,
-  type RoomExitNotice as RoomExitNoticeData,
-} from "./utils/room-exit";
-import { buildInviteLink, readInviteRoom } from "@/lib/meet-invite";
+  clampRoom,
+  getCenter,
+  getLiveKitEndpoints,
+  DEFAULT_ROOM_W,
+  DEFAULT_ROOM_H,
+  MIN_ROOM_W,
+  MIN_ROOM_H,
+} from "./utils/floating-panel";
+import { useStudyRoomSession } from "./hooks/useStudyRoomSession";
 import { configureLiveKitLogging } from "@/lib/livekit-log";
 
 configureLiveKitLogging();
@@ -46,38 +37,10 @@ export interface StudyRoomsWidgetProps {
   soundType?: PomodoroSoundType;
 }
 
-const ROOM_MARGIN = 16;
-const DEFAULT_ROOM_W = 720;
-const DEFAULT_ROOM_H = 540;
-// Vào phòng mà thẻ nhỏ hơn cỡ này thì tự nở ra cho xem rõ
-const MIN_JOIN_W = 680;
-const MIN_JOIN_H = 500;
-const MIN_ROOM_W = 380;
-const MIN_ROOM_H = 360;
-
-// Giữ thẻ luôn nằm trong màn hình
-const clampRoom = (
-  x: number,
-  y: number,
-  w: number,
-  h: number
-): { x: number; y: number } => {
-  if (typeof window === "undefined") return { x: Math.round(x), y: Math.round(y) };
-  const maxX = Math.max(ROOM_MARGIN, window.innerWidth - w - ROOM_MARGIN);
-  const maxY = Math.max(ROOM_MARGIN, window.innerHeight - h - ROOM_MARGIN);
-  return {
-    x: Math.round(Math.max(ROOM_MARGIN, Math.min(maxX, x))),
-    y: Math.round(Math.max(ROOM_MARGIN, Math.min(maxY, y))),
-  };
-};
-
-const getCenter = (w: number, h: number) => {
-  if (typeof window === "undefined") return { x: 100, y: 100 };
-  return clampRoom((window.innerWidth - w) / 2, (window.innerHeight - h) / 2, w, h);
-};
-
-// Phòng học nhóm dạng thẻ bay: kéo đi được, đổi cỡ được,
-// nhớ chỗ y như thẻ ghi chú.
+/**
+ * Phòng học nhóm dạng thẻ bay: kéo đi được, đổi cỡ được,
+ * nhớ vị trí trên màn hình desktop và hiển thị dạng Sheet trên di động.
+ */
 export const StudyRoomsWidget = memo(function StudyRoomsWidget({
   isOpen,
   onClose,
@@ -98,8 +61,6 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
 
   const isMobile = useIsMobile();
 
-  // Page truyền onClose/onOpen dạng closure mới mỗi lần render; giữ bản ổn định
-  // để React.memo của MobileRoomsSheet không bị vô hiệu.
   const onCloseRef = useRef(onClose);
   const onOpenRef = useRef(onOpen);
   useEffect(() => {
@@ -109,85 +70,12 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
   const stableOnClose = useCallback(() => onCloseRef.current(), []);
   const stableOnOpen = useCallback(() => onOpenRef.current?.(), []);
 
-  const [displayName, setDisplayName] = useState(
-    () => user?.displayName || user?.email?.split("@")[0] || ""
-  );
-  const [roomName, setRoomName] = useState("");
-  const [token, setToken] = useState<string | null>(null);
-  const [serverUrl, setServerUrl] = useState("");
-  const [joinedRoom, setJoinedRoom] = useState("");
-  const [joining, setJoining] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  // Giữ lại thông báo rời phòng để sảnh vẫn hiện sau khi panel đã đóng
-  const [exitNotice, setExitNotice] = useState<RoomExitNoticeData | null>(null);
-  const [exitRoomName, setExitRoomName] = useState("");
-  const [openRooms, setOpenRooms] = useState<
-    { name: string; count: number; isLocked?: boolean; hasPassword?: boolean }[]
-  >([]);
-  const [userRole, setUserRole] = useState<"host" | "co-host" | "member">("member");
-  const [isHost, setIsHost] = useState(false);
-  const [isCoHost, setIsCoHost] = useState(false);
-  const [isRoomLocked, setIsRoomLocked] = useState(false);
-  const [roomHasPassword, setRoomHasPassword] = useState(false);
-  const [maxParticipants, setMaxParticipants] = useState<number>(6);
-  const [remainingMinutes, setRemainingMinutes] = useState<number | null>(null);
-  const [quotaStatus, setQuotaStatus] = useState<string>("ok");
-  const [sessionMaxMinutes, setSessionMaxMinutes] = useState<number>(120);
-  const [loadingRooms, setLoadingRooms] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const isFullscreenRef = useRef(false);
   useEffect(() => {
     isFullscreenRef.current = isFullscreen;
   }, [isFullscreen]);
-  const [preJoinConfig, setPreJoinConfig] = useState<{
-    room: string;
-    name: string;
-    passwordMode: "required" | "optional-create" | "none";
-  } | null>(null);
-  const [initialMedia, setInitialMedia] = useState<{
-    audio: boolean;
-    video: boolean;
-    audioDeviceId?: string;
-    videoDeviceId?: string;
-  }>({
-    audio: false,
-    video: false,
-  });
-
-  const processedInviteRef = useRef(false);
-
-  // Đọc query ?room= khi component mount; tự điền và mở panel phòng (chỉ chạy 1 lần, không tự join)
-  useEffect(() => {
-    if (typeof window === "undefined" || processedInviteRef.current) return;
-    processedInviteRef.current = true;
-    const inviteRoom = readInviteRoom(window.location.search);
-    if (inviteRoom) {
-      setRoomName(inviteRoom);
-      stableOnOpen();
-    }
-  }, [stableOnOpen]);
-
-  // Cập nhật timestamp phiên gọi video định kỳ & trước khi tải lại trang (F5)
-  useEffect(() => {
-    if (!joinedRoom || !token) return;
-    const updateSessionHeartbeat = () => {
-      try {
-        const raw = sessionStorage.getItem(STORAGE_KEYS.roomsActiveSession);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          parsed.timestamp = Date.now();
-          sessionStorage.setItem(STORAGE_KEYS.roomsActiveSession, JSON.stringify(parsed));
-        }
-      } catch {}
-    };
-    const interval = setInterval(updateSessionHeartbeat, 15000);
-    window.addEventListener("beforeunload", updateSessionHeartbeat);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("beforeunload", updateSessionHeartbeat);
-    };
-  }, [joinedRoom, token]);
 
   const toggleFullscreen = useCallback(() => {
     const next = !isFullscreenRef.current;
@@ -246,17 +134,6 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
     };
   }, [isFullscreen]);
 
-  // Tự động gán tên từ tài khoản đăng nhập khi user có sẵn
-  useEffect(() => {
-    if (user) {
-      const preferred = user.displayName || user.email?.split("@")[0] || "";
-      if (preferred && !displayName) {
-        setDisplayName(preferred);
-      }
-    }
-  }, [user, displayName]);
-
-  // Cỡ khung do hook chung lo (nhớ + kẹp + kéo góc); chỗ đứng tự lo ở dưới
   const {
     size: roomSize,
     setSize: setRoomSize,
@@ -268,6 +145,7 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
     defaultHeight: DEFAULT_ROOM_H,
     storageKey: STORAGE_KEYS.roomsSize,
   });
+
   const [roomPos, setRoomPos] = useState(() => {
     if (typeof window !== "undefined") {
       try {
@@ -304,7 +182,7 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
     } catch {}
   }, []);
 
-  // Thu nhỏ cửa sổ thì kéo thẻ vào trong (co cỡ do hook lo)
+  // Thu nhỏ cửa sổ thì kẹp thẻ vào trong
   useEffect(() => {
     const onResize = () => {
       setRoomPos((prev) => clampRoom(prev.x, prev.y, roomSize.width, roomSize.height));
@@ -313,9 +191,23 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
     return () => window.removeEventListener("resize", onResize);
   }, [roomSize.width, roomSize.height]);
 
+  // Kết nối và quản lý phiên phòng học
+  const session = useStudyRoomSession({
+    user,
+    authLoading,
+    getToken,
+    isOpen,
+    stableOnOpen,
+    stableOnClose,
+    roomSize,
+    setRoomSize,
+    setRoomPos,
+    setIsFullscreen,
+  });
+
   // Esc chỉ đóng bảng chờ, đang gọi thì giữ máy (tránh rớt cuộc gọi)
   useEffect(() => {
-    if (!isOpen || token) return;
+    if (!isOpen || session.token) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
@@ -324,355 +216,8 @@ export const StudyRoomsWidget = memo(function StudyRoomsWidget({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen, token, stableOnClose]);
+  }, [isOpen, session.token, stableOnClose]);
 
-const getLiveKitEndpoints = () => {
-  const raw = (process.env.NEXT_PUBLIC_LIVEKIT_TOKEN_URL || "").trim().replace(/\/+$/, "");
-  if (!raw) {
-    const isDev = process.env.NODE_ENV === "development";
-    return {
-      tokenUrl: isDev ? "/api/livekit-token/" : "",
-      roomsUrl: isDev ? "/api/livekit-rooms/" : "",
-      isAvailable: isDev,
-    };
-  }
-  const base = raw.replace(/\/(token|rooms)$/, "");
-  return {
-    tokenUrl: `${base}/token`,
-    roomsUrl: `${base}/rooms`,
-    isAvailable: true,
-  };
-};
-
-  const doJoin = useCallback(async (room: string, name: string, password?: string) => {
-    const { tokenUrl, isAvailable } = getLiveKitEndpoints();
-    if (!isAvailable || !tokenUrl) {
-      setError("Chưa cấu hình máy chủ phòng học nhóm (NEXT_PUBLIC_LIVEKIT_TOKEN_URL).");
-      return;
-    }
-    setJoining(true);
-    setError(null);
-    try {
-      // Worker tự kiểm vé Firebase và lấy danh tính từ uid trong vé.
-      const idToken = await getToken();
-      if (!idToken) throw new Error("Đăng nhập rồi mới vào phòng học nhóm được.");
-      const res = await fetch(tokenUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({ room, name, password }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        if (data?.code === "ROOM_PASSWORD_REQUIRED") {
-          // Tự động mở lại Pre-join view với chế độ passwordMode = "required"
-          setPreJoinConfig({
-            room,
-            name,
-            passwordMode: "required",
-          });
-          throw new Error("Phòng này yêu cầu mật khẩu. Vui lòng nhập mật khẩu để vào.");
-        }
-        if (data?.code === "INVALID_PASSWORD") {
-          setPreJoinConfig({
-            room,
-            name,
-            passwordMode: "required",
-          });
-          throw new Error("Mật khẩu phòng không đúng. Vui lòng thử lại.");
-        }
-        if (data?.code === "ROOM_LOCKED") {
-          throw new Error("Phòng đang bị khóa bởi trưởng phòng.");
-        }
-        if (res.status === 409 || data?.code === "ROOM_FULL") {
-          throw new Error(data?.error || "Phòng đã đủ người. Thử phòng khác nhé.");
-        }
-        if (res.status === 429 || data?.code === "QUOTA_EXCEEDED") {
-          throw new Error(
-            data?.error || "Phòng học nhóm đã hết hạn mức tháng này. Vui lòng quay lại đầu tháng sau."
-          );
-        }
-        throw new Error(data?.error || "Vào phòng thất bại.");
-      }
-      setToken(data.token);
-      setServerUrl(data.url);
-      setJoinedRoom(data.room);
-      try {
-        sessionStorage.setItem(
-          STORAGE_KEYS.roomsActiveSession,
-          JSON.stringify({
-            room: data.room,
-            name,
-            password,
-            timestamp: Date.now(),
-          })
-        );
-      } catch {}
-      trackEvent("room-join");
-      // Vào phòng thành công thì thông báo rời phòng cũ không còn cần thiết
-      setExitNotice(null);
-      setUserRole(data.role || "member");
-      setIsHost(Boolean(data.isHost));
-      setIsCoHost(Boolean(data.isCoHost));
-      setIsRoomLocked(Boolean(data.isLocked));
-      setRoomHasPassword(Boolean(data.hasPassword));
-      if (typeof data.maxParticipants === "number") setMaxParticipants(data.maxParticipants);
-      if (typeof data.remainingMinutes === "number") setRemainingMinutes(data.remainingMinutes);
-      if (typeof data.sessionMaxMinutes === "number") setSessionMaxMinutes(data.sessionMaxMinutes);
-      if (typeof data.quotaStatus === "string") setQuotaStatus(data.quotaStatus);
-
-      // Vào phòng thì nở thẻ ra cỡ xem được, khỏi giữ cỡ nhỏ của bảng chờ
-      const grown = {
-        width: Math.max(roomSize.width, MIN_JOIN_W),
-        height: Math.max(roomSize.height, MIN_JOIN_H),
-      };
-      if (grown.width !== roomSize.width || grown.height !== roomSize.height) {
-        setRoomSize(grown);
-        try {
-          localStorage.setItem(STORAGE_KEYS.roomsSize, JSON.stringify(grown));
-        } catch {}
-        setRoomPos((p) => {
-          const fixed = clampRoom(p.x, p.y, grown.width, grown.height);
-          if (fixed.x === p.x && fixed.y === p.y) return p;
-          try {
-            localStorage.setItem(STORAGE_KEYS.roomsPos, JSON.stringify(fixed));
-          } catch {}
-          return fixed;
-        });
-      }
-    } catch (e) {
-      setError(String(e instanceof Error ? e.message : e));
-    } finally {
-      setJoining(false);
-    }
-  }, [roomSize, getToken]);
-
-  // Tự động kết nối lại (Auto-rejoin) vào phòng khi vừa F5 hoặc rớt mạng nhẹ (mic & cam mặc định TẮT)
-  const autoRejoinAttemptedRef = useRef(false);
-  useEffect(() => {
-    if (typeof window === "undefined" || authLoading || autoRejoinAttemptedRef.current) return;
-    autoRejoinAttemptedRef.current = true;
-
-    try {
-      const raw = sessionStorage.getItem(STORAGE_KEYS.roomsActiveSession);
-      if (!raw) return;
-      const session = JSON.parse(raw);
-      // Chỉ tự động vào lại nếu phiên học xảy ra trong vòng 2 phút gần nhất
-      if (session?.room && session?.name && Date.now() - session.timestamp < 120000) {
-        if (!user) {
-          sessionStorage.removeItem(STORAGE_KEYS.roomsActiveSession);
-          return;
-        }
-        setRoomName(session.room);
-        // Yêu cầu quan trọng: khi rejoin thì mic và cam mặc định là OFF
-        setInitialMedia({ audio: false, video: false });
-        stableOnOpen();
-        toast.info(`Đang tự động kết nối lại vào phòng ${session.room}...`, { id: "rejoin-room" });
-        doJoin(session.room, session.name, session.password).catch(() => {
-          try {
-            sessionStorage.removeItem(STORAGE_KEYS.roomsActiveSession);
-          } catch {}
-        });
-      } else {
-        sessionStorage.removeItem(STORAGE_KEYS.roomsActiveSession);
-      }
-    } catch {
-      try {
-        sessionStorage.removeItem(STORAGE_KEYS.roomsActiveSession);
-      } catch {}
-    }
-  }, [authLoading, user, stableOnOpen, doJoin]);
-
-  const resolvedDisplayName =
-    displayName.trim() || user?.displayName || user?.email?.split("@")[0] || "";
-
-  const handleCopyLobbyInvite = useCallback(async () => {
-    const trimmed = roomName.trim();
-    if (!trimmed) {
-      toast.error("Nhập tên phòng trước khi copy link mời");
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(buildInviteLink(trimmed));
-      toast.success("Đã copy link mời");
-    } catch {
-      toast.error("Không thể copy link mời");
-    }
-  }, [roomName]);
-
-  const handleStartJoin = useCallback(
-    (
-      targetRoom: string,
-      targetName: string,
-      explicitPasswordMode?: "required" | "optional-create" | "none"
-    ) => {
-      if (!targetRoom.trim() || !targetName.trim() || joining) return;
-      setError(null);
-
-      // Xác định passwordMode nếu chưa truyền rõ:
-      let mode = explicitPasswordMode;
-      if (!mode) {
-        const found = openRooms.find((r) => r.name === targetRoom.trim());
-        if (found) {
-          mode = found.hasPassword ? "required" : "none";
-        } else {
-          mode = "optional-create";
-        }
-      }
-
-      setPreJoinConfig({
-        room: targetRoom.trim(),
-        name: targetName.trim(),
-        passwordMode: mode,
-      });
-    },
-    [joining, openRooms]
-  );
-
-  const handleJoin = useCallback(() => {
-    if (!resolvedDisplayName || !roomName.trim() || joining) return;
-    handleStartJoin(roomName.trim(), resolvedDisplayName);
-  }, [resolvedDisplayName, roomName, joining, handleStartJoin]);
-
-  const handleJoinListed = useCallback(
-    (roomItem: { name: string; hasPassword?: boolean }) => {
-      if (!resolvedDisplayName) {
-        setError("Nhập tên hiển thị của bạn ở dưới trước rồi bấm Vào.");
-        return;
-      }
-      setRoomName(roomItem.name);
-      handleStartJoin(
-        roomItem.name,
-        resolvedDisplayName,
-        roomItem.hasPassword ? "required" : "none"
-      );
-    },
-    [resolvedDisplayName, handleStartJoin]
-  );
-
-  const handlePreJoinSubmit = useCallback(
-    async (choices: PreJoinChoices) => {
-      if (!preJoinConfig) return;
-      const { room, name } = preJoinConfig;
-      setInitialMedia({
-        audio: choices.audioEnabled,
-        video: choices.videoEnabled,
-        audioDeviceId: choices.audioDeviceId,
-        videoDeviceId: choices.videoDeviceId,
-      });
-      setPreJoinConfig(null);
-      await doJoin(room, name, choices.password);
-    },
-    [preJoinConfig, doJoin]
-  );
-
-  const handlePreJoinCancel = useCallback(() => {
-    setPreJoinConfig(null);
-  }, []);
-
-  // Lấy phòng đang mở mỗi lần mở bảng + bấm tải lại
-  const loadOpenRooms = useCallback(async () => {
-    const { roomsUrl, isAvailable } = getLiveKitEndpoints();
-    if (!isAvailable || !roomsUrl) {
-      setOpenRooms([]);
-      return;
-    }
-    setLoadingRooms(true);
-    try {
-      // Danh sách phòng cũng cần vé Firebase (worker tự kiểm).
-      const idToken = await getToken();
-      const res = await fetch(roomsUrl, {
-        cache: "no-store",
-        ...(idToken ? { headers: { Authorization: `Bearer ${idToken}` } } : {}),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok) {
-        setOpenRooms(data.rooms || []);
-        if (typeof data.maxParticipants === "number") setMaxParticipants(data.maxParticipants);
-        if (typeof data.remainingMinutes === "number") setRemainingMinutes(data.remainingMinutes);
-        if (typeof data.quotaStatus === "string") setQuotaStatus(data.quotaStatus);
-      }
-    } catch {}
-    finally {
-      setLoadingRooms(false);
-    }
-  }, [getToken]);
-
-  useEffect(() => {
-    if (isOpen && !token) loadOpenRooms();
-  }, [isOpen, token, loadOpenRooms]);
-
-  const leavingRef = useRef(false);
-
-  const handleRejoinFromNotice = useCallback(() => {
-    if (!exitRoomName || joining) return;
-    stableOnOpen();
-    handleStartJoin(exitRoomName, resolvedDisplayName);
-  }, [exitRoomName, joining, stableOnOpen, resolvedDisplayName, handleStartJoin]);
-
-  const handleDismissExitNotice = useCallback(() => setExitNotice(null), []);
-
-  const handleLeave = useCallback(
-    function handleLeave(reason?: number) {
-      if (leavingRef.current) return;
-      leavingRef.current = true;
-
-      // Gọi không tham số (tự bấm rời, hết phiên, pill "Rời") là tự nguyện.
-      // onDisconnected luôn truyền tham số, kể cả undefined khi rớt mạng.
-      const voluntary =
-        arguments.length === 0 || reason === DISCONNECT_REASON_CLIENT_INITIATED;
-      // Đọc tên phòng trước khi setJoinedRoom("") bên dưới
-      const exitedRoom = joinedRoom;
-
-      if (!voluntary) {
-        const notice = getRoomExitNotice(reason, exitedRoom);
-        if (notice.showNotice) {
-          setExitNotice(notice);
-          setExitRoomName(exitedRoom);
-          toast.warning(notice.title, {
-            id: "room-exit-notice", // kick liên tiếp thì thay thế, không xếp chồng
-            description: notice.description,
-            duration: 10000,
-          });
-        }
-      }
-
-      if (typeof document !== "undefined" && document.fullscreenElement) {
-        const doc = document as Document & {
-          exitFullscreen?: () => Promise<void>;
-          webkitExitFullscreen?: () => void;
-        };
-        const exit = doc.exitFullscreen || doc.webkitExitFullscreen;
-        if (typeof exit === "function") {
-          try {
-            const result = exit.call(doc);
-            if (result && typeof (result as Promise<void>).catch === "function") {
-              (result as Promise<void>).catch(() => {});
-            }
-          } catch {}
-        }
-      }
-      try {
-        sessionStorage.removeItem(STORAGE_KEYS.roomsActiveSession);
-      } catch {}
-      setIsFullscreen(false);
-      setToken(null);
-      setServerUrl("");
-      setJoinedRoom("");
-      setError(null);
-      setPreJoinConfig(null);
-      setInitialMedia({ audio: false, video: false });
-      stableOnClose();
-      setTimeout(() => {
-        leavingRef.current = false;
-      }, 300);
-    },
-    [stableOnClose, joinedRoom]
-  );
-
-  // Kéo to/nhỏ ở góc dưới phải (logic gom trong hook chung, đây chỉ kẹp lại chỗ đứng)
   const handleResizePointerDown = useCallback(
     (e: React.PointerEvent) => {
       beginRoomResize(e, { x: roomPos.x, y: roomPos.y }, (latest) => {
@@ -684,10 +229,6 @@ const getLiveKitEndpoints = () => {
       });
     },
     [beginRoomResize, roomPos.x, roomPos.y]
-  );
-
-  const canJoin = Boolean(
-    user && resolvedDisplayName.length > 0 && roomName.trim().length > 0 && !joining
   );
 
   if (isMobile) {
@@ -705,40 +246,40 @@ const getLiveKitEndpoints = () => {
         isSigningIn={isSigningIn}
         authError={authError}
         signIn={signIn}
-        displayName={displayName}
-        setDisplayName={setDisplayName}
-        roomName={roomName}
-        setRoomName={setRoomName}
-        openRooms={openRooms}
-        loadingRooms={loadingRooms}
-        loadOpenRooms={loadOpenRooms}
-        handleJoinListed={handleJoinListed}
-        handleJoin={handleJoin}
-        canJoin={canJoin}
-        joining={joining}
-        error={error}
-        token={token}
-        serverUrl={serverUrl}
-        joinedRoom={joinedRoom}
-        handleLeave={handleLeave}
-        exitNotice={exitNotice}
-        onDismissExitNotice={handleDismissExitNotice}
-        onRejoinExitNotice={handleRejoinFromNotice}
+        displayName={session.displayName}
+        setDisplayName={session.setDisplayName}
+        roomName={session.roomName}
+        setRoomName={session.setRoomName}
+        openRooms={session.openRooms}
+        loadingRooms={session.loadingRooms}
+        loadOpenRooms={session.loadOpenRooms}
+        handleJoinListed={session.handleJoinListed}
+        handleJoin={session.handleJoin}
+        canJoin={session.canJoin}
+        joining={session.joining}
+        error={session.error}
+        token={session.token}
+        serverUrl={session.serverUrl}
+        joinedRoom={session.joinedRoom}
+        handleLeave={session.handleLeave}
+        exitNotice={session.exitNotice}
+        onDismissExitNotice={session.handleDismissExitNotice}
+        onRejoinExitNotice={session.handleRejoinFromNotice}
         isAvailable={getLiveKitEndpoints().isAvailable}
-        maxParticipants={maxParticipants}
-        remainingMinutes={remainingMinutes}
-        quotaStatus={quotaStatus}
-        sessionMaxMinutes={sessionMaxMinutes}
-        preJoinConfig={preJoinConfig}
-        onPreJoinSubmit={handlePreJoinSubmit}
-        onPreJoinCancel={handlePreJoinCancel}
-        initialMedia={initialMedia}
-        handleCopyLobbyInvite={handleCopyLobbyInvite}
-        userRole={userRole}
-        isHost={isHost}
-        isCoHost={isCoHost}
-        initialIsLocked={isRoomLocked}
-        initialHasPassword={roomHasPassword}
+        maxParticipants={session.maxParticipants}
+        remainingMinutes={session.remainingMinutes}
+        quotaStatus={session.quotaStatus}
+        sessionMaxMinutes={session.sessionMaxMinutes}
+        preJoinConfig={session.preJoinConfig}
+        onPreJoinSubmit={session.handlePreJoinSubmit}
+        onPreJoinCancel={session.handlePreJoinCancel}
+        initialMedia={session.initialMedia}
+        handleCopyLobbyInvite={session.handleCopyLobbyInvite}
+        userRole={session.userRole}
+        isHost={session.isHost}
+        isCoHost={session.isCoHost}
+        initialIsLocked={session.isRoomLocked}
+        initialHasPassword={session.roomHasPassword}
         getIdToken={getToken}
       />
     );
@@ -761,7 +302,6 @@ const getLiveKitEndpoints = () => {
               if (isFullscreen) return;
               setIsDragging(false);
               if (Math.hypot(info.offset.x, info.offset.y) < 2) return;
-              // Đo cỡ thật của thẻ lúc thả để kẹp cho khít
               const rect = panelRef.current?.getBoundingClientRect();
               const w = rect?.width || roomSize.width;
               const h = rect?.height || roomSize.height;
@@ -796,11 +336,13 @@ const getLiveKitEndpoints = () => {
                     left: 0,
                     x: roomPos.x,
                     y: roomPos.y,
-                    width: token ? roomSize.width : 400,
-                    height: token ? roomSize.height : "auto",
+                    width: session.token ? roomSize.width : 400,
+                    height: session.token ? roomSize.height : "auto",
                   }
             }
-            className={`hidden sm:flex pointer-events-auto fixed flex-col select-none will-change-transform ${isFullscreen ? "" : "transform-gpu"} ${
+            className={`hidden sm:flex pointer-events-auto fixed flex-col select-none will-change-transform ${
+              isFullscreen ? "" : "transform-gpu"
+            } ${
               isFullscreen
                 ? "inset-0 w-screen h-screen rounded-none bg-neutral-950/95 backdrop-blur-3xl z-[90] border-none shadow-none"
                 : `min-w-[300px] min-h-[240px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] rounded-3xl bg-black/60 hover:bg-black/65 backdrop-blur-2xl border overflow-hidden z-[70] ${
@@ -814,349 +356,117 @@ const getLiveKitEndpoints = () => {
               <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
             )}
 
-
-
-            {!token ? (
-              preJoinConfig ? (
+            {!session.token ? (
+              session.preJoinConfig ? (
                 <div className="flex-1 min-h-0 overflow-y-auto custom-study-scroll flex flex-col">
                   <RoomPreJoinView
-                    roomName={preJoinConfig.room}
-                    displayName={preJoinConfig.name}
-                    passwordMode={preJoinConfig.passwordMode}
-                    onJoin={handlePreJoinSubmit}
-                    onCancel={handlePreJoinCancel}
+                    roomName={session.preJoinConfig.room}
+                    displayName={session.preJoinConfig.name}
+                    passwordMode={session.preJoinConfig.passwordMode}
+                    onJoin={session.handlePreJoinSubmit}
+                    onCancel={session.handlePreJoinCancel}
                     onDragStart={(e) => dragControls.start(e)}
-                    joining={joining}
+                    joining={session.joining}
                   />
                 </div>
               ) : (
-                <div className="flex-1 min-h-0 overflow-y-auto custom-study-scroll flex flex-col">
-                  {/* Thanh kéo / Header */}
-                  <div
-                    onPointerDown={(e) => dragControls.start(e)}
-                    className="relative group/header flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 cursor-grab active:cursor-grabbing touch-none shrink-0"
-                  >
-                    {/* Vạch kéo ở giữa mép trên - span rộng khi hover vào thanh tiêu đề */}
-                    {!isFullscreen && (
-                      <div
-                        className="absolute top-1.5 left-1/2 -translate-x-1/2 z-10 flex items-center justify-center pointer-events-none"
-                        aria-hidden="true"
-                      >
-                        <span
-                          className={`block h-1 rounded-full transition-all duration-200 ease-out ${
-                            isDragging
-                              ? "w-16 bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]"
-                              : "w-10 bg-white/30 group-hover/header:w-16 group-hover/header:bg-white/70"
-                          }`}
-                        />
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-2.5">
-                      <span className="p-2 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300">
-                        <UsersIcon className="w-5 h-5" />
-                      </span>
-                      <div>
-                        <h2 className="text-sm font-bold text-white">Phòng học nhóm</h2>
-                        <p className="text-xs text-slate-400">
-                          Vào phòng là thấy nhau, tối đa {maxParticipants} người
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={onClose}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 flex items-center justify-center text-white/70 hover:text-white transition-all shadow-sm cursor-pointer"
-                        title="Đóng (Esc)"
-                        aria-label="Đóng phòng học nhóm"
-                      >
-                        <XIcon className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {quotaStatus === "unknown" && (
-                    <div className="mx-4 sm:mx-5 mt-2.5 px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-200 text-xs text-center font-medium">
-                      Không kiểm tra được hạn mức tháng
-                    </div>
-                  )}
-
-                  {authLoading ? (
-                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400 text-xs my-auto">
-                      <CircleNotchIcon className="w-6 h-6 animate-spin text-emerald-400 mb-2.5" />
-                      <span>Đang kiểm tra tài khoản...</span>
-                    </div>
-                  ) : !user ? (
-                    <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 text-center select-none my-auto">
-                      <div className="relative mb-4">
-                        <div className="w-16 h-16 rounded-3xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-300 shadow-[0_0_28px_rgba(52,211,153,0.35)]">
-                          <UsersIcon className="w-8 h-8" />
-                        </div>
-                        <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-slate-900 flex items-center justify-center text-slate-950 shadow-md">
-                          <LockKeyIcon className="w-3.5 h-3.5" />
-                        </span>
-                      </div>
-
-                      <h3 className="text-base sm:text-lg font-bold text-white mb-1.5 tracking-tight">
-                        Đăng nhập để vào phòng học nhóm
-                      </h3>
-                      <p className="text-xs text-slate-300 max-w-sm leading-relaxed mb-6">
-                        Để giữ môi trường học tập an toàn, văn minh và tự động nhận diện thành viên, bạn cần đăng nhập tài khoản Google trước khi tham gia lớp học.
-                      </p>
-
-                      <div className="w-full max-w-xs space-y-2 mb-6 text-left">
-                        <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-200">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                          <span>Bật camera & micro cùng bạn bè tập trung</span>
-                        </div>
-                        <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-200">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                          <span>Trò chuyện và học cùng nhau</span>
-                        </div>
-                        <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-200">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                          <span>Tự động định danh thành viên, chống người lạ</span>
-                        </div>
-                      </div>
-
-                      {authError && (
-                        <p className="text-xs text-rose-300 bg-rose-500/10 border border-rose-400/30 rounded-xl px-3.5 py-2 mb-4 max-w-xs">
-                          {authError}
-                        </p>
-                      )}
-
-                      <button
-                        onClick={signIn}
-                        disabled={isSigningIn}
-                        className="relative group overflow-hidden w-full max-w-xs px-5 py-2.5 rounded-full text-xs font-bold text-slate-950 bg-white hover:bg-slate-100 shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-95 disabled:opacity-60"
-                      >
-                        {isSigningIn ? (
-                          <>
-                            <CircleNotchIcon className="w-4 h-4 animate-spin text-slate-700" />
-                            <span>Đang mở Google...</span>
-                          </>
-                        ) : (
-                          <>
-                            <GoogleIcon />
-                            <span>Đăng nhập với Google</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="p-5 sm:p-6 space-y-4">
-                      <div className="space-y-3">
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs font-semibold text-slate-300">Tên hiển thị trong phòng</p>
-                            <span className="text-[11px] text-emerald-300/80 truncate max-w-[200px]">
-                              {user.email}
-                            </span>
-                          </div>
-                          <input
-                            value={displayName}
-                            onChange={(e) => setDisplayName(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleJoin();
-                            }}
-                            placeholder="Ví dụ: An"
-                            maxLength={30}
-                            className="w-full px-3 py-2 rounded-xl bg-black/50 border border-white/20 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:border-white/30"
-                          />
-                        </div>
-
-                        {/* Phòng đang mở: bấm Vào là xong, khỏi gõ tên */}
-                        <div>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <p className="text-xs font-semibold text-slate-300">
-                              Phòng đang mở ({openRooms.length})
-                            </p>
-                            <button
-                              onClick={loadOpenRooms}
-                              disabled={loadingRooms}
-                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
-                              title="Tải lại danh sách"
-                            >
-                              <ArrowClockwiseIcon className={`w-3 h-3 ${loadingRooms ? "animate-spin" : ""}`} />
-                              Tải lại
-                            </button>
-                          </div>
-                          {openRooms.length === 0 ? (
-                            <p className="text-[11px] text-slate-500 px-1 py-2">
-                              {loadingRooms
-                                ? "Đang tìm..."
-                                : !getLiveKitEndpoints().isAvailable
-                                ? "Chưa cấu hình Cloudflare Worker cho phòng học (NEXT_PUBLIC_LIVEKIT_TOKEN_URL)."
-                                : "Chưa có phòng nào mở. Tạo phòng mới ở dưới nhé."}
-                            </p>
-                          ) : (
-                            <div className="space-y-1.5 max-h-36 overflow-y-auto custom-study-scroll pr-0.5">
-                              {openRooms.map((r) => (
-                                <div
-                                  key={r.name}
-                                  className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-colors"
-                                >
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-1.5">
-                                      <p className="text-xs font-bold truncate">{r.name}</p>
-                                      {r.isLocked && (
-                                        <span className="p-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px]" title="Phòng đang khóa">
-                                          <LockKeyIcon className="w-3 h-3" weight="fill" />
-                                        </span>
-                                      )}
-                                      {r.hasPassword && (
-                                        <span className="p-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px]" title="Có mật khẩu bảo vệ">
-                                          <KeyIcon className="w-3 h-3" />
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="text-[11px] text-emerald-300/90">
-                                      {r.count} người đang học
-                                    </p>
-                                  </div>
-                                  <button
-                                    onClick={() => handleJoinListed(r)}
-                                    disabled={joining}
-                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-40 shrink-0"
-                                  >
-                                    <SignInIcon className="w-3.5 h-3.5" /> Vào
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs font-semibold text-slate-300">Hoặc tạo phòng mới</p>
-                            <button
-                              type="button"
-                              onClick={handleCopyLobbyInvite}
-                              disabled={!roomName.trim()}
-                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer disabled:opacity-40"
-                              title={roomName.trim() ? "Sao chép link mời phòng này" : "Nhập tên phòng trước"}
-                            >
-                              <LinkSimpleIcon className="w-3.5 h-3.5" />
-                              <span>Copy link mời</span>
-                            </button>
-                          </div>
-                          <input
-                            value={roomName}
-                            onChange={(e) => setRoomName(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleJoin();
-                            }}
-                            placeholder="Ví dụ: on-thi-cuoi-ky"
-                            maxLength={32}
-                            className="w-full px-3 py-2 rounded-xl bg-black/50 border border-white/20 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:border-white/30"
-                          />
-                          <div className="mt-2 space-y-1.5">
-                            <p className="flex items-start gap-2 text-[11px] leading-relaxed text-slate-400">
-                              <UsersIcon className="w-3.5 h-3.5 mt-[1px] shrink-0 text-emerald-400/80" weight="bold" />
-                              <span>
-                                Ai gõ <span className="font-semibold text-slate-200">cùng tên phòng</span> là vào chung.
-                              </span>
-                            </p>
-                            <p className="flex items-start gap-2 text-[11px] leading-relaxed text-slate-400">
-                              <VideoCameraIcon className="w-3.5 h-3.5 mt-[1px] shrink-0 text-slate-500" weight="bold" />
-                              <span>
-                                Có thể xem trước và tùy chỉnh mic/camera trước khi vào phòng.
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {error && (
-                        <p className="text-xs text-rose-300 bg-rose-500/10 border border-rose-400/30 rounded-xl px-3 py-2">
-                          {error}
-                        </p>
-                      )}
-
-                      {exitNotice && (
-                        <RoomExitNotice
-                          notice={exitNotice}
-                          onDismiss={() => setExitNotice(null)}
-                          onRejoin={handleRejoinFromNotice}
-                        />
-                      )}
-
-                      <button
-                        onClick={handleJoin}
-                        disabled={!canJoin}
-                        className="w-full py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-40 flex items-center justify-center gap-2"
-                      >
-                        {joining ? (
-                          <>
-                            <CircleNotchIcon className="w-4 h-4 animate-spin" /> Đang vào...
-                          </>
-                        ) : (
-                          "Vào phòng học"
-                        )}
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <RoomLobbyView
+                  user={user}
+                  authLoading={authLoading}
+                  isSigningIn={isSigningIn}
+                  authError={authError}
+                  signIn={signIn}
+                  displayName={session.displayName}
+                  setDisplayName={session.setDisplayName}
+                  roomName={session.roomName}
+                  setRoomName={session.setRoomName}
+                  openRooms={session.openRooms}
+                  loadingRooms={session.loadingRooms}
+                  loadOpenRooms={session.loadOpenRooms}
+                  handleJoinListed={session.handleJoinListed}
+                  handleJoin={session.handleJoin}
+                  canJoin={session.canJoin}
+                  joining={session.joining}
+                  error={session.error}
+                  exitNotice={session.exitNotice}
+                  onDismissExitNotice={session.handleDismissExitNotice}
+                  onRejoinExitNotice={session.handleRejoinFromNotice}
+                  maxParticipants={session.maxParticipants}
+                  quotaStatus={session.quotaStatus}
+                  handleCopyLobbyInvite={session.handleCopyLobbyInvite}
+                  onClose={onClose}
+                  onDragStart={(e) => dragControls.start(e)}
+                  isDragging={isDragging}
+                  isFullscreen={isFullscreen}
+                />
               )
             ) : (
               <LiveKitRoom
-                token={token}
-                serverUrl={serverUrl}
+                token={session.token}
+                serverUrl={session.serverUrl}
                 connect
                 audio={
-                  initialMedia.audio
-                    ? (initialMedia.audioDeviceId ? { deviceId: initialMedia.audioDeviceId } : true)
+                  session.initialMedia.audio
+                    ? session.initialMedia.audioDeviceId
+                      ? { deviceId: session.initialMedia.audioDeviceId }
+                      : true
                     : false
                 }
                 video={
-                  initialMedia.video
-                    ? (initialMedia.videoDeviceId ? { deviceId: initialMedia.videoDeviceId } : true)
+                  session.initialMedia.video
+                    ? session.initialMedia.videoDeviceId
+                      ? { deviceId: session.initialMedia.videoDeviceId }
+                      : true
                     : false
                 }
                 options={{
-                  audioCaptureDefaults: initialMedia.audioDeviceId ? { deviceId: initialMedia.audioDeviceId } : undefined,
+                  audioCaptureDefaults: session.initialMedia.audioDeviceId
+                    ? { deviceId: session.initialMedia.audioDeviceId }
+                    : undefined,
                   videoCaptureDefaults: undefined,
                   adaptiveStream: true,
                   dynacast: true,
                 }}
                 className="flex flex-col h-full min-h-0"
-                onDisconnected={handleLeave}
+                onDisconnected={session.handleLeave}
               >
                 <StudyRoomView
-                  roomName={joinedRoom}
-                  onLeave={handleLeave}
+                  roomName={session.joinedRoom}
+                  onLeave={session.handleLeave}
                   sideBySide={isFullscreen || wide}
                   onDragStart={(e) => dragControls.start(e)}
                   isFullscreen={isFullscreen}
                   onToggleFullscreen={toggleFullscreen}
-                  remainingMinutes={remainingMinutes}
-                  sessionMaxMinutes={sessionMaxMinutes}
-                  audioDeviceId={initialMedia.audioDeviceId}
-                  videoDeviceId={initialMedia.videoDeviceId}
+                  remainingMinutes={session.remainingMinutes}
+                  sessionMaxMinutes={session.sessionMaxMinutes}
+                  audioDeviceId={session.initialMedia.audioDeviceId}
+                  videoDeviceId={session.initialMedia.videoDeviceId}
                   soundEnabled={soundEnabled}
                   soundType={soundType}
-                  userRole={userRole}
-                  isHost={isHost}
-                  isCoHost={isCoHost}
-                  initialIsLocked={isRoomLocked}
-                  initialHasPassword={roomHasPassword}
+                  userRole={session.userRole}
+                  isHost={session.isHost}
+                  isCoHost={session.isCoHost}
+                  initialIsLocked={session.isRoomLocked}
+                  initialHasPassword={session.roomHasPassword}
                   getIdToken={getToken}
                 />
               </LiveKitRoom>
             )}
 
-            {/* Tay kéo to/nhỏ: chỉ hiện khi đã vào phòng và không toàn màn hình */}
-            {token && !isFullscreen && (
+            {/* Tay kéo to/nhỏ */}
+            {session.token && !isFullscreen && (
               <div
                 onPointerDown={handleResizePointerDown}
                 className="absolute bottom-1 right-1 w-6 h-6 cursor-nwse-resize touch-none z-20 flex items-end justify-end opacity-60 hover:opacity-100 transition-opacity"
                 title="Kéo để đổi cỡ"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" className="text-slate-400">
-                  <path d="M11 1 L1 11 M11 5 L5 11 M11 9 L9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <path
+                    d="M11 1 L1 11 M11 5 L5 11 M11 9 L9 11"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </div>
             )}

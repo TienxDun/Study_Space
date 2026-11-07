@@ -82,8 +82,10 @@ export default function StudySpacePage() {
   }, []);
 
   // Kiểm soát hiệu ứng hiển thị tuần tự (Fly in from bottom) khi vào trang chính
-  const [hasEntered, setHasEntered] = useState(() => {
-    if (typeof window === "undefined") return true;
+  // Khởi tạo true đồng nhất giữa máy chủ và trình duyệt để tránh lỗi Hydration mismatch (#418)
+  const [hasEntered, setHasEntered] = useState(true);
+
+  useEffect(() => {
     try {
       const isWelcomeDone = Boolean(
         localStorage.getItem(STORAGE_KEYS.mobileWelcomeCompleted) ||
@@ -92,11 +94,13 @@ export default function StudySpacePage() {
       const isSplashDone = MOBILE_SPLASH_ENABLED
         ? Boolean(sessionStorage.getItem("zenstudy_mobile_splash_completed"))
         : true;
-      return isWelcomeDone && isSplashDone;
+      if (!isWelcomeDone || !isSplashDone) {
+        setHasEntered(false);
+      }
     } catch {
-      return true;
+      // Giữ nguyên true nếu không đọc được storage
     }
-  });
+  }, []);
 
   // Theo dõi trạng thái nạp bối cảnh ban đầu để đồng bộ đóng Splash Screen chuẩn xác
   const [isBackgroundReady, setIsBackgroundReady] = useState(false);

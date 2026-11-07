@@ -34,8 +34,15 @@ export const MobileTopBar = React.memo(function MobileTopBar({
   isPreloadingScene = false,
 }: MobileTopBarProps) {
   const [time, setTime] = useState("");
+  const [canShowFullscreen, setCanShowFullscreen] = useState(true);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didLongPressRef = useRef(false);
+
+  useEffect(() => {
+    if (isNativeApp()) {
+      setCanShowFullscreen(false);
+    }
+  }, []);
 
   const handlePointerDown = useCallback(() => {
     if (!onOpenScenes) return;
@@ -130,7 +137,7 @@ export const MobileTopBar = React.memo(function MobileTopBar({
           )}
 
           {/* Nút toàn màn hình chỉ có ích khi xem bằng trình duyệt; trong app thì ẩn */}
-          {!isNativeApp() && (
+          {canShowFullscreen && (
             <button
               type="button"
               onClick={onToggleFullscreen}

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { CircleNotchIcon, GoogleLogoIcon } from "@phosphor-icons/react";
 import { firebaseConfigured } from "@/lib/firebase-config";
 import { isNativeApp } from "@/lib/google-sign-in";
+import { toast } from "sonner";
 import { useAuth } from "../hooks/use-auth";
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
@@ -98,8 +99,10 @@ export function GoogleSignInButton() {
                 fb.getFirebaseAuth(),
                 GoogleAuthProvider.credential(resp.credential)
               );
+              toast.success("Đăng nhập thành công!");
             } catch {
               setFailed("Đăng nhập lỗi, bạn thử lại nhé.");
+              toast.error("Đăng nhập thất bại, bạn thử lại nhé.");
             } finally {
               setIsExchanging(false);
             }

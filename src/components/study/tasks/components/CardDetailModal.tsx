@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { ModalShell } from "@/components/ui/ModalShell";
 import {
   XIcon,
@@ -66,9 +67,53 @@ export const CardDetailModal = React.memo(function CardDetailModal({
   const [editingChecklistId, setEditingChecklistId] = useState<string | null>(null);
   const [editingChecklistText, setEditingChecklistText] = useState("");
   const [isDueDatePopoverOpen, setIsDueDatePopoverOpen] = useState(false);
+  const statusButtonRef = useRef<HTMLButtonElement>(null);
+  const [statusCoords, setStatusCoords] = useState<{ top: number; left: number } | null>(null);
+  const dueDateButtonRef = useRef<HTMLButtonElement>(null);
+  const [dueDateCoords, setDueDateCoords] = useState<{ top: number; right: number } | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
   const touchStartY = useRef<number | null>(null);
+
+  // Đồng bộ vị trí hiển thị dropdown trạng thái
+  useEffect(() => {
+    if (!isStatusDropdownOpen) {
+      setStatusCoords(null);
+      return;
+    }
+    const updateCoords = () => {
+      const el = statusButtonRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setStatusCoords({
+        top: rect.bottom + 6,
+        left: Math.max(12, rect.left),
+      });
+    };
+    updateCoords();
+    window.addEventListener("resize", updateCoords);
+    return () => window.removeEventListener("resize", updateCoords);
+  }, [isStatusDropdownOpen]);
+
+  // Đồng bộ vị trí hiển thị popover hạn chót
+  useEffect(() => {
+    if (!isDueDatePopoverOpen) {
+      setDueDateCoords(null);
+      return;
+    }
+    const updateCoords = () => {
+      const el = dueDateButtonRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setDueDateCoords({
+        top: rect.bottom + 6,
+        right: Math.max(12, window.innerWidth - rect.right),
+      });
+    };
+    updateCoords();
+    window.addEventListener("resize", updateCoords);
+    return () => window.removeEventListener("resize", updateCoords);
+  }, [isDueDatePopoverOpen]);
 
   // Kéo vuốt xuống ở đỉnh để đóng sheet nhanh trên mobile
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -174,14 +219,24 @@ export const CardDetailModal = React.memo(function CardDetailModal({
   const propertyChipsBar = (
     <div className="grid grid-cols-3 gap-2 w-full pt-0.5">
       {/* 1. Status Chip */}
-      <div className="relative">
+      <div className={`relative ${isStatusDropdownOpen ? "z-50" : "z-0"}`}>
         <button
+          ref={statusButtonRef}
           type="button"
-          onClick={() => {
+          onClick={(e) => {
             setIsDueDatePopoverOpen(false);
+            const rect = e.currentTarget.getBoundingClientRect();
+            setStatusCoords({
+              top: rect.bottom + 6,
+              left: Math.max(12, rect.left),
+            });
             setIsStatusDropdownOpen(!isStatusDropdownOpen);
           }}
-          className="w-full h-8 px-2 sm:px-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-xs font-medium text-slate-200 flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs"
+          className={`w-full h-8 px-2 sm:px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${
+            isStatusDropdownOpen
+              ? "bg-white/15 border-white/30 text-white"
+              : "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 hover:border-white/20 text-slate-200"
+          }`}
           title="Cột trạng thái"
         >
           <span className="truncate flex items-center gap-1">
@@ -196,20 +251,35 @@ export const CardDetailModal = React.memo(function CardDetailModal({
           />
         </button>
 
-        {/* Status Dropdown Menu */}
-        <AnimatePresence>
-          {isStatusDropdownOpen && (
-            <>
+        {/* Status Dropdown Menu (Portal ra document.body để mờ toàn màn hình) */}
+        {isStatusDropdownOpen &&
+          statusCoords &&
+          typeof document !== "undefined" &&
+          document.body &&
+          createPortal(
+            <div className="select-none">
+              {/* Lớp nền mờ tối phủ toàn màn hình bắt chạm để đóng */}
               <div
-                className="fixed inset-0 z-40"
-                onClick={() => setIsStatusDropdownOpen(false)}
+                className="fixed inset-0 z-[70] bg-black/45 animate-in fade-in duration-150 cursor-pointer touch-none"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsStatusDropdownOpen(false);
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsStatusDropdownOpen(false);
+                }}
+                role="button"
+                tabIndex={-1}
+                aria-label="Đóng danh sách trạng thái"
               />
-              <motion.div
-                initial={{ opacity: 0, y: 4, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 4, scale: 0.97 }}
-                transition={{ duration: 0.12 }}
-                className="absolute top-full mt-1.5 left-0 w-48 p-1.5 rounded-2xl bg-neutral-950/95 backdrop-blur-2xl border border-white/20 shadow-2xl z-50 max-h-48 overflow-y-auto custom-study-scroll space-y-0.5"
+              <div
+                style={{ top: statusCoords.top, left: statusCoords.left }}
+                className="fixed z-[71] w-48 p-1.5 rounded-2xl surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] max-h-48 overflow-y-auto custom-study-scroll space-y-0.5 select-none animate-in fade-in zoom-in-95 duration-150"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
               >
                 {currentBoard.columns.map((col) => {
                   const isActive = selectedCard.columnId === col.id;
@@ -232,10 +302,10 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                     </button>
                   );
                 })}
-              </motion.div>
-            </>
+              </div>
+            </div>,
+            document.body
           )}
-        </AnimatePresence>
       </div>
 
       {/* 2. Priority Chip - Chạm để chuyển đổi trực tiếp giữa Thấp -> Vừa -> Cao */}
@@ -268,15 +338,23 @@ export const CardDetailModal = React.memo(function CardDetailModal({
       </div>
 
       {/* 3. Due Date Chip */}
-      <div className="relative">
+      <div className={`relative ${isDueDatePopoverOpen ? "z-50" : "z-0"}`}>
         {selectedCard.dueDate && deadlineInfo ? (
           <button
+            ref={dueDateButtonRef}
             type="button"
-            onClick={() => {
+            onClick={(e) => {
               setIsStatusDropdownOpen(false);
+              const rect = e.currentTarget.getBoundingClientRect();
+              setDueDateCoords({
+                top: rect.bottom + 6,
+                right: Math.max(12, window.innerWidth - rect.right),
+              });
               setIsDueDatePopoverOpen(!isDueDatePopoverOpen);
             }}
-            className={`w-full h-8 px-2 sm:px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${deadlineInfo.badgeClass}`}
+            className={`w-full h-8 px-2 sm:px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${
+              isDueDatePopoverOpen ? "border-white/30 bg-white/15 text-white" : deadlineInfo.badgeClass
+            }`}
             title="Hạn chót"
           >
             <div className="flex items-center gap-1.5 min-w-0 truncate">
@@ -291,36 +369,65 @@ export const CardDetailModal = React.memo(function CardDetailModal({
           </button>
         ) : (
           <button
+            ref={dueDateButtonRef}
             type="button"
-            onClick={() => {
+            onClick={(e) => {
               setIsStatusDropdownOpen(false);
+              const rect = e.currentTarget.getBoundingClientRect();
+              setDueDateCoords({
+                top: rect.bottom + 6,
+                right: Math.max(12, window.innerWidth - rect.right),
+              });
               setIsDueDatePopoverOpen(!isDueDatePopoverOpen);
             }}
-            className="w-full h-8 px-2 sm:px-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-xs font-medium text-slate-300 hover:text-white flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs"
+            className={`w-full h-8 px-2 sm:px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${
+              isDueDatePopoverOpen
+                ? "bg-white/15 border-white/30 text-white"
+                : "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 hover:border-white/20 text-slate-300 hover:text-white"
+            }`}
             title="Thêm hạn chót"
           >
             <div className="flex items-center gap-1.5 min-w-0 truncate">
               <CalendarIcon className="w-3 h-3 text-slate-400 shrink-0" />
               <span className="truncate">Hạn chót</span>
             </div>
-            <CaretDownIcon className="w-3 h-3 opacity-60 shrink-0" />
+            <CaretDownIcon
+              className={`w-3 h-3 opacity-60 shrink-0 transition-transform ${
+                isDueDatePopoverOpen ? "rotate-180" : ""
+              }`}
+            />
           </button>
         )}
 
-        {/* Due Date Popover */}
-        <AnimatePresence>
-          {isDueDatePopoverOpen && (
-            <>
+        {/* Due Date Popover (Portal ra document.body để mờ toàn màn hình) */}
+        {isDueDatePopoverOpen &&
+          dueDateCoords &&
+          typeof document !== "undefined" &&
+          document.body &&
+          createPortal(
+            <div className="select-none">
+              {/* Lớp nền mờ tối phủ toàn màn hình bắt chạm để đóng */}
               <div
-                className="fixed inset-0 z-40"
-                onClick={() => setIsDueDatePopoverOpen(false)}
+                className="fixed inset-0 z-[70] bg-black/45 animate-in fade-in duration-150 cursor-pointer touch-none"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDueDatePopoverOpen(false);
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDueDatePopoverOpen(false);
+                }}
+                role="button"
+                tabIndex={-1}
+                aria-label="Đóng chọn hạn chót"
               />
-              <motion.div
-                initial={{ opacity: 0, y: 4, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 4, scale: 0.97 }}
-                transition={{ duration: 0.12 }}
-                className="absolute top-full mt-1.5 right-0 w-[min(20rem,calc(100vw-3rem))] sm:w-80 p-3.5 rounded-2xl bg-neutral-950/95 backdrop-blur-2xl border border-white/20 shadow-2xl z-50 space-y-3"
+              <div
+                style={{ top: dueDateCoords.top, right: dueDateCoords.right }}
+                className="fixed z-[71] w-[min(20rem,calc(100vw-24px))] sm:w-80 p-3.5 rounded-2xl surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] space-y-3 select-none animate-in fade-in zoom-in-95 duration-150"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -477,10 +584,10 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                     );
                   })}
                 </div>
-              </motion.div>
-            </>
+              </div>
+            </div>,
+            document.body
           )}
-        </AnimatePresence>
       </div>
     </div>
   );

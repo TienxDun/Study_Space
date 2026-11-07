@@ -22,6 +22,7 @@ export const viewport: Viewport = {
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://zenstudy.space";
+const isMobileShell = process.env.NEXT_PUBLIC_MOBILE_SHELL === "1";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -108,17 +109,21 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  icons: {
-    icon: [
-      { url: `${basePath}/favicon.ico`, sizes: "any" },
-      { url: `${basePath}/icon.svg`, type: "image/svg+xml" },
-      { url: `${basePath}/icon-192.png`, sizes: "192x192", type: "image/png" },
-      { url: `${basePath}/icon-512.png`, sizes: "512x512", type: "image/png" },
-    ],
-    apple: [
-      { url: `${basePath}/apple-touch-icon.png`, sizes: "180x180", type: "image/png" },
-    ],
-  },
+  icons: isMobileShell
+    ? {
+        icon: [{ url: "data:image/x-icon;," }],
+      }
+    : {
+        icon: [
+          { url: `${basePath}/favicon.ico`, sizes: "any" },
+          { url: `${basePath}/icon.svg`, type: "image/svg+xml" },
+          { url: `${basePath}/icon-192.png`, sizes: "192x192", type: "image/png" },
+          { url: `${basePath}/icon-512.png`, sizes: "512x512", type: "image/png" },
+        ],
+        apple: [
+          { url: `${basePath}/apple-touch-icon.png`, sizes: "180x180", type: "image/png" },
+        ],
+      },
 };
 
 // Khung phải khớp từng pixel với MobileSplashScreen: logo 80px + lề 20px + chữ 24px
@@ -158,7 +163,7 @@ export default function RootLayout({
             <style dangerouslySetInnerHTML={{ __html: PRE_SPLASH_CSS }} />
             <Script src={`${basePath}/pre-splash-gate.js`} strategy="beforeInteractive" />
             <div id="pre-splash" aria-hidden="true" suppressHydrationWarning>
-              <div className="ps-body">
+              <div className="ps-body" suppressHydrationWarning>
                 <div className="ps-logo">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useRef, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   SparkleIcon,
   LightbulbIcon,
@@ -110,17 +110,48 @@ export function NoteChatPromptMenu({
   triggerRef,
 }: NoteChatPromptMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; right: number } | null>(null);
 
+  // Tính toán toạ độ vị trí neo theo nút bấm
+  useEffect(() => {
+    if (!isOpen) {
+      setCoords(null);
+      return;
+    }
+    const updateCoords = () => {
+      const el = triggerRef?.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + 6,
+        right: Math.max(12, window.innerWidth - rect.right),
+      });
+    };
+    updateCoords();
+    window.addEventListener("resize", updateCoords);
+    return () => window.removeEventListener("resize", updateCoords);
+  }, [isOpen, triggerRef]);
+
+  // Đóng menu khi bấm ra ngoài hoặc nhấn Esc
   useEffect(() => {
     if (!isOpen) return;
-    const handleOutsideClick = (e: MouseEvent) => {
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
       const target = e.target as Node;
       if (menuRef.current?.contains(target)) return;
       if (triggerRef?.current?.contains(target)) return;
       onClose();
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isOpen, onClose, triggerRef]);
 
   const handleTriggerAction = (action: PromptAction) => {
@@ -144,96 +175,115 @@ export function NoteChatPromptMenu({
     );
   };
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          ref={menuRef}
-          initial={{ opacity: 0, scale: 0.95, y: 6 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 6 }}
-          transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-          className={`absolute right-0 top-full mt-1.5 w-[min(320px,calc(100vw-36px))] sm:w-[340px] p-1.5 rounded-2xl border z-50 select-none ${
-            isLight
-              ? "bg-white border-slate-200 text-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.18)]"
-              : "bg-slate-900 border-slate-700/80 text-white shadow-[0_20px_60px_rgba(0,0,0,0.85),0_0_0_1px_rgba(255,255,255,0.08)]"
+  if (!isOpen || !coords || typeof document === "undefined" || !document.body) return null;
+
+  return createPortal(
+    <div className="select-none">
+      {/* Lớp nền mờ tối phủ toàn màn hình bắt chạm để đóng */}
+      <div
+        className="fixed inset-0 z-[70] bg-black/45 animate-in fade-in duration-150 cursor-pointer touch-none"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
+        role="button"
+        tabIndex={-1}
+        aria-label="Đóng menu hỏi AI"
+      />
+
+      {/* Menu Kính mờ (Frosted Glass) */}
+      <div
+        ref={menuRef}
+        style={{ top: coords.top, right: coords.right }}
+        className={`fixed z-[71] w-[min(320px,calc(100vw-24px))] sm:w-[340px] p-1.5 rounded-2xl border select-none animate-in fade-in zoom-in-95 duration-150 ${
+          isLight
+            ? "bg-white/95 backdrop-blur-xl border-slate-200 text-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.18)]"
+            : "surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] text-white"
+        }`}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header menu */}
+        <div
+          className={`px-2.5 pt-1.5 pb-2 border-b flex items-center justify-between ${
+            isLight ? "border-slate-200/80" : "border-white/10"
           }`}
         >
-          {/* Header menu */}
-          <div
-            className={`px-2.5 pt-1.5 pb-2 border-b flex items-center justify-between ${
-              isLight ? "border-slate-200/80" : "border-white/10 sm:border-slate-800"
-            }`}
-          >
-            <div>
-              <div
-                className={`text-xs font-bold flex items-center gap-1.5 ${
-                  isLight ? "text-slate-900" : "text-white"
-                }`}
-              >
-                <span>Hỏi Trợ lý AI về ghi chú này</span>
-              </div>
-              <div
-                className={`text-[11px] mt-0.5 ${
-                  isLight ? "text-slate-500" : "text-slate-400"
-                }`}
-              >
-                Chọn nhu cầu phù hợp để AI phản hồi tối ưu nhất
-              </div>
+          <div>
+            <div
+              className={`text-xs font-bold flex items-center gap-1.5 ${
+                isLight ? "text-slate-900" : "text-white"
+              }`}
+            >
+              <span>Hỏi Trợ lý AI về ghi chú này</span>
+            </div>
+            <div
+              className={`text-[11px] mt-0.5 ${
+                isLight ? "text-slate-500" : "text-white/60"
+              }`}
+            >
+              Chọn nhu cầu phù hợp để AI phản hồi tối ưu nhất
             </div>
           </div>
+        </div>
 
-          {/* Prompt list */}
-          <div className="space-y-0.5 mt-1 max-h-[min(400px,calc(100vh-200px))] overflow-y-auto custom-study-scroll p-0.5">
-            {PROMPT_ACTIONS.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => handleTriggerAction(item)}
-                  className={`w-full flex items-start gap-2.5 p-1.5 rounded-xl text-left transition-all cursor-pointer group ${
-                    isLight
-                      ? "hover:bg-slate-100/80 active:bg-slate-200/70"
-                      : "hover:bg-white/10 active:bg-white/15"
-                  }`}
+        {/* Prompt list */}
+        <div className="space-y-0.5 mt-1 max-h-[min(400px,calc(100vh-200px))] overflow-y-auto custom-study-scroll p-0.5">
+          {PROMPT_ACTIONS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleTriggerAction(item)}
+                className={`w-full flex items-start gap-2.5 p-1.5 rounded-xl text-left transition-all cursor-pointer group ${
+                  isLight
+                    ? "hover:bg-slate-100/80 active:bg-slate-200/70"
+                    : "hover:bg-white/10 active:bg-white/15"
+                }`}
+              >
+                <div
+                  className={`shrink-0 w-7 h-7 rounded-lg border flex items-center justify-center transition-transform group-hover:scale-105 ${item.iconColor}`}
                 >
-                  <div
-                    className={`shrink-0 w-7 h-7 rounded-lg border flex items-center justify-center transition-transform group-hover:scale-105 ${item.iconColor}`}
-                  >
-                    <Icon size={15} weight="bold" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={`text-xs font-semibold transition-colors ${
-                          isLight
-                            ? "text-slate-800 group-hover:text-emerald-600"
-                            : "text-slate-100 group-hover:text-emerald-400"
-                        }`}
-                      >
-                        {item.title}
-                      </span>
-                      {item.badge && (
-                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-                    <p
-                      className={`text-[11px] leading-snug mt-0.5 line-clamp-2 ${
-                        isLight ? "text-slate-500" : "text-slate-400"
+                  <Icon size={15} weight="bold" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`text-xs font-semibold transition-colors ${
+                        isLight
+                          ? "text-slate-800 group-hover:text-emerald-600"
+                          : "text-slate-100 group-hover:text-emerald-400"
                       }`}
                     >
-                      {item.description}
-                    </p>
+                      {item.title}
+                    </span>
+                    {item.badge && (
+                      <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        {item.badge}
+                      </span>
+                    )}
                   </div>
-                </button>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+                  <p
+                    className={`text-[11px] leading-snug mt-0.5 line-clamp-2 ${
+                      isLight ? "text-slate-500" : "text-white/60"
+                    }`}
+                  >
+                    {item.description}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }

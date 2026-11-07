@@ -6,6 +6,7 @@ import { cloudConfigured, syncNow, clearLocalUserData } from "@/lib/simple-cloud
 import { broadcastWipe, hasStoredUserData } from "@/lib/local-data";
 import { trackEvent } from "@/lib/analytics";
 import { isNativeApp, signInWithGoogleNative, signOutGoogleNative } from "@/lib/google-sign-in";
+import { toast } from "sonner";
 import type { UseAuthReturn } from "../types";
 import type { User } from "firebase/auth";
 
@@ -51,20 +52,24 @@ export function useAuth(): UseAuthReturn {
         // Nhận kết quả sau khi Google chuyển về nếu dùng redirect
         getRedirectResult(getFirebaseAuth())
           .then((cred) => {
-            if (cred?.user) trackEvent("auth-login");
+            if (cred?.user) {
+              trackEvent("auth-login");
+              toast.success("Đăng nhập thành công!");
+            }
           })
           .catch((e: { code?: string }) => {
             const code = String(e?.code || "");
             if (code === "auth/user-cancelled" || code === "auth/popup-closed-by-user") return;
-            setAuthError(
+            const message =
               code === "auth/unauthorized-domain"
                 ? "Domain này chưa được duyệt trong Firebase (Authentication > Settings > Authorized domains)."
                 : code === "auth/network-request-failed"
                   ? "Mạng chập chờn hoặc bị chặn, bạn thử lại nhé."
                   : code === "auth/web-storage-unsupported"
                     ? "Trình duyệt đang chặn bộ nhớ bên thứ ba, bạn cho phép cookie bên thứ ba rồi thử lại."
-                    : `Đăng nhập lỗi (${code || "không rõ"}), bạn thử lại nhé.`
-            );
+                    : `Đăng nhập lỗi (${code || "không rõ"}), bạn thử lại nhé.`;
+            setAuthError(message);
+            toast.error(message);
           });
         unsubscribe = onAuthStateChanged(getFirebaseAuth(), (u: User | null) => {
           setUser(u);
@@ -84,7 +89,9 @@ export function useAuth(): UseAuthReturn {
   // Ưu tiên mở popup để không làm đứt quãng nhạc/trang web; nếu bị chặn thì chuyển sang redirect
   const signIn = useCallback(async () => {
     if (!firebaseConfigured) {
-      setAuthError("Chưa cấu hình Firebase Auth trong môi trường.");
+      const msg = "Chưa cấu hình Firebase Auth trong môi trường.";
+      setAuthError(msg);
+      toast.error(msg);
       return;
     }
     setIsSigningIn(true);
@@ -93,9 +100,14 @@ export function useAuth(): UseAuthReturn {
     if (isNativeApp()) {
       try {
         const { cancelled } = await signInWithGoogleNative();
-        if (!cancelled) trackEvent("auth-login");
+        if (!cancelled) {
+          trackEvent("auth-login");
+          toast.success("Đăng nhập thành công!");
+        }
       } catch {
-        setAuthError("Đăng nhập Google thất bại, bạn thử lại nhé.");
+        const msg = "Đăng nhập Google thất bại, bạn thử lại nhé.";
+        setAuthError(msg);
+        toast.error(msg);
       } finally {
         setIsSigningIn(false);
       }
@@ -114,6 +126,7 @@ export function useAuth(): UseAuthReturn {
     try {
       await signInWithPopup(auth, provider);
       trackEvent("auth-login");
+      toast.success("Đăng nhập thành công!");
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string };
       const code = String(err?.code || "");
@@ -124,17 +137,20 @@ export function useAuth(): UseAuthReturn {
         try {
           await signInWithRedirect(auth, provider);
         } catch {
-          setAuthError("Không thể mở trang đăng nhập Google.");
+          const msg = "Không thể mở trang đăng nhập Google.";
+          setAuthError(msg);
+          toast.error(msg);
         }
         return;
       }
-      setAuthError(
+      const msg =
         code === "auth/unauthorized-domain"
           ? "Domain này chưa được duyệt trong Firebase (Authentication > Settings > Authorized domains)."
           : code === "auth/network-request-failed"
             ? "Mạng chập chờn, bạn kiểm tra kết nối nhé."
-            : `Đăng nhập thất bại (${code || err?.message || "lỗi kết nối"}).`
-      );
+            : `Đăng nhập thất bại (${code || err?.message || "lỗi kết nối"}).`;
+      setAuthError(msg);
+      toast.error(msg);
     } finally {
       setIsSigningIn(false);
     }

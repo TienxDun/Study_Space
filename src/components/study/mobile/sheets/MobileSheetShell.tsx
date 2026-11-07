@@ -19,6 +19,7 @@ interface MobileSheetShellProps {
   heightClassName?: string;
   defaultZenMode?: boolean;
   footer?: ReactNode;
+  footerClassName?: string;
   panelRef?: React.Ref<HTMLDivElement>;
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
@@ -51,6 +52,7 @@ export function MobileSheetShell({
   heightClassName,
   defaultZenMode = false,
   footer,
+  footerClassName,
   panelRef,
   onSwipeLeft,
   onSwipeRight,
@@ -408,7 +410,7 @@ export function MobileSheetShell({
 
       {/* Cụm điều khiển cố định ở đáy (Thumb-Zone) */}
       {footer && (
-        <div className="shrink-0 border-t border-white/[0.12] bg-neutral-950/85">
+        <div className={cn("shrink-0 border-t border-white/[0.08] bg-white/[0.02]", footerClassName)}>
           {footer}
         </div>
       )}
