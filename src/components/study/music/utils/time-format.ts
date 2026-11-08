@@ -1,15 +1,13 @@
+import { formatMinutesSeconds } from "@/lib/time";
+import { clamp } from "@/lib/utils";
+
 /**
  * Chuyển đổi thời gian từ giây sang định dạng mm:ss
  * @param timeInSeconds Thời gian tính bằng giây
  * @returns Chuỗi định dạng "m:ss" hoặc "0:00" nếu không hợp lệ
  */
 export function formatTime(timeInSeconds: number): string {
-  if (!isFinite(timeInSeconds) || isNaN(timeInSeconds) || timeInSeconds <= 0) {
-    return "0:00";
-  }
-  const minutes = Math.floor(timeInSeconds / 60);
-  const seconds = Math.floor(timeInSeconds % 60);
-  return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+  return formatMinutesSeconds(timeInSeconds, false);
 }
 
 /**
@@ -17,7 +15,7 @@ export function formatTime(timeInSeconds: number): string {
  */
 export function clampVolume(value: number): number {
   if (isNaN(value)) return 0.5;
-  return Math.max(0, Math.min(1, Math.round(value * 100) / 100));
+  return clamp(Math.round(value * 100) / 100, 0, 1);
 }
 
 /**

@@ -5,8 +5,8 @@ import { MusicNotesIcon, CloudRainIcon, SpeakerXIcon } from "@phosphor-icons/rea
 import { MobileSheetShell } from "./core/MobileSheetShell";
 import { MixerTab, Track, MoodType } from "../../mixer/types";
 import { STUDY_TRACKS_BY_MOOD } from "../../study-types";
-import { MusicTabContent } from "../../mixer/components/MusicTabContent";
-import { AmbientTabContent } from "../../mixer/components/AmbientTabContent";
+import { MobileMusicTabContent } from "./components/mixer/MobileMusicTabContent";
+import { MobileAmbientTabContent } from "./components/mixer/MobileAmbientTabContent";
 
 const EMPTY_TRACKS: Track[] = [];
 
@@ -81,7 +81,7 @@ export const MobileMixerSheet = memo(function MobileMixerSheet({
   );
 
   const tabContent = activeTab === "music" ? (
-    <MusicTabContent
+    <MobileMusicTabContent
       currentMood={currentMood}
       onSelectMood={onSelectMood}
       currentTrack={currentTrack}
@@ -98,16 +98,13 @@ export const MobileMixerSheet = memo(function MobileMixerSheet({
       isLooping={isLooping}
       onToggleLoop={onToggleLoop}
       currentMoodTracks={currentMoodTracks}
-      isMobile={true}
     />
   ) : (
-    <AmbientTabContent
+    <MobileAmbientTabContent
       ambientVolumes={ambientVolumes}
-      activeCount={activeCount}
       onTogglePreset={handleTogglePreset}
       onToggleSound={toggleSound}
       onVolumeChange={handleSoundVolume}
-      isMobile={true}
     />
   );
 
@@ -128,11 +125,11 @@ export const MobileMixerSheet = memo(function MobileMixerSheet({
           <button
             type="button"
             onClick={resetAllSounds}
-            className="h-8 px-2.5 rounded-full inline-flex items-center gap-1.5 text-xs font-semibold bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-400/30 active:scale-95 transition-all shadow-sm cursor-pointer touch-manipulation"
+            className="h-8 px-2.5 rounded-full inline-flex items-center gap-1.5 text-xs font-semibold bg-white/10 hover:bg-rose-500/20 active:bg-rose-500/30 text-slate-200 hover:text-white border border-white/15 hover:border-rose-400/40 active:scale-95 transition-all shadow-sm cursor-pointer touch-manipulation"
             title="Tắt tất cả âm thanh thiên nhiên"
             aria-label="Tắt tất cả âm thanh thiên nhiên"
           >
-            <SpeakerXIcon className="w-3.5 h-3.5" weight="bold" />
+            <SpeakerXIcon className="w-3.5 h-3.5 text-rose-400" weight="bold" />
             <span>Tắt hết ({activeCount})</span>
           </button>
         ) : undefined

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { saveStorageJSON } from "@/lib/safe-storage";
+import { clamp } from "@/lib/utils";
 
 export interface FloatingSize {
   width: number;
@@ -45,10 +46,10 @@ export function useFloatingSize({
       }
       return {
         width: Math.round(
-          Math.max(minWidth, Math.min(Math.max(minWidth, window.innerWidth - 32), w))
+          clamp(w, minWidth, Math.max(minWidth, window.innerWidth - 32))
         ),
         height: Math.round(
-          Math.max(minHeight, Math.min(Math.max(minHeight, window.innerHeight - 120), h))
+          clamp(h, minHeight, Math.max(minHeight, window.innerHeight - 120))
         ),
       };
     },
@@ -125,8 +126,8 @@ export function useFloatingSize({
             ? Math.max(minHeight, window.innerHeight - anchor.y - edgeMargin)
             : startH;
         latest = {
-          width: Math.round(Math.max(minWidth, Math.min(maxW, startW + (ev.clientX - startX)))),
-          height: Math.round(Math.max(minHeight, Math.min(maxH, startH + (ev.clientY - startY)))),
+          width: Math.round(clamp(startW + (ev.clientX - startX), minWidth, maxW)),
+          height: Math.round(clamp(startH + (ev.clientY - startY), minHeight, maxH)),
         };
         if (!rafId) rafId = requestAnimationFrame(apply);
       };

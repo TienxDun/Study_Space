@@ -42,7 +42,6 @@ interface CardDetailModalProps {
   promptDeleteCard: (card: KanbanCard) => void;
   onBack?: () => void;
   backLabel?: string;
-  embedded?: boolean;
 }
 
 export const CardDetailModal = React.memo(function CardDetailModal({
@@ -61,7 +60,6 @@ export const CardDetailModal = React.memo(function CardDetailModal({
   promptDeleteCard,
   onBack,
   backLabel,
-  embedded = false,
 }: CardDetailModalProps) {
   const [newChecklistText, setNewChecklistText] = useState("");
   const [editingChecklistId, setEditingChecklistId] = useState<string | null>(null);
@@ -213,7 +211,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
             });
             setIsStatusDropdownOpen(!isStatusDropdownOpen);
           }}
-          className={`w-full h-8 px-2 sm:px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${
+          className={`w-full h-8 px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${
             isStatusDropdownOpen
               ? "bg-white/15 border-white/30 text-white"
               : "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 hover:border-white/20 text-slate-200"
@@ -268,7 +266,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                     exit={{ opacity: 0, scale: 0.95, y: -4 }}
                     transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
                     style={{ top: statusCoords.top, left: statusCoords.left }}
-                    className="fixed z-[71] w-48 p-1.5 rounded-2xl surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] max-h-48 overflow-y-auto custom-study-scroll space-y-0.5 select-none"
+                    className="fixed z-[71] w-48 p-1.5 rounded-2xl border border-white/15 bg-neutral-950/88 shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] max-h-48 overflow-y-auto custom-study-scroll space-y-0.5 select-none"
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -310,12 +308,12 @@ export const CardDetailModal = React.memo(function CardDetailModal({
             setIsDueDatePopoverOpen(false);
             cyclePriority();
           }}
-          className={`w-full h-8 px-2 sm:px-2.5 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 select-none ${
+          className={`w-full h-8 px-2.5 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 select-none bg-white/[0.04] hover:bg-white/[0.08] border-white/10 hover:border-white/20 ${
             selectedCard.priority === "high"
-              ? "bg-rose-500/[0.08] border-rose-500/25 text-rose-300 hover:bg-rose-500/15"
+              ? "text-rose-300"
               : selectedCard.priority === "medium"
-              ? "bg-amber-500/[0.08] border-amber-500/25 text-amber-300 hover:bg-amber-500/15"
-              : "bg-emerald-500/[0.08] border-emerald-500/25 text-emerald-300 hover:bg-emerald-500/15"
+              ? "text-amber-300"
+              : "text-emerald-300"
           }`}
           title="Mức độ ưu tiên"
         >
@@ -345,7 +343,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
               });
               setIsDueDatePopoverOpen(!isDueDatePopoverOpen);
             }}
-            className={`w-full h-8 px-2 sm:px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${
+            className={`w-full h-8 px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${
               isDueDatePopoverOpen ? "border-white/30 bg-white/15 text-white" : deadlineInfo.badgeClass
             }`}
             title="Hạn chót"
@@ -373,7 +371,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
               });
               setIsDueDatePopoverOpen(!isDueDatePopoverOpen);
             }}
-            className={`w-full h-8 px-2 sm:px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${
+            className={`w-full h-8 px-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-1 transition-all cursor-pointer shadow-xs ${
               isDueDatePopoverOpen
                 ? "bg-white/15 border-white/30 text-white"
                 : "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 hover:border-white/20 text-slate-300 hover:text-white"
@@ -428,7 +426,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                     exit={{ opacity: 0, scale: 0.95, y: -4 }}
                     transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
                     style={{ top: dueDateCoords.top, right: dueDateCoords.right }}
-                    className="fixed z-[71] w-[min(20rem,calc(100vw-24px))] sm:w-80 p-3.5 rounded-2xl surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] space-y-3 select-none"
+                    className="fixed z-[71] w-80 p-3.5 rounded-2xl border border-white/15 bg-neutral-950/88 shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] space-y-3 select-none"
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -514,9 +512,9 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                         ) : null}
                       </div>
 
-                      {/* Quick Time Presets if date exists (desktop only, mobile dùng nút + Giờ cho gọn) */}
+                      {/* Quick Time Presets if date exists */}
                       {dateVal && (
-                        <div className="hidden sm:flex items-center justify-between gap-1 pt-0.5">
+                        <div className="flex items-center justify-between gap-1 pt-0.5">
                           <span className="text-xs text-slate-400 shrink-0">Giờ:</span>
                           <div className="flex items-center gap-1 flex-1 justify-end">
                             {[
@@ -647,7 +645,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
             ),
           }));
         }}
-        className="w-full p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.06] focus:bg-white/[0.08] border border-white/[0.1] focus:border-white/25 text-xs sm:text-sm text-slate-200 placeholder-white/30 focus:outline-none resize-none overflow-hidden transition-[background-color,border-color] font-normal leading-relaxed"
+        className="w-full p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.06] focus:bg-white/[0.08] border border-white/[0.1] focus:border-white/25 text-sm text-slate-200 placeholder-white/30 focus:outline-none resize-none overflow-hidden transition-[background-color,border-color] font-normal leading-relaxed"
       />
     </div>
   );
@@ -684,7 +682,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
 
       {/* Danh sách các việc con */}
       {totalCheck > 0 && (
-        <div className="space-y-1.5 sm:max-h-52 sm:overflow-y-auto pr-1 custom-study-scroll">
+        <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1 custom-study-scroll">
           {selectedCard.checklist.map((item, itemIdx) => {
             const isEditing = editingChecklistId === item.id;
             return (
@@ -772,8 +770,8 @@ export const CardDetailModal = React.memo(function CardDetailModal({
         </div>
       )}
 
-      {/* Thêm việc con nhanh */}
-      <div className="flex items-center gap-2 p-1 pl-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.08] focus-within:border-white/25 focus-within:bg-white/[0.05] transition-all">
+      {/* Thêm việc con nhanh (Input và Button tách biệt độc lập) */}
+      <div className="flex items-center gap-2">
         <input
           type="text"
           placeholder="Thêm mục việc cần làm..."
@@ -788,7 +786,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
               }
             }
           }}
-          className="flex-1 py-1.5 bg-transparent border-0 text-xs text-white placeholder-white/30 focus:outline-none"
+          className="flex-1 min-w-0 h-9 px-3.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.06] focus:bg-white/[0.08] border border-white/10 focus:border-white/25 text-xs text-white placeholder-white/30 focus:outline-none transition-[background-color,border-color]"
         />
         <button
           type="button"
@@ -798,33 +796,14 @@ export const CardDetailModal = React.memo(function CardDetailModal({
               setNewChecklistText("");
             }
           }}
-          className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white text-white hover:text-black text-xs font-semibold transition-all cursor-pointer flex items-center gap-1 active:scale-95"
+          className="h-9 px-3.5 rounded-xl bg-white/10 hover:bg-white text-white hover:text-black border border-white/15 hover:border-white text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 active:scale-95 shadow-sm"
         >
-          <PlusIcon className="w-3.5 h-3.5" />
+          <PlusIcon className="w-3.5 h-3.5" weight="bold" />
           <span>Thêm</span>
         </button>
       </div>
     </div>
   );
-
-  // Khi được nhúng trực tiếp vào MobileSheetShell (như Sheet Ghi chú)
-  if (embedded) {
-    return (
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden text-white">
-        {/* Controls: Property Chips & Pomodoro CTA */}
-        <div className="px-3.5 sm:px-6 pt-2 pb-2.5 space-y-2.5 border-b border-white/[0.08] shrink-0 bg-white/[0.01]">
-          {propertyChipsBar}
-          {pomodoroButton}
-        </div>
-
-        {/* Scrollable Content: Description & Sub-tasks */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pt-3 pb-6 space-y-4 custom-study-scroll">
-          {descriptionSection}
-          {checklistSection}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <ModalShell
@@ -832,8 +811,8 @@ export const CardDetailModal = React.memo(function CardDetailModal({
       onClose={handleRequestClose}
       panelKey={`card-details-modal-${selectedCard.id}`}
       ariaLabel={selectedCard.title || "Chi tiết nhiệm vụ"}
-      backdropClassName="sm:hidden"
-      panelClassName="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4 pointer-events-none"
+      backdropClassName="z-[90] bg-black/60 backdrop-blur-md"
+      panelClassName="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -844,18 +823,18 @@ export const CardDetailModal = React.memo(function CardDetailModal({
         exit={{ opacity: 0, y: 60 }}
         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="relative pointer-events-auto w-full sm:max-w-[660px] h-[68dvh] max-h-[72dvh] sm:h-auto sm:max-h-[88vh] mx-3 sm:mx-0 mb-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] sm:mb-0 flex flex-col rounded-[28px] sm:rounded-3xl surface-frost border shadow-[0_10px_24px_rgba(0,0,0,0.65),inset_0_1px_1.5px_rgba(255,255,255,0.2)] text-white overflow-hidden transform-gpu will-change-transform"
+        className="relative pointer-events-auto w-full max-w-[640px] max-h-[88vh] flex flex-col rounded-2xl border border-white/15 bg-neutral-950/88 shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] text-white overflow-hidden transform-gpu will-change-transform"
       >
         {/* Mép kính bắt sáng trên đỉnh tấm kính */}
         <div
           aria-hidden="true"
-          className="absolute inset-x-12 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none z-10"
+          className="absolute inset-x-8 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none z-10"
         />
 
         {/* Header: Title, Board Info & Action Bar */}
-        <div className="px-3.5 sm:px-6 py-2.5 sm:pt-5 border-b border-white/[0.12] space-y-2.5 bg-white/[0.01]">
-          <div className="flex items-center justify-between gap-2.5 sm:gap-3">
-            {/* Nút Quay lại cho Mobile / Stack Navigation */}
+        <div className="px-6 pt-5 pb-3 border-b border-white/[0.08] space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            {/* Nút Quay lại nếu có */}
             {onBack && (
               <button
                 type="button"
@@ -872,14 +851,14 @@ export const CardDetailModal = React.memo(function CardDetailModal({
             <div className="flex-1 min-w-0 flex flex-col justify-center">
               <div
                 onClick={() => titleInputRef.current?.focus()}
-                className="group/title relative inline-flex items-center gap-1.5 max-w-full -ml-1.5 px-1.5 py-0.5 rounded-xl border border-transparent hover:border-white/15 hover:bg-white/[0.04] focus-within:border-white/25 focus-within:bg-white/[0.06] transition-all cursor-text leading-none"
+                className="group/title relative inline-flex items-center gap-1.5 max-w-full cursor-text leading-none py-0.5"
                 title="Nhấp để chỉnh sửa tiêu đề nhiệm vụ"
               >
-                <div className="relative inline-flex items-center max-w-[320px] sm:max-w-[420px] min-w-[24px]">
+                <div className="relative inline-flex items-center max-w-[420px] min-w-[24px]">
                   {/* Thẻ đệm đo chính xác từng pixel chiều rộng của chữ */}
                   <span
                     aria-hidden="true"
-                    className="invisible text-lg sm:text-xl font-bold tracking-tight whitespace-pre select-none pointer-events-none px-0.5 truncate max-w-full leading-snug"
+                    className="invisible text-xl font-bold tracking-tight whitespace-pre select-none pointer-events-none px-0.5 truncate max-w-full leading-snug"
                   >
                     {selectedCard.title || "Tiêu đề nhiệm vụ..."}
                   </span>
@@ -898,7 +877,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                         ),
                       }));
                     }}
-                    className="absolute inset-0 w-full h-full text-lg sm:text-xl font-bold bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-white/25 text-white tracking-tight cursor-text px-0.5 leading-snug"
+                    className="absolute inset-0 w-full h-full text-xl font-bold bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-white/25 text-white tracking-tight cursor-text px-0.5 leading-snug caret-white"
                     placeholder="Tiêu đề nhiệm vụ..."
                   />
                 </div>
@@ -942,13 +921,13 @@ export const CardDetailModal = React.memo(function CardDetailModal({
         </div>
 
         {/* Scrollable Content Body */}
-        <div className="flex-1 overflow-y-auto px-5 sm:px-6 pt-4 pb-6 space-y-5 custom-study-scroll">
+        <div className="flex-1 overflow-y-auto px-6 pt-4 pb-6 space-y-5 custom-study-scroll">
           {descriptionSection}
           {checklistSection}
         </div>
 
         {/* Footer Bar: Trạng thái đồng bộ mây đồng nhất với các thẻ khác */}
-        <div className="shrink-0 px-3.5 sm:px-6 py-2 sm:py-2.5 border-t border-white/[0.12] bg-white/[0.02] flex items-center justify-between text-xs select-none">
+        <div className="shrink-0 px-6 py-2.5 border-t border-white/[0.08] flex items-center justify-between text-xs select-none">
           <div className="flex items-center gap-2 text-[11px] text-slate-400 truncate">
             <span className="font-medium text-slate-300 truncate">{currentBoard.title}</span>
           </div>
@@ -958,3 +937,5 @@ export const CardDetailModal = React.memo(function CardDetailModal({
     </ModalShell>
   );
 });
+
+export { CardDetailModal as DesktopCardDetailModal };

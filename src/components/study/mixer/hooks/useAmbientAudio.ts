@@ -21,7 +21,14 @@ export function useAmbientAudio({ isGlobalMuted }: UseAmbientAudioOptions) {
       if (savedVolsStr) {
         const parsed = JSON.parse(savedVolsStr);
         if (parsed && typeof parsed === "object") {
-          setAmbientVolumes(parsed);
+          // Chuẩn hoá mọi giá trị > 1 về [0, 1] để tự động chữa lành dữ liệu cũ
+          const normalized: Record<string, number> = {};
+          Object.entries(parsed).forEach(([k, v]) => {
+            if (typeof v === "number" && !isNaN(v)) {
+              normalized[k] = v > 1 ? Math.min(1, Math.max(0, v / 100)) : Math.min(1, Math.max(0, v));
+            }
+          });
+          setAmbientVolumes(normalized);
         }
       }
     } catch {}
@@ -71,8 +78,13 @@ export function useAmbientAudio({ isGlobalMuted }: UseAmbientAudioOptions) {
   // Cập nhật âm lượng và phát/dừng cho từng âm thanh thiên nhiên đang hoạt động
   useEffect(() => {
     AMBIENT_SOUNDS.forEach((sound: AmbientSound) => {
-      const soundVol = ambientVolumes[sound.id] || 0;
-      const effectiveVol = isGlobalMuted ? 0 : soundVol;
+      const rawVol = ambientVolumes[sound.id] || 0;
+      // Chuẩn hoá âm lượng về khoảng [0, 1] cho HTMLMediaElement
+      const normalizedVol =
+        rawVol > 1
+          ? Math.min(1, Math.max(0, rawVol / 100))
+          : Math.min(1, Math.max(0, rawVol));
+      const effectiveVol = isGlobalMuted ? 0 : normalizedVol;
 
       if (effectiveVol > 0) {
         const audio = getOrCreateAudio(sound);
@@ -107,9 +119,14 @@ export function useAmbientAudio({ isGlobalMuted }: UseAmbientAudioOptions) {
 
   const handleSoundVolume = useCallback(
     (soundId: string, val: number) => {
+      // Đảm bảo giá trị âm lượng luôn thuộc [0, 1]
+      const clampedVal =
+        val > 1
+          ? Math.min(1, Math.max(0, val / 100))
+          : Math.min(1, Math.max(0, val));
       updateAmbientVolumes((prev) => ({
         ...prev,
-        [soundId]: val,
+        [soundId]: clampedVal,
       }));
     },
     [updateAmbientVolumes]

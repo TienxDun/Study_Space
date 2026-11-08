@@ -8,7 +8,7 @@ import {
   PencilLineIcon,
 } from "@phosphor-icons/react";
 import { useKanbanBoards } from "../../tasks/hooks/useKanbanBoards";
-import { CardDetailModal } from "../../tasks/components/CardDetailModal";
+import { MobileCardDetailView } from "./components/tasks/MobileCardDetailView";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { MobileSheetShell } from "./core/MobileSheetShell";
 import { KanbanCard } from "../../tasks/types";
@@ -280,11 +280,10 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
               type="button"
               onClick={() => setIsSearchOpen((prev) => !prev)}
               aria-label="Tìm kiếm việc"
-              className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all active:scale-90 ${
-                isSearchOpen || searchQuery
+              className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all active:scale-90 ${isSearchOpen || searchQuery
                   ? "bg-white/20 border-white/30 text-white"
                   : "bg-white/10 hover:bg-white/15 border-white/15 text-white/80 hover:text-white"
-              }`}
+                }`}
             >
               <MagnifyingGlassIcon className="w-4 h-4" />
             </button>
@@ -310,11 +309,10 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                     }}
                     type="button"
                     onClick={() => setSelectedColumnFilter("all")}
-                    className={`h-7 px-3 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer border ${
-                      selectedColumnFilter === "all"
+                    className={`h-7 px-3 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer border ${selectedColumnFilter === "all"
                         ? "bg-white/20 border-white/30 text-white font-medium shadow-sm"
                         : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white"
-                    }`}
+                      }`}
                   >
                     <span>Tất cả</span>
                     <span className="text-[10px] opacity-75">({allCardsWithColumn.length})</span>
@@ -332,11 +330,10 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
                         key={col.id}
                         type="button"
                         onClick={() => setSelectedColumnFilter(col.id)}
-                        className={`h-7 px-3 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer border ${
-                          isActive
+                        className={`h-7 px-3 rounded-full text-xs whitespace-nowrap flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer border ${isActive
                             ? "bg-white/20 border-white/30 text-white font-medium shadow-sm"
                             : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70 hover:text-white"
-                        }`}
+                          }`}
                       >
                         <span className="truncate max-w-[120px]">{col.title}</span>
                         <span className="text-[10px] opacity-75">({count})</span>
@@ -358,8 +355,7 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
         }
       >
         {selectedCard ? (
-          <CardDetailModal
-            embedded
+          <MobileCardDetailView
             selectedCard={selectedCard}
             setSelectedCard={handleSelectCard}
             currentBoard={currentBoard}

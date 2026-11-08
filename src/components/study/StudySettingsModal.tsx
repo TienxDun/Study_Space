@@ -20,6 +20,7 @@ import {
 } from "./study-sound";
 import { useRealtimeClock } from "./pomodoro/hooks/useRealtimeClock";
 import { formatStopwatch } from "./pomodoro/utils/timer-formatters";
+import { clamp } from "@/lib/utils";
 
 /** Demo bấm giờ chạy riêng trong cài đặt để thấy ngay .00 khác gì. */
 function StopwatchPreview({ showMs, enabled = true }: { showMs: boolean; enabled?: boolean }) {
@@ -203,7 +204,7 @@ export const StudySettingsModal = ({
 
   const stepDuration = (key: DurationKey, delta: number) => {
     const { min, max } = DURATION_LIMITS[key];
-    const next = Math.max(min, Math.min(max, durations[key] + delta));
+    const next = clamp(durations[key] + delta, min, max);
     if (next !== durations[key]) {
       onSaveDurations({ ...durations, [key]: next });
     }

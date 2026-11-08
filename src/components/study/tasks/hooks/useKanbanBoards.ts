@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { saveStorageJSON } from "@/lib/safe-storage";
+import { generateId } from "@/lib/utils";
 import { EVENT_CLOUD_SYNCED } from "@/lib/simple-cloud-sync";
 import {
   KanbanBoard,
@@ -690,10 +691,7 @@ export function useKanbanBoards() {
       toast.error("Đã có bảng tên này rồi.");
       return;
     }
-    const uid = () =>
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const uid = () => generateId();
     const stamp = Date.now();
     const newBoard: KanbanBoard = {
       id: `board-${uid()}`,

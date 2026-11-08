@@ -8,6 +8,7 @@ import {
 } from "@phosphor-icons/react";
 import { formatTime } from "../utils/time-format";
 import { useSiriWaveform } from "../hooks/useSiriWaveform";
+import { clamp } from "@/lib/utils";
 
 interface WaveformScrubberProps {
   currentTime: number;
@@ -62,7 +63,7 @@ export function WaveformScrubber({
     if (!pending) return;
     const rect = pending.el.getBoundingClientRect();
     if (rect.width <= 0) return;
-    const x = Math.max(0, Math.min(pending.x - rect.left, rect.width));
+    const x = clamp(pending.x - rect.left, 0, rect.width);
     const ratio = Math.round((x / rect.width) * 1000) / 1000;
     setHoverPositionRatio((prev) =>
       prev !== null && Math.abs(prev - ratio) < 0.001 ? prev : ratio
@@ -94,7 +95,7 @@ export function WaveformScrubber({
     getProgress: () => {
       const el = audioRef?.current;
       if (el && isFinite(el.duration) && el.duration > 0) {
-        return Math.max(0, Math.min(1, el.currentTime / el.duration));
+        return clamp(el.currentTime / el.duration, 0, 1);
       }
       return duration > 0 ? currentTime / duration : 0;
     },

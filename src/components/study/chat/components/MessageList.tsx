@@ -22,6 +22,7 @@ import { StudySproutMascot } from "./StudySproutMascot";
 import { ImageLightboxModal } from "./ImageLightboxModal";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { logError } from "@/lib/logger";
+import { generateId } from "@/lib/utils";
 import { markdownToHtml } from "@/components/study/notes/utils/note-markdown";
 import type { StudyNote } from "@/components/study/notes/types";
 import { MarkdownText } from "./MarkdownText";
@@ -175,7 +176,7 @@ export function MessageList({
       }
 
       const newNote: StudyNote = {
-        id: `note-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        id: generateId("note"),
         title: extractNoteTitle(text),
         content: markdownToHtml(text),
         updatedAt: Date.now(),

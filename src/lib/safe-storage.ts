@@ -36,3 +36,18 @@ export function saveStorageJSON(key: string, value: unknown): boolean {
   }
   return saveStorage(key, raw);
 }
+
+/**
+ * Đọc localStorage an toàn: tự bắt lỗi JSON và trả về fallback nếu rỗng hoặc lỗi cú pháp
+ */
+export function loadStorageJSON<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+

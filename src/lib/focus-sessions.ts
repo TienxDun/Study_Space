@@ -2,6 +2,7 @@
 
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { saveStorageJSON } from "@/lib/safe-storage";
+import { generateId } from "@/lib/utils";
 
 /**
  * Ghi nhận thời gian tập trung Pomodoro theo từng task cụ thể.
@@ -67,7 +68,7 @@ function createSessionId(): string {
       return crypto.randomUUID();
     }
   } catch {}
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return generateId();
 }
 
 function sanitizeSession(s: FocusSession): FocusSession | null {

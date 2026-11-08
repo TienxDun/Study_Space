@@ -1,6 +1,7 @@
 "use client";
 
 import { memo } from "react";
+import { clamp } from "@/lib/utils";
 
 interface PomoProgressRingProps {
   progress: number; // 0..1 elapsed
@@ -11,7 +12,7 @@ interface PomoProgressRingProps {
 export const PomoProgressRing = memo(function PomoProgressRing({ progress, size = 340 }: PomoProgressRingProps) {
   const stroke = 4;
   const r = (size - stroke) / 2;
-  const clamped = Math.max(0, Math.min(1, progress));
+  const clamped = clamp(progress, 0, 1);
 
   // Ring khuyết 1 khoảng ở đáy (GAP% chu vi) để nhét dots chu kỳ vào.
   // pathLength=100 cho số đẹp: ARC% cung hiển thị + GAP% khoảng trống.

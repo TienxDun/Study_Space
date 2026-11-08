@@ -46,11 +46,11 @@ export const MixerHeader = memo(function MixerHeader({
         {activeTab === "ambience" && activeAmbienceCount > 0 && onResetAmbience && (
           <button
             onClick={onResetAmbience}
-            className="h-8 px-2.5 rounded-full inline-flex items-center gap-1.5 text-xs font-medium bg-white/[0.06] hover:bg-rose-500/15 text-slate-300 hover:text-rose-300 border border-white/10 hover:border-rose-400/30 transition-all active:scale-95 cursor-pointer"
+            className="h-8 px-2.5 rounded-full inline-flex items-center gap-1.5 text-xs font-semibold bg-white/10 hover:bg-rose-500/20 active:bg-rose-500/30 text-slate-200 hover:text-white border border-white/15 hover:border-rose-400/40 active:scale-95 transition-all shadow-sm cursor-pointer"
             title="Tắt tất cả âm thanh thiên nhiên đang phát"
           >
-            <SpeakerXIcon className="w-3.5 h-3.5" />
-            <span>Tắt tất cả</span>
+            <SpeakerXIcon className="w-3.5 h-3.5 text-rose-400" weight="bold" />
+            <span>Tắt tất cả ({activeAmbienceCount})</span>
           </button>
         )}
         <IconBtn

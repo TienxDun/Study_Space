@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useDragControls, useMotionValue } from "framer-motion";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { clamp } from "@/lib/utils";
 
 const STORAGE_PIP_POS_KEY = STORAGE_KEYS.embedPipPos;
 const STORAGE_PIP_SIZE_KEY = STORAGE_KEYS.embedPipSize;
@@ -17,8 +18,8 @@ const clampSize = (w: number, h: number) => {
   const maxW = Math.max(MIN_PIP_W, window.innerWidth - 32);
   const maxH = Math.max(MIN_PIP_H, window.innerHeight - 32);
   return {
-    width: Math.round(Math.max(MIN_PIP_W, Math.min(maxW, w))),
-    height: Math.round(Math.max(MIN_PIP_H, Math.min(maxH, h))),
+    width: Math.round(clamp(w, MIN_PIP_W, maxW)),
+    height: Math.round(clamp(h, MIN_PIP_H, maxH)),
   };
 };
 
@@ -61,8 +62,8 @@ export function usePipMode({ isOpen, onPipModeChange, onOpen }: UsePipModeOption
       if (saved) {
         const parsed = JSON.parse(saved);
         if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
-          const clampedX = Math.max(dragBounds.left, Math.min(dragBounds.right, parsed.x));
-          const clampedY = Math.max(dragBounds.top, Math.min(dragBounds.bottom, parsed.y));
+          const clampedX = clamp(parsed.x, dragBounds.left, dragBounds.right);
+          const clampedY = clamp(parsed.y, dragBounds.top, dragBounds.bottom);
           pipX.set(clampedX);
           pipY.set(clampedY);
         }

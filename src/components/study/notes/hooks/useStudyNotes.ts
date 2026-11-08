@@ -6,7 +6,8 @@ import { StudyNote, isNoteActive } from "../types";
 import { DEFAULT_NOTES } from "../constants/default-notes";
 import { sanitizeStoredNoteContent, markdownToHtml } from "../utils/note-markdown";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
-import { saveStorageJSON } from "@/lib/safe-storage";
+import { saveStorageJSON, loadStorageJSON } from "@/lib/safe-storage";
+import { generateId } from "@/lib/utils";
 
 const STORAGE_MULTI_KEY = STORAGE_KEYS.multiNotes;
 const STORAGE_OLD_KEY = STORAGE_KEYS.oldNotes;
@@ -66,9 +67,9 @@ export function useStudyNotes() {
     try {
       const hasUpgraded = localStorage.getItem(TEMPLATE_UPGRADE_KEY);
       const savedMulti = localStorage.getItem(STORAGE_MULTI_KEY);
+      const parsed = loadStorageJSON<StudyNote[] | null>(STORAGE_MULTI_KEY, null);
 
-      if (savedMulti) {
-        const parsed: StudyNote[] = JSON.parse(savedMulti);
+      if (parsed) {
         if (Array.isArray(parsed)) {
           if (parsed.length > 0) {
             // Bỏ ghi chú hỏng cấu trúc, giữ lại cái lành
@@ -83,7 +84,7 @@ export function useStudyNotes() {
               valid.every((n) => TEMPLATE_NOTE_IDS.has(n.id));
 
             if (isUntouchedTemplate) {
-              backupNotesRaw(savedMulti);
+              backupNotesRaw(savedMulti ?? "");
               setNotes(DEFAULT_NOTES);
               setActiveNoteId(DEFAULT_NOTES[0].id);
               localStorage.setItem(STORAGE_MULTI_KEY, JSON.stringify(DEFAULT_NOTES));
@@ -224,7 +225,7 @@ export function useStudyNotes() {
   // Actions
   const handleCreateNote = useCallback(() => {
     const newNote: StudyNote = {
-      id: `note-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: generateId("note"),
       title: "Ghi chú không tên",
       isPinned: false,
       content: "",

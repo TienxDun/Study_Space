@@ -14,6 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { ZenStudyLogo } from "../brand/ZenStudyLogo";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { clamp } from "@/lib/utils";
 import { TOUR_GROUPS, QUEST_TASKS } from "./constants";
 import type { StudyOnboardingTourProps } from "./types";
 
@@ -48,8 +49,8 @@ export const StudyOnboardingTour = React.memo(function StudyOnboardingTour({
     // Bảng cao ~380px -> nửa chiều cao là 190px, chừa lề tối thiểu 20px
     const maxVert = Math.max(0, halfH - 190 - 20);
     return {
-      x: Math.round(Math.max(-maxHoriz, Math.min(maxHoriz, x))),
-      y: Math.round(Math.max(-maxVert, Math.min(maxVert, y))),
+      x: Math.round(clamp(x, -maxHoriz, maxHoriz)),
+      y: Math.round(clamp(y, -maxVert, maxVert)),
     };
   }, []);
 

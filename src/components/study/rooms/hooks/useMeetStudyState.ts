@@ -9,6 +9,7 @@ import {
 import { RoomEvent, type Participant } from "livekit-client";
 import { toast } from "sonner";
 import { devWarn } from "@/lib/logger";
+import { generateId } from "@/lib/utils";
 import {
   playPomodoroSound,
   type PomodoroSoundType,
@@ -211,7 +212,7 @@ export function useMeetStudyState(
       const emoji = parseReactionPayload(payload);
       if (!emoji) return;
 
-      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const id = generateId("reaction");
       const senderName = participant?.name || participant?.identity || "Thành viên";
 
       setReactions((prev) => [
@@ -459,7 +460,7 @@ export function useMeetStudyState(
       }
 
       // Hiện ngay phản ứng trên màn hình người gửi
-      const id = `${now}-${Math.random().toString(36).slice(2, 7)}`;
+      const id = generateId("reaction");
       const senderName =
         localParticipant?.name || localParticipant?.identity || "Bạn";
 

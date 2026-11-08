@@ -7,6 +7,9 @@
  * - Reaction nhanh qua Data Channel
  */
 
+import { clamp } from "@/lib/utils";
+import { formatMinutesSeconds } from "@/lib/time";
+
 export const MEET_ATTR = {
   status: "zen.status",
   hand: "zen.hand",
@@ -163,7 +166,7 @@ export function remainingTimerSeconds(
   if (!timer) return 0;
   const diffMs = timer.endsAt - nowMs;
   const remSec = Math.ceil(diffMs / 1000);
-  return Math.max(0, Math.min(timer.durationSec, remSec));
+  return clamp(remSec, 0, timer.durationSec);
 }
 
 /**
@@ -200,10 +203,7 @@ export function nextPhasePreset(
  * Định dạng thời gian đếm ngược mm:ss
  */
 export function formatMeetCountdown(seconds: number): string {
-  const s = Math.max(0, Math.floor(seconds));
-  const m = Math.floor(s / 60);
-  const rem = s % 60;
-  return `${m.toString().padStart(2, "0")}:${rem.toString().padStart(2, "0")}`;
+  return formatMinutesSeconds(seconds);
 }
 
 /**

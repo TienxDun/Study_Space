@@ -1,3 +1,5 @@
+import { clamp } from "@/lib/utils";
+
 /**
  * Cấu hình kích thước và tọa độ cho khung phòng học nhóm dạng thẻ bay.
  */
@@ -23,8 +25,8 @@ export const clampRoom = (
   const maxX = Math.max(ROOM_MARGIN, window.innerWidth - w - ROOM_MARGIN);
   const maxY = Math.max(ROOM_MARGIN, window.innerHeight - h - ROOM_MARGIN);
   return {
-    x: Math.round(Math.max(ROOM_MARGIN, Math.min(maxX, x))),
-    y: Math.round(Math.max(ROOM_MARGIN, Math.min(maxY, y))),
+    x: Math.round(clamp(x, ROOM_MARGIN, maxX)),
+    y: Math.round(clamp(y, ROOM_MARGIN, maxY)),
   };
 };
 

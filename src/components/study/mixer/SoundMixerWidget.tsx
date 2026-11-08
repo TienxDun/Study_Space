@@ -76,61 +76,61 @@ export const SoundMixerWidget = memo(function SoundMixerWidget({
   );
 
   return (
-    <div className="hidden sm:contents">
-      <ModalShell
-        isOpen={isOpen}
+    <ModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      panelKey="sound-mixer"
+      panelRef={popupRef}
+      initial={{ opacity: 0, x: 20, scale: 0.97 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 16, scale: 0.97 }}
+      panelClassName="fixed top-16 bottom-[84px] right-3.5 z-50 w-[420px] max-w-[calc(100vw-24px)] flex flex-col rounded-2xl border border-white/15 bg-neutral-950/88 shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] text-white overflow-hidden backdrop-blur-xl"
+      backdropClassName="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs"
+    >
+      <div className="absolute inset-x-8 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none z-10" />
+      <MixerHeader
         onClose={onClose}
-        panelKey="sound-mixer"
-        panelRef={popupRef}
-        initial={{ opacity: 0, x: 20, scale: 0.97 }}
-        animate={{ opacity: 1, x: 0, scale: 1 }}
-        exit={{ opacity: 0, x: 16, scale: 0.97 }}
-        panelClassName="hidden sm:flex fixed top-16 bottom-[84px] right-3.5 z-50 w-[420px] max-w-[calc(100vw-24px)] flex-col glass-panel hover:bg-black/45 text-white overflow-hidden"
-        backdropClassName="hidden sm:block"
-      >
-        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
-        <MixerHeader
-          onClose={onClose}
-          activeTab={activeTab}
-          onTabChange={onTabChange}
-          musicCount={currentMoodTracks.length}
-          ambienceCount={AMBIENT_SOUNDS.length}
-          activeAmbienceCount={activeCount}
-          onResetAmbience={resetAllSounds}
-        />
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-study-scroll">
-          {activeTab === "music" ? (
-            <MusicTabContent
-              currentMood={currentMood}
-              onSelectMood={onSelectMood}
-              currentTrack={currentTrack}
-              isPlaying={isPlaying}
-              onTogglePlay={onTogglePlay}
-              onNextTrack={onNextTrack}
-              onPrevTrack={onPrevTrack}
-              onSelectTrack={onSelectTrack}
-              currentTime={currentTime}
-              duration={duration}
-              onSeek={onSeek}
-              isShuffle={isShuffle}
-              onToggleShuffle={onToggleShuffle}
-              isLooping={isLooping}
-              onToggleLoop={onToggleLoop}
-              currentMoodTracks={currentMoodTracks}
-              isMobile={false}
-            />
-          ) : (
-            <AmbientTabContent
-              ambientVolumes={ambientVolumes}
-              activeCount={activeCount}
-              onTogglePreset={handleTogglePreset}
-              onToggleSound={toggleSound}
-              onVolumeChange={handleSoundVolume}
-              isMobile={false}
-            />
-          )}
-        </div>
-      </ModalShell>
-    </div>
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        musicCount={currentMoodTracks.length}
+        ambienceCount={AMBIENT_SOUNDS.length}
+        activeAmbienceCount={activeCount}
+        onResetAmbience={resetAllSounds}
+      />
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-study-scroll">
+        {activeTab === "music" ? (
+          <MusicTabContent
+            currentMood={currentMood}
+            onSelectMood={onSelectMood}
+            currentTrack={currentTrack}
+            isPlaying={isPlaying}
+            onTogglePlay={onTogglePlay}
+            onNextTrack={onNextTrack}
+            onPrevTrack={onPrevTrack}
+            onSelectTrack={onSelectTrack}
+            currentTime={currentTime}
+            duration={duration}
+            onSeek={onSeek}
+            isShuffle={isShuffle}
+            onToggleShuffle={onToggleShuffle}
+            isLooping={isLooping}
+            onToggleLoop={onToggleLoop}
+            currentMoodTracks={currentMoodTracks}
+            isMobile={false}
+          />
+        ) : (
+          <AmbientTabContent
+            ambientVolumes={ambientVolumes}
+            activeCount={activeCount}
+            onTogglePreset={handleTogglePreset}
+            onToggleSound={toggleSound}
+            onVolumeChange={handleSoundVolume}
+            isMobile={false}
+          />
+        )}
+      </div>
+    </ModalShell>
   );
 });
+
+export { SoundMixerWidget as DesktopSoundMixer };

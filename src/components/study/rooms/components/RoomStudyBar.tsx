@@ -3,6 +3,7 @@
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { clamp } from "@/lib/utils";
 import {
   MEET_PRESETS,
   MEET_REACTIONS,
@@ -175,7 +176,7 @@ export function RoomStudyBar({
       const rect = presetsBtnRef.current.getBoundingClientRect();
       setPresetsPos({
         top: rect.bottom + 6,
-        left: Math.max(8, Math.min(rect.left, window.innerWidth - 220)),
+        left: clamp(rect.left, 8, window.innerWidth - 220),
       });
       setShowPresets(true);
       setShowStatusMenu(false);
@@ -190,7 +191,7 @@ export function RoomStudyBar({
       const rect = statusBtnRef.current.getBoundingClientRect();
       setStatusPos({
         top: rect.bottom + 6,
-        left: Math.max(8, Math.min(rect.left, window.innerWidth - 160)),
+        left: clamp(rect.left, 8, window.innerWidth - 160),
       });
       setShowStatusMenu(true);
       setShowPresets(false);

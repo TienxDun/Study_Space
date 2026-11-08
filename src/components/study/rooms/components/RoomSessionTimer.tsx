@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { UsersIcon, TimerIcon } from "@phosphor-icons/react";
+import { formatMinutesSeconds } from "@/lib/time";
 
 interface RoomSessionTimerProps {
   sessionMaxMinutes?: number;
@@ -11,15 +12,11 @@ interface RoomSessionTimerProps {
 }
 
 export function formatSessionCountdown(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
+  return formatMinutesSeconds(seconds, false);
 }
 
 export function formatElapsed(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
+  return formatMinutesSeconds(seconds, false);
 }
 
 /**

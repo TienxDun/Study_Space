@@ -6,6 +6,7 @@ import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useFloatingSize } from "@/lib/use-floating-size";
+import { clamp } from "@/lib/utils";
 import { StudyNotesWidgetProps } from "./types";
 import { useStudyNotes } from "./hooks/useStudyNotes";
 import { useRichTextEditor, flattenNestedTodos } from "./hooks/useRichTextEditor";
@@ -25,8 +26,8 @@ const clampNotePos = (x: number, y: number, w: number, h: number) => {
   const maxX = Math.max(NOTE_MARGIN, window.innerWidth - w - NOTE_MARGIN);
   const maxY = Math.max(NOTE_MARGIN, window.innerHeight - h - NOTE_MARGIN);
   return {
-    x: Math.round(Math.max(NOTE_MARGIN, Math.min(maxX, x))),
-    y: Math.round(Math.max(NOTE_MARGIN, Math.min(maxY, y))),
+    x: Math.round(clamp(x, NOTE_MARGIN, maxX)),
+    y: Math.round(clamp(y, NOTE_MARGIN, maxY)),
   };
 };
 
