@@ -24,7 +24,6 @@ export function useSceneState({ isMobile }: UseSceneStateOptions) {
     setCurrentSceneDirectly,
   } = useScenePreloader({
     initialScene: STUDY_SCENES[0],
-    preferMobileSource: isMobile,
   });
 
   // null = chưa từng tự bật/tắt. Mobile mặc định tắt: mỗi lần đổi cảnh chạy

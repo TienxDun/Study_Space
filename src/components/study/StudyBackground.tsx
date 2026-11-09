@@ -4,13 +4,12 @@ import { useEffect, useState, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Scene } from "./study-types";
 import { devWarn } from "@/lib/logger";
-import { getSceneSourceUrl } from "@/lib/asset-resolver";
 import { useRenderTrace } from "@/components/study/mobile/perf/useRenderTrace";
 
 export interface StudyBackgroundProps {
   scene: Scene;
   isBlurActive?: boolean;
-  /** Điện thoại: dùng bản video 720p cho nhẹ, bản gốc vẫn để dự phòng. */
+  /** Điện thoại: tạm dừng video khi bảng che gần hết màn hình. */
   isMobile?: boolean;
   onLoaded?: () => void;
 }
@@ -24,15 +23,10 @@ export const StudyBackground = memo(function StudyBackground({
 }: StudyBackgroundProps) {
   useRenderTrace("background props", { scene, isBlurActive, isMobile, onLoaded });
   const [hasVideoError, setHasVideoError] = useState(false);
-  // Bản 720p có thể chưa được encode/upload: lỗi lần đầu thì dùng bản gốc.
-  const [hasMobileSourceError, setHasMobileSourceError] = useState(false);
 
   useEffect(() => {
     setHasVideoError(false);
-    setHasMobileSourceError(false);
   }, [scene.id]);
-
-  const videoSrc = getSceneSourceUrl(scene, isMobile && !hasMobileSourceError);
 
   // Tab/app bị ẩn (chuyển app, khoá màn hình) thì dừng decode video nền.
   // Nhiều máy vẫn giải mã tiếp khi ẩn tab, đốt pin/GPU mà chẳng ai xem.
@@ -106,7 +100,7 @@ export const StudyBackground = memo(function StudyBackground({
           {scene.type === "VIDEO" && !hasVideoError ? (
             <video
               data-scene-id={scene.id}
-              src={videoSrc}
+              src={scene.bgUrl}
               poster={scene.thumbnailUrl}
               autoPlay
               loop
@@ -115,11 +109,6 @@ export const StudyBackground = memo(function StudyBackground({
               onLoadedData={() => onLoaded?.()}
               onCanPlay={() => onLoaded?.()}
               onError={() => {
-                if (isMobile && scene.bgUrlMobile && !hasMobileSourceError) {
-                  devWarn(`[StudySpace] Không nạp được bản nhẹ của "${scene.name}", chuyển sang bản gốc.`);
-                  setHasMobileSourceError(true);
-                  return;
-                }
                 devWarn(`[StudySpace] Lỗi nạp video bối cảnh "${scene.name}", tự động chuyển sang ảnh thumbnail an toàn.`);
                 setHasVideoError(true);
                 onLoaded?.();

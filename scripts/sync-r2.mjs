@@ -110,7 +110,7 @@ async function main() {
   }
 
   // Lọc theo chuỗi trong đường dẫn để chỉ đẩy một nhóm file, ví dụ:
-  //   npm run sync:r2 -- 1280x720
+  //   npm run sync:r2 -- scenes/
   const filters = process.argv.slice(2).filter((arg) => !arg.startsWith("-"));
   const allKeys = (
     await walkDir(localBase)

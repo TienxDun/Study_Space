@@ -4,14 +4,11 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { Scene, STUDY_SCENES } from "@/components/study/study-types";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { devWarn } from "@/lib/logger";
-import { getSceneSourceUrl } from "@/lib/asset-resolver";
 
 export interface UseScenePreloaderOptions {
   initialScene?: Scene;
   timeoutMs?: number;
   onSceneChange?: (scene: Scene) => void;
-  /** Điện thoại: nạp trước bản video 720p để không tải 4K chỉ nhằm đệm cảnh. */
-  preferMobileSource?: boolean;
 }
 
 export interface UseScenePreloaderReturn {
@@ -32,7 +29,6 @@ export function useScenePreloader({
   initialScene = STUDY_SCENES[0],
   timeoutMs = 12000,
   onSceneChange,
-  preferMobileSource = false,
 }: UseScenePreloaderOptions = {}): UseScenePreloaderReturn {
   const [currentScene, setCurrentScene] = useState<Scene>(initialScene);
   const [pendingScene, setPendingScene] = useState<Scene | null>(null);
@@ -107,9 +103,6 @@ export function useScenePreloader({
         finish();
       }, timeoutMs);
 
-      // Nạp trước đúng file mà lúc hiển thị sẽ dùng (mobile: bản 720p nếu có)
-      const preloadUrl = getSceneSourceUrl(targetScene, preferMobileSource);
-
       // Nạp trước tùy theo định dạng Media (Ảnh hoặc Video)
       if (targetScene.type === "IMAGE") {
         if (typeof window === "undefined") {
@@ -118,7 +111,7 @@ export function useScenePreloader({
         }
 
         const img = new Image();
-        img.src = preloadUrl;
+        img.src = targetScene.bgUrl;
 
         // Nếu ảnh đã nằm sẵn trong bộ nhớ đệm trình duyệt
         if (img.complete) {
@@ -138,38 +131,8 @@ export function useScenePreloader({
           img.onload = null;
           img.onerror = null;
         };
-      } else if (preferMobileSource) {
-        // Điện thoại: bản 720p chỉ ~1-2MB và CDN trả cache immutable 1 năm,
-        // nên tải bằng fetch là đủ để lần phát thật lấy từ cache.
-        // Không tạo <video> ẩn: máy yếu phải mở thêm bộ giải mã trong lúc
-        // video cũ đang crossfade -> khựng đúng lúc chuyển cảnh.
-        if (typeof window === "undefined" || typeof fetch !== "function") {
-          finish();
-          return;
-        }
-
-        const controller = new AbortController();
-
-        fetch(preloadUrl, { signal: controller.signal })
-          .then((res) => {
-            if (!res.ok) throw new Error(String(res.status));
-            // Đọc hết để trình duyệt ghi trọn file vào cache.
-            return res.arrayBuffer();
-          })
-          .then(() => finish())
-          .catch((err) => {
-            if (controller.signal.aborted) return;
-            devWarn(`[ScenePreloader] Không thể nạp trước video "${targetScene.name}".`, err);
-            finish();
-          });
-
-        cancelPreviousPreloadRef.current = () => {
-          isFinished = true;
-          if (timerId) clearTimeout(timerId);
-          controller.abort();
-        };
       } else {
-        // Video 4K/1080p trên máy tính: tạo Video element ngầm để đệm trước
+        // Tạo Video element ngầm để đệm trước trong lúc cảnh cũ còn hiển thị
         if (typeof window === "undefined" || !document.createElement) {
           finish();
           return;
@@ -179,7 +142,7 @@ export function useScenePreloader({
         video.preload = "auto";
         video.muted = true;
         video.playsInline = true;
-        video.src = preloadUrl;
+        video.src = targetScene.bgUrl;
 
         const cleanupVideo = () => {
           video.removeEventListener("canplaythrough", onReady);
@@ -215,7 +178,7 @@ export function useScenePreloader({
         };
       }
     },
-    [currentScene.id, pendingScene, timeoutMs, applyScene, preferMobileSource]
+    [currentScene.id, pendingScene, timeoutMs, applyScene]
   );
 
   const setCurrentSceneDirectly = useCallback(

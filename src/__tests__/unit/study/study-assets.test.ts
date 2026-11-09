@@ -90,38 +90,6 @@ describe("StudySpace Asset Integrity Tests", () => {
     expect(parseEmbedUrl("not-a-valid-url")).toBeNull();
   });
 
-  it("should derive a 720p source for videos and fall back to the original", async () => {
-    const { resolveScene, resolveMobileMediaPath, getSceneSourceUrl } = await import(
-      "../../../lib/asset-resolver"
-    );
-
-    expect(resolveMobileMediaPath("scenes/a.mp4")).toBe("scenes/a.1280x720.mp4");
-    expect(resolveMobileMediaPath("scenes/a.webp")).toBeUndefined();
-
-    const video = resolveScene({
-      id: "v",
-      name: "V",
-      category: "chill",
-      type: "VIDEO",
-      mediaPath: "scenes/a.mp4",
-      thumbnailPath: "thumbnails/a.webp",
-    });
-    expect(video.bgUrlMobile).toContain("scenes/a.1280x720.mp4");
-    expect(getSceneSourceUrl(video, true)).toBe(video.bgUrlMobile);
-    expect(getSceneSourceUrl(video, false)).toBe(video.bgUrl);
-
-    const image = resolveScene({
-      id: "i",
-      name: "I",
-      category: "chill",
-      type: "IMAGE",
-      mediaPath: "scenes/a.webp",
-      thumbnailPath: "thumbnails/a.webp",
-    });
-    expect(image.bgUrlMobile).toBeUndefined();
-    expect(getSceneSourceUrl(image, true)).toBe(image.bgUrl);
-  });
-
   it("should correctly resolve relative asset paths and preserve absolute URLs", async () => {
     const { resolveAssetUrl, resolveScene, resolveTrack, resolveAmbientSound } = await import(
       "../../../lib/asset-resolver"
