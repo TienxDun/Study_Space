@@ -1,6 +1,6 @@
 # Kế Hoạch Mở Rộng Admin Console
 
-Trạng thái: P0 đã xong 2026-10-25; P1 xong và đã đối chiếu production 2026-10-26; P2 có kế hoạch riêng; P2a/P2b xong, P2c đợt 1 code xong (chờ T20 deploy). P2e — báo cáo nội dung & chặn cho Play P0.5 — **code xong E1–E3/E5 (2026-10-30), chờ deploy**. Bản 14 — 2026-10-30.
+Trạng thái: P0 đã xong 2026-10-25; P1 xong và đã đối chiếu production 2026-10-26; P2a/P2b/P2c đợt 1 đã xong và deploy production; P2e (báo cáo nội dung & chặn) đã xong toàn bộ và đưa lên production kèm hiệu lực chặn thực tế (2026-11-03). Còn lại: P2c đợt 2 (upload tệp trực tiếp), P2d (dọn dẹp kho R2) và sửa copy "chỉ xem" sai ở shell. Bản 18 — 2026-11-09.
 Đã chốt: admin chạy trên Cloudflare Workers + Static Assets sau Cloudflare Access. GitHub Actions đã bỏ; web chính deploy bằng Cloudflare Pages.
 
 Chi tiết từng mục viết khi bắt tay làm. P0 đã đóng, runbook ở `docs/archive/ADMIN_P0_PLAN.md`. P1 đã đóng, hồ sơ ở `docs/archive/ADMIN_P1_PLAN.md`. P2 có kế hoạch riêng ở `docs/features/ADMIN_P2_PLAN.md`. Lịch sử thay đổi ở cuối file.
@@ -72,7 +72,7 @@ Tóm tắt: UI mới bằng shell tĩnh, không dùng admin cũ; một endpoint 
 
 **Đã xong 2026-10-26.** Production trả 200 với `degraded: false`: health 3/3, chat theo ngày Thái Bình Dương, sync, LiveKit 440/4.500 phút, R2 487.851.634 byte / 121 object (khớp byte baseline S3), nhật ký lỗi D1 có dòng thật. Access vẫn chặn ở edge, network/localStorage không có token. Chi tiết và bằng chứng ở [`ADMIN_P1_PLAN.md`](../archive/ADMIN_P1_PLAN.md#kết-quả-đối-chiếu-production-2026-10-26).
 
-Hai điểm còn mở, không chặn P2: giới hạn log 1 dòng/giờ chỉ đúng trong một isolate; LiveKit `/usage` đôi khi vượt timeout 10 giây vì Twirp `ListRooms` không có timeout riêng.
+Hai điểm từng mở đã xử lý: Twirp `ListRooms` có timeout 4 giây (P2.0) và log lỗi khử trùng theo giờ — nhưng chỉ trong worker admin; `chat-proxy` vẫn có thể ghi trùng (xem P2.0 mục 0.2).
 
 ### P2 — Quản lý được (mở dần từng hành động ghi)
 
@@ -97,7 +97,7 @@ Kế hoạch chi tiết, chia bước nhỏ và thứ tự deploy ở [`docs/fea
 
 ## Thứ tự đề nghị
 
-P0 (xong 2026-10-25) → P1a → P1b → P1c → P2.11 → P2.12 → P2c (xong code, chờ T20) → **P2e** → P2d → phần còn lại theo nhu cầu thật.
+P0 (xong 2026-10-25) → P1a → P1b → P1c → P2.11 → P2.12 → P2c đợt 1 (xong) → P2e (xong) → P2c đợt 2 / P2d → phần còn lại theo nhu cầu thật.
 
 Lý do: chặn lộ trước; thấy hệ thống trước khi sửa; cờ là cách chặn sự cố rẻ nhất; P2e trước P2d vì là điều kiện nộp Google Play.
 
@@ -153,3 +153,4 @@ P1 có mục kiểm chứng riêng trong `docs/archive/ADMIN_P1_PLAN.md`.
 - **Bản 15** (2026-10-30): tách shell theo panel — `index.html` còn ~187 dòng; HTML sang `admin-host/panels/*.html`, CSS sang `admin-*.css` theo panel; build mở rộng include, không publish `panels/`; test DOM dùng `loadAdminHtml()`. Bỏ 5 inline style tĩnh trong thẻ số liệu, giữ 3 style width do JS điều khiển.
 - **Bản 16** (2026-10-30): tách tiếp `admin.css` 859 dòng thành `admin.css` (nền, 147), `admin-topbar.css` (248), `admin-dashboard.css` (316), `admin-footer.css` (145); giữ 5 file CSS panel. Tổng 9 file CSS, mỗi file dưới 320 dòng; build + local kiểm style/metadata OK, không lỗi console.
 - **Bản 17** (2026-10-30): sắp xếp lại `admin-host/` thành `assets/`, `panels/`, `styles/`, `scripts/`; đổi tên `admin.css` → `styles/base.css`, `admin-chat.js` → `scripts/chat.js`…; cập nhật index, build favicon (copy cả `/admin/favicon.svg`), test DOM. Build + local 9 CSS/4 JS tải 200, không lỗi console.
+- **Bản 18** (2026-11-09): rà tiến độ theo production — P2a, P2b, P2c đợt 1 và P2e đã đóng và lên production; P2.0 đóng mục 0.1, mục 0.2 còn nợ khử trùng ở `chat-proxy`; P2a còn nhánh hạn mức 30 → 35 (chưa có người dùng chạm mức); P2c còn đợt 2 (upload + tab Kho tệp) và bước kiểm sửa/xóa/rollback trên production; P2d và P3 chưa bắt đầu.

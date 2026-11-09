@@ -1,7 +1,19 @@
 # P2 — Quản lý được (kế hoạch triển khai)
 
-Trạng thái (2026-10-29): P2.0 code + deploy xong, còn 2 mục quan sát 24 giờ chưa chốt; P2a đóng 2026-10-27, mở đúng nhánh hạn mức 30 → 35; P2b đóng 2026-10-28; P2c **đợt 1 đã code xong T1–T19**, chỉ còn T20 deploy chờ lệnh; **P2e (báo cáo nội dung & chặn) đã có kế hoạch, chưa code**; P2d thu hẹp còn dọn mồ côi hàng loạt. Bản 15 — 2026-10-29.
+Trạng thái (2026-11-09): **P2.0** đóng mục 0.1, còn 1 lỗi nhỏ ở 0.2 (chat-proxy chưa khử trùng); **P2a** đóng 2026-10-27, chỉ để mở nhánh hạn mức 30 → 35 vì chưa có người dùng thật chạm hạn mức; **P2b** đóng 2026-10-28; **P2c đợt 1 đóng** (T1–T20, manifest v1 live), **đợt 2 T21–T24 chưa làm**; **P2e đóng** (E1–E6 xong, E4 có hiệu lực và QA tay pass 2026-11-03); **P2d** chưa bắt đầu. P3 chưa bắt đầu. Bản 21 — 2026-11-09.
 Thuộc P2 của `docs/features/ADMIN_CONSOLE_PLAN.md`; P1 đã đóng, xem `docs/archive/ADMIN_P1_PLAN.md`.
+
+### Đối chiếu shell production 2026-11-09
+
+Đăng nhập `admin.zenstudy.space` bằng `jimwork218@gmail.com`: 6 tab tải đủ, không có lỗi console, chỉ gọi `/api/admin/*`.
+
+- **Tổng quan**: health 3/3 (127–345 ms); chat hôm nay 0 câu / 0 người, hạn mức 30; sync 5 người, bản lớn nhất 22,0 KB; LiveKit 526/4.500 phút tháng 11; R2 **127 tệp / 497,65 MB** (P1 đo 121 tệp / 487,85 MB — tăng 6 tệp, chưa rõ nguồn; sau đó xác định là 6 bản video 720p cho mobile, đã xóa 2026-11-09, R2 về **121 tệp**).
+- **Cờ hệ thống**: bật đủ, banner trống, hạn mức 30, lần lưu cuối 01:25 27-10 bởi chính tài khoản admin.
+- **Trợ lý chat**: đủ 3 mục (Thử model / Thứ tự trả lời / Câu lệnh hệ thống) và khối "Quy tắc an toàn (cố định)" đã là bản 16+. Shell production vẫn là bố cục một trang; bản tách tab con đang sửa dở chưa deploy.
+- **Nội dung**: **bản v1 · 40 cảnh · 20 âm · 49 nhạc · 28/10 13:43**, Lịch sử chỉ có 1 bản, mọi dòng "Có file"; **không có tab "Kho tệp"** (đợt 2 chưa làm).
+- **Báo cáo**: **0 chờ xử lý / 4 tổng**, cả 4 đã xử lý.
+- **Chẩn đoán**: 9 dòng lỗi; vẫn còn cặp `fallback_failed` trùng giờ ngày 27–28/10 → xác nhận mục 0.2 còn mở; không có dòng mới sau 28/10.
+- **Nợ giao diện phát hiện khi rà**: ô tài khoản ghi cứng "Quyền: **chỉ xem**" ([`index.html:159`](../../admin-host/index.html#L159)) và footer "Phiên bản **chỉ xem**" ([`index.html:217`](../../admin-host/index.html#L217)) — copy di sản từ thời P1 chỉ đọc, trong khi tài khoản này đã ghi bình thường (cờ, nội dung v1, resolve báo cáo). Cần sửa hoặc thay bằng thông tin hạn mức phiên thật.
 
 Mục tiêu: bảng điều khiển từ chỗ **chỉ xem** chuyển sang **sửa được** — chặn sự cố không cần deploy, đổi cấu hình chat, đẩy nội dung có phiên bản và quay lại, dọn kho — nhưng mọi hành động ghi đều đi qua Access, có audit ghi trước, và không đưa token xuống trình duyệt.
 
@@ -46,7 +58,8 @@ web (tĩnh)     ── GET chat-proxy /config (công khai, poll 60s) ──▶ b
 
 - [x] `workers/livekit-rooms/worker.js:761`: thêm `signal: AbortSignal.timeout(4000)` cho `fetch(ListRooms)`. Nhánh `catch` sẵn có đã trả `roomsOpen: 0, participants: 0`.
 - [x] Dán lại code worker `livekit-rooms` trên dashboard (2026-10-26).
-- [ ] Xong khi: `/usage` trả trong **dưới 5 giây** kể cả khi LiveKit chậm; `admin_error_log` không còn sinh thêm dòng `livekit:unreachable` trong 24 giờ.
+- [x] Xong khi: `/usage` trả trong **dưới 5 giây** kể cả khi LiveKit chậm; `admin_error_log` không còn sinh thêm dòng `livekit:unreachable` trong 24 giờ.
+  - Chốt 2026-11-09: quét D1 `zenspace` toàn bộ 30 ngày chỉ có 5 dòng `livekit:unreachable`, dòng mới nhất **2026-10-26 16:31** (trước bản deploy 16:54), không phát sinh dòng nào sau đó; `/usage` production trả 190–336 ms.
 
 ### 0.2 Chặn log lỗi trùng
 
@@ -58,8 +71,10 @@ Chọn một hướng, mặc định là (a):
 - [x] Unit test: hai lần gọi liên tiếp chỉ chèn 1 dòng; quá 1 giờ thì chèn tiếp (`src/__tests__/unit/admin/error-log.test.ts`, 6 ca).
 - [x] Deploy admin worker: version `1a427f38`, 2026-10-26 16:54 UTC.
 - [ ] Xong khi: bảng lỗi không còn nhiều dòng giống nhau trong cùng một giờ (theo dõi 24 giờ sau deploy).
+  - Kiểm 2026-11-09: khử trùng đúng cho dòng do worker admin ghi, nhưng **chat-proxy có `logAdminError` riêng chưa khử trùng** ([`workers/chat-proxy/worker.js:331`](../../workers/chat-proxy/worker.js)) nên vẫn còn 2 cặp `fallback_failed` trùng trong cùng giờ (2026-10-27 06:55 và 2026-10-28 04:48, cách nhau 1–3 giây). Cần thêm luật 1 giờ vào chat-proxy **hoặc** gộp trùng lúc đọc (hướng (b)) rồi mới chốt.
 
 Rà soát 2026-10-28: code và deploy của 0.1 và 0.2 đều đã xong; hai mục "Xong khi" vẫn để mở vì chưa có bằng chứng 24 giờ trong `admin_error_log` — muốn chốt thì mở admin, xem khối Lỗi và đếm dòng `livekit:unreachable`.
+Chốt lại 2026-11-09: 0.1 **đóng**; 0.2 **còn mở** đúng một phần — worker admin đã khử trùng, chat-proxy chưa.
 
 ---
 
@@ -179,6 +194,7 @@ Kiểm tra chấp nhận:
   - Kiểm 2026-10-27: audit id 6 (tắt) và id 7 (bật) do chính bạn lưu; `/config` production trả đúng trạng thái hiện tại (`chatEnabled:true`); bundle production bị chặn `/config` trả `chatEnabled:false` thì menu hiện "Chatbot AI đang tạm tắt"; nhánh 503 trước khi gọi AI phủ bằng unit test.
 - [ ] Đổi hạn mức 30 → 35: người đã dùng 30 câu hỏi được câu tiếp theo; hạ về thấp hơn số đã dùng → 429 tới hết ngày; thẻ chat trên admin hiện đúng hạn mức mới trong ≤ 30 giây.
   - **Chưa kiểm được (2026-10-27):** chưa có người dùng nào đạt 30 câu/ngày để thử "câu thứ 31". Phần còn lại đã kiểm: đổi 30 → 1 → 30 không cần deploy (audit id 5 và 9), panel admin hiện "Đang áp dụng: 30 câu/người/ngày" lấy từ `/status`; thứ tự ưu tiên KV → env → 30 và ngưỡng 429 phủ bằng unit test. Sẽ kiểm khi có người dùng thật chạm hạn mức.
+  - Rà 2026-11-09: `chat_usage` có 13 dòng, cao nhất **4 câu/người/ngày** (ngày mới nhất 2026-11-03) — vẫn chưa có ai chạm hạn mức, tiếp tục để mở.
 - [x] Tắt phòng học nhóm → `/token` trả 503; phòng đang mở không bị đá ra.
   - Kiểm 2026-10-27: audit id 7 (tắt) và id 8 (bật); bundle production với `roomsEnabled:false` hiện nút "Phòng học nhóm · Tạm tắt" và `disabled`; worker chỉ chặn `/token` + `/rooms`, `/webhook/livekit` vẫn 200 (unit test).
 - [x] Bật bảo trì + banner "Thử bảo trì" → web hiện banner trong ≤ 60 giây; chat/rooms vẫn chạy.
@@ -230,7 +246,7 @@ Các bước nhỏ dự kiến:
   - **Còn lại sau deploy:** bấm Thử/đổi chain trên bản production để xác nhận bằng mắt — code đã nằm trong `main`, chỉ chờ bản deploy chứa `testText()` và bản sửa icon.
 - [x] Xóa trang `/admin/chat` local (chốt 2026-10-27, người dùng xác nhận P2b xong): xóa `src/app/admin/chat/`, gỡ tab "Quản Lý Chatbot" khỏi `src/components/admin/AdminHeader.tsx` (`AdminTab` còn `limits | studio`), cập nhật `admin-header.test.tsx`.
 
-## P2c — Quản lý nội dung trong admin (đã chốt hướng, chưa code — 2026-10-28)
+## P2c — Quản lý nội dung trong admin (đợt 1 đóng 2026-10-30; đợt 2 chưa làm)
 
 Mục tiêu: mọi thao tác với thư viện nội dung — **thêm, xem, sửa, xóa từng cảnh / âm thanh / bài nhạc và cả file media của nó** — làm được ngay trong shell admin: không cần máy local, không sửa JSON tay, không build lại web. Studio `/dev/studio` vẫn giữ nhưng chỉ để thử.
 
@@ -331,7 +347,7 @@ Vì sao tách xóa mục và xóa file: một file có thể được nhiều m�
 
 ### Tiến độ đợt 1 (2026-10-28)
 
-T1–T19 đã xong: 82 test mới (21 validate, 30 API worker, 9 data-api, 13 catalog web, 7 DOM panel, 2 seed); `npm test` 72 file / 587 test xanh, `npx tsc --noEmit` sạch, `npm run lint` chỉ còn cảnh báo cũ, `npm run build:admin` sinh `dist-admin/admin/seed/*.json`. Chưa deploy, chưa commit — T20 chờ lệnh.
+T1–T19 đã xong: 82 test mới (21 validate, 30 API worker, 9 data-api, 13 catalog web, 7 DOM panel, 2 seed); `npm test` 72 file / 587 test xanh, `npx tsc --noEmit` sạch, `npm run lint` chỉ còn cảnh báo cũ, `npm run build:admin` sinh `dist-admin/admin/seed/*.json`. **Cập nhật 2026-11-09: đã commit (`922864a`) và lên production — T20 đóng, `GET /content` trả version 1 với 40/20/49.**
 
 ### C1. Bảng dữ liệu và validate (đợt 1)
 
@@ -395,20 +411,21 @@ CREATE INDEX IF NOT EXISTS idx_content_manifest_created ON content_manifest (cre
 
 ### C6. Test (đợt 1 và 2)
 
-- [x] worker: validate (trùng id, sai `type`, icon lạ, `mediaPath` tuyệt đối, quá trần số mục, JSON hỏng); tạo/sửa/xóa ghi đúng 1 phiên bản + 1 dòng audit **trước** khi ghi; audit lỗi → không ghi; rollback tạo bản mới cùng nội dung; xóa mục không gọi xóa file và `releasedFiles` đúng; upload sai đuôi / quá 50 MB → 400; xóa file đang dùng → 409; thiếu JWT → 401; rate limit.
+- [x] worker: validate (trùng id, sai `type`, icon lạ, `mediaPath` tuyệt đối, quá trần số mục, JSON hỏng); tạo/sửa/xóa ghi đúng 1 phiên bản + 1 dòng audit **trước** khi ghi; audit lỗi → không ghi; rollback tạo bản mới cùng nội dung; xóa mục không gọi xóa file và `releasedFiles` đúng; thiếu JWT → 401; rate limit. — phần upload (sai đuôi, quá 50 MB) và xóa file đang dùng (`409`) thuộc đợt 2, **chưa có test**.
 - [x] data-api: `/content` công khai không cần token, đúng `Cache-Control` + CORS, bảng trống trả `version: 0`, route cũ vẫn 401 khi thiếu token.
 - [x] web: cache ghi/đọc, payload sai shape bị bỏ, fetch lỗi → giữ bundle, mục `hidden` không xuất hiện, `splice` đổi nội dung mà `resolveAssetUrl` vẫn đúng.
-- [x] DOM: bảng hiện đúng số mục, mở form sửa điền sẵn giá trị, lưu gọi đúng endpoint, xóa hỏi xác nhận, tab Kho tệp chặn xóa file đang dùng.
+- [x] DOM: bảng hiện đúng số mục, mở form sửa điền sẵn giá trị, lưu gọi đúng endpoint, xóa hỏi xác nhận. — "Kho tệp chặn xóa file đang dùng" thuộc đợt 2, chưa có tab nên chưa có test.
 - [x] `npm run lint`, `npx tsc --noEmit`, `npm test` sạch.
 
 ### C7. Deploy và kiểm tra (thứ tự bắt buộc, mỗi bước không khóa ai)
 
-1. [ ] Chạy SQL C1 trên D1 `zenspace` (bảng mới, không đụng 4 bảng cũ).
-2. [ ] Dán `data-api` mới → `GET /content` trả `{ ok: true, version: 0 }`.
-3. [ ] `npm run build:admin` + deploy admin worker → panel hiện "chưa có bản nào", đọc được 40 cảnh từ bundle.
-4. [ ] Push web → trang chủ vẫn chạy bằng bundle (chưa có bản nào).
-5. [ ] Trong shell: publish lần đầu bằng chính 3 file bundle → `/content` trả `version: 1`, web vẫn 40 cảnh / 20 âm / 49 nhạc.
+1. [x] Chạy SQL C1 trên D1 `zenspace` (bảng mới, không đụng 4 bảng cũ). — xác minh 2026-11-09: bảng `content_manifest` có đúng 3 dòng của version 1, tạo 2026-10-28 06:43 UTC bởi `jimwork218@gmail.com`.
+2. [x] Dán `data-api` mới → `GET /content` trả `{ ok: true, version: 0 }`. — xong; hiện trả `version: 1`.
+3. [x] `npm run build:admin` + deploy admin worker → panel hiện "chưa có bản nào", đọc được 40 cảnh từ bundle. — xong; admin worker tự deploy theo push `main`.
+4. [x] Push web → trang chủ vẫn chạy bằng bundle (chưa có bản nào). — xong.
+5. [x] Trong shell: publish lần đầu bằng chính 3 file bundle → `/content` trả `version: 1`, web vẫn 40 cảnh / 20 âm / 49 nhạc. — probe 2026-11-09: `version: 1`, `counts 40/20/49`.
 6. [ ] Sửa tên 1 cảnh → tải lại web thấy tên mới; xóa 1 cảnh thử → biến mất và file được chừa lại nếu mục khác dùng; rollback → như cũ.
+   - **Chưa làm (2026-11-09):** D1 mới có đúng version 1 (3 dòng), chưa có version 2 nên chưa chứng minh luồng sửa / xóa / quay lại trên production.
 7. [ ] Upload 1 cảnh mới (đợt 2) → file nằm trên R2, cảnh hiện trên web sau khi tải lại; thử xóa file đang dùng → bị chặn.
 
 Xong khi: thêm/sửa/xóa một cảnh, một âm, một bài nhạc và file của nó đều làm được trong shell **không cần máy local, không build lại web**; mọi lần ghi có đúng 1 dòng `admin_audit`; web vẫn chạy bình thường khi `/content` chết.
@@ -421,7 +438,7 @@ Xong khi: thêm/sửa/xóa một cảnh, một âm, một bài nhạc và file c
 
 ## P2e — Báo cáo nội dung & chặn người dùng (phục vụ Play P0.5)
 
-Trạng thái: **E1–E3, E5 code xong 2026-10-30**; E4 (hiệu lực khóa AI/phòng) thuộc P0.5 Phase 4/5; chờ deploy D1 + data-api + admin worker.
+Trạng thái: **đóng 2026-11-03** — E1–E3/E5 code xong 2026-10-30; E4 (hiệu lực khóa AI/phòng) đã lên production cùng P0.5 Phase 4; QA tay 2026-11-03 xác nhận khóa/mở AI đúng; D1 + `data-api` + admin worker đã deploy.
 Luồng client/backend đầy đủ: [P0_5_REPORTING_PLAN.md](./P0_5_REPORTING_PLAN.md). P2e chỉ làm **phần admin**: đọc, xử lý, hạn chế tài khoản.
 
 Mục tiêu: admin có hộp thư báo cáo AI + phòng học, xử lý được và có công cụ hạn chế tài khoản — đáp ứng AI-Generated Content + UGC của Google Play. Không thay thế "Phản hồi chung" (P3).
@@ -459,9 +476,9 @@ Mục tiêu: admin có hộp thư báo cáo AI + phòng học, xử lý được
 
 ### E4. Hiệu lực hạn chế (phối hợp P0.5)
 
-- [ ] chat-proxy đọc `user_restrictions.ai_disabled` trước khi gọi AI → 403.
-- [ ] livekit-rooms đọc `rooms_disabled` trước khi phát vé → 403.
-- [ ] Admin chỉ ghi dữ liệu; hai worker đọc theo P0.5 Phase 4/5.
+- [x] chat-proxy đọc `user_restrictions.ai_disabled` trước khi gọi AI → 403. — `workers/chat-proxy/worker.js:1137` trả 403 `AI_RESTRICTED`; deploy 2026-11-03.
+- [x] livekit-rooms đọc `rooms_disabled` trước khi phát vé → 403. — `workers/livekit-rooms/worker.js:848` trả 403 `RESTRICTED`; deploy 2026-10-30, QA 2026-11-03 mục 11.
+- [x] Admin chỉ ghi dữ liệu; hai worker đọc theo P0.5 Phase 4/5. — đúng như triển khai.
 
 ### E5. Test
 
@@ -471,17 +488,17 @@ Mục tiêu: admin có hộp thư báo cáo AI + phòng học, xử lý được
 
 ### E6. Deploy (thứ tự)
 
-1. [ ] D1 migration + `data-api` (P0.5 Phase 1).
-2. [ ] `npm run build:admin` + `npx wrangler deploy --config wrangler.admin.jsonc`.
-3. [ ] Seed 1 báo cáo thử → resolve → kiểm `admin_audit`.
-4. [ ] Đặt restriction thử → chat/phòng bị chặn đúng → gỡ restriction.
+1. [x] D1 migration + `data-api` (P0.5 Phase 1). — xong 2026-10-30: `content_reports`, `user_blocks`, `user_restrictions` có trong D1; `/report` và `/blocks` trả 401 (route sống).
+2. [x] `npm run build:admin` + `npx wrangler deploy --config wrangler.admin.jsonc`. — xong 2026-10-30, admin worker version `2ff4e780` (push `main` tự deploy từ đó).
+3. [x] Seed 1 báo cáo thử → resolve → kiểm `admin_audit`. — production có 11 dòng `report.resolve`, mới nhất 2026-11-03 10:17.
+4. [x] Đặt restriction thử → chat/phòng bị chặn đúng → gỡ restriction. — production có 4 dòng `user.restrictions`; QA 2026-11-03 mục 11 khóa AI tài khoản thử → chat từ chối → mở lại chạy bình thường.
 
 ### DoD P2e
 
-- [ ] Báo cáo AI/phòng hiện trong shell, lọc được, resolve/dismiss có audit.
-- [ ] Hạn chế AI/phòng có hiệu lực thật và gỡ được.
-- [ ] Không lộ token; nội dung báo cáo không chạy HTML.
-- [ ] Báo cáo > 180 ngày được dọn.
+- [x] Báo cáo AI/phòng hiện trong shell, lọc được, resolve/dismiss có audit. — đã dùng thật trong QA 2026-11-03 (báo cáo AI + báo cáo phòng, resolve 11 lần).
+- [x] Hạn chế AI/phòng có hiệu lực thật và gỡ được. — QA 2026-11-03 mục 11.
+- [x] Không lộ token; nội dung báo cáo không chạy HTML. — chỉ gọi `/api/admin/*`; nội dung render bằng `textContent`.
+- [x] Báo cáo > 180 ngày được dọn. — endpoint list tự xóa trước khi trả; có unit test; chưa có dữ liệu quá 180 ngày để chứng minh thực tế.
 
 ### Rủi ro P2e
 
@@ -565,3 +582,4 @@ npx wrangler kv key put --namespace-id=a16e430f9bbe46afa51ffc9d4f9bce9d --remote
 - **Bản 18** (2026-10-30): tách toàn bộ shell — `index.html` còn ~187 dòng; thêm `panels/usage.html`, `panels/flags.html`, `panels/chat.html`, `panels/content.html`, `panels/diagnostics.html`; CSS chia `admin-usage/flags/chat/content/reports.css`; 3 test panel đổi sang `loadAdminHtml()`; bỏ 5 inline style tĩnh. 628 test vẫn xanh, admin local chạy đúng.
 - **Bản 19** (2026-10-30): tách tiếp `admin.css` thành `admin.css` (nền, 147 dòng), `admin-topbar.css` (248), `admin-dashboard.css` (316), `admin-footer.css` (145). Tổng 9 file CSS, không file nào quá 320 dòng; link theo thứ tự base → topbar → dashboard → footer → panel. Build và kiểm local OK.
 - **Bản 20** (2026-10-30): sắp xếp `admin-host/` thành `assets/`, `panels/`, `styles/`, `scripts/` và đổi tên file cho gọn (`styles/base.css`, `styles/chat.css`, `scripts/dashboard.js`, `scripts/chat.js`…). Build copy đúng cấu trúc, không publish `panels/`/`assets/`; vẫn copy favicon ra `/favicon.svg` và `/admin/favicon.svg`. Test DOM cập nhật đường dẫn; 207 test admin + 628 toàn bộ xanh.
+- **Bản 21** (2026-11-09): rà tiến độ theo production. Đóng P2.0 mục 0.1 (không còn `livekit:unreachable` sau deploy; quét 30 ngày). Mục 0.2 vẫn để mở vì phát hiện `chat-proxy` có `logAdminError` riêng chưa khử trùng — còn 2 cặp `fallback_failed` trùng giờ (27–28/10). Đóng P2c đợt 1: T20 xong, `content_manifest` version 1 (3 dòng, 28/10) và `GET /content` trả 40/20/49; C7 bước 6 (sửa/xóa/rollback trên production) **chưa làm** vì chưa có version 2; đợt 2 T21–T24 vẫn chưa bắt đầu. Đóng P2e: E4 có hiệu lực trong `chat-proxy`/`livekit-rooms`, E6 và DoD đủ bằng chứng từ production (11 `report.resolve`, 4 `user.restrictions`, QA tay 2026-11-03). P2a vẫn để mở nhánh 30 → 35: `chat_usage` cao nhất 4 câu/người/ngày. Đối chiếu shell production cùng ngày (mục "Đối chiếu shell production 2026-11-09"): 6 tab đủ, Báo cáo 0 chờ / 4 tổng, Nội dung chỉ có v1, R2 127 tệp / 497,65 MB; phát hiện copy cứng "chỉ xem" ở ô tài khoản và footer (di sản P1) cần sửa.
