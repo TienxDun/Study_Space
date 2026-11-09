@@ -1,0 +1,301 @@
+/* ================= P2f — Người dùng ================= */
+.users-body {
+  padding: 24px;
+}
+
+/* Danh sách và chi tiết là hai màn hình tách nhau, chỉ một cái hiện tại một thời điểm. */
+.users-list-view,
+.users-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.users-list-view[hidden],
+.users-detail[hidden] {
+  display: none;
+}
+
+.users-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.users-search {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 260px;
+  min-width: 0;
+  max-width: 360px;
+}
+
+.users-table td {
+  vertical-align: top;
+}
+
+.users-table th,
+.users-table td {
+  padding: 10px 12px;
+}
+
+.users-email,
+.users-name {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.users-name {
+  max-width: 160px;
+}
+
+.users-time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.users-count {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.users-more-wrap .btn-ghost {
+  margin-left: auto;
+}
+
+/* .btn-ghost có display riêng nên phải ép ẩn khi hết trang. */
+.users-more-wrap .btn-ghost[hidden] {
+  display: none;
+}
+
+/* ---------- Chi tiết: thanh định danh ---------- */
+.users-detail-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.users-back {
+  flex: 0 0 auto;
+}
+
+.users-back svg {
+  flex: 0 0 auto;
+}
+
+.users-detail-id {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.users-detail-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.users-detail-sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  word-break: break-word;
+}
+
+.users-detail-status {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.users-detail-status[hidden] {
+  display: none;
+}
+
+.users-detail .btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Chi tiết: lưới thẻ ---------- */
+.users-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.9fr);
+  grid-template-areas:
+    "info controls"
+    "chat controls"
+    "reports controls";
+  gap: 16px;
+  align-items: start;
+}
+
+.users-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.users-card-info {
+  grid-area: info;
+}
+
+.users-card-chat {
+  grid-area: chat;
+}
+
+.users-card-reports {
+  grid-area: reports;
+}
+
+.users-card-controls {
+  grid-area: controls;
+  position: sticky;
+  top: 16px;
+}
+
+.users-card-title {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.users-card-hint {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-faint);
+}
+
+.users-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.users-chat-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px 14px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.users-chat-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-subtle);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.users-chat-row strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.users-report-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.users-report-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-subtle);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.users-report-row strong {
+  color: var(--text-primary);
+  margin-left: auto;
+}
+
+.users-empty {
+  margin: 0;
+  padding: 8px 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.users-restrict {
+  gap: 10px;
+}
+
+.users-card-controls .users-quota {
+  border-top: 1px dashed var(--border-subtle);
+  padding-top: 14px;
+}
+
+.users-quota-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.users-quota-row strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .users-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "info"
+      "chat"
+      "reports"
+      "controls";
+  }
+  .users-card-controls {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .users-body {
+    padding: 16px;
+  }
+  .users-search {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+  .users-detail-status {
+    margin-left: 0;
+  }
+}

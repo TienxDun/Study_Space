@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="styles/chat.css" />
     <link rel="stylesheet" href="styles/content.css" />
     <link rel="stylesheet" href="styles/reports.css" />
+    <link rel="stylesheet" href="styles/users.css" />
   </head>
   <body>
     <!-- Top Navigation Bar -->
@@ -64,6 +65,7 @@
         <button class="admin-tab" id="tab-btn-chat" type="button" role="tab" aria-selected="false" aria-controls="tab-panel-chat" tabindex="-1" data-admin-tab="chat">Trợ lý chat</button>
         <button class="admin-tab" id="tab-btn-content" type="button" role="tab" aria-selected="false" aria-controls="tab-panel-content" tabindex="-1" data-admin-tab="content">Nội dung</button>
         <button class="admin-tab" id="tab-btn-reports" type="button" role="tab" aria-selected="false" aria-controls="tab-panel-reports" tabindex="-1" data-admin-tab="reports">Báo cáo</button>
+        <button class="admin-tab" id="tab-btn-users" type="button" role="tab" aria-selected="false" aria-controls="tab-panel-users" tabindex="-1" data-admin-tab="users">Người dùng</button>
       </div>
     </nav>
 
@@ -206,6 +208,11 @@
       <div class="tab-panel" id="tab-panel-reports" role="tabpanel" aria-labelledby="tab-btn-reports" data-tab-panel="reports" hidden>
         <!-- include: panels/reports.html -->
       </div>
+
+      <!-- Tab: Người dùng -->
+      <div class="tab-panel" id="tab-panel-users" role="tabpanel" aria-labelledby="tab-btn-users" data-tab-panel="users" hidden>
+        <!-- include: panels/users.html -->
+      </div>
     </main>
 
     <!-- Footer -->
@@ -224,6 +231,7 @@
     <script src="scripts/tabs.js" defer></script>
     <script src="scripts/content.js" defer></script>
     <script src="scripts/reports.js" defer></script>
+    <script src="scripts/users.js" defer></script>
     <script src="scripts/chat.js" defer></script>
     <script src="scripts/dashboard.js" defer></script>
   </body>

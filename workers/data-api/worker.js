@@ -10,6 +10,8 @@
  *   POST   /blocks  -> chặn người dùng
  *   DELETE /blocks/:uid -> bỏ chặn
  *   DELETE /account -> xoá toàn bộ dữ liệu của tài khoản (kèm dữ liệu phòng học)
+ *   GET    /admin/users        -> danh sách tài khoản Firebase (Bearer ADMIN_TOKEN)
+ *   GET    /admin/users/lookup -> tìm một tài khoản theo uid hoặc email (Bearer ADMIN_TOKEN)
  */
 
 const CERT_URL =
@@ -438,6 +440,73 @@ async function markAccountDeleted(db, uid) {
     .run();
 }
 
+// ---------- Đọc tài khoản cho trang quản lý người dùng (admin) ----------
+// Chỉ admin worker gọi được, xác thực bằng Bearer ADMIN_TOKEN dùng chung.
+// Trả về đúng trường cần hiển thị, không trả token hay thông tin đăng nhập.
+const IDENTITY_BASE = "https://identitytoolkit.googleapis.com/v1";
+const ADMIN_USERS_PAGE_MAX = 50;
+
+function adminOnly(req, env) {
+  const expected = String(env.ADMIN_TOKEN || "").trim();
+  if (!expected) return json({ error: "Chưa cấu hình ADMIN_TOKEN trên data-api." }, 503);
+  const header = String(req.headers.get("Authorization") || "");
+  const given = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+  if (!given || given !== expected) return json({ error: "Cần quyền quản trị." }, 401);
+  return null;
+}
+
+async function firebaseAdminCall(env, path, init) {
+  const projectId = String(env.FIREBASE_PROJECT_ID || "").trim();
+  if (!projectId) throw new Error("NO_PROJECT_ID");
+  const token = await getAdminAccessToken(env);
+  const res = await fetch(
+    `${IDENTITY_BASE}/projects/${encodeURIComponent(projectId)}${path}`,
+    {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        ...(init && init.headers),
+      },
+    }
+  );
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(`IDENTITY_${res.status}`);
+  return data;
+}
+
+function mapAuthUser(user) {
+  return {
+    uid: String(user?.localId || ""),
+    email: String(user?.email || ""),
+    displayName: String(user?.displayName || ""),
+    createdAt: Number(user?.createdAt) || 0,
+    lastSignInAt: Number(user?.lastLoginAt) || 0,
+    disabled: !!user?.disabled,
+  };
+}
+
+async function listAuthUsers(env, size, pageToken) {
+  const params = new URLSearchParams({ maxResults: String(size) });
+  if (pageToken) params.set("nextPageToken", pageToken);
+  const data = await firebaseAdminCall(env, `/accounts:batchGet?${params.toString()}`, {
+    method: "GET",
+  });
+  return {
+    users: (data?.users || []).map(mapAuthUser),
+    nextPageToken: String(data?.nextPageToken || ""),
+  };
+}
+
+async function lookupAuthUser(env, { uid, email }) {
+  const data = await firebaseAdminCall(env, "/accounts:lookup", {
+    method: "POST",
+    body: JSON.stringify(uid ? { localId: [uid] } : { email: [email] }),
+  });
+  const user = (data?.users || [])[0];
+  return user ? mapAuthUser(user) : null;
+}
+
 // ---------- Handler Chính Của Worker ----------
 const workerHandler = {
   async fetch(req, env) {
@@ -542,6 +611,40 @@ const workerHandler = {
           500,
           { ...cors, "Cache-Control": "no-store" }
         );
+      }
+    }
+
+    // 2b. Đọc tài khoản cho trang quản lý người dùng (server-to-server, Bearer ADMIN_TOKEN).
+    if (url.pathname === "/admin/users") {
+      if (req.method !== "GET") return json({ error: "Chỉ hỗ trợ GET." }, 405);
+      const denied = adminOnly(req, env);
+      if (denied) return denied;
+      const size = Math.min(
+        ADMIN_USERS_PAGE_MAX,
+        Math.max(1, Number(url.searchParams.get("size")) || 25)
+      );
+      const pageToken = String(url.searchParams.get("pageToken") || "").slice(0, 2048);
+      try {
+        const page = await listAuthUsers(env, size, pageToken);
+        return json({ ok: true, ...page }, 200, { "Cache-Control": "no-store" });
+      } catch (err) {
+        return json({ ok: false, error: String(err?.message || err) }, 502);
+      }
+    }
+
+    if (url.pathname === "/admin/users/lookup") {
+      if (req.method !== "GET") return json({ error: "Chỉ hỗ trợ GET." }, 405);
+      const denied = adminOnly(req, env);
+      if (denied) return denied;
+      const uid = String(url.searchParams.get("uid") || "").trim().slice(0, 128);
+      const email = String(url.searchParams.get("email") || "").trim().slice(0, 254);
+      if (!uid && !email) return json({ error: "Cần uid hoặc email." }, 400);
+      if (email && !email.includes("@")) return json({ error: "Email không hợp lệ." }, 400);
+      try {
+        const user = await lookupAuthUser(env, uid ? { uid } : { email });
+        return json({ ok: true, user }, 200, { "Cache-Control": "no-store" });
+      } catch (err) {
+        return json({ ok: false, error: String(err?.message || err) }, 502);
       }
     }
 

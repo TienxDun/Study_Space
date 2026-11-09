@@ -34,6 +34,7 @@ import {
 import { handleContentApi } from "./content-api";
 import { FLAGS_KEY, parseFlagsBody, readFlags, type SystemFlags } from "./flags";
 import { handleReportsApi, handleRestrictionsApi } from "./reports-api";
+import { handleUsersApi } from "./users-api";
 import { API_PREFIX, json, type AdminEnv } from "./shared";
 import { buildOverview, pingProbes, probeCheck } from "./usage";
 
@@ -79,6 +80,11 @@ async function handleApi(
   const restrictionsMatch = new RegExp(`^${API_PREFIX}/users/([^/]+)/restrictions$`).exec(pathname);
   if (restrictionsMatch) {
     return handleRestrictionsApi(request, env, restrictionsMatch[1], identity.email);
+  }
+
+  if (pathname === `${API_PREFIX}/users` || pathname.startsWith(`${API_PREFIX}/users/`)) {
+    const handled = await handleUsersApi(request, env, pathname, identity.email);
+    if (handled) return handled;
   }
 
   if (pathname === `${API_PREFIX}/overview`) {

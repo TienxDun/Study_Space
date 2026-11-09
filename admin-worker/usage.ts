@@ -102,7 +102,7 @@ async function fetchJson<T>(
   }
 }
 
-function pacificDay(): string {
+export function pacificDay(): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Los_Angeles",
     year: "numeric",

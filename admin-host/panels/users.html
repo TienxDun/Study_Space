@@ -1,0 +1,127 @@
+      <!-- P2f: quản lý người dùng -->
+      <section class="panel-card users-panel" id="users-panel" aria-labelledby="users-title">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <h2 class="panel-title" id="users-title">Người dùng</h2>
+            <span class="panel-desc">Danh tính lấy từ Firebase, số liệu lấy từ D1. Bấm Xem để mở trang chi tiết riêng của từng tài khoản. Tìm chính xác theo email, không quét toàn bộ.</span>
+          </div>
+          <span class="usage-tag" id="users-state">Chưa tải</span>
+        </div>
+
+        <div class="users-body">
+          <div class="users-list-view" id="users-list-view">
+            <div class="users-toolbar">
+              <label class="users-search">
+                <span class="chat-label">Email chính xác</span>
+                <input class="flag-input" id="users-search-input" type="email" inputmode="email" autocomplete="off" maxlength="254" placeholder="ten@example.com" />
+              </label>
+              <button class="btn-ghost" id="users-search-btn" type="button">Tìm</button>
+              <button class="btn-ghost" id="users-refresh" type="button">Làm mới</button>
+            </div>
+
+            <p class="chat-feedback" id="users-note" hidden></p>
+
+            <div class="content-table-wrap">
+              <table class="services-table content-table users-table">
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Tên</th>
+                    <th>Đăng nhập cuối</th>
+                    <th>Đồng bộ lúc</th>
+                    <th>Chat hôm nay</th>
+                    <th>Trạng thái</th>
+                    <th class="text-right">Chi tiết</th>
+                  </tr>
+                </thead>
+                <tbody id="users-rows">
+                  <tr><td colspan="7">Đang đọc…</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="chat-actions users-more-wrap">
+              <button class="btn-ghost" id="users-more" type="button" hidden>Tải thêm</button>
+            </div>
+          </div>
+
+          <section class="users-detail" id="users-detail" aria-labelledby="users-detail-title" hidden>
+            <div class="users-detail-bar">
+              <button class="btn-ghost users-back" id="users-detail-close" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+                <span>Danh sách</span>
+              </button>
+              <div class="users-detail-id">
+                <h3 class="users-detail-title" id="users-detail-title">Chi tiết người dùng</h3>
+                <p class="users-detail-sub" id="users-detail-sub"></p>
+              </div>
+              <span class="users-detail-status" id="users-detail-status" hidden></span>
+            </div>
+
+            <p class="chat-feedback" id="users-detail-note" hidden></p>
+
+            <div class="users-detail-grid">
+              <section class="users-card users-card-info">
+                <p class="users-card-title">Thông tin tài khoản</p>
+                <div class="reports-meta" id="users-detail-meta"></div>
+              </section>
+
+              <section class="users-card users-card-chat">
+                <p class="users-card-title">Chat 30 ngày gần nhất</p>
+                <div class="users-chat-list" id="users-chat-days"></div>
+              </section>
+
+              <section class="users-card users-card-reports">
+                <p class="users-card-title">Báo cáo liên quan <span class="users-card-hint">10 gần nhất</span></p>
+                <div class="users-report-list" id="users-reports"></div>
+              </section>
+
+              <section class="users-card users-card-controls">
+                <p class="users-card-title">Kiểm soát tài khoản</p>
+
+                <div class="users-block users-restrict" id="users-restrict">
+                  <label class="flag-row" for="users-restrict-ai">
+                    <span class="flag-text">
+                      <span class="flag-name">Khóa trợ lý AI</span>
+                      <span class="flag-desc">Tài khoản này không gửi được câu hỏi mới.</span>
+                    </span>
+                    <span class="switch">
+                      <input type="checkbox" id="users-restrict-ai" />
+                      <span class="switch-track" aria-hidden="true"></span>
+                    </span>
+                  </label>
+                  <label class="flag-row" for="users-restrict-rooms">
+                    <span class="flag-text">
+                      <span class="flag-name">Khóa phòng học</span>
+                      <span class="flag-desc">Tài khoản này không tạo/vào phòng được.</span>
+                    </span>
+                    <span class="switch">
+                      <input type="checkbox" id="users-restrict-rooms" />
+                      <span class="switch-track" aria-hidden="true"></span>
+                    </span>
+                  </label>
+                  <label class="chat-field">
+                    <span class="chat-label">Ghi chú hạn chế (tối đa 500 ký tự)</span>
+                    <textarea class="flag-input" id="users-restrict-note" rows="2" maxlength="500"></textarea>
+                  </label>
+                  <div class="chat-actions">
+                    <button class="btn-ghost" id="users-restrict-save" type="button">Lưu hạn chế</button>
+                    <span class="chat-feedback" id="users-restrict-state" hidden></span>
+                  </div>
+                </div>
+
+                <div class="users-block users-quota">
+                  <p class="chat-label">Hạn mức chat hôm nay</p>
+                  <div class="users-quota-row">
+                    <span>Đã dùng <strong id="users-quota-count">0</strong> câu</span>
+                    <button class="btn-ghost" id="users-chat-reset" type="button">Đặt lại hôm nay</button>
+                    <span class="chat-feedback" id="users-chat-reset-state" hidden></span>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </section>
+        </div>
+      </section>

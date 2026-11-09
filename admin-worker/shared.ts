@@ -35,9 +35,14 @@ export interface R2BucketLike {
   list(options?: { limit?: number; cursor?: string }): Promise<R2ListPage>;
 }
 
+export interface KvPutOptions {
+  expirationTtl?: number;
+}
+
 export interface KvNamespaceLike {
   get(key: string): Promise<string | null>;
-  put(key: string, value: string): Promise<void>;
+  put(key: string, value: string, options?: KvPutOptions): Promise<void>;
+  delete?(key: string): Promise<void>;
 }
 
 export interface AdminEnv {

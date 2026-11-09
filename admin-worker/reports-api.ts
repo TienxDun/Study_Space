@@ -8,6 +8,7 @@
 
 import { allowReportWrite, logAudit } from "./audit";
 import { API_PREFIX, json, type AdminEnv } from "./shared";
+import { clearUserDetailCache } from "./users-api";
 
 const REPORT_STATUS = new Set(["open", "resolved", "dismissed"]);
 const REPORT_SOURCE = new Set(["ai", "room"]);
@@ -297,6 +298,8 @@ export async function handleRestrictionsApi(
   } catch {
     return json({ error: "d1_error" }, 500);
   }
+
+  await clearUserDetailCache(env, uid);
 
   return json({
     ok: true,

@@ -107,6 +107,7 @@ export type FakeKv = {
   kv: NonNullable<AdminEnv["FLAGS"]>;
   store: Map<string, string>;
   puts: Array<{ key: string; value: string }>;
+  deletes: string[];
 };
 
 export function fakeKv(
@@ -115,6 +116,7 @@ export function fakeKv(
 ): FakeKv {
   const store = new Map(Object.entries(initial));
   const puts: Array<{ key: string; value: string }> = [];
+  const deletes: string[] = [];
   const kv = {
     async get(key: string) {
       if (options.failGet) throw new Error("KV lỗi");
@@ -126,6 +128,10 @@ export function fakeKv(
       puts.push({ key, value });
       store.set(key, value);
     },
+    async delete(key: string) {
+      deletes.push(key);
+      store.delete(key);
+    },
   };
-  return { kv, store, puts };
+  return { kv, store, puts, deletes };
 }
