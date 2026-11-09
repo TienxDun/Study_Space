@@ -343,7 +343,7 @@ export async function deleteCloudAccount(token: string): Promise<void> {
   }
 }
 
-// ---------- Tự động lưu sau 2 giây (Debounce) ----------
+// ---------- Tự động lưu sau 5 giây (Debounce) ----------
 export function scheduleAutoSave() {
   if (!activeUid || !tokenProvider) return;
   currentState = "pending";
@@ -357,7 +357,7 @@ export function scheduleAutoSave() {
 
   autoSaveTimer = setTimeout(() => {
     void pushData();
-  }, 2000);
+  }, 5000);
 }
 
 // ---------- Nút "Đồng bộ ngay" (Sync Now) ----------

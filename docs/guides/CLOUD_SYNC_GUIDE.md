@@ -97,7 +97,7 @@ npm run test:load
 ### 🧪 Kịch bản 1: Đăng nhập & Tự động lưu ngầm (Auto-Save)
 1. Mở web ZenStudy tại `http://localhost:3001` hoặc `https://zenstudy.space`, đăng nhập tài khoản Google.
 2. Thêm 1 ghi chú mới: *"Ôn thi Giải tích chương 2"*.
-3. Đợi 2 giây (thời gian debounce lưu ngầm), quan sát icon ở góc trên:
+3. Đợi 5 giây (thời gian debounce lưu ngầm), quan sát icon ở góc trên:
    - Chuyển sang vòng xoay 🔵 **"Đang lưu..."**
    - Sau đó chuyển sang tích xanh 🟢 **"Đã lưu đám mây"**.
 4. Vào D1 Console chạy lệnh: `SELECT * FROM user_data WHERE uid = 'your-uid';` $\to$ Ghi chú đã an toàn trên D1.
