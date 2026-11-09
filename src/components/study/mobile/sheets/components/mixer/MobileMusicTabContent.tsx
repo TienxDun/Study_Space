@@ -194,10 +194,10 @@ export const MobileMusicTabContent = memo(function MobileMusicTabContent({
           <button
             type="button"
             onClick={onToggleShuffle}
-            className={`relative w-9.5 h-9.5 rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 cursor-pointer touch-manipulation shadow-sm ${
+            className={`relative w-9.5 h-9.5 rounded-full bg-white/10 hover:bg-white/15 active:bg-white/20 flex items-center justify-center transition-all duration-150 active:scale-90 cursor-pointer touch-manipulation shadow-sm ${
               isShuffle
-                ? "bg-emerald-500/20 active:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.3)]"
-                : "bg-white/10 hover:bg-white/15 active:bg-white/20 border border-white/15 text-white/80 hover:text-white"
+                ? "border border-emerald-400/40 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.3)]"
+                : "border border-white/15 text-white/80 hover:text-white"
             }`}
             title="Xáo trộn bài hát"
             aria-label="Xáo trộn bài hát"
@@ -260,10 +260,10 @@ export const MobileMusicTabContent = memo(function MobileMusicTabContent({
           <button
             type="button"
             onClick={onToggleLoop}
-            className={`relative w-9.5 h-9.5 rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 cursor-pointer touch-manipulation shadow-sm ${
+            className={`relative w-9.5 h-9.5 rounded-full bg-white/10 hover:bg-white/15 active:bg-white/20 flex items-center justify-center transition-all duration-150 active:scale-90 cursor-pointer touch-manipulation shadow-sm ${
               isLooping
-                ? "bg-emerald-500/20 active:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.3)]"
-                : "bg-white/10 hover:bg-white/15 active:bg-white/20 border border-white/15 text-white/80 hover:text-white"
+                ? "border border-emerald-400/40 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.3)]"
+                : "border border-white/15 text-white/80 hover:text-white"
             }`}
             title="Lặp lại danh sách"
             aria-label="Lặp lại danh sách"

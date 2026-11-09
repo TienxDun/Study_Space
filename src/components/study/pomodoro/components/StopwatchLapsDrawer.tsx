@@ -68,7 +68,7 @@ export function StopwatchLapsDrawer({
           {showContent && (
             <div
               key="stopwatch-laps-backdrop"
-              className="fixed inset-0 z-30 cursor-pointer"
+              className="fixed inset-0 z-30 cursor-pointer pointer-events-auto"
               onClick={(e) => {
                 e.stopPropagation();
                 onClose();
@@ -82,7 +82,7 @@ export function StopwatchLapsDrawer({
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
             aria-hidden={isHiddenPlaceholder || undefined}
-            className={`absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 w-[calc(100vw-24px)] max-w-80 sm:w-88 sm:max-w-none glass-panel hover:bg-black/45 p-3.5 z-40 laps-drawer-mobile space-y-2.5 ${
+            className={`absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 w-[calc(100vw-24px)] max-w-80 sm:w-88 sm:max-w-none glass-panel sm:bg-black/60 sm:hover:bg-black/65 sm:border sm:border-white/15 sm:backdrop-blur-2xl sm:shadow-[0_20px_50px_rgba(0,0,0,0.6)] sm:rounded-3xl p-3.5 z-40 laps-drawer-mobile space-y-2.5 pointer-events-auto transition-colors duration-150 ${
               isHiddenPlaceholder ? "invisible pointer-events-none select-none" : ""
             }`}
           >

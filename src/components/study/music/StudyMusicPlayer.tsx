@@ -413,6 +413,7 @@ export const StudyMusicPlayer = memo(function StudyMusicPlayer({
                 onToggleShuffle={handleToggleShuffle}
                 isLooping={isLooping}
                 onToggleLoop={handleToggleLoop}
+                isMobile={isMobile}
               />
 
               {/* Row 2: sóng nhạc và âm lượng chỉ hiện trên màn lớn, mobile bấm vào đĩa để mở */}

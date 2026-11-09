@@ -185,23 +185,23 @@ export const MusicTabContent = memo(function MusicTabContent({
           </div>
         </div>
 
-        {/* Cụm nút điều khiển phát nhạc Desktop: Tách riêng độc lập, nền kính mờ đồng bộ với toàn sheet */}
+        {/* Cụm nút điều khiển phát nhạc Desktop: Tách riêng độc lập, phong cách frameless không nền đồng bộ UI Desktop */}
         <div className="flex items-center justify-center gap-3 sm:gap-4 select-none w-full max-w-[285px] mx-auto py-1">
           {/* 1. Xáo trộn bài hát */}
           <button
             type="button"
             onClick={onToggleShuffle}
-            className={`relative w-9.5 h-9.5 rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 cursor-pointer touch-manipulation shadow-sm ${
+            className={`relative w-9.5 h-9.5 rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 cursor-pointer touch-manipulation ${
               isShuffle
-                ? "bg-emerald-500/20 active:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.3)]"
-                : "bg-white/10 hover:bg-white/15 active:bg-white/20 border border-white/15 text-white/80 hover:text-white"
+                ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)]"
+                : "text-white/75 hover:text-white"
             }`}
             title="Xáo trộn bài hát"
             aria-label="Xáo trộn bài hát"
           >
             <ShuffleIcon className="w-4 h-4" />
             {isShuffle && (
-              <span className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.9)]" />
+              <span className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-white shadow-[0_0_4px_rgba(255,255,255,1)]" />
             )}
           </button>
 
@@ -209,7 +209,7 @@ export const MusicTabContent = memo(function MusicTabContent({
           <button
             type="button"
             onClick={onPrevTrack}
-            className="w-9.5 h-9.5 rounded-full bg-white/10 hover:bg-white/15 active:bg-white/20 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all duration-150 active:scale-90 cursor-pointer touch-manipulation shadow-sm"
+            className="w-9.5 h-9.5 rounded-full flex items-center justify-center text-white/80 hover:text-white transition-all duration-150 active:scale-90 cursor-pointer touch-manipulation"
             title="Bài trước đó"
             aria-label="Bài trước đó"
           >
@@ -247,7 +247,7 @@ export const MusicTabContent = memo(function MusicTabContent({
           <button
             type="button"
             onClick={onNextTrack}
-            className="w-9.5 h-9.5 rounded-full bg-white/10 hover:bg-white/15 active:bg-white/20 border border-white/15 flex items-center justify-center text-white/80 hover:text-white transition-all duration-150 active:scale-90 cursor-pointer touch-manipulation shadow-sm"
+            className="w-9.5 h-9.5 rounded-full flex items-center justify-center text-white/80 hover:text-white transition-all duration-150 active:scale-90 cursor-pointer touch-manipulation"
             title="Bài tiếp theo"
             aria-label="Bài tiếp theo"
           >
@@ -258,17 +258,17 @@ export const MusicTabContent = memo(function MusicTabContent({
           <button
             type="button"
             onClick={onToggleLoop}
-            className={`relative w-9.5 h-9.5 rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 cursor-pointer touch-manipulation shadow-sm ${
+            className={`relative w-9.5 h-9.5 rounded-full flex items-center justify-center transition-all duration-150 active:scale-90 cursor-pointer touch-manipulation ${
               isLooping
-                ? "bg-emerald-500/20 active:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.3)]"
-                : "bg-white/10 hover:bg-white/15 active:bg-white/20 border border-white/15 text-white/80 hover:text-white"
+                ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)]"
+                : "text-white/75 hover:text-white"
             }`}
             title="Lặp lại danh sách"
             aria-label="Lặp lại danh sách"
           >
             <RepeatIcon className="w-4 h-4" />
             {isLooping && (
-              <span className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.9)]" />
+              <span className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-white shadow-[0_0_4px_rgba(255,255,255,1)]" />
             )}
           </button>
         </div>

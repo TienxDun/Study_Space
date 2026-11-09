@@ -18,6 +18,7 @@ interface PlayerControlsProps {
   onToggleShuffle: () => void;
   isLooping: boolean;
   onToggleLoop: () => void;
+  isMobile?: boolean;
 }
 
 export function PlayerControls({
@@ -27,6 +28,7 @@ export function PlayerControls({
   onToggleShuffle,
   isLooping,
   onToggleLoop,
+  isMobile = false,
 }: PlayerControlsProps) {
   // Mèo ngồi giữa làm nút phát/dừng chính
   const { musicPlaying, toggleMusic } = useMusicBridge();
@@ -48,11 +50,16 @@ export function PlayerControls({
     <div className="flex items-center justify-center gap-2 sm:gap-1 select-none w-full max-w-[270px] sm:max-w-[290px] px-1">
       {/* 1. Xáo trộn bài hát */}
       <button
+        type="button"
         onClick={onToggleShuffle}
-        className={`relative w-8.5 h-8.5 rounded-full flex items-center justify-center transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation ${
-          isShuffle
-            ? "glass-round-btn-active text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)]"
-            : "glass-round-btn text-white/75 hover:text-white"
+        className={`relative w-8.5 h-8.5 rounded-full flex items-center justify-center transition-all duration-75 active:scale-90 cursor-pointer touch-manipulation ${
+          isMobile
+            ? isShuffle
+              ? "glass-round-btn-active text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)]"
+              : "glass-round-btn text-white/75 hover:text-white"
+            : isShuffle
+            ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)]"
+            : "text-white/75 hover:text-white"
         }`}
         title="Xáo trộn bài hát (S)"
         aria-label="Xáo trộn bài hát"
@@ -65,8 +72,11 @@ export function PlayerControls({
 
       {/* 2. Bài trước đó */}
       <button
+        type="button"
         onClick={onPrevTrack}
-        className="glass-round-btn w-8.5 h-8.5 rounded-full flex items-center justify-center text-white/80 hover:text-white transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation"
+        className={`w-8.5 h-8.5 rounded-full flex items-center justify-center text-white/80 hover:text-white transition-all duration-75 active:scale-90 cursor-pointer touch-manipulation ${
+          isMobile ? "glass-round-btn" : ""
+        }`}
         title="Bài trước đó (←)"
         aria-label="Bài trước đó"
       >
@@ -107,8 +117,11 @@ export function PlayerControls({
 
       {/* 4. Bài tiếp theo */}
       <button
+        type="button"
         onClick={onNextTrack}
-        className="glass-round-btn w-8.5 h-8.5 rounded-full flex items-center justify-center text-white/80 hover:text-white transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation"
+        className={`w-8.5 h-8.5 rounded-full flex items-center justify-center text-white/80 hover:text-white transition-all duration-75 active:scale-90 cursor-pointer touch-manipulation ${
+          isMobile ? "glass-round-btn" : ""
+        }`}
         title="Bài tiếp theo (→)"
         aria-label="Bài tiếp theo"
       >
@@ -117,11 +130,16 @@ export function PlayerControls({
 
       {/* 5. Lặp lại danh sách */}
       <button
+        type="button"
         onClick={onToggleLoop}
-        className={`relative w-8.5 h-8.5 rounded-full flex items-center justify-center transition-transform duration-75 active:scale-90 cursor-pointer touch-manipulation ${
-          isLooping
-            ? "glass-round-btn-active text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)]"
-            : "glass-round-btn text-white/75 hover:text-white"
+        className={`relative w-8.5 h-8.5 rounded-full flex items-center justify-center transition-all duration-75 active:scale-90 cursor-pointer touch-manipulation ${
+          isMobile
+            ? isLooping
+              ? "glass-round-btn-active text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)]"
+              : "glass-round-btn text-white/75 hover:text-white"
+            : isLooping
+            ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.85)]"
+            : "text-white/75 hover:text-white"
         }`}
         title="Lặp lại danh sách (L)"
         aria-label="Lặp lại danh sách"
