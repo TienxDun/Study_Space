@@ -327,18 +327,48 @@ const ERROR_MESSAGES = {
   fallback_failed: "Đường dự phòng cuối trả lỗi.",
 };
 const ERROR_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
+const ERROR_THROTTLE_MS = 60 * 60 * 1000;
+const errorLogThrottle = new Map();
+let errorCleanupAt = 0;
 
+// Test dùng để xóa bộ nhớ khử trùng giữa các ca.
+function resetErrorLogThrottle() {
+  errorLogThrottle.clear();
+  errorCleanupAt = 0;
+}
+
+// Cùng một code chỉ ghi tối đa 1 dòng/giờ. Map trong RAM chỉ chặn trong một
+// isolate, nên phải đọc dòng mới nhất trong D1 để các isolate khác cũng thấy.
 async function logAdminError(env, code) {
   const db = d1(env);
   const message = ERROR_MESSAGES[code];
-  if (!db || !message) return;
+  if (!db || !message) return false;
+  const now = Date.now();
+  const lastInMemory = errorLogThrottle.get(code) || 0;
+  if (now - lastInMemory < ERROR_THROTTLE_MS) return false;
   try {
+    const recent = await db.prepare(
+      "SELECT created_at FROM admin_error_log WHERE source = ? AND code = ? ORDER BY created_at DESC LIMIT 1"
+    ).bind("chat-proxy", code).first();
+    const lastAt = Math.max(lastInMemory, Number(recent && recent.created_at) || 0);
+    if (now - lastAt < ERROR_THROTTLE_MS) {
+      if (recent) errorLogThrottle.set(code, lastAt);
+      return false;
+    }
+    errorLogThrottle.set(code, now);
+
     await db.prepare(
       "INSERT INTO admin_error_log (source, code, message, created_at) VALUES (?, ?, ?, ?)"
-    ).bind("chat-proxy", code, message, Date.now()).run();
-    await db.prepare("DELETE FROM admin_error_log WHERE created_at < ?")
-      .bind(Date.now() - ERROR_RETENTION_MS).run();
-  } catch { /* bảng chưa có hoặc D1 lỗi: bỏ qua, không làm hỏng câu trả lời */ }
+    ).bind("chat-proxy", code, message, now).run();
+
+    // Dọn bản ghi quá 14 ngày, tối đa 1 lần/giờ, chỉ ở đường ghi.
+    if (now - errorCleanupAt >= ERROR_THROTTLE_MS) {
+      errorCleanupAt = now;
+      await db.prepare("DELETE FROM admin_error_log WHERE created_at < ?")
+        .bind(now - ERROR_RETENTION_MS).run();
+    }
+    return true;
+  } catch { /* bảng chưa có hoặc D1 lỗi: bỏ qua, không làm hỏng câu trả lời */ return false; }
 }
 
 // Ghi log ngoài đường trả lời (ctx.waitUntil). Không có ctx (test/local) thì chờ.
@@ -1268,6 +1298,8 @@ export default worker;
 export {
   resetFlagsCache as __resetFlagsCache,
   resetCfgCache as __resetCfgCache,
+  resetErrorLogThrottle as __resetErrorLogThrottle,
+  logAdminError as __logAdminError,
   screenSafety as __screenSafety,
   SAFETY_PREFIX as __SAFETY_PREFIX,
   SAFETY_REPLIES as __SAFETY_REPLIES,

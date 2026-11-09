@@ -13,7 +13,7 @@ Thuộc P2 của `docs/features/ADMIN_CONSOLE_PLAN.md`; P1 đã đóng, xem `doc
 - **Nội dung**: **bản v1 · 40 cảnh · 20 âm · 49 nhạc · 28/10 13:43**, Lịch sử chỉ có 1 bản, mọi dòng "Có file"; **không có tab "Kho tệp"** (đợt 2 chưa làm).
 - **Báo cáo**: **0 chờ xử lý / 4 tổng**, cả 4 đã xử lý.
 - **Chẩn đoán**: 9 dòng lỗi; vẫn còn cặp `fallback_failed` trùng giờ ngày 27–28/10 → xác nhận mục 0.2 còn mở; không có dòng mới sau 28/10.
-- **Nợ giao diện phát hiện khi rà**: ô tài khoản ghi cứng "Quyền: **chỉ xem**" ([`index.html:159`](../../admin-host/index.html#L159)) và footer "Phiên bản **chỉ xem**" ([`index.html:217`](../../admin-host/index.html#L217)) — copy di sản từ thời P1 chỉ đọc, trong khi tài khoản này đã ghi bình thường (cờ, nội dung v1, resolve báo cáo). Cần sửa hoặc thay bằng thông tin hạn mức phiên thật.
+- **Nợ giao diện phát hiện khi rà**: ô tài khoản ghi cứng "Quyền: **chỉ xem**" ([`index.html:159`](../../admin-host/index.html#L159)) và footer "Phiên bản **chỉ xem**" ([`index.html:217`](../../admin-host/index.html#L217)) — copy di sản từ thời P1 chỉ đọc, trong khi tài khoản này đã ghi bình thường (cờ, nội dung v1, resolve báo cáo). **Đã sửa 2026-11-10**: nay ghi "Quyền: quản trị" và "Phiên bản đầy đủ".
 
 Mục tiêu: bảng điều khiển từ chỗ **chỉ xem** chuyển sang **sửa được** — chặn sự cố không cần deploy, đổi cấu hình chat, đẩy nội dung có phiên bản và quay lại, dọn kho — nhưng mọi hành động ghi đều đi qua Access, có audit ghi trước, và không đưa token xuống trình duyệt.
 
@@ -75,6 +75,7 @@ Chọn một hướng, mặc định là (a):
 
 Rà soát 2026-10-28: code và deploy của 0.1 và 0.2 đều đã xong; hai mục "Xong khi" vẫn để mở vì chưa có bằng chứng 24 giờ trong `admin_error_log` — muốn chốt thì mở admin, xem khối Lỗi và đếm dòng `livekit:unreachable`.
 Chốt lại 2026-11-09: 0.1 **đóng**; 0.2 **còn mở** đúng một phần — worker admin đã khử trùng, chat-proxy chưa.
+Cập nhật 2026-11-10: đã thêm luật 1 giờ vào `logAdminError` của `chat-proxy` (đọc dòng mới nhất trong D1 như worker admin, có test riêng 6 ca). Còn chờ dán lại worker lên dashboard rồi theo dõi mới chốt được.
 
 ---
 
