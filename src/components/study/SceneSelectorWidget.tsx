@@ -16,9 +16,7 @@ import {
   ShuffleIcon,
   SmileyIcon,
   CircleNotchIcon,
-  PlayIcon,
-  PauseIcon,
-  TimerIcon,
+  ArrowClockwiseIcon,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import { Scene, STUDY_SCENES } from "./study-types";
@@ -429,82 +427,103 @@ export const SceneSelectorWidget = ({
           </button>
         </div>
 
-        {/* Hàng 2: Thanh công cụ (hàng riêng nên không bao giờ chen tiêu đề) */}
-        <div className="flex items-center gap-1.5">
-          {/* Nút Bật/Tắt tự xoay bối cảnh */}
-          <button
-            onClick={onToggleSlideshow}
-            className={`p-1.5 px-2.5 rounded-xl transition-colors cursor-pointer border flex flex-1 items-center justify-center gap-1.5 text-xs active:scale-95 ${
-              slideshowEnabled
-                ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-300 font-bold"
-                : "text-slate-300 hover:text-white hover:bg-white/10 border-transparent hover:border-white/10 font-medium"
-            }`}
-              title={
-                slideshowEnabled
-                  ? `Tự xoay cảnh mỗi ${slideshowIntervalMin} phút (${slideshowPoolLabel}) — bấm để tắt`
-                  : "Tự xoay bối cảnh — bấm để bật"
-              }
-            >
-              {slideshowEnabled ? (
-                <PauseIcon weight="fill" className="w-3.5 h-3.5 text-emerald-400" />
-              ) : (
-                <PlayIcon className="w-3.5 h-3.5 text-emerald-400" />
-              )}
-              <span className="hidden sm:inline font-medium whitespace-nowrap">Tự xoay cảnh</span>
-          </button>
+        {/* Hàng 2: Toolbar tìm kiếm + Đổi ngẫu nhiên + Tự xoay bối cảnh (Đồng bộ chuẩn Mobile) */}
+        <div className="flex items-center gap-2">
+          {/* Quick Search Bar thanh mảnh */}
+          <div className="relative flex-1 flex items-center min-w-0">
+            <MagnifyingGlassIcon className="w-3.5 h-3.5 absolute left-3 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm bối cảnh (Tokyo, cafe, mưa...)"
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="w-full h-8.5 bg-white/[0.04] hover:bg-white/[0.07] focus:bg-white/[0.08] border border-white/10 focus:border-emerald-400/40 rounded-xl pl-8.5 pr-8 text-xs text-white placeholder:text-slate-500 focus:outline-none transition-all shadow-inner"
+            />
+            {Boolean(searchQuery) && (
+              <button
+                type="button"
+                onClick={() => handleSearchChange("")}
+                className="absolute right-2.5 text-slate-400 hover:text-white text-xs cursor-pointer p-0.5 rounded-full hover:bg-white/10"
+                title="Xóa tìm kiếm"
+              >
+                <XIcon className="w-3 h-3" />
+              </button>
+            )}
+          </div>
 
-          {/* Nút chọn thời gian mỗi lượt (chỉ hiện khi đang bật tự xoay) */}
-          {slideshowEnabled && (
-            <button
-              onClick={onCycleSlideshowInterval}
-              className="p-1.5 px-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex flex-1 items-center justify-center gap-1.5 text-xs active:scale-95 font-bold"
-              title="Bấm để đổi thời gian mỗi lượt (5 → 15 → 30 → 60 phút)"
-            >
-                <TimerIcon className="w-3.5 h-3.5 text-sky-400" />
-                <span className="hidden sm:inline font-medium whitespace-nowrap">{slideshowIntervalMin} phút</span>
-            </button>
-          )}
-
-          {/* Nút Đổi ngẫu nhiên không gian (icon phổ quát nên icon-only) */}
+          {/* Nút Đổi ngẫu nhiên không gian */}
           <button
+            type="button"
             onClick={handleShuffle}
-            className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex flex-1 items-center justify-center gap-1.5 text-xs active:scale-95"
-            title="Đổi cảnh ngẫu nhiên"
+            className="w-8.5 h-8.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 border border-white/10 hover:border-white/20 flex items-center justify-center text-slate-300 hover:text-white transition-all shrink-0 cursor-pointer shadow-xs"
+            title="Đổi cảnh ngẫu nhiên (R)"
+            aria-label="Đổi cảnh ngẫu nhiên"
           >
-            <ShuffleIcon className="w-3.5 h-3.5 text-emerald-400" />
+            <ShuffleIcon className="w-4 h-4 text-emerald-400" />
           </button>
+
+          {/* Cụm Tự xoay bối cảnh: Đồng bộ phong cách Capsule từ Mobile */}
+          {onToggleSlideshow && (
+            <div className="flex items-center shrink-0">
+              {slideshowEnabled ? (
+                <div className="h-8.5 flex items-center rounded-xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-400/30 shadow-xs shrink-0 overflow-hidden transition-all">
+                  {/* Nút Tắt tự xoay */}
+                  <button
+                    type="button"
+                    onClick={onToggleSlideshow}
+                    title={
+                      slideshowEnabled
+                        ? `Tự xoay cảnh mỗi ${slideshowIntervalMin} phút (${slideshowPoolLabel}) — bấm để tắt`
+                        : "Tự xoay bối cảnh — bấm để bật"
+                    }
+                    aria-label="Tắt tự động đổi cảnh"
+                    className="h-full px-2.5 flex items-center justify-center text-emerald-400 hover:text-white active:scale-95 transition-all cursor-pointer"
+                  >
+                    <ArrowClockwiseIcon
+                      weight="bold"
+                      className="w-4 h-4 animate-[spin_8s_linear_infinite]"
+                    />
+                  </button>
+
+                  <div className="w-px h-3.5 bg-emerald-400/20 shrink-0" aria-hidden="true" />
+
+                  {/* Nút Chọn chu kỳ thời gian */}
+                  {onCycleSlideshowInterval && (
+                    <button
+                      type="button"
+                      onClick={onCycleSlideshowInterval}
+                      title="Bấm để đổi thời gian mỗi lượt (5 → 15 → 30 → 60 phút)"
+                      aria-label="Đổi thời gian tự xoay"
+                      className="h-full px-2 flex items-center justify-center text-xs font-mono font-bold text-emerald-300 hover:text-white active:scale-95 transition-all cursor-pointer tabular-nums"
+                    >
+                      <span>{slideshowIntervalMin}m</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onToggleSlideshow}
+                  title="Tự xoay bối cảnh — bấm để bật"
+                  aria-label="Bật tự động đổi cảnh"
+                  className="w-8.5 h-8.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 border border-white/10 hover:border-white/20 flex items-center justify-center text-slate-400 hover:text-white transition-all shrink-0 shadow-xs cursor-pointer"
+                >
+                  <ArrowClockwiseIcon className="w-4 h-4 text-slate-400 hover:text-white transition-colors" />
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Nút Mở Studio Quản lý Background (Chỉ hiện ở môi trường Local Development) */}
           {process.env.NODE_ENV === "development" && (
             <Link
               href="/dev/studio/"
               target="_blank"
-              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer border border-transparent hover:border-white/10 flex flex-1 items-center justify-center gap-1.5 text-xs active:scale-95"
+              className="w-8.5 h-8.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 border border-white/10 hover:border-white/20 flex items-center justify-center text-indigo-400 hover:text-indigo-300 transition-all shrink-0 shadow-xs"
               title="Mở Studio quản lý bối cảnh"
             >
-              <SparkleIcon className="w-3.5 h-3.5 text-indigo-400" />
+              <SparkleIcon className="w-4 h-4" />
             </Link>
-          )}
-        </div>
-
-        {/* Quick Search Bar thanh mảnh */}
-        <div className="relative flex items-center">
-          <MagnifyingGlassIcon className="w-3.5 h-3.5 absolute left-3 text-slate-400 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm bối cảnh (Tokyo, cafe, mưa, lofi...)"
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full bg-white/[0.04] hover:bg-white/[0.07] focus:bg-white/[0.08] border border-white/10 focus:border-emerald-400/40 rounded-xl pl-8.5 pr-8 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none transition-all shadow-inner"
-          />
-          {Boolean(searchQuery) && (
-            <button
-              onClick={() => handleSearchChange("")}
-              className="absolute right-2.5 text-slate-400 hover:text-white text-xs cursor-pointer p-0.5 rounded-full hover:bg-white/10"
-              title="Xóa tìm kiếm"
-            >
-              <XIcon className="w-3 h-3" />
-            </button>
           )}
         </div>
       </div>

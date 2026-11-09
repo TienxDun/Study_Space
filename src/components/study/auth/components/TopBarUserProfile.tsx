@@ -18,11 +18,7 @@ import { APP_VERSION_LABEL } from "@/lib/version";
  * Nút hồ sơ tài khoản và bảng menu đăng nhập / đăng xuất trên TopBar.
  * Hỗ trợ tự đóng khi click ra ngoài, avatar fallback và giao diện chuẩn glass-panel.
  */
-interface TopBarUserProfileProps {
-  bare?: boolean;
-}
-
-export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {}) => {
+export const TopBarUserProfile = () => {
   const { user, loading, isSigningIn, isSigningOut, signIn, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
@@ -61,11 +57,7 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
       <button
         onClick={signIn}
         disabled={isSigningIn}
-        className={`h-8 px-2.5 rounded-xl transition-all active:scale-95 flex items-center gap-1.5 text-xs font-semibold cursor-pointer shadow-xs shrink-0 ${
-          bare
-            ? "bg-transparent border border-transparent text-slate-200 hover:text-white hover:bg-white/5"
-            : "bg-white/10 hover:bg-white/15 border border-white/15 text-slate-200 hover:text-white"
-        }`}
+        className="h-8 px-2.5 rounded-xl border border-transparent transition-all active:scale-95 flex items-center gap-1.5 text-xs font-semibold cursor-pointer shrink-0 select-none text-slate-200 hover:text-white glass-hover drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
         title="Đăng nhập tài khoản Google"
         aria-label="Đăng nhập tài khoản Google"
       >
@@ -84,12 +76,10 @@ export const TopBarUserProfile = ({ bare = false }: TopBarUserProfileProps = {})
       <button
         ref={triggerRef}
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`h-8 pl-1 pr-2 rounded-xl border transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs group ${
+        className={`h-8 pl-1 pr-2 rounded-xl border transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer select-none group drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] ${
           isOpen
             ? "bg-white/20 border-white/25 text-white shadow-[0_0_12px_rgba(255,255,255,0.2)]"
-            : bare
-              ? "bg-transparent border-transparent text-slate-200 hover:text-white hover:bg-white/5"
-              : "bg-white/10 hover:bg-white/15 border-white/15 text-slate-200 hover:text-white"
+            : "bg-transparent border-transparent text-slate-200 hover:text-white glass-hover"
         }`}
         title={`${user.displayName || user.email} (Bấm để xem hồ sơ)`}
         aria-label={`${user.displayName || user.email}, bấm để xem hồ sơ`}

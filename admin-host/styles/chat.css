@@ -13,10 +13,104 @@
   border-color: rgba(251, 113, 133, 0.3);
 }
 
+/* Subtabs điều hướng bên trong Chat Panel (Segmented Capsule Linear style) */
+.chat-subtabs-bar {
+  display: flex;
+  align-items: center;
+  padding: 10px 24px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.chat-subtabs {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
+  gap: 2px;
+}
+
+.chat-subtab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+  user-select: none;
+}
+
+.chat-subtab:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.chat-subtab.is-active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 2px 8px -1px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  font-weight: 600;
+}
+
+.chat-subtab-svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  opacity: 0.65;
+  transition: opacity 150ms ease, stroke 150ms ease;
+}
+
+.chat-subtab:hover .chat-subtab-svg {
+  opacity: 0.9;
+}
+
+.chat-subtab.is-active .chat-subtab-svg {
+  opacity: 1;
+  stroke: var(--emerald-400);
+}
+
 .chat-body {
-  display: grid;
-  gap: 14px;
   padding: 20px 24px 22px;
+}
+
+.chat-pane {
+  display: block;
+}
+
+.chat-pane[hidden] {
+  display: none;
+}
+
+.chat-pane-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.chat-prompt-grid {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 960px) {
+  .chat-prompt-grid {
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.95fr);
+    align-items: start;
+    gap: 20px;
+  }
 }
 
 .chat-section {
@@ -260,6 +354,111 @@ textarea.chat-prompt {
 
 .chat-try-row > .chat-mini-btn {
   flex: none;
+}
+
+/* Khung thử nghiệm model (Playground) */
+.chat-playground-card {
+  border-color: rgba(16, 185, 129, 0.25);
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%), var(--surface-nested);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.25);
+}
+
+.chat-step-playground {
+  background: var(--emerald-soft);
+  color: var(--emerald-400);
+  font-size: 13px;
+}
+
+.chat-try-fields {
+  display: grid;
+  gap: 12px;
+}
+
+.chat-try-fields .chat-try-field {
+  flex: none;
+  width: 100%;
+}
+
+.chat-playground-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+
+.chat-playground-run {
+  min-width: 80px;
+  height: 34px;
+  padding: 0 16px;
+  font-weight: 600;
+  color: var(--emerald-400);
+  background: var(--emerald-soft);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  transition: all 150ms ease;
+}
+
+.chat-playground-run:hover:not(:disabled) {
+  background: var(--emerald-400);
+  color: #021a12;
+  border-color: var(--emerald-400);
+  box-shadow: 0 0 12px var(--emerald-glow);
+}
+
+.chat-playground-output {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.chat-playground-output .chat-feedback {
+  min-height: 44px;
+}
+
+/* Accordion quy tắc an toàn */
+.chat-safety-accordion {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 150ms ease;
+}
+
+.chat-safety-accordion[open] {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.chat-safety-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.chat-safety-summary::-webkit-details-marker {
+  display: none;
+}
+
+.chat-safety-badge {
+  font-size: 11px;
+  color: var(--text-faint);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  transition: all 150ms ease;
+}
+
+.chat-safety-accordion[open] .chat-safety-badge {
+  color: var(--emerald-400);
+  background: var(--emerald-soft);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.chat-safety-body {
+  padding: 0 12px 12px;
+  display: grid;
+  gap: 8px;
 }
 
 /* Thứ tự dự phòng */

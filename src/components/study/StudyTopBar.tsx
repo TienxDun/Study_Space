@@ -23,14 +23,14 @@ import type { TimerTab } from "./pomodoro/types";
 
 export interface StudyTopBarProps {
   isZenMode: boolean;
-  isPomodoroVisible: boolean;
-  centerTab: TimerTab;
+  isPomodoroVisible?: boolean;
+  centerTab?: TimerTab;
   isGlobalMuted: boolean;
   isSettingsOpen: boolean;
   isFullscreen: boolean;
   showClockSeconds?: boolean;
   isClock12Hour?: boolean;
-  onToggleClock: () => void;
+  onToggleClock?: () => void;
   onToggleShortcuts: () => void;
   onEnterZen: () => void;
   onExitZen: () => void;
@@ -41,17 +41,11 @@ export interface StudyTopBarProps {
   onToggleStats?: () => void;
 }
 
-/** Nút đồng hồ giữa: tự tick mỗi giây, tách riêng để khỏi vẽ lại cả thanh */
-const TopBarClockButton = ({
-  isPomodoroVisible,
-  centerTab,
-  onToggleClock,
+/** Đồng hồ giữa TopBar: tự tick mỗi giây, chỉ hiển thị giờ tĩnh không click */
+const TopBarClockDisplay = ({
   showClockSeconds = true,
   isClock12Hour = false,
 }: {
-  isPomodoroVisible: boolean;
-  centerTab: TimerTab;
-  onToggleClock: () => void;
   showClockSeconds?: boolean;
   isClock12Hour?: boolean;
 }) => {
@@ -76,45 +70,23 @@ const TopBarClockButton = ({
   }, [showClockSeconds, isClock12Hour]);
 
   return (
-    <motion.button
-
-
-      onClick={onToggleClock}
-      className={`absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 h-9 hidden lg:inline-flex items-center justify-center px-2.5 sm:px-3 rounded-xl pointer-events-auto group cursor-pointer active:scale-95 will-change-transform transition-all duration-200 select-none ${
-        isPomodoroVisible && centerTab === "clock"
-          ? "text-accent-music-bright bg-white/[0.08] border border-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_4px_16px_rgba(0,0,0,0.4)]"
-          : "text-slate-100 hover:text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] glass-hover"
-      }`}
-      title={
-        isPomodoroVisible && centerTab === "clock"
-          ? "Bấm để ẩn Đồng hồ lớn"
-          : "Bấm để mở Đồng hồ lớn (C)"
-      }
+    <div
+      className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 h-9 hidden lg:inline-flex items-center justify-center font-mono text-xs sm:text-sm font-semibold tracking-wider tabular-nums text-slate-100 drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] select-none pointer-events-none"
+      aria-label="Đồng hồ hiện tại"
     >
-      {/* Realtime Monospace Clock */}
-      <span className="font-mono text-xs sm:text-sm font-semibold tracking-wider tabular-nums transition-colors">
-        {currentTime || (showClockSeconds ? "00:00:00" : "00:00")}
-      </span>
-
-      {/* Subtle Status Hint without layout-thrashing reflows (chỉ mở rộng trên desktop/hover) */}
-      <span className="hidden sm:inline max-w-0 group-hover:max-w-20 overflow-hidden whitespace-nowrap text-[10px] text-accent-music-bright font-medium opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out pl-0 group-hover:pl-1.5">
-        • {isPomodoroVisible && centerTab === "clock" ? "Ẩn giờ" : "Hiện giờ"}
-      </span>
-    </motion.button>
+      {currentTime || (showClockSeconds ? "00:00:00" : "00:00")}
+    </div>
   );
 };
 
 /** Thanh điều hướng trên phong cách Spatial Glass & Dynamic Island Capsule */
 export const StudyTopBar = ({
   isZenMode,
-  isPomodoroVisible,
-  centerTab,
   isGlobalMuted,
   isSettingsOpen,
   isFullscreen,
   showClockSeconds = true,
   isClock12Hour = false,
-  onToggleClock,
   onToggleShortcuts,
   onEnterZen,
   onExitZen,
@@ -163,11 +135,8 @@ export const StudyTopBar = ({
               </span>
             </Link>
 
-            {/* Dynamic Island Center Capsule - Realtime Clock (Thuần túy không viền không hộp, hiển thị thẳng lên bg) */}
-            <TopBarClockButton
-              isPomodoroVisible={isPomodoroVisible}
-              centerTab={centerTab}
-              onToggleClock={onToggleClock}
+            {/* Realtime Clock: Chỉ hiển thị giờ tĩnh, không bấm toggle */}
+            <TopBarClockDisplay
               showClockSeconds={showClockSeconds}
               isClock12Hour={isClock12Hour}
             />

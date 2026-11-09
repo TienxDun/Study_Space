@@ -90,7 +90,7 @@
   function node(tag, className, text) {
     var el = document.createElement(tag);
     if (className) el.className = className;
-    if (text !== undefined) el.textContent = text;
+    if (text !== undefined && text !== null) el.textContent = text;
     return el;
   }
 
@@ -99,6 +99,44 @@
     el.value = value;
     el.textContent = label;
     return el;
+  }
+
+  function makeFlagInput(cls, value, placeholder, ariaLabel, onInput) {
+    var input = document.createElement("input");
+    input.className = "flag-input " + (cls || "");
+    input.type = "text";
+    input.maxLength = 200;
+    input.value = value || "";
+    input.placeholder = placeholder || "";
+    input.autocomplete = "off";
+    input.spellcheck = false;
+    if (ariaLabel) input.setAttribute("aria-label", ariaLabel);
+    input.disabled = !editable();
+    if (onInput) input.addEventListener("input", onInput);
+    return input;
+  }
+
+  function makeFlagSelect(cls, ariaLabel, options, value, onChange) {
+    var sel = document.createElement("select");
+    sel.className = "flag-input " + (cls || "");
+    if (ariaLabel) sel.setAttribute("aria-label", ariaLabel);
+    options.forEach(function (opt) {
+      sel.appendChild(makeOption(opt.value, opt.label));
+    });
+    sel.value = value;
+    sel.disabled = !editable();
+    if (onChange) sel.addEventListener("change", onChange);
+    return sel;
+  }
+
+  function makeMiniBtn(label, cls, title, ariaLabel, disabled, onClick) {
+    var btn = node("button", "btn-ghost chat-mini-btn" + (cls ? " " + cls : ""), label);
+    btn.type = "button";
+    if (title) btn.title = title;
+    if (ariaLabel) btn.setAttribute("aria-label", ariaLabel);
+    btn.disabled = disabled !== undefined ? disabled : !editable();
+    if (onClick) btn.addEventListener("click", onClick);
+    return btn;
   }
 
   function cloneList(list) {
@@ -413,22 +451,11 @@
   }
 
   function tryInput(className) {
-    var input = document.createElement("input");
-    input.className = "flag-input " + className;
-    input.type = "text";
-    input.maxLength = 200;
-    input.value = tryModelId;
-    input.placeholder = "Nhập mã model";
-    input.autocomplete = "off";
-    input.spellcheck = false;
-    input.setAttribute("aria-label", "Mã model để thử");
-    input.disabled = !editable();
-    input.addEventListener("input", function () {
-      tryModelId = input.value.trim();
+    return makeFlagInput(className, tryModelId, "Nhập mã model", "Mã model để thử", function (e) {
+      tryModelId = e.target.value.trim();
       clearTryFeedback();
       updateTryUi();
     });
-    return input;
   }
 
   function renderTryModel() {
@@ -437,15 +464,8 @@
 
     if (tryProviderId === "cf") {
       if (!tryModelId) tryModelId = cfDefaultModel();
-      var cfSelect = document.createElement("select");
-      cfSelect.className = "flag-input chat-try-model";
-      cfSelect.setAttribute("aria-label", "Model để thử");
-      cfModels().forEach(function (model) {
-        cfSelect.appendChild(makeOption(model.key, modelOptionLabel(model)));
-      });
-      cfSelect.value = tryModelId;
-      cfSelect.disabled = !editable();
-      cfSelect.addEventListener("change", function () {
+      var cfOpts = cfModels().map(function (m) { return { value: m.key, label: modelOptionLabel(m) }; });
+      var cfSelect = makeFlagSelect("chat-try-model", "Model để thử", cfOpts, tryModelId, function () {
         tryModelId = cfSelect.value;
         clearTryFeedback();
         updateTryUi();
@@ -455,7 +475,6 @@
     }
 
     var state = modelState(tryProviderId);
-
     if (tryCustomModel) {
       tryModelSlot.appendChild(tryInput("chat-try-model-input"));
       var listBtn = node("button", "btn-ghost chat-mini-btn", "Danh sách");
@@ -463,9 +482,7 @@
       listBtn.disabled = !editable();
       listBtn.addEventListener("click", function () {
         tryCustomModel = false;
-        if (!tryModelId && state.status === "ready" && state.list.length) {
-          tryModelId = state.list[0];
-        }
+        if (!tryModelId && state.status === "ready" && state.list.length) tryModelId = state.list[0];
         renderTryModel();
         updateTryUi();
       });
@@ -477,18 +494,10 @@
       var list = state.list.slice();
       if (tryModelId && list.indexOf(tryModelId) < 0) list = list.concat([tryModelId]);
       if (!tryModelId && list.length) tryModelId = list[0];
-
-      var select = document.createElement("select");
-      select.className = "flag-input chat-try-model";
-      select.setAttribute("aria-label", "Model để thử");
-      list.forEach(function (key) {
-        var label = state.list.indexOf(key) < 0 ? key + " (ngoài danh sách)" : key;
-        select.appendChild(makeOption(key, label));
-      });
-      select.appendChild(makeOption(CUSTOM_MODEL, "Nhập mã model khác…"));
-      select.value = tryModelId;
-      select.disabled = !editable();
-      select.addEventListener("change", function () {
+      var opts = list.map(function (key) {
+        return { value: key, label: state.list.indexOf(key) < 0 ? key + " (ngoài danh sách)" : key };
+      }).concat([{ value: CUSTOM_MODEL, label: "Nhập mã model khác…" }]);
+      var select = makeFlagSelect("chat-try-model", "Model để thử", opts, tryModelId, function () {
         if (select.value === CUSTOM_MODEL) {
           tryCustomModel = true;
           tryModelId = "";
@@ -512,17 +521,9 @@
       var retryBtn = node("button", "btn-ghost chat-mini-btn", "Tải lại");
       retryBtn.type = "button";
       retryBtn.disabled = !editable();
-      retryBtn.addEventListener("click", function () {
-        loadModels(tryProviderId, true);
-      });
+      retryBtn.addEventListener("click", function () { loadModels(tryProviderId, true); });
       tryModelSlot.appendChild(retryBtn);
-      tryModelSlot.appendChild(
-        node(
-          "span",
-          "chat-help",
-          "Không tải được danh sách model — nhập mã model hoặc bấm Tải lại."
-        )
-      );
+      tryModelSlot.appendChild(node("span", "chat-help", "Không tải được danh sách model — nhập mã model hoặc bấm Tải lại."));
       return;
     }
 
@@ -625,38 +626,19 @@
     var wrap = node("div", "chat-model-control");
 
     function customInput(retry) {
-      var input = document.createElement("input");
-      input.className = "flag-input chat-step-model-input";
-      input.type = "text";
-      input.maxLength = 200;
-      input.value = entry.modelId;
-      input.placeholder = "Nhập mã model";
-      input.autocomplete = "off";
-      input.spellcheck = false;
-      input.setAttribute("aria-label", "Mã model cho bước " + (index + 1));
-      input.disabled = !editable();
-      input.addEventListener("input", function () {
-        entry.modelId = input.value.trim();
+      wrap.appendChild(makeFlagInput("chat-step-model-input", entry.modelId, "Nhập mã model", "Mã model cho bước " + (index + 1), function (e) {
+        entry.modelId = e.target.value.trim();
         entry.testText = "";
         updateUi();
-      });
-      wrap.appendChild(input);
+      }));
 
       if (retry) {
         var retryBtn = node("button", "btn-ghost chat-mini-btn", "Tải lại");
         retryBtn.type = "button";
         retryBtn.disabled = !editable();
-        retryBtn.addEventListener("click", function () {
-          loadModels(entry.provider, true);
-        });
+        retryBtn.addEventListener("click", function () { loadModels(entry.provider, true); });
         wrap.appendChild(retryBtn);
-        wrap.appendChild(
-          node(
-            "span",
-            "chat-help",
-            "Không tải được danh sách model — nhập mã model hoặc bấm Tải lại."
-          )
-        );
+        wrap.appendChild(node("span", "chat-help", "Không tải được danh sách model — nhập mã model hoặc bấm Tải lại."));
         return wrap;
       }
 
@@ -681,25 +663,15 @@
         var cfList = cfKeys();
         if (cfList.length) entry.modelId = cfList[0];
       }
-      var cfSelect = document.createElement("select");
-      cfSelect.className = "flag-input chat-step-model";
-      cfSelect.setAttribute("aria-label", "Model cho bước " + (index + 1));
-      cfModels().forEach(function (model) {
-        cfSelect.appendChild(makeOption(model.key, modelOptionLabel(model)));
-      });
+      var cfOpts = cfModels().map(function (m) { return { value: m.key, label: modelOptionLabel(m) }; });
       if (entry.modelId && cfKeys().indexOf(entry.modelId) < 0) {
-        cfSelect.appendChild(
-          makeOption(entry.modelId, entry.modelId + " (không có trong danh sách)")
-        );
+        cfOpts.push({ value: entry.modelId, label: entry.modelId + " (không có trong danh sách)" });
       }
-      cfSelect.value = entry.modelId;
-      cfSelect.disabled = !editable();
-      cfSelect.addEventListener("change", function () {
-        entry.modelId = cfSelect.value;
+      wrap.appendChild(makeFlagSelect("chat-step-model", "Model cho bước " + (index + 1), cfOpts, entry.modelId, function (e) {
+        entry.modelId = e.target.value;
         entry.testText = "";
         updateUi();
-      });
-      wrap.appendChild(cfSelect);
+      }));
       return wrap;
     }
 
@@ -708,22 +680,12 @@
 
     if (state.status === "ready") {
       var list = state.list.slice();
-      if (entry.modelId && list.indexOf(entry.modelId) < 0) {
-        list = list.concat([entry.modelId]);
-      }
+      if (entry.modelId && list.indexOf(entry.modelId) < 0) list = list.concat([entry.modelId]);
       if (!entry.modelId && list.length) entry.modelId = list[0];
-
-      var select = document.createElement("select");
-      select.className = "flag-input chat-step-model";
-      select.setAttribute("aria-label", "Model cho bước " + (index + 1));
-      list.forEach(function (key) {
-        var label = state.list.indexOf(key) < 0 ? key + " (ngoài danh sách)" : key;
-        select.appendChild(makeOption(key, label));
-      });
-      select.appendChild(makeOption(CUSTOM_MODEL, "Nhập mã model khác…"));
-      select.value = entry.modelId;
-      select.disabled = !editable();
-      select.addEventListener("change", function () {
+      var opts = list.map(function (key) {
+        return { value: key, label: state.list.indexOf(key) < 0 ? key + " (ngoài danh sách)" : key };
+      }).concat([{ value: CUSTOM_MODEL, label: "Nhập mã model khác…" }]);
+      var select = makeFlagSelect("chat-step-model", "Model cho bước " + (index + 1), opts, entry.modelId, function () {
         if (select.value === CUSTOM_MODEL) {
           entry.customModel = true;
           entry.modelId = "";
@@ -812,45 +774,14 @@
     fields.appendChild(modelField);
 
     var actions = node("div", "chat-step-actions");
-    var testBtn = node("button", "btn-ghost chat-mini-btn", "Thử");
-    testBtn.type = "button";
-    testBtn.disabled = !editable() || !entry.modelId;
-    testBtn.addEventListener("click", function () {
-      runEntryTest(entry);
-    });
-    actions.appendChild(testBtn);
-
-    var upBtn = node("button", "btn-ghost chat-mini-btn chat-icon-btn", "↑");
-    upBtn.type = "button";
-    upBtn.title = "Đưa lên trước";
-    upBtn.setAttribute("aria-label", "Đưa bước " + (index + 1) + " lên trước");
-    upBtn.disabled = !editable() || index === 0;
-    upBtn.addEventListener("click", function () {
-      moveChain(index, -1);
-    });
-    actions.appendChild(upBtn);
-
-    var downBtn = node("button", "btn-ghost chat-mini-btn chat-icon-btn", "↓");
-    downBtn.type = "button";
-    downBtn.title = "Đưa xuống sau";
-    downBtn.setAttribute("aria-label", "Đưa bước " + (index + 1) + " xuống sau");
-    downBtn.disabled = !editable() || index === chain.length - 1;
-    downBtn.addEventListener("click", function () {
-      moveChain(index, 1);
-    });
-    actions.appendChild(downBtn);
-
-    var removeBtn = node("button", "btn-ghost chat-mini-btn chat-icon-btn is-danger", "✕");
-    removeBtn.type = "button";
-    removeBtn.title = "Bỏ bước này";
-    removeBtn.setAttribute("aria-label", "Bỏ bước " + (index + 1));
-    removeBtn.disabled = !editable();
-    removeBtn.addEventListener("click", function () {
+    actions.appendChild(makeMiniBtn("Thử", "", null, null, !editable() || !entry.modelId, function () { runEntryTest(entry); }));
+    actions.appendChild(makeMiniBtn("↑", "chat-icon-btn", "Đưa lên trước", "Đưa bước " + (index + 1) + " lên trước", !editable() || index === 0, function () { moveChain(index, -1); }));
+    actions.appendChild(makeMiniBtn("↓", "chat-icon-btn", "Đưa xuống sau", "Đưa bước " + (index + 1) + " xuống sau", !editable() || index === chain.length - 1, function () { moveChain(index, 1); }));
+    actions.appendChild(makeMiniBtn("✕", "chat-icon-btn is-danger", "Bỏ bước này", "Bỏ bước " + (index + 1), !editable(), function () {
       chain.splice(index, 1);
       renderChain();
       updateUi();
-    });
-    actions.appendChild(removeBtn);
+    }));
 
     row.appendChild(fields);
     row.appendChild(actions);
@@ -891,7 +822,7 @@
         if (caret !== null && typeof target.setSelectionRange === "function") {
           try {
             target.setSelectionRange(caret, caret);
-          } catch (err) {
+          } catch {
             // select không hỗ trợ caret, bỏ qua
           }
         }
@@ -1047,21 +978,8 @@
       switchLabel.appendChild(node("span", "switch-track"));
       actions.appendChild(switchLabel);
 
-      var editBtn = node("button", "btn-ghost chat-mini-btn", "Sửa");
-      editBtn.type = "button";
-      editBtn.disabled = !editable();
-      editBtn.addEventListener("click", function () {
-        openProviderForm(provider);
-      });
-      actions.appendChild(editBtn);
-
-      var removeBtn = node("button", "btn-ghost chat-mini-btn is-danger", "Xóa");
-      removeBtn.type = "button";
-      removeBtn.disabled = !editable();
-      removeBtn.addEventListener("click", function () {
-        removeProvider(provider.id);
-      });
-      actions.appendChild(removeBtn);
+      actions.appendChild(makeMiniBtn("Sửa", "", null, null, !editable(), function () { openProviderForm(provider); }));
+      actions.appendChild(makeMiniBtn("Xóa", "is-danger", null, null, !editable(), function () { removeProvider(provider.id); }));
 
       row.appendChild(info);
       row.appendChild(actions);
@@ -1101,14 +1019,12 @@
         ? "Đang giữ key đã lưu. Xóa ô rồi dán key mới nếu muốn đổi."
         : "Chưa có key đã lưu, dán key của hãng vào đây.";
       providerApply.textContent = "Cập nhật trong danh sách";
-      providerNote.textContent =
-        "Đang sửa “" + (provider.label || provider.id) + "”. Bấm cập nhật để đưa vào danh sách nháp.";
+      providerNote.textContent = "Đang sửa “" + (provider.label || provider.id) + "”. Bấm cập nhật để đưa vào danh sách nháp.";
     }
     providerForm.hidden = false;
     providerToggle.hidden = true;
     updateUi();
-    var focusTarget = provider ? providerLabel : providerId;
-    focusTarget.focus();
+    (provider ? providerLabel : providerId).focus();
   }
 
   function closeProviderForm() {
@@ -1235,7 +1151,8 @@
   }
 
   function setDefaultNotes() {
-    modelNote.textContent = "Chỉ thử, không lưu. Model trả lời thật đặt ở mục 2.";
+    modelNote.textContent =
+      "Chỉ thử, không lưu. Model trả lời thật đặt ở tab Định tuyến & Nhà cung cấp.";
     chainNote.textContent =
       "Bước 1 chạy trước, lỗi mới xuống bước sau. Thay đổi chỉ áp dụng sau khi bấm “Lưu thứ tự”.";
     promptNote.textContent = "Câu lệnh áp dụng cho mọi câu trả lời của trợ lý.";
@@ -1336,6 +1253,33 @@
     });
   }
 
+  function executeSave(button, noteEl, kind, payload, successMsg) {
+    busy = true;
+    busyButton = button;
+    updateUi();
+    noteEl.textContent = "Đang lưu…";
+    return postConfig(kind, payload)
+      .then(function (res) {
+        if (!res.ok) {
+          busy = false;
+          busyButton = null;
+          noteEl.textContent = "Không lưu được: " + errorText(res.error) + ".";
+          updateUi();
+          return;
+        }
+        if (kind === "providers") providerModels = {};
+        return reloadConfig().then(function () {
+          noteEl.textContent = successMsg;
+        });
+      })
+      .catch(function (err) {
+        busy = false;
+        busyButton = null;
+        noteEl.textContent = (err && err.message) || "Không kết nối được máy chủ.";
+        updateUi();
+      });
+  }
+
   function saveChain() {
     if (busy || !readable || !chainDirty() || !chainValid()) return;
     var lines = ["Lưu thứ tự dự phòng?"];
@@ -1343,30 +1287,7 @@
       lines.push(index + 1 + ". " + entry.provider + " · " + entry.modelId);
     });
     if (!window.confirm(lines.join("\n"))) return;
-
-    busy = true;
-    busyButton = chainSave;
-    updateUi();
-    chainNote.textContent = "Đang lưu…";
-    postConfig("chain", { chain: plainChain(chain) })
-      .then(function (res) {
-        if (!res.ok) {
-          busy = false;
-          busyButton = null;
-          chainNote.textContent = "Không lưu được: " + errorText(res.error) + ".";
-          updateUi();
-          return;
-        }
-        return reloadConfig().then(function () {
-          chainNote.textContent = "Đã lưu thứ tự. Chờ khoảng 60 giây để chat-proxy áp dụng.";
-        });
-      })
-      .catch(function (err) {
-        busy = false;
-        busyButton = null;
-        chainNote.textContent = (err && err.message) || "Không kết nối được máy chủ.";
-        updateUi();
-      });
+    executeSave(chainSave, chainNote, "chain", { chain: plainChain(chain) }, "Đã lưu thứ tự. Chờ khoảng 60 giây để chat-proxy áp dụng.");
   }
 
   function savePrompt() {
@@ -1382,30 +1303,7 @@
       return;
     }
     if (!window.confirm("Lưu câu lệnh hệ thống mới? (" + prompt.length + " ký tự)")) return;
-
-    busy = true;
-    busyButton = promptSave;
-    updateUi();
-    promptNote.textContent = "Đang lưu…";
-    postConfig("prompt", { prompt: prompt })
-      .then(function (res) {
-        if (!res.ok) {
-          busy = false;
-          busyButton = null;
-          promptNote.textContent = "Không lưu được: " + errorText(res.error) + ".";
-          updateUi();
-          return;
-        }
-        return reloadConfig().then(function () {
-          promptNote.textContent = "Đã lưu câu lệnh. Chờ khoảng 60 giây để chat-proxy áp dụng.";
-        });
-      })
-      .catch(function (err) {
-        busy = false;
-        busyButton = null;
-        promptNote.textContent = (err && err.message) || "Không kết nối được máy chủ.";
-        updateUi();
-      });
+    executeSave(promptSave, promptNote, "prompt", { prompt: prompt }, "Đã lưu câu lệnh. Chờ khoảng 60 giây để chat-proxy áp dụng.");
   }
 
   function saveProviders() {
@@ -1414,14 +1312,12 @@
     for (var i = 0; i < providers.length; i += 1) {
       var provider = providers[i];
       if (!PROVIDER_ID_RE.test(provider.id) || seen[provider.id]) {
-        providerSaveNote.textContent =
-          "Mã nhà cung cấp “" + provider.id + "” không hợp lệ hoặc bị trùng.";
+        providerSaveNote.textContent = "Mã nhà cung cấp “" + provider.id + "” không hợp lệ hoặc bị trùng.";
         return;
       }
       seen[provider.id] = true;
       if (!/^https:\/\/.+/.test(provider.baseUrl)) {
-        providerSaveNote.textContent =
-          "Địa chỉ của “" + provider.id + "” phải bắt đầu bằng https://";
+        providerSaveNote.textContent = "Địa chỉ của “" + provider.id + "” phải bắt đầu bằng https://";
         return;
       }
       if (!provider.apiKey) {
@@ -1429,51 +1325,14 @@
         return;
       }
     }
-    if (
-      !window.confirm(
-        "Lưu danh sách " +
-          providers.length +
-          " nhà cung cấp?\n\nKey đã che sẽ giữ nguyên key cũ trên máy chủ."
-      )
-    ) {
+    if (!window.confirm("Lưu danh sách " + providers.length + " nhà cung cấp?\n\nKey đã che sẽ giữ nguyên key cũ trên máy chủ.")) {
       return;
     }
 
-    busy = true;
-    busyButton = providerSave;
-    updateUi();
-    providerSaveNote.textContent = "Đang lưu…";
-    var payload = providers.map(function (provider) {
-      return {
-        id: provider.id,
-        type: provider.type,
-        label: provider.label,
-        baseUrl: provider.baseUrl,
-        apiKey: provider.apiKey,
-        enabled: provider.enabled !== false
-      };
+    var payload = providers.map(function (p) {
+      return { id: p.id, type: p.type, label: p.label, baseUrl: p.baseUrl, apiKey: p.apiKey, enabled: p.enabled !== false };
     });
-    postConfig("providers", { providers: payload })
-      .then(function (res) {
-        if (!res.ok) {
-          busy = false;
-          busyButton = null;
-          providerSaveNote.textContent = "Không lưu được: " + errorText(res.error) + ".";
-          updateUi();
-          return;
-        }
-        providerModels = {};
-        return reloadConfig().then(function () {
-          providerSaveNote.textContent =
-            "Đã lưu danh sách. Chờ khoảng 60 giây để chat-proxy áp dụng.";
-        });
-      })
-      .catch(function (err) {
-        busy = false;
-        busyButton = null;
-        providerSaveNote.textContent = (err && err.message) || "Không kết nối được máy chủ.";
-        updateUi();
-      });
+    executeSave(providerSave, providerSaveNote, "providers", { providers: payload }, "Đã lưu danh sách. Chờ khoảng 60 giây để chat-proxy áp dụng.");
   }
 
   tryProvider.addEventListener("change", function () {
@@ -1524,6 +1383,22 @@
   });
   [providerId, providerLabel, providerUrl].forEach(function (el) {
     el.addEventListener("input", updateUi);
+  });
+
+  var subtabs = panel.querySelectorAll(".chat-subtab");
+  var panes = panel.querySelectorAll(".chat-pane");
+  subtabs.forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      var target = tab.getAttribute("data-chat-tab");
+      subtabs.forEach(function (t) {
+        var active = t.getAttribute("data-chat-tab") === target;
+        t.classList.toggle("is-active", active);
+        t.setAttribute("aria-selected", active ? "true" : "false");
+      });
+      panes.forEach(function (p) {
+        p.hidden = p.getAttribute("data-chat-pane") !== target;
+      });
+    });
   });
 
   updateUi();

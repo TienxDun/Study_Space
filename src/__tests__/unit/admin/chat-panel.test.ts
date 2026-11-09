@@ -675,4 +675,29 @@ describe("panel Trợ lý chat", () => {
       calls.some((call) => call.url.includes("/provider-models")),
     ).toBe(false);
   });
+
+  it("chuyển subtab thì đổi trạng thái active và ẩn/hiện pane tương ứng", async () => {
+    boot();
+    await flush();
+
+    const routingTab = el<HTMLButtonElement>("chat-subtab-routing");
+    const promptTab = el<HTMLButtonElement>("chat-subtab-prompt");
+    const routingPane = el("chat-pane-routing");
+    const promptPane = el("chat-pane-prompt");
+
+    expect(routingTab.classList.contains("is-active")).toBe(true);
+    expect(routingPane.hidden).toBe(false);
+    expect(promptPane.hidden).toBe(true);
+
+    promptTab.click();
+    expect(promptTab.classList.contains("is-active")).toBe(true);
+    expect(routingTab.classList.contains("is-active")).toBe(false);
+    expect(promptPane.hidden).toBe(false);
+    expect(routingPane.hidden).toBe(true);
+
+    routingTab.click();
+    expect(routingTab.classList.contains("is-active")).toBe(true);
+    expect(routingPane.hidden).toBe(false);
+    expect(promptPane.hidden).toBe(true);
+  });
 });

@@ -277,18 +277,34 @@
     FIELD[id] = document.getElementById(id);
   });
 
+  function makeNameCell(name, id, sub, hidden) {
+    var td = el("td"), main = el("div", "content-cell-main");
+    main.appendChild(el("span", null, name || "(chưa đặt tên)"));
+    if (hidden) main.appendChild(hiddenTag());
+    main.appendChild(el("div", "content-cell-sub", sub || id));
+    td.appendChild(main);
+    return td;
+  }
+
+  function setPreviewMedia(box, tag, src, props) {
+    if (!src) return null;
+    var node = mediaNode(el(tag));
+    if (props) Object.assign(node, props);
+    node.src = mediaUrl(src);
+    box.appendChild(node);
+    return node;
+  }
+
   function listTags(raw) {
     return String(raw || "")
       .split(",")
-      .map(function (part) {
-        return part.trim();
-      })
+      .map(function (part) { return part.trim(); })
       .filter(Boolean)
       .slice(0, 10);
   }
 
   function readSceneForm() {
-    var item = {
+    return {
       name: FIELD["scene-name"].value.trim(),
       category: FIELD["scene-category"].value,
       type: FIELD["scene-type"].value,
@@ -299,19 +315,19 @@
       tags: listTags(FIELD["scene-tags"].value),
       hidden: FIELD["scene-hidden"].checked
     };
-    return item;
   }
 
   function fillSceneForm(item) {
-    FIELD["scene-name"].value = item.name || "";
-    FIELD["scene-category"].value = item.category || "chill";
-    FIELD["scene-type"].value = item.type || "IMAGE";
-    FIELD["scene-badge"].value = item.badge || "";
-    FIELD["scene-media"].value = item.mediaPath || "";
-    FIELD["scene-thumb"].value = item.thumbnailPath || "";
-    FIELD["scene-description"].value = item.description || "";
-    FIELD["scene-tags"].value = Array.isArray(item.tags) ? item.tags.join(", ") : "";
-    FIELD["scene-hidden"].checked = item.hidden === true;
+    var d = item || {};
+    FIELD["scene-name"].value = d.name || "";
+    FIELD["scene-category"].value = d.category || "chill";
+    FIELD["scene-type"].value = d.type || "IMAGE";
+    FIELD["scene-badge"].value = d.badge || "";
+    FIELD["scene-media"].value = d.mediaPath || "";
+    FIELD["scene-thumb"].value = d.thumbnailPath || "";
+    FIELD["scene-description"].value = d.description || "";
+    FIELD["scene-tags"].value = Array.isArray(d.tags) ? d.tags.join(", ") : "";
+    FIELD["scene-hidden"].checked = d.hidden === true;
   }
 
   function validateScene(item) {
@@ -323,26 +339,12 @@
   }
 
   function previewScene() {
-    var item = readSceneForm();
-    var box = FIELD["scene-preview"];
+    var item = readSceneForm(), box = FIELD["scene-preview"];
     box.textContent = "";
-    var src = item.type === "VIDEO" ? item.thumbnailPath : item.mediaPath;
-    if (src) {
-      var img = mediaNode(el("img"));
-      img.alt = item.name || "Xem trước cảnh";
-      img.loading = "lazy";
-      img.src = mediaUrl(src);
-      box.appendChild(img);
-    }
-    var media = item.mediaPath;
-    if (item.type === "VIDEO" && media) {
-      var video = mediaNode(el("video"));
-      video.controls = true;
-      video.preload = "metadata";
-      video.src = mediaUrl(media);
-      box.appendChild(video);
-    }
-    box.appendChild(el("span", "content-preview-note", media ? item.mediaPath : "Chưa có đường dẫn file."));
+    var thumb = item.type === "VIDEO" ? item.thumbnailPath : item.thumbnailPath || item.mediaPath;
+    setPreviewMedia(box, "img", thumb, { alt: item.name || "Xem trước cảnh", loading: "lazy" });
+    if (item.type === "VIDEO") setPreviewMedia(box, "video", item.mediaPath, { controls: true, preload: "metadata" });
+    box.appendChild(el("span", "content-preview-note", item.mediaPath || "Chưa có đường dẫn file."));
   }
 
   function readSoundForm() {
@@ -356,11 +358,12 @@
   }
 
   function fillSoundForm(item) {
-    FIELD["sound-name"].value = item.name || "";
-    FIELD["sound-category"].value = item.category || "rain";
-    FIELD["sound-icon"].value = item.icon || "CloudRain";
-    FIELD["sound-audio"].value = item.audioPath || "";
-    FIELD["sound-hidden"].checked = item.hidden === true;
+    var d = item || {};
+    FIELD["sound-name"].value = d.name || "";
+    FIELD["sound-category"].value = d.category || "rain";
+    FIELD["sound-icon"].value = d.icon || "CloudRain";
+    FIELD["sound-audio"].value = d.audioPath || "";
+    FIELD["sound-hidden"].checked = d.hidden === true;
   }
 
   function validateSound(item) {
@@ -370,19 +373,10 @@
   }
 
   function previewSound() {
-    var item = readSoundForm();
-    var box = FIELD["sound-preview"];
+    var item = readSoundForm(), box = FIELD["sound-preview"];
     box.textContent = "";
-    if (item.audioPath) {
-      var audio = mediaNode(el("audio"));
-      audio.controls = true;
-      audio.preload = "none";
-      audio.src = mediaUrl(item.audioPath);
-      box.appendChild(audio);
-    }
-    box.appendChild(
-      el("span", "content-preview-note", item.audioPath ? item.audioPath + " · icon " + item.icon : "Chưa có đường dẫn file.")
-    );
+    setPreviewMedia(box, "audio", item.audioPath, { controls: true, preload: "none" });
+    box.appendChild(el("span", "content-preview-note", item.audioPath ? item.audioPath + " · icon " + item.icon : "Chưa có đường dẫn file."));
   }
 
   function readTrackForm() {
@@ -398,13 +392,14 @@
   }
 
   function fillTrackForm(item) {
-    FIELD["track-title"].value = item.title || "";
-    FIELD["track-artist"].value = item.artist || "";
-    FIELD["track-genre"].value = item.genre || "";
-    FIELD["track-mood"].value = item.category || "lofi";
-    FIELD["track-audio"].value = item.audioPath || "";
-    FIELD["track-cover"].value = item.coverPath || "";
-    FIELD["track-hidden"].checked = item.hidden === true;
+    var d = item || {};
+    FIELD["track-title"].value = d.title || "";
+    FIELD["track-artist"].value = d.artist || "";
+    FIELD["track-genre"].value = d.genre || "";
+    FIELD["track-mood"].value = d.category || "lofi";
+    FIELD["track-audio"].value = d.audioPath || "";
+    FIELD["track-cover"].value = d.coverPath || "";
+    FIELD["track-hidden"].checked = d.hidden === true;
   }
 
   function validateTrack(item) {
@@ -416,26 +411,11 @@
   }
 
   function previewTrack() {
-    var item = readTrackForm();
-    var box = FIELD["track-preview"];
+    var item = readTrackForm(), box = FIELD["track-preview"];
     box.textContent = "";
-    if (item.coverPath) {
-      var img = mediaNode(el("img"));
-      img.alt = item.title || "Ảnh bìa";
-      img.loading = "lazy";
-      img.src = mediaUrl(item.coverPath);
-      box.appendChild(img);
-    }
-    if (item.audioPath) {
-      var audio = mediaNode(el("audio"));
-      audio.controls = true;
-      audio.preload = "none";
-      audio.src = mediaUrl(item.audioPath);
-      box.appendChild(audio);
-    }
-    box.appendChild(
-      el("span", "content-preview-note", item.audioPath ? item.audioPath : "Chưa có đường dẫn file.")
-    );
+    setPreviewMedia(box, "img", item.coverPath, { alt: item.title || "Ảnh bìa", loading: "lazy" });
+    setPreviewMedia(box, "audio", item.audioPath, { controls: true, preload: "none" });
+    box.appendChild(el("span", "content-preview-note", item.audioPath || "Chưa có đường dẫn file."));
   }
 
   var SPECS = {
@@ -457,35 +437,18 @@
       fill: fillSceneForm,
       validate: validateScene,
       preview: previewScene,
-      title: function (item) {
-        return item.name || item.id;
-      },
+      title: function (item) { return item.name || item.id; },
       matches: function (item, query, filter) {
         if (filter && item.category !== filter) return false;
         if (!query) return true;
         return (String(item.name || "") + " " + String(item.tags || "")).toLowerCase().indexOf(query) >= 0;
       },
       cells: function (item) {
-        var thumbCell = el("td");
-        var preview = el("div");
+        var thumbCell = el("td"), preview = el("div");
         var src = item.type === "VIDEO" ? item.thumbnailPath : item.thumbnailPath || item.mediaPath;
-        if (src) {
-          preview.appendChild(thumbNode(mediaUrl(src), item.name || ""));
-        } else {
-          preview.appendChild(el("div", "content-thumb is-empty", item.type === "VIDEO" ? "Video" : "Chưa có ảnh"));
-        }
+        preview.appendChild(src ? thumbNode(mediaUrl(src), item.name || "") : el("div", "content-thumb is-empty", item.type === "VIDEO" ? "Video" : "Chưa có ảnh"));
         thumbCell.appendChild(preview);
-
-        var nameCell = el("td");
-        var main = el("div", "content-cell-main");
-        main.appendChild(el("span", null, item.name || "(chưa đặt tên)"));
-        if (item.hidden) main.appendChild(hiddenTag());
-        main.appendChild(el("div", "content-cell-sub", item.id));
-        nameCell.appendChild(main);
-
-        var categoryCell = el("td", null, CATEGORY_LABELS[item.category] || item.category || "--");
-        var typeCell = el("td", null, item.type === "VIDEO" ? "Video" : "Ảnh");
-        return [thumbCell, nameCell, categoryCell, typeCell, statusCell("scenes", item.mediaPath)];
+        return [thumbCell, makeNameCell(item.name, item.id, null, item.hidden), el("td", null, CATEGORY_LABELS[item.category] || item.category || "--"), el("td", null, item.type === "VIDEO" ? "Video" : "Ảnh"), statusCell("scenes", item.mediaPath)];
       }
     },
     sounds: {
@@ -505,9 +468,7 @@
       fill: fillSoundForm,
       validate: validateSound,
       preview: previewSound,
-      title: function (item) {
-        return item.name || item.id;
-      },
+      title: function (item) { return item.name || item.id; },
       matches: function (item, query) {
         if (!query) return true;
         return String(item.name || "").toLowerCase().indexOf(query) >= 0;
@@ -515,16 +476,7 @@
       cells: function (item) {
         var iconCell = el("td");
         iconCell.appendChild(el("span", "content-tag", item.icon || "--"));
-
-        var nameCell = el("td");
-        var main = el("div", "content-cell-main");
-        main.appendChild(el("span", null, item.name || "(chưa đặt tên)"));
-        if (item.hidden) main.appendChild(hiddenTag());
-        main.appendChild(el("div", "content-cell-sub", item.id));
-        nameCell.appendChild(main);
-
-        var categoryCell = el("td", null, CATEGORY_LABELS[item.category] || item.category || "--");
-        return [iconCell, nameCell, categoryCell, statusCell("sounds", item.audioPath)];
+        return [iconCell, makeNameCell(item.name, item.id, null, item.hidden), el("td", null, CATEGORY_LABELS[item.category] || item.category || "--"), statusCell("sounds", item.audioPath)];
       }
     },
     tracks: {
@@ -545,9 +497,7 @@
       fill: fillTrackForm,
       validate: validateTrack,
       preview: previewTrack,
-      title: function (item) {
-        return item.title || item.id;
-      },
+      title: function (item) { return item.title || item.id; },
       matches: function (item, query, filter) {
         if (filter && item.category !== filter) return false;
         if (!query) return true;
@@ -555,21 +505,8 @@
       },
       cells: function (item) {
         var coverCell = el("td");
-        if (item.coverPath) {
-          coverCell.appendChild(thumbNode(mediaUrl(item.coverPath), item.title || ""));
-        } else {
-          coverCell.appendChild(el("div", "content-thumb is-empty", "Chưa có bìa"));
-        }
-
-        var titleCell = el("td");
-        var main = el("div", "content-cell-main");
-        main.appendChild(el("span", null, item.title || "(chưa đặt tên)"));
-        if (item.hidden) main.appendChild(hiddenTag());
-        main.appendChild(el("div", "content-cell-sub", (item.artist || "--") + " · " + (item.genre || "--")));
-        titleCell.appendChild(main);
-
-        var moodCell = el("td", null, MOOD_LABELS[item.category] || item.category || "--");
-        return [coverCell, titleCell, moodCell, statusCell("tracks", item.audioPath)];
+        coverCell.appendChild(item.coverPath ? thumbNode(mediaUrl(item.coverPath), item.title || "") : el("div", "content-thumb is-empty", "Chưa có bìa"));
+        return [coverCell, makeNameCell(item.title, item.id, (item.artist || "--") + " · " + (item.genre || "--"), item.hidden), el("td", null, MOOD_LABELS[item.category] || item.category || "--"), statusCell("tracks", item.audioPath)];
       }
     }
   };
@@ -925,44 +862,33 @@
   }
 
   function downloadVersion(version, button) {
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Đang tải…";
-    }
+    if (button) { button.disabled = true; button.textContent = "Đang tải…"; }
     call("/versions/" + version)
       .then(function (res) {
-        if (!res.ok || res.data.ok !== true) {
-          throw new Error(errorText(res.data.error));
-        }
-        var catalog = res.data.catalog || {};
+        if (!res.ok || res.data.ok !== true) throw new Error(errorText(res.data.error));
+        var cat = res.data.catalog || {};
         var payload = {
           version: res.data.version,
           createdAt: res.data.createdAt,
           createdBy: res.data.createdBy,
-          scenes: catalog.scenes || [],
-          sounds: catalog.sounds || [],
-          tracks: catalog.tracks || { lofi: [], jazz: [], relax: [] }
+          scenes: cat.scenes || [],
+          sounds: cat.sounds || [],
+          tracks: cat.tracks || { lofi: [], jazz: [], relax: [] }
         };
         var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-        var url = URL.createObjectURL(blob);
-        var link = document.createElement("a");
+        var url = URL.createObjectURL(blob), link = document.createElement("a");
         link.href = url;
         link.download = "zenstudy-content-v" + res.data.version + ".json";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        setTimeout(function () {
-          URL.revokeObjectURL(url);
-        }, 0);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 0);
       })
       .catch(function (err) {
         setNote(noteEl, err.message || "Không tải được JSON.", "error");
       })
       .then(function () {
-        if (button) {
-          button.disabled = false;
-          button.textContent = "Tải JSON";
-        }
+        if (button) { button.disabled = false; button.textContent = "Tải JSON"; }
       });
   }
 
