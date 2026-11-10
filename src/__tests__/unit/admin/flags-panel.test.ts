@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { loadAdminHtml } from "./load-admin-html";
 
 const html = loadAdminHtml();
@@ -10,6 +10,10 @@ const bodyHtml = html
   .slice(html.indexOf("<body>") + "<body>".length, html.indexOf("</body>"))
   .replace(/<script[\s\S]*?<\/script>/gi, "");
 const scriptPath = resolve(__dirname, "../../../../admin-host/scripts/dashboard.js");
+const dialogsScript = readFileSync(
+  resolve(__dirname, "../../../../admin-host/scripts/dialogs.js"),
+  "utf8",
+);
 
 const overview = (flags: Record<string, unknown>) => ({
   generatedAt: new Date().toISOString(),
@@ -57,7 +61,24 @@ function stubApi(overviewBody: Record<string, any>, saveResponse?: unknown) {
 // admin.js là script thuần (IIFE), không phải module: chạy trong ngữ cảnh happy-dom.
 const adminScript = readFileSync(scriptPath, "utf8");
 function runAdminScript() {
+  new Function(dialogsScript)();
   new Function(adminScript)();
+}
+
+function dialogEl(): HTMLElement | null {
+  const node = document.querySelector(".admin-dialog") as HTMLElement | null;
+  return node && !node.hidden ? node : null;
+}
+
+async function answerDialog(accept: boolean) {
+  await new Promise((done) => setTimeout(done, 0));
+  const node = dialogEl();
+  if (!node) throw new Error("Không thấy hộp thoại xác nhận");
+  const button = node.querySelector(
+    accept ? ".admin-dialog-ok" : ".admin-dialog-cancel",
+  ) as HTMLButtonElement;
+  button.click();
+  await new Promise((done) => setTimeout(done, 0));
 }
 
 async function boot() {
@@ -72,13 +93,10 @@ function el<T extends HTMLElement>(id: string) {
   return document.getElementById(id) as T;
 }
 
-beforeEach(() => {
-  vi.stubGlobal("confirm", vi.fn(() => true));
-});
-
 afterEach(() => {
   vi.unstubAllGlobals();
   document.body.innerHTML = "";
+  document.body.classList.remove("admin-dialog-open");
 });
 
 describe("panel Cờ hệ thống", () => {
@@ -121,9 +139,10 @@ describe("panel Cờ hệ thống", () => {
     (el("flags-save") as HTMLButtonElement).click();
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(confirm).toHaveBeenCalledTimes(1);
-    const dialog = String((confirm as unknown as { mock: { calls: string[][] } }).mock.calls[0][0]);
-    expect(dialog).toContain("Tắt chat sẽ chặn tất cả người dùng ngay");
+    const dialog = dialogEl();
+    expect(dialog?.textContent).toContain("Tắt chat sẽ chặn tất cả người dùng ngay");
+    (dialog?.querySelector(".admin-dialog-ok") as HTMLButtonElement).click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     const save = calls.find((call) => call.url.endsWith("/api/admin/flags"));
     expect(save?.init?.method).toBe("POST");
@@ -154,12 +173,11 @@ describe("panel Cờ hệ thống", () => {
 
   it("không xác nhận thì không gọi API", async () => {
     const calls = stubApi(overview({ chatEnabled: true, roomsEnabled: true, maintenance: false, banner: "", chatDailyLimit: 30 }));
-    (confirm as unknown as { mockReturnValue: (value: boolean) => void }).mockReturnValue(false);
     await boot();
 
     (el("flag-maintenance") as HTMLInputElement).click();
     (el("flags-save") as HTMLButtonElement).click();
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await answerDialog(false);
 
     expect(calls.some((call) => call.url.endsWith("/api/admin/flags"))).toBe(false);
   });

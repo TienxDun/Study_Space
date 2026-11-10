@@ -1,19 +1,20 @@
-      <!-- Cờ hệ thống -->
+      <!-- Cài đặt tính năng hệ thống -->
       <section class="panel-card flags-card" id="flags-card" aria-labelledby="flags-title">
         <div class="panel-header">
           <div class="panel-title-group">
-            <h2 class="panel-title" id="flags-title">Cờ hệ thống</h2>
-            <span class="panel-desc">Lưu xong có hiệu lực trong khoảng 30 giây, không cần deploy</span>
+            <h2 class="panel-title" id="flags-title">Cài đặt tính năng hệ thống</h2>
+            <span class="panel-desc">Thay đổi có hiệu lực sau khoảng 30 giây mà không cần khởi động lại ứng dụng.</span>
           </div>
           <span class="usage-tag" id="flags-state">Đang đọc…</span>
         </div>
 
         <div class="flags-body">
           <div class="flags-toggles">
+            <!-- Toggle 1: Trợ lý AI -->
             <label class="flag-row" for="flag-chat">
               <span class="flag-text">
-                <span class="flag-name">Trợ lý chat</span>
-                <span class="flag-desc">Tắt thì mọi người không gửi được câu hỏi mới.</span>
+                <span class="flag-name">Trợ lý học tập AI</span>
+                <span class="flag-desc">Khi tắt, học viên sẽ tạm thời không thể gửi câu hỏi mới.</span>
               </span>
               <span class="switch">
                 <input type="checkbox" id="flag-chat" />
@@ -21,10 +22,11 @@
               </span>
             </label>
 
+            <!-- Toggle 2: Phòng học nhóm -->
             <label class="flag-row" for="flag-rooms">
               <span class="flag-text">
-                <span class="flag-name">Phòng học nhóm</span>
-                <span class="flag-desc">Tắt thì không tạo phòng mới và không xem danh sách phòng.</span>
+                <span class="flag-name">Không gian học nhóm</span>
+                <span class="flag-desc">Khi tắt, học viên sẽ không thể tạo phòng mới hoặc xem danh sách phòng học.</span>
               </span>
               <span class="switch">
                 <input type="checkbox" id="flag-rooms" />
@@ -32,10 +34,11 @@
               </span>
             </label>
 
+            <!-- Toggle 3: Chế độ bảo trì -->
             <label class="flag-row" for="flag-maintenance">
               <span class="flag-text">
                 <span class="flag-name">Chế độ bảo trì</span>
-                <span class="flag-desc">Hiện banner nhắc trên web; chat và phòng học vẫn chạy.</span>
+                <span class="flag-desc">Hiển thị thông báo bảo trì ở đầu trang web; các tính năng hiện tại vẫn hoạt động bình thường.</span>
               </span>
               <span class="switch">
                 <input type="checkbox" id="flag-maintenance" />
@@ -46,20 +49,20 @@
 
           <div class="flags-fields">
             <div class="flag-field">
-              <label class="flag-name" for="flag-banner">Thông báo trên trang chủ</label>
+              <label class="flag-name" for="flag-banner">Nội dung thanh thông báo</label>
               <input
                 class="flag-input"
                 id="flag-banner"
                 type="text"
                 maxlength="140"
-                placeholder="Ví dụ: Tối nay bảo trì từ 22:00 đến 22:30."
+                placeholder="Ví dụ: Hệ thống sẽ bảo trì nâng cấp từ 22:00 đến 22:30 tối nay."
                 autocomplete="off"
               />
-              <span class="flag-hint"><span id="flag-banner-count">0</span>/140 ký tự. Để trống thì không hiện banner.</span>
+              <span class="flag-hint"><span id="flag-banner-count">0</span>/140 ký tự. Để trống ô này nếu không muốn hiển thị thanh thông báo.</span>
             </div>
 
             <div class="flag-field">
-              <label class="flag-name" for="flag-limit">Câu hỏi mỗi người mỗi ngày</label>
+              <label class="flag-name" for="flag-limit">Giới hạn số câu hỏi AI cho mỗi tài khoản trong ngày</label>
               <input
                 class="flag-input flag-number"
                 id="flag-limit"
@@ -69,12 +72,12 @@
                 step="1"
                 inputmode="numeric"
               />
-              <span class="flag-hint">Từ 1 đến 200 câu. Đang áp dụng: <strong id="flag-limit-current">--</strong> câu/người/ngày.</span>
+              <span class="flag-hint">Cho phép từ 1 đến 200 câu hỏi. Mức đang áp dụng hiện tại: <strong id="flag-limit-current">--</strong> câu/người/ngày.</span>
             </div>
           </div>
 
           <div class="flags-actions">
-            <p class="usage-note" id="flags-note">Chưa đọc được cờ hệ thống.</p>
+            <p class="usage-note" id="flags-note">Đang tải cấu hình tính năng…</p>
             <button class="btn-primary" id="flags-save" type="button" disabled>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>

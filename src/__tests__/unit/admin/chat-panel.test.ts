@@ -10,6 +10,10 @@ const html = loadAdminHtml();
 const bodyHtml = html
   .slice(html.indexOf("<body>") + "<body>".length, html.indexOf("</body>"))
   .replace(/<script[\s\S]*?<\/script>/g, "");
+const dialogsScript = readFileSync(
+  path.resolve(process.cwd(), "admin-host/scripts/dialogs.js"),
+  "utf8",
+);
 const chatScript = readFileSync(path.resolve(process.cwd(), "admin-host/scripts/chat.js"), "utf8");
 const shellScript = readFileSync(path.resolve(process.cwd(), "admin-host/scripts/dashboard.js"), "utf8");
 
@@ -126,13 +130,12 @@ function boot(
   });
 
   vi.stubGlobal("fetch", fetchMock);
-  const confirmMock = vi.fn(() => true);
-  (window as unknown as { confirm: () => boolean }).confirm = confirmMock;
-  // Chạy đúng hai script sẽ deploy, theo thứ tự trong index.html.
+  // Chạy đúng các script sẽ deploy, theo thứ tự trong index.html.
+  new Function(dialogsScript)();
   (0, eval)(chatScript);
   (0, eval)(shellScript);
 
-  return { calls, confirm: confirmMock, fetchMock, failures };
+  return { calls, fetchMock, failures };
 }
 
 function el<T extends HTMLElement>(id: string): T {
@@ -163,6 +166,16 @@ function providerRows(): HTMLElement[] {
   return Array.from(document.querySelectorAll<HTMLElement>("#chat-providers .chat-provider-row"));
 }
 
+async function acceptDialog(): Promise<string> {
+  await flush();
+  const node = document.querySelector(".admin-dialog") as HTMLElement | null;
+  if (!node || node.hidden) throw new Error("Không thấy hộp thoại xác nhận");
+  const text = node.textContent || "";
+  (node.querySelector(".admin-dialog-ok") as HTMLButtonElement).click();
+  await flush();
+  return text;
+}
+
 function modelValues(row: ParentNode): string[] {
   const select = row.querySelector(".chat-step-model") as HTMLSelectElement | null;
   if (!select) return [];
@@ -189,6 +202,7 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
   document.body.innerHTML = "";
+  document.body.classList.remove("admin-dialog-open");
 });
 
 describe("panel Trợ lý chat", () => {
@@ -336,7 +350,9 @@ describe("panel Trợ lý chat", () => {
     ).toEqual(["cf", "groq-1"]);
 
     el<HTMLButtonElement>("chat-chain-save").click();
-    await flush();
+    const chainDialog = await acceptDialog();
+    expect(chainDialog).toContain("1. cf · qwen3-30b");
+    expect(chainDialog).toContain("2. groq-1 · llama-3.3-70b");
     expect(postBodies(calls)).toEqual([
       {
         kind: "chain",
@@ -364,7 +380,7 @@ describe("panel Trợ lý chat", () => {
     input.value = "groq/llama-4-scout";
     input.dispatchEvent(new Event("input", { bubbles: true }));
     el<HTMLButtonElement>("chat-chain-save").click();
-    await flush();
+    await acceptDialog();
 
     expect(postBodies(calls)).toEqual([
       {
@@ -416,7 +432,7 @@ describe("panel Trợ lý chat", () => {
     expect(chainRows()).toHaveLength(1);
 
     el<HTMLButtonElement>("chat-chain-save").click();
-    await flush();
+    await acceptDialog();
     expect(postBodies(calls)).toEqual([
       { kind: "chain", chain: [{ provider: "cf", modelId: "llama-4" }] },
     ]);
@@ -429,7 +445,8 @@ describe("panel Trợ lý chat", () => {
     setValue("chat-prompt", "Mới ngắn hơn.");
     expect(el("chat-prompt-count").textContent).toBe("13");
     el<HTMLButtonElement>("chat-prompt-save").click();
-    await flush();
+    const promptDialog = await acceptDialog();
+    expect(promptDialog).toContain("13 ký tự");
 
     expect(postBodies(calls)).toEqual([{ kind: "prompt", prompt: "Mới ngắn hơn." }]);
   });
@@ -470,7 +487,7 @@ describe("panel Trợ lý chat", () => {
     expect(el<HTMLButtonElement>("chat-provider-save").disabled).toBe(false);
 
     el<HTMLButtonElement>("chat-provider-save").click();
-    await flush();
+    await acceptDialog();
 
     expect(postBodies(calls)).toEqual([
       {
@@ -533,6 +550,39 @@ describe("panel Trợ lý chat", () => {
 
     expect(providerRows()).toHaveLength(1);
     expect(el("chat-provider-save-note").textContent).toContain("Bỏ bước");
+  });
+
+  it("xóa nhà cung cấp không dùng trong thứ tự sau khi xác nhận hộp thoại", async () => {
+    boot(
+      baseConfig({
+        providers: [
+          {
+            id: "groq-1",
+            type: "groq",
+            label: "Groq chính",
+            baseUrl: "https://api.groq.com/openai/v1",
+            apiKey: "***abcd",
+            enabled: true,
+          },
+          {
+            id: "openrouter-1",
+            type: "openrouter",
+            label: "OpenRouter",
+            baseUrl: "https://openrouter.ai/api/v1",
+            apiKey: "***wxyz",
+            enabled: true,
+          },
+        ],
+      }),
+    );
+    await flush();
+    expect(providerRows()).toHaveLength(2);
+
+    findButton(providerRows()[1], "Xóa").click();
+    expect((await acceptDialog()).replace(/\s+/g, " ")).toContain("Xóa nhà cung cấp?");
+    expect(providerRows()).toHaveLength(1);
+    expect(providerRows()[0].textContent).toContain("Groq chính");
+    expect(el("chat-provider-save-note").textContent).toContain("Đã bỏ “openrouter-1”");
   });
 
   it("thử một bước trong thứ tự gửi đúng hãng và model", async () => {

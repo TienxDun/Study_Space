@@ -34,26 +34,26 @@
 
   var SERVICE_META = {
     "chat-proxy": {
-      label: "Chat & trợ lý",
-      desc: "Trả lời câu hỏi và gợi ý học tập",
+      label: "Trợ lý học tập AI",
+      desc: "Xử lý câu hỏi học tập và hướng dẫn phương pháp học",
       path: "/health",
       auth: "Công khai",
       isToken: false,
       svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
     },
     "data-api": {
-      label: "Lưu dữ liệu",
-      desc: "Lưu dữ liệu học tập lên đám mây",
+      label: "Đồng bộ dữ liệu đám mây",
+      desc: "Sao lưu ghi chú, tiến độ học và cài đặt cá nhân",
       path: "/health",
       auth: "Công khai",
       isToken: false,
       svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>'
     },
     "livekit": {
-      label: "Phòng học nhóm",
-      desc: "Phòng học video nhóm",
+      label: "Không gian học nhóm",
+      desc: "Kết nối âm thanh, video và học chung thời gian thực",
       path: "/usage",
-      auth: "Cần mã quản trị",
+      auth: "Bảo mật quản trị",
       isToken: true,
       svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>'
     }
@@ -267,7 +267,7 @@
       setWidth("chat-meter", 0);
       setMeterState("chat-meter", 0);
     }
-    markBlock("chat-card", "chat-note", chat, "Ngày tính theo giờ Mỹ (Thái Bình Dương). Chi phí dùng AI xem trên trang Cloudflare.");
+    markBlock("chat-card", "chat-note", chat, "Lượt hỏi đáp tự động làm mới mỗi ngày lúc 14:00 (theo giờ quốc tế UTC-7).");
 
     if (sync.ok === true) {
       setText("sync-users", formatNumber(sync.users));
@@ -276,7 +276,7 @@
     } else {
       clearBlock(["sync-users", "sync-last", "sync-max"]);
     }
-    markBlock("sync-card", "sync-note", sync, "Dữ liệu học tập tự động lưu lên mây.");
+    markBlock("sync-card", "sync-note", sync, "Ghi chú và cài đặt cá nhân của học viên được sao lưu tự động lên đám mây.");
 
     if (livekit.ok === true) {
       setText("livekit-month", formatMonthTag(livekit.month));
@@ -292,7 +292,7 @@
       setWidth("livekit-meter", 0);
       setMeterState("livekit-meter", 0);
     }
-    markBlock("livekit-card", "livekit-note", livekit, "Tháng tính theo giờ quốc tế (UTC).");
+    markBlock("livekit-card", "livekit-note", livekit, "Tổng số phút học nhóm tích lũy trong tháng hiện tại (giờ chuẩn UTC).");
 
     if (r2.ok === true) {
       setText("r2-used", formatDecimalBytes(r2.bytes));
@@ -317,7 +317,7 @@
         ? "Không đọc được kho tệp: " + errorLabel(r2.error) + "."
         : r2.partial
           ? "Số liệu có thể chưa đủ vì kho quá lớn."
-          : "Tính cả tệp cảnh và âm thanh trên R2. Cập nhật tối đa mỗi 60 giây."
+          : "Bao gồm toàn bộ ảnh nền, âm thanh và nhạc trong kho lưu trữ R2."
     );
 
     setText("limits-chat", formatNumber(limits.chatDaily) + " câu");
@@ -332,7 +332,7 @@
     livekit: "Phòng học nhóm",
     errors: "Nhật ký lỗi",
     r2: "Kho tệp",
-    flags: "Cờ hệ thống"
+    flags: "Tính năng"
   };
 
   function renderErrors(block) {
@@ -458,7 +458,7 @@
     }
 
     var next = readFormFlags();
-    var lines = ["Lưu thay đổi cờ hệ thống?"];
+    var lines = [];
     if (flagsBaseline.chatEnabled && !next.chatEnabled) {
       lines.push("Tắt chat sẽ chặn tất cả người dùng ngay.");
     }
@@ -471,8 +471,16 @@
     if (next.maintenance) {
       lines.push("Chế độ bảo trì hiện banner cho mọi người; chat và phòng học vẫn chạy.");
     }
-    if (!window.confirm(lines.join("\n\n"))) return;
+    AdminDialog.confirm({
+      title: "Lưu thay đổi cờ hệ thống?",
+      description: lines.length ? lines.join("\n") : "Thay đổi áp dụng trong khoảng 30 giây.",
+      confirmLabel: "Lưu thay đổi"
+    }).then(function (ok) {
+      if (ok) applyFlags(next);
+    });
+  }
 
+  function applyFlags(next) {
     flagsSaving = true;
     syncFlagsButtons();
     flagsNote.textContent = "Đang lưu…";

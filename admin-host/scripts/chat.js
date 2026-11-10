@@ -1076,25 +1076,27 @@
         "Bỏ bước “" + id + "” khỏi thứ tự dự phòng trước khi xóa nhà cung cấp.";
       return;
     }
-    if (
-      !window.confirm(
-        "Xóa nhà cung cấp “" +
-          id +
-          "” khỏi danh sách nháp?\n\nChưa áp dụng tới khi bấm “Lưu nhà cung cấp”."
-      )
-    ) {
-      return;
-    }
-    providers = providers.filter(function (provider) {
-      return provider.id !== id;
+    AdminDialog.confirm({
+      title: "Xóa nhà cung cấp?",
+      description:
+        "“" +
+        id +
+        "” chỉ bị bỏ khỏi danh sách nháp. Chưa áp dụng tới khi bấm “Lưu nhà cung cấp”.",
+      confirmLabel: "Bỏ khỏi danh sách",
+      tone: "danger"
+    }).then(function (ok) {
+      if (!ok) return;
+      providers = providers.filter(function (provider) {
+        return provider.id !== id;
+      });
+      delete providerModels[id];
+      if (editId === id) closeProviderForm();
+      renderProviders();
+      renderTry();
+      providerSaveNote.textContent =
+        "Đã bỏ “" + id + "” khỏi danh sách nháp. Bấm “Lưu nhà cung cấp” để áp dụng.";
+      updateUi();
     });
-    delete providerModels[id];
-    if (editId === id) closeProviderForm();
-    renderProviders();
-    renderTry();
-    providerSaveNote.textContent =
-      "Đã bỏ “" + id + "” khỏi danh sách nháp. Bấm “Lưu nhà cung cấp” để áp dụng.";
-    updateUi();
   }
 
   function checkProviderKey() {
@@ -1282,12 +1284,18 @@
 
   function saveChain() {
     if (busy || !readable || !chainDirty() || !chainValid()) return;
-    var lines = ["Lưu thứ tự dự phòng?"];
+    var lines = [];
     chain.forEach(function (entry, index) {
       lines.push(index + 1 + ". " + entry.provider + " · " + entry.modelId);
     });
-    if (!window.confirm(lines.join("\n"))) return;
-    executeSave(chainSave, chainNote, "chain", { chain: plainChain(chain) }, "Đã lưu thứ tự. Chờ khoảng 60 giây để chat-proxy áp dụng.");
+    AdminDialog.confirm({
+      title: "Lưu thứ tự dự phòng?",
+      detail: lines.join("\n"),
+      confirmLabel: "Lưu thứ tự"
+    }).then(function (ok) {
+      if (!ok) return;
+      executeSave(chainSave, chainNote, "chain", { chain: plainChain(chain) }, "Đã lưu thứ tự. Chờ khoảng 60 giây để chat-proxy áp dụng.");
+    });
   }
 
   function savePrompt() {
@@ -1302,8 +1310,14 @@
       promptNote.textContent = "Câu lệnh tối đa " + PROMPT_MAX + " ký tự.";
       return;
     }
-    if (!window.confirm("Lưu câu lệnh hệ thống mới? (" + prompt.length + " ký tự)")) return;
-    executeSave(promptSave, promptNote, "prompt", { prompt: prompt }, "Đã lưu câu lệnh. Chờ khoảng 60 giây để chat-proxy áp dụng.");
+    AdminDialog.confirm({
+      title: "Lưu câu lệnh hệ thống mới?",
+      description: "Câu lệnh mới dài " + prompt.length + " ký tự.",
+      confirmLabel: "Lưu câu lệnh"
+    }).then(function (ok) {
+      if (!ok) return;
+      executeSave(promptSave, promptNote, "prompt", { prompt: prompt }, "Đã lưu câu lệnh. Chờ khoảng 60 giây để chat-proxy áp dụng.");
+    });
   }
 
   function saveProviders() {
@@ -1325,14 +1339,19 @@
         return;
       }
     }
-    if (!window.confirm("Lưu danh sách " + providers.length + " nhà cung cấp?\n\nKey đã che sẽ giữ nguyên key cũ trên máy chủ.")) {
-      return;
-    }
-
-    var payload = providers.map(function (p) {
-      return { id: p.id, type: p.type, label: p.label, baseUrl: p.baseUrl, apiKey: p.apiKey, enabled: p.enabled !== false };
+    AdminDialog.confirm({
+      title: "Lưu danh sách nhà cung cấp?",
+      description:
+        providers.length +
+        " nhà cung cấp. Key đã che sẽ giữ nguyên key cũ trên máy chủ.",
+      confirmLabel: "Lưu danh sách"
+    }).then(function (ok) {
+      if (!ok) return;
+      var payload = providers.map(function (p) {
+        return { id: p.id, type: p.type, label: p.label, baseUrl: p.baseUrl, apiKey: p.apiKey, enabled: p.enabled !== false };
+      });
+      executeSave(providerSave, providerSaveNote, "providers", { providers: payload }, "Đã lưu danh sách. Chờ khoảng 60 giây để chat-proxy áp dụng.");
     });
-    executeSave(providerSave, providerSaveNote, "providers", { providers: payload }, "Đã lưu danh sách. Chờ khoảng 60 giây để chat-proxy áp dụng.");
   }
 
   tryProvider.addEventListener("change", function () {

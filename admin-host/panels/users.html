@@ -2,8 +2,8 @@
       <section class="panel-card users-panel" id="users-panel" aria-labelledby="users-title">
         <div class="panel-header">
           <div class="panel-title-group">
-            <h2 class="panel-title" id="users-title">Người dùng</h2>
-            <span class="panel-desc">Danh tính lấy từ Firebase, số liệu lấy từ D1. Bấm Xem để mở trang chi tiết riêng của từng tài khoản. Tìm chính xác theo email, không quét toàn bộ.</span>
+            <h2 class="panel-title" id="users-title">Quản lý người dùng</h2>
+            <span class="panel-desc">Tra cứu thông tin tài khoản học viên, số lượt sử dụng trợ lý AI và nhật ký đồng bộ dữ liệu. Tìm kiếm chính xác theo địa chỉ email.</span>
           </div>
           <span class="usage-tag" id="users-state">Chưa tải</span>
         </div>
@@ -12,10 +12,10 @@
           <div class="users-list-view" id="users-list-view">
             <div class="users-toolbar">
               <label class="users-search">
-                <span class="chat-label">Email chính xác</span>
+                <span class="chat-label">Tìm kiếm theo email</span>
                 <input class="flag-input" id="users-search-input" type="email" inputmode="email" autocomplete="off" maxlength="254" placeholder="ten@example.com" />
               </label>
-              <button class="btn-ghost" id="users-search-btn" type="button">Tìm</button>
+              <button class="btn-ghost" id="users-search-btn" type="button">Tìm kiếm</button>
               <button class="btn-ghost" id="users-refresh" type="button">Làm mới</button>
             </div>
 
@@ -25,13 +25,13 @@
               <table class="services-table content-table users-table">
                 <thead>
                   <tr>
-                    <th>Email</th>
-                    <th>Tên</th>
-                    <th>Đăng nhập cuối</th>
+                    <th>Email tài khoản</th>
+                    <th>Tên hiển thị</th>
+                    <th>Đăng nhập gần nhất</th>
                     <th>Đồng bộ lúc</th>
-                    <th>Chat hôm nay</th>
+                    <th>Tin nhắn AI hôm nay</th>
                     <th>Trạng thái</th>
-                    <th class="text-right">Chi tiết</th>
+                    <th class="text-right">Hành động</th>
                   </tr>
                 </thead>
                 <tbody id="users-rows">
@@ -85,7 +85,7 @@
                   <label class="flag-row" for="users-restrict-ai">
                     <span class="flag-text">
                       <span class="flag-name">Khóa trợ lý AI</span>
-                      <span class="flag-desc">Tài khoản này không gửi được câu hỏi mới.</span>
+                      <span class="flag-desc">Tài khoản này tạm thời không thể gửi thêm câu hỏi mới.</span>
                     </span>
                     <span class="switch">
                       <input type="checkbox" id="users-restrict-ai" />
@@ -95,7 +95,7 @@
                   <label class="flag-row" for="users-restrict-rooms">
                     <span class="flag-text">
                       <span class="flag-name">Khóa phòng học</span>
-                      <span class="flag-desc">Tài khoản này không tạo/vào phòng được.</span>
+                      <span class="flag-desc">Tài khoản này tạm thời không thể tạo hoặc tham gia phòng học nhóm.</span>
                     </span>
                     <span class="switch">
                       <input type="checkbox" id="users-restrict-rooms" />

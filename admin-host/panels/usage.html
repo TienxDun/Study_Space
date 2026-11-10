@@ -1,14 +1,15 @@
-      <!-- Sử dụng & hạn mức -->
+      <!-- Mức độ sử dụng & hạn mức tài nguyên -->
       <section class="usage-section" aria-labelledby="usage-title">
         <div class="usage-heading">
           <div>
-            <h2 class="usage-title" id="usage-title">Sử dụng &amp; giới hạn</h2>
-            <p class="usage-desc">Các số dưới đây tự động cập nhật theo thời gian thực.</p>
+            <h2 class="usage-title" id="usage-title">Mức độ sử dụng &amp; Giới hạn tài nguyên</h2>
+            <p class="usage-desc">Số liệu thống kê hoạt động được tự động tổng hợp theo thời gian thực.</p>
           </div>
           <span class="usage-source">Tự động tổng hợp</span>
         </div>
 
         <div class="usage-grid">
+          <!-- Card 1: Chat AI -->
           <article class="usage-card" id="chat-card">
             <div class="usage-card-top">
               <div class="usage-icon-box is-sky" aria-hidden="true">
@@ -19,7 +20,7 @@
               <span class="usage-tag" id="chat-day">--</span>
             </div>
             <div class="usage-card-title-group">
-              <h3 class="usage-label">Chat hôm nay <span class="usage-sublabel">(giờ Mỹ)</span></h3>
+              <h3 class="usage-label">Tin nhắn AI hôm nay <span class="usage-sublabel">(chu kỳ ngày)</span></h3>
             </div>
             <div class="usage-main">
               <span id="chat-total">--</span>
@@ -27,12 +28,13 @@
             </div>
             <div class="usage-meter" aria-hidden="true"><span id="chat-meter" style="width: 0%"></span></div>
             <dl class="usage-facts">
-              <div class="usage-fact-item"><dt>Số người dùng</dt><dd id="chat-users">--</dd></div>
-              <div class="usage-fact-item"><dt>Giới hạn mỗi ngày</dt><dd id="chat-limit">--</dd></div>
+              <div class="usage-fact-item"><dt>Số người đã chat</dt><dd id="chat-users">--</dd></div>
+              <div class="usage-fact-item"><dt>Hạn mức tối đa/ngày</dt><dd id="chat-limit">--</dd></div>
             </dl>
-            <p class="usage-note" id="chat-note">Ngày tính theo giờ Mỹ (Thái Bình Dương). Chi phí dùng AI xem trên trang Cloudflare.</p>
+            <p class="usage-note" id="chat-note">Lượt hỏi đáp tự động làm mới mỗi ngày lúc 14:00 (theo giờ quốc tế UTC-7).</p>
           </article>
 
+          <!-- Card 2: Sao lưu đám mây -->
           <article class="usage-card" id="sync-card">
             <div class="usage-card-top">
               <div class="usage-icon-box is-emerald" aria-hidden="true">
@@ -49,16 +51,17 @@
             </div>
             <div class="usage-main">
               <span id="sync-users">--</span>
-              <span class="usage-unit">người dùng đã lưu</span>
+              <span class="usage-unit">tài khoản đã lưu</span>
             </div>
             <div class="usage-meter is-muted" aria-hidden="true"><span></span></div>
             <dl class="usage-facts">
-              <div class="usage-fact-item"><dt>Lần lưu gần nhất</dt><dd id="sync-last">--</dd></div>
-              <div class="usage-fact-item"><dt>Bản lưu lớn nhất</dt><dd id="sync-max">--</dd></div>
+              <div class="usage-fact-item"><dt>Lần lưu mới nhất</dt><dd id="sync-last">--</dd></div>
+              <div class="usage-fact-item"><dt>Bản lưu nặng nhất</dt><dd id="sync-max">--</dd></div>
             </dl>
-            <p class="usage-note" id="sync-note">Dữ liệu học tập tự động lưu lên mây.</p>
+            <p class="usage-note" id="sync-note">Ghi chú và cài đặt cá nhân của học viên được sao lưu tự động lên đám mây.</p>
           </article>
 
+          <!-- Card 3: Phòng học nhóm LiveKit -->
           <article class="usage-card" id="livekit-card">
             <div class="usage-card-top">
               <div class="usage-icon-box is-indigo" aria-hidden="true">
@@ -70,7 +73,7 @@
               <span class="usage-tag" id="livekit-month">--</span>
             </div>
             <div class="usage-card-title-group">
-              <h3 class="usage-label">Phút học nhóm <span class="usage-sublabel">tháng này</span></h3>
+              <h3 class="usage-label">Thời gian học nhóm <span class="usage-sublabel">tháng này</span></h3>
             </div>
             <div class="usage-main">
               <span id="livekit-used">--</span>
@@ -78,12 +81,13 @@
             </div>
             <div class="usage-meter" aria-hidden="true"><span id="livekit-meter" style="width: 0%"></span></div>
             <dl class="usage-facts">
-              <div class="usage-fact-item"><dt>Phòng đang học</dt><dd id="livekit-rooms">--</dd></div>
-              <div class="usage-fact-item"><dt>Người đang học</dt><dd id="livekit-people">--</dd></div>
+              <div class="usage-fact-item"><dt>Phòng đang mở</dt><dd id="livekit-rooms">--</dd></div>
+              <div class="usage-fact-item"><dt>Học viên tham gia</dt><dd id="livekit-people">--</dd></div>
             </dl>
-            <p class="usage-note" id="livekit-note">Tháng tính theo giờ quốc tế (UTC).</p>
+            <p class="usage-note" id="livekit-note">Tổng số phút học nhóm tích lũy trong tháng hiện tại (giờ chuẩn UTC).</p>
           </article>
 
+          <!-- Card 4: Kho tệp R2 -->
           <article class="usage-card" id="r2-card">
             <div class="usage-card-top">
               <div class="usage-icon-box is-amber" aria-hidden="true">
@@ -94,10 +98,10 @@
                   <line x1="6" y1="18" x2="6.01" y2="18"/>
                 </svg>
               </div>
-              <span class="usage-tag">Cloudflare R2</span>
+              <span class="usage-tag">Kho lưu trữ R2</span>
             </div>
             <div class="usage-card-title-group">
-              <h3 class="usage-label">Kho tệp lưu trữ</h3>
+              <h3 class="usage-label">Kho tệp đa phương tiện</h3>
             </div>
             <div class="usage-main">
               <span id="r2-used">--</span>
@@ -105,10 +109,10 @@
             </div>
             <div class="usage-meter" aria-hidden="true"><span id="r2-meter" style="width: 0%"></span></div>
             <dl class="usage-facts">
-              <div class="usage-fact-item"><dt>Số tệp</dt><dd id="r2-objects">--</dd></div>
+              <div class="usage-fact-item"><dt>Số lượng tệp</dt><dd id="r2-objects">--</dd></div>
               <div class="usage-fact-item"><dt>Trạng thái</dt><dd id="r2-state">Đang đọc…</dd></div>
             </dl>
-            <p class="usage-note" id="r2-note">Tính cả tệp cảnh và âm thanh trên R2. Cập nhật tối đa mỗi 60 giây.</p>
+            <p class="usage-note" id="r2-note">Bao gồm toàn bộ ảnh nền, âm thanh và nhạc trong kho lưu trữ R2.</p>
           </article>
         </div>
 
@@ -119,12 +123,12 @@
               <line x1="12" y1="16" x2="12" y2="12"/>
               <line x1="12" y1="8" x2="12.01" y2="8"/>
             </svg>
-            <span class="limits-title">Giới hạn gói miễn phí</span>
+            <span class="limits-title">Hạn mức tài nguyên</span>
           </div>
           <div class="limits-items">
-            <span>Chat mỗi ngày <strong id="limits-chat">--</strong></span>
-            <span>Mỗi bản lưu tối đa <strong id="limits-snapshot">--</strong></span>
-            <span>Kho tệp <strong id="limits-r2">--</strong></span>
+            <span>Tin nhắn AI: tối đa <strong id="limits-chat">--</strong>/ngày</span>
+            <span>Kích thước bản lưu: tối đa <strong id="limits-snapshot">--</strong></span>
+            <span>Dung lượng kho tệp: tối đa <strong id="limits-r2">--</strong></span>
           </div>
         </div>
       </section>

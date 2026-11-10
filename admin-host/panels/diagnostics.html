@@ -1,28 +1,28 @@
-      <!-- Main Panel: Nhật ký lỗi & dịch vụ -->
+      <!-- Main Panel: Nhật ký sự cố & Tình trạng dịch vụ -->
       <div class="section-layout">
         <!-- Lỗi & dự phòng -->
         <section class="panel-card" id="errors-card" aria-labelledby="errors-title">
           <div class="panel-header">
             <div class="panel-title-group">
-              <h2 class="panel-title" id="errors-title">Lỗi &amp; dự phòng gần đây</h2>
-              <span class="panel-desc">20 lỗi mới nhất, tự xóa sau 14 ngày</span>
+              <h2 class="panel-title" id="errors-title">Nhật ký sự cố &amp; chuyển đổi dự phòng</h2>
+              <span class="panel-desc">20 sự cố mới nhất được ghi nhận; tự động dọn dẹp sau 14 ngày</span>
             </div>
           </div>
           <table class="services-table">
             <thead>
               <tr>
                 <th>Thời gian</th>
-                <th>Nguồn</th>
-                <th>Mã lỗi</th>
-                <th>Ghi chú</th>
+                <th>Dịch vụ phát sinh</th>
+                <th>Mã sự cố</th>
+                <th>Chi tiết &amp; xử lý</th>
               </tr>
             </thead>
             <tbody id="error-rows">
-              <tr><td colspan="4">Chưa có lỗi nào.</td></tr>
+              <tr><td colspan="4">Hệ thống đang hoạt động ổn định, không có sự cố nào.</td></tr>
             </tbody>
           </table>
           <div class="panel-footer">
-            <p class="usage-note" id="errors-note">Không có lỗi nào trong 14 ngày gần đây.</p>
+            <p class="usage-note" id="errors-note">Hệ thống hoạt động ổn định, không ghi nhận sự cố trong 14 ngày qua.</p>
           </div>
         </section>
 
@@ -30,8 +30,8 @@
         <section class="panel-card">
           <div class="panel-header">
             <div class="panel-title-group">
-              <h2 class="panel-title">Các dịch vụ đang chạy</h2>
-              <span class="panel-desc">Thời gian phản hồi của từng dịch vụ <span class="desc-extra">(tối đa 10 giây)</span></span>
+              <h2 class="panel-title">Tình trạng các dịch vụ thành phần</h2>
+              <span class="panel-desc">Tốc độ phản hồi và trạng thái sẵn sàng của từng máy chủ dịch vụ <span class="desc-extra">(giới hạn kiểm tra 10 giây)</span></span>
             </div>
           </div>
 
@@ -39,7 +39,7 @@
             <thead>
               <tr>
                 <th>Dịch vụ</th>
-                <th>Địa chỉ kiểm tra</th>
+                <th>Điểm kiểm tra</th>
                 <th>Quyền truy cập</th>
                 <th class="text-right">Thời gian phản hồi</th>
                 <th class="text-right">Trạng thái</th>
@@ -53,8 +53,8 @@
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                     </div>
                     <div>
-                      <div class="service-name">Chat &amp; trợ lý</div>
-                      <div class="service-desc">Trả lời câu hỏi và gợi ý học tập</div>
+                      <div class="service-name">Trợ lý học tập AI</div>
+                      <div class="service-desc">Xử lý câu hỏi học tập và hướng dẫn phương pháp học</div>
                     </div>
                   </div>
                 </td>
@@ -74,8 +74,8 @@
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
                     </div>
                     <div>
-                      <div class="service-name">Lưu dữ liệu</div>
-                      <div class="service-desc">Lưu dữ liệu học tập lên đám mây</div>
+                      <div class="service-name">Đồng bộ dữ liệu đám mây</div>
+                      <div class="service-desc">Sao lưu ghi chú, tiến độ học và cài đặt cá nhân</div>
                     </div>
                   </div>
                 </td>
@@ -95,8 +95,8 @@
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                     </div>
                     <div>
-                      <div class="service-name">Phòng học nhóm</div>
-                      <div class="service-desc">Phòng học video nhóm</div>
+                      <div class="service-name">Không gian học nhóm</div>
+                      <div class="service-desc">Kết nối âm thanh, video và học chung thời gian thực</div>
                     </div>
                   </div>
                 </td>
@@ -105,7 +105,7 @@
                     <span>/usage</span>
                   </div>
                 </td>
-                <td><span class="auth-badge token">Cần mã quản trị</span></td>
+                <td><span class="auth-badge token">Bảo mật quản trị</span></td>
                 <td class="latency-cell">--</td>
                 <td class="text-right"><span class="badge-wait">Đang kiểm tra</span></td>
               </tr>
@@ -113,12 +113,12 @@
           </table>
         </section>
 
-        <!-- Pipeline Architecture Card -->
+        <!-- Quy trình bảo mật & luồng dữ liệu -->
         <section class="panel-card">
           <div class="panel-header">
             <div class="panel-title-group">
-              <h2 class="panel-title">4 lớp bảo vệ khi đăng nhập</h2>
-              <span class="panel-desc">Mật khẩu và mã truy cập không bao giờ được lưu trên trình duyệt.</span>
+              <h2 class="panel-title">Quy trình xác thực &amp; bảo mật 4 lớp</h2>
+              <span class="panel-desc">Thông tin bảo mật và mã truy cập luôn được mã hóa, không lưu trữ trên trình duyệt.</span>
             </div>
           </div>
 
@@ -128,35 +128,35 @@
                 <span class="step-order">01 / GỬI YÊU CẦU</span>
                 <span class="step-icon">💻</span>
               </div>
-              <span class="step-name">Trình duyệt</span>
-              <p class="step-info">Trình duyệt hỏi số liệu tổng quan, không gửi kèm mật khẩu hay mã truy cập.</p>
+              <span class="step-name">Trình duyệt quản trị</span>
+              <p class="step-info">Gửi yêu cầu xem thông số; không bao giờ đính kèm mật khẩu gốc hay khóa bí mật.</p>
             </div>
 
             <div class="pipeline-step">
               <div class="pipeline-step-head">
-                <span class="step-order">02 / KIỂM TRA ĐĂNG NHẬP</span>
+                <span class="step-order">02 / CỔNG BẢO VỆ</span>
                 <span class="step-icon">🛡️</span>
               </div>
-              <span class="step-name">Cổng đăng nhập Cloudflare</span>
-              <p class="step-info">Kiểm tra email đã được cấp quyền trước khi cho vào.</p>
+              <span class="step-name">Cloudflare Access</span>
+              <p class="step-info">Xác thực email và cấp quyền đăng nhập trước khi cho phép dữ liệu đi tiếp.</p>
             </div>
 
             <div class="pipeline-step">
               <div class="pipeline-step-head">
-                <span class="step-order">03 / XÁC THỰC MÁY CHỦ</span>
+                <span class="step-order">03 / KIỂM TRA CHỮ KÝ</span>
                 <span class="step-icon">🔑</span>
               </div>
-              <span class="step-name">Máy chủ quản trị</span>
-              <p class="step-info">Máy chủ kiểm tra chữ ký số; thiếu quyền hoặc sai chữ ký thì từ chối ngay.</p>
+              <span class="step-name">Máy chủ bảo mật</span>
+              <p class="step-info">Kiểm tra chữ ký số mật mã; tự động từ chối ngay lập tức nếu không đúng quyền hạn.</p>
             </div>
 
             <div class="pipeline-step">
               <div class="pipeline-step-head">
-                <span class="step-order">04 / TỔNG HỢP SỐ LIỆU</span>
+                <span class="step-order">04 / TỔNG HỢP DỮ LIỆU</span>
                 <span class="step-icon">⚡</span>
               </div>
-              <span class="step-name">Các dịch vụ</span>
-              <p class="step-info">Gom tình trạng, chat, dữ liệu và phút học nhóm; mục nào lỗi thì báo đỏ.</p>
+              <span class="step-name">Hệ thống dịch vụ</span>
+              <p class="step-info">Tổng hợp thông tin từ AI, kho tệp và phòng học để hiển thị lên bảng điều khiển.</p>
             </div>
           </div>
         </section>
