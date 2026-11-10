@@ -173,11 +173,11 @@
         )
       : null;
 
-  function thumbNode(src, alt) {
-    var img = mediaNode(el("img", "content-thumb"));
+  function thumbNode(src, alt, isSquare) {
+    var img = mediaNode(el("img", "content-thumb" + (isSquare ? " is-square" : "")));
     img.alt = alt || "";
-    img.width = 74;
-    img.height = 44;
+    img.width = isSquare ? 48 : 74;
+    img.height = isSquare ? 48 : 44;
     img.loading = "lazy";
     img.decoding = "async";
     if (thumbObserver) {
@@ -253,7 +253,7 @@
       openForm(kind, item);
     });
 
-    var remove = el("button", "btn-ghost", "Xóa");
+    var remove = el("button", "btn-ghost is-danger", "Xóa");
     remove.type = "button";
     remove.addEventListener("click", function () {
       removeItem(kind, item);
@@ -292,10 +292,13 @@
     FIELD[id] = document.getElementById(id);
   });
 
-  function makeNameCell(name, id, sub, hidden) {
+  function makeNameCell(name, id, sub, hidden, badge) {
     var td = el("td"), main = el("div", "content-cell-main");
-    main.appendChild(el("span", null, name || "(chưa đặt tên)"));
-    if (hidden) main.appendChild(hiddenTag());
+    var titleRow = el("div", "content-title-row");
+    titleRow.appendChild(el("span", "content-title-text", name || "(chưa đặt tên)"));
+    if (badge) titleRow.appendChild(el("span", "content-tag is-badge", badge));
+    if (hidden) titleRow.appendChild(hiddenTag());
+    main.appendChild(titleRow);
     main.appendChild(el("div", "content-cell-sub", sub || id));
     td.appendChild(main);
     return td;
@@ -459,11 +462,14 @@
         return (String(item.name || "") + " " + String(item.tags || "")).toLowerCase().indexOf(query) >= 0;
       },
       cells: function (item) {
-        var thumbCell = el("td"), preview = el("div");
+        var thumbCell = el("td"), preview = el("div", "content-thumb-container");
         var src = item.type === "VIDEO" ? item.thumbnailPath : item.thumbnailPath || item.mediaPath;
         preview.appendChild(src ? thumbNode(mediaUrl(src), item.name || "") : el("div", "content-thumb is-empty", item.type === "VIDEO" ? "Video" : "Chưa có ảnh"));
+        if (item.type === "VIDEO") {
+          preview.appendChild(el("span", "content-thumb-badge is-video", "VIDEO"));
+        }
         thumbCell.appendChild(preview);
-        return [thumbCell, makeNameCell(item.name, item.id, null, item.hidden), el("td", null, CATEGORY_LABELS[item.category] || item.category || "--"), el("td", null, item.type === "VIDEO" ? "Video" : "Ảnh"), statusCell("scenes", item.mediaPath)];
+        return [thumbCell, makeNameCell(item.name, item.id, null, item.hidden, item.badge), el("td", null, CATEGORY_LABELS[item.category] || item.category || "--"), el("td", null, item.type === "VIDEO" ? "Video" : "Ảnh"), statusCell("scenes", item.mediaPath)];
       }
     },
     sounds: {
@@ -520,7 +526,7 @@
       },
       cells: function (item) {
         var coverCell = el("td");
-        coverCell.appendChild(item.coverPath ? thumbNode(mediaUrl(item.coverPath), item.title || "") : el("div", "content-thumb is-empty", "Chưa có bìa"));
+        coverCell.appendChild(item.coverPath ? thumbNode(mediaUrl(item.coverPath), item.title || "", true) : el("div", "content-thumb is-empty is-square", "Chưa có bìa"));
         return [coverCell, makeNameCell(item.title, item.id, (item.artist || "--") + " · " + (item.genre || "--"), item.hidden), el("td", null, MOOD_LABELS[item.category] || item.category || "--"), statusCell("tracks", item.audioPath)];
       }
     }
