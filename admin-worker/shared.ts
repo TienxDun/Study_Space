@@ -23,6 +23,7 @@ export interface D1DatabaseLike {
 export interface R2ObjectLike {
   key?: string;
   size?: number;
+  uploaded?: Date | string | number;
 }
 
 export interface R2ListPage {
@@ -31,8 +32,18 @@ export interface R2ListPage {
   cursor?: string;
 }
 
+export interface R2PutOptions {
+  httpMetadata?: { contentType?: string; cacheControl?: string };
+}
+
 export interface R2BucketLike {
   list(options?: { limit?: number; cursor?: string }): Promise<R2ListPage>;
+  put?(
+    key: string,
+    value: ReadableStream | ArrayBuffer | ArrayBufferView | string | Blob,
+    options?: R2PutOptions,
+  ): Promise<unknown>;
+  delete?(keys: string | string[]): Promise<unknown>;
 }
 
 export interface KvPutOptions {

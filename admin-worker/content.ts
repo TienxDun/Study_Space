@@ -158,6 +158,30 @@ export function detectMediaKind(ext: string): MediaKind | null {
   return null;
 }
 
+/**
+ * Thư mục được phép ghi/xóa từ admin. Đây cũng là toàn bộ tiền tố đang dùng
+ * trong bucket study-space; tên khác bị từ chối để không đụng file lạ.
+ */
+export const MEDIA_FOLDERS = ["scenes", "thumbnails", "sounds", "musics", "authors"] as const;
+export type MediaFolder = (typeof MEDIA_FOLDERS)[number];
+
+export const MEDIA_FOLDER_KINDS: Record<MediaFolder, MediaKind[]> = {
+  scenes: ["image", "video"],
+  thumbnails: ["image"],
+  sounds: ["audio"],
+  musics: ["audio"],
+  authors: ["image"],
+};
+
+export function isMediaFolder(value: unknown): value is MediaFolder {
+  return typeof value === "string" && (MEDIA_FOLDERS as readonly string[]).includes(value);
+}
+
+export function folderAccepts(folder: MediaFolder, ext: string): boolean {
+  const kind = detectMediaKind(ext);
+  return kind !== null && MEDIA_FOLDER_KINDS[folder].includes(kind);
+}
+
 export function contentTypeFor(ext: string): string {
   switch (String(ext || "").toLowerCase()) {
     case ".mp4":
@@ -207,7 +231,39 @@ export function filesOf(kind: ContentKind, item: unknown): string[] {
   if (kind === "sounds") {
     return typeof row.audioPath === "string" && row.audioPath ? [row.audioPath] : [];
   }
-  return typeof row.audioPath === "string" && row.audioPath ? [row.audioPath] : [];
+  const out: string[] = [];
+  if (typeof row.audioPath === "string" && row.audioPath) out.push(row.audioPath);
+  const cover = typeof row.coverPath === "string" ? row.coverPath : "";
+  if (cover && !/^https?:\/\//i.test(cover)) out.push(cover);
+  return out;
+}
+
+export type FileUsage = { kind: ContentKind; id: string; name: string };
+
+/** File → các mục đang dùng; dùng để biết file nào được phép xóa khỏi kho. */
+export function fileUsage(catalog: Catalog): Map<string, FileUsage[]> {
+  const usage = new Map<string, FileUsage[]>();
+  const add = (path: string, entry: FileUsage) => {
+    const list = usage.get(path);
+    if (list) list.push(entry);
+    else usage.set(path, [entry]);
+  };
+  for (const scene of catalog.scenes) {
+    for (const file of filesOf("scenes", scene)) {
+      add(file, { kind: "scenes", id: scene.id, name: scene.name });
+    }
+  }
+  for (const sound of catalog.sounds) {
+    for (const file of filesOf("sounds", sound)) {
+      add(file, { kind: "sounds", id: sound.id, name: sound.name });
+    }
+  }
+  for (const track of collectTracks(catalog)) {
+    for (const file of filesOf("tracks", track)) {
+      add(file, { kind: "tracks", id: track.id, name: track.title });
+    }
+  }
+  return usage;
 }
 
 function collectTracks(catalog: Catalog): TrackItem[] {

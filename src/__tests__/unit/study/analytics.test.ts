@@ -28,10 +28,10 @@ describe("resolveGoatCounterConfig", () => {
 });
 
 describe("shouldTrackPath", () => {
-  it("bỏ qua bảng admin và studio nội bộ", () => {
+  it("bỏ qua bảng admin và các trang thử nội bộ", () => {
     expect(shouldTrackPath("/admin")).toBe(false);
     expect(shouldTrackPath("/admin/limits")).toBe(false);
-    expect(shouldTrackPath("/dev/studio")).toBe(false);
+    expect(shouldTrackPath("/dev/surface-lab")).toBe(false);
     expect(shouldTrackPath("/dev-preview")).toBe(false);
   });
 

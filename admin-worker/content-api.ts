@@ -8,20 +8,30 @@
 
 import { allowContentWrite, logAudit } from "./audit";
 import {
+  FILE_MAX_BYTES,
   VERSIONS_PAGE,
+  contentTypeFor,
   countsOf,
   deleteItem,
   diffFields,
+  fileUsage,
+  filesOf,
+  folderAccepts,
   getItems,
   insertItem,
   isContentKind,
+  isMediaFolder,
+  isSafeRelPath,
   makeItemId,
+  pickFreeKey,
   pickItemPatch,
+  sanitizeFileName,
   updateItem,
   validateCatalog,
   type Catalog,
   type CatalogCounts,
   type ContentKind,
+  type FileUsage,
 } from "./content";
 import {
   API_PREFIX,
@@ -212,8 +222,9 @@ async function readVersions(env: AdminEnv): Promise<
   }
 }
 
+type FileEntry = { size: number; uploaded: number };
 type FileIndex =
-  | { ok: true; sizes: Map<string, number>; partial: boolean }
+  | { ok: true; objects: Map<string, FileEntry>; partial: boolean }
   | { ok: false; error: string };
 
 let fileIndexCache: { at: number; value: FileIndex } | null = null;
@@ -223,19 +234,29 @@ export function __resetContentCaches(): void {
   fileIndexCache = null;
 }
 
+function uploadedAt(value: unknown): number {
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "string") return Date.parse(value) || 0;
+  const num = Number(value);
+  return Number.isFinite(num) && num > 0 ? num : 0;
+}
+
 /**
  * Danh sách key + dung lượng trong bucket, cache 60 giây như `readR2Usage`.
  * Một lần list dùng cho cả tab nội dung và tab kho tệp để không đốt Class A.
+ * `force` dùng trước khi upload để không chọn trùng key vừa được thêm.
  */
-async function readFileIndex(env: AdminEnv): Promise<FileIndex> {
+async function readFileIndex(env: AdminEnv, force = false): Promise<FileIndex> {
   const now = Date.now();
-  if (fileIndexCache && now - fileIndexCache.at < R2_CACHE_TTL_MS) return fileIndexCache.value;
+  if (!force && fileIndexCache && now - fileIndexCache.at < R2_CACHE_TTL_MS) {
+    return fileIndexCache.value;
+  }
 
   let result: FileIndex;
   if (!env.R2) {
     result = { ok: false, error: "missing_binding" };
   } else {
-    const sizes = new Map<string, number>();
+    const objects = new Map<string, FileEntry>();
     let cursor: string | undefined;
     let partial = false;
     try {
@@ -243,7 +264,12 @@ async function readFileIndex(env: AdminEnv): Promise<FileIndex> {
         const res = await env.R2.list({ limit: R2_LIST_PAGE, cursor });
         for (const object of res?.objects || []) {
           const key = typeof object?.key === "string" ? object.key : "";
-          if (key) sizes.set(key, Number(object?.size) || 0);
+          if (key) {
+            objects.set(key, {
+              size: Number(object?.size) || 0,
+              uploaded: uploadedAt(object?.uploaded),
+            });
+          }
         }
         if (!res?.truncated) break;
         if (!res.cursor || page >= R2_LIST_MAX_PAGES) {
@@ -252,7 +278,7 @@ async function readFileIndex(env: AdminEnv): Promise<FileIndex> {
         }
         cursor = res.cursor;
       }
-      result = { ok: true, sizes, partial };
+      result = { ok: true, objects, partial };
     } catch {
       result = { ok: false, error: "r2_error" };
     }
@@ -266,19 +292,26 @@ async function readFileIndex(env: AdminEnv): Promise<FileIndex> {
 function mediaState(files: Set<string>, index: FileIndex): Record<string, number | null> {
   const out: Record<string, number | null> = {};
   for (const path of files) {
-    const size = index.ok ? index.sizes.get(path) : undefined;
-    out[path] = typeof size === "number" ? size : null;
+    const entry = index.ok ? index.objects.get(path) : undefined;
+    out[path] = entry ? entry.size : null;
   }
   return out;
 }
 
 function contentStatus(error: string): number {
   if (error === "not_found") return 404;
-  if (error === "version_conflict") return 409;
+  if (error === "version_conflict" || error === "media_in_use") return 409;
+  if (error === "too_large") return 413;
+  if (error === "unsupported_type") return 415;
   if (error === "missing_binding" || error === "d1_error" || error === "r2_error") return 500;
-  if (error === "invalid_json") return 500;
+  if (error === "invalid_json" || error === "r2_write_failed") return 500;
   return 400;
 }
+
+const MEDIA_ENTRY_LIMIT = 500;
+const MEDIA_ORPHAN_LIMIT = 200;
+const MEDIA_MISSING_LIMIT = 100;
+const MEDIA_PRUNE_LIMIT = 50;
 
 async function readJsonBody(request: Request): Promise<Record<string, unknown> | null> {
   try {
@@ -298,6 +331,21 @@ export async function handleContentApi(
 ): Promise<Response> {
   const rest = pathname.slice(`${API_PREFIX}/content`.length);
   const method = request.method;
+
+  if (rest === "/media") {
+    if (method === "GET") return getMedia(request, env);
+    if (method !== "POST" && method !== "DELETE") {
+      return json({ error: "Chỉ hỗ trợ GET, POST hoặc DELETE." }, 405);
+    }
+    if (!allowContentWrite(email)) return json({ error: "rate_limited" }, 429);
+    return method === "POST" ? uploadMedia(request, env, email) : deleteMedia(request, env, email);
+  }
+
+  if (rest === "/media/prune") {
+    if (method !== "POST") return json({ error: "Chỉ hỗ trợ POST." }, 405);
+    if (!allowContentWrite(email)) return json({ error: "rate_limited" }, 429);
+    return pruneMedia(request, env, email);
+  }
 
   if (rest === "/items") {
     if (method === "GET") return getContentItems(request, env);
@@ -403,7 +451,7 @@ async function getContentItems(request: Request, env: AdminEnv): Promise<Respons
   const index = await readFileIndex(env);
   const files = new Set<string>();
   for (const item of items) {
-    for (const path of itemFiles(kind, item)) files.add(path);
+    for (const path of filesOf(kind, item)) files.add(path);
   }
 
   return json({
@@ -418,26 +466,6 @@ async function getContentItems(request: Request, env: AdminEnv): Promise<Respons
     filesOk: index.ok,
     filesPartial: index.ok ? index.partial : false,
   });
-}
-
-function itemFiles(kind: ContentKind, item: unknown): string[] {
-  const row = (item || {}) as Record<string, unknown>;
-  const out: string[] = [];
-  const push = (value: unknown) => {
-    if (typeof value === "string" && value) out.push(value);
-  };
-  if (kind === "scenes") {
-    push(row.mediaPath);
-    push(row.thumbnailPath);
-  } else if (kind === "sounds") {
-    push(row.audioPath);
-  } else {
-    push(row.audioPath);
-    if (typeof row.coverPath === "string" && !/^https?:\/\//i.test(row.coverPath)) {
-      push(row.coverPath);
-    }
-  }
-  return out;
 }
 
 async function saveContentItem(
@@ -556,5 +584,279 @@ async function deleteContentItem(
   const written = await writeVersion(env, checked.catalog, email, published.version);
   if (!written.ok) return json({ error: written.error }, contentStatus(written.error));
   // Chỉ bỏ mục khỏi catalog; file trong R2 giữ nguyên vì có thể dùng chung.
-  return json({ ok: true, version: written.version, files: itemFiles(kind, removed.removed) });
+  return json({ ok: true, version: written.version, files: filesOf(kind, removed.removed) });
+}
+
+async function getMedia(request: Request, env: AdminEnv): Promise<Response> {
+  const url = new URL(request.url);
+  const prefix = url.searchParams.get("prefix") || "";
+  if (prefix && !isMediaFolder(prefix)) return json({ error: "invalid_folder" }, 400);
+  const query = (url.searchParams.get("q") || "").trim().toLowerCase().slice(0, 80);
+  const onlyOrphans = url.searchParams.get("orphans") === "1";
+
+  const published = await readPublished(env);
+  if (!published.ok) return json({ error: published.error }, contentStatus(published.error));
+  const usage = fileUsage(published.catalog);
+
+  const index = await readFileIndex(env, url.searchParams.get("fresh") === "1");
+  if (!index.ok) return json({ error: index.error }, contentStatus(index.error));
+
+  type FolderSummary = {
+    prefix: string;
+    files: number;
+    bytes: number;
+    orphans: number;
+    orphanBytes: number;
+  };
+  const folders = new Map<string, FolderSummary>();
+  const entries: Array<{
+    key: string;
+    size: number;
+    uploaded: number;
+    usedBy: FileUsage[];
+    orphan: boolean;
+  }> = [];
+  const orphanKeys: string[] = [];
+  let totalBytes = 0;
+  let orphanFiles = 0;
+  let orphanBytesAll = 0;
+
+  for (const [key, entry] of index.objects) {
+    const folder = key.split("/")[0] || "";
+    const summary =
+      folders.get(folder) ||
+      { prefix: folder, files: 0, bytes: 0, orphans: 0, orphanBytes: 0 };
+    summary.files += 1;
+    summary.bytes += entry.size;
+    totalBytes += entry.size;
+
+    const usedBy = usage.get(key) || [];
+    const orphan = usedBy.length === 0;
+    if (orphan) {
+      summary.orphans += 1;
+      summary.orphanBytes += entry.size;
+      orphanFiles += 1;
+      orphanBytesAll += entry.size;
+      if (orphanKeys.length < MEDIA_ORPHAN_LIMIT) orphanKeys.push(key);
+    }
+    folders.set(folder, summary);
+
+    if (prefix && folder !== prefix) continue;
+    if (query && !key.toLowerCase().includes(query)) continue;
+    if (onlyOrphans && !orphan) continue;
+    entries.push({ key, size: entry.size, uploaded: entry.uploaded, usedBy, orphan });
+  }
+
+  entries.sort((a, b) => a.key.localeCompare(b.key));
+  const total = entries.length;
+  const shown = entries.slice(0, MEDIA_ENTRY_LIMIT);
+
+  const missing: Array<{ kind: ContentKind; id: string; name: string; path: string }> = [];
+  let missingTotal = 0;
+  const checkFile = (kind: ContentKind, id: string, name: string, path: string) => {
+    if (!path || index.objects.has(path)) return;
+    missingTotal += 1;
+    if (missing.length < MEDIA_MISSING_LIMIT) missing.push({ kind, id, name, path });
+  };
+  for (const scene of published.catalog.scenes) {
+    for (const path of filesOf("scenes", scene)) checkFile("scenes", scene.id, scene.name, path);
+  }
+  for (const sound of published.catalog.sounds) {
+    for (const path of filesOf("sounds", sound)) checkFile("sounds", sound.id, sound.name, path);
+  }
+  for (const mood of ["lofi", "jazz", "relax"] as const) {
+    for (const track of published.catalog.tracks[mood]) {
+      for (const path of filesOf("tracks", track)) {
+        checkFile("tracks", track.id, track.title, path);
+      }
+    }
+  }
+
+  return json({
+    ok: true,
+    version: published.version,
+    summary: {
+      files: index.objects.size,
+      bytes: totalBytes,
+      orphans: orphanFiles,
+      orphanBytes: orphanBytesAll,
+      missing: missingTotal,
+      partial: index.partial,
+    },
+    folders: [...folders.values()].sort((a, b) => a.prefix.localeCompare(b.prefix)),
+    entries: shown,
+    total,
+    truncated: total > shown.length,
+    orphanKeys,
+    missing,
+  });
+}
+
+async function uploadMedia(
+  request: Request,
+  env: AdminEnv,
+  email: string,
+): Promise<Response> {
+  const url = new URL(request.url);
+  const folder = url.searchParams.get("folder") || "";
+  if (!isMediaFolder(folder)) return json({ error: "invalid_folder" }, 400);
+  const name = url.searchParams.get("name") || "";
+  const cleaned = sanitizeFileName(name);
+  if (!cleaned.ext || !folderAccepts(folder, cleaned.ext)) {
+    return json({ error: "unsupported_type" }, 415);
+  }
+  if (!env.R2 || typeof env.R2.put !== "function") {
+    return json({ error: "missing_binding" }, 500);
+  }
+
+  const declaredRaw = request.headers.get("content-length");
+  const declared = declaredRaw === null ? NaN : Number(declaredRaw);
+  if (Number.isFinite(declared) && declared > FILE_MAX_BYTES) {
+    return json({ error: "too_large" }, 413);
+  }
+
+  // Danh sách tươi trước khi đặt tên: không bao giờ ghi đè file vừa được thêm.
+  const index = await readFileIndex(env, true);
+  if (!index.ok) return json({ error: index.error }, contentStatus(index.error));
+  const key = pickFreeKey(`${folder}/${cleaned.base}${cleaned.ext}`, new Set(index.objects.keys()));
+
+  let payload: ArrayBuffer | ReadableStream<Uint8Array>;
+  let size: number;
+  if (request.body && Number.isFinite(declared) && declared > 0) {
+    payload = request.body;
+    size = declared;
+  } else {
+    const buffer = await request.arrayBuffer();
+    if (buffer.byteLength === 0) return json({ error: "invalid_body" }, 400);
+    if (buffer.byteLength > FILE_MAX_BYTES) return json({ error: "too_large" }, 413);
+    payload = buffer;
+    size = buffer.byteLength;
+  }
+
+  const contentType = contentTypeFor(cleaned.ext);
+  if (
+    !(await logAudit(env, {
+      actorEmail: email,
+      action: "content.media.upload",
+      target: key,
+      detail: { key, size, contentType },
+    }))
+  ) {
+    return json({ error: "audit_failed" }, 500);
+  }
+
+  try {
+    await env.R2.put(key, payload, {
+      httpMetadata: {
+        contentType,
+        cacheControl: "public, max-age=31536000, immutable",
+      },
+    });
+  } catch {
+    return json({ error: "r2_write_failed" }, 500);
+  }
+  fileIndexCache = null;
+  return json({ ok: true, key, size, contentType });
+}
+
+async function deleteMedia(
+  request: Request,
+  env: AdminEnv,
+  email: string,
+): Promise<Response> {
+  const url = new URL(request.url);
+  const key = (url.searchParams.get("key") || "").trim();
+  if (!isSafeRelPath(key) || !isMediaFolder(key.split("/")[0])) {
+    return json({ error: "invalid_key" }, 400);
+  }
+  if (!env.R2 || typeof env.R2.delete !== "function") {
+    return json({ error: "missing_binding" }, 500);
+  }
+
+  const published = await readPublished(env);
+  if (!published.ok) return json({ error: published.error }, contentStatus(published.error));
+  const usedBy = fileUsage(published.catalog).get(key) || [];
+  if (usedBy.length > 0) {
+    return json({ error: "media_in_use", usedBy }, 409);
+  }
+
+  const index = await readFileIndex(env);
+  if (index.ok && !index.objects.has(key)) return json({ error: "not_found" }, 404);
+
+  if (
+    !(await logAudit(env, {
+      actorEmail: email,
+      action: "content.media.delete",
+      target: key,
+      detail: { key, size: index.ok ? index.objects.get(key)?.size || 0 : 0 },
+    }))
+  ) {
+    return json({ error: "audit_failed" }, 500);
+  }
+
+  try {
+    await env.R2.delete(key);
+  } catch {
+    return json({ error: "r2_error" }, 500);
+  }
+  fileIndexCache = null;
+  return json({ ok: true, key });
+}
+
+async function pruneMedia(
+  request: Request,
+  env: AdminEnv,
+  email: string,
+): Promise<Response> {
+  const body = await readJsonBody(request);
+  const raw = body?.keys;
+  if (!Array.isArray(raw) || raw.length === 0) return json({ error: "invalid_body" }, 400);
+  if (raw.length > MEDIA_PRUNE_LIMIT) return json({ error: "too_many_keys" }, 400);
+  if (!env.R2 || typeof env.R2.delete !== "function") {
+    return json({ error: "missing_binding" }, 500);
+  }
+
+  const published = await readPublished(env);
+  if (!published.ok) return json({ error: published.error }, contentStatus(published.error));
+  const usage = fileUsage(published.catalog);
+  const index = await readFileIndex(env);
+
+  const keys: string[] = [];
+  let skipped = 0;
+  let bytes = 0;
+  for (const value of new Set(raw)) {
+    if (
+      typeof value !== "string" ||
+      !isSafeRelPath(value) ||
+      !isMediaFolder(value.split("/")[0]) ||
+      (usage.get(value) || []).length > 0 ||
+      (index.ok && !index.objects.has(value))
+    ) {
+      skipped += 1;
+      continue;
+    }
+    keys.push(value);
+    bytes += index.ok ? index.objects.get(value)?.size || 0 : 0;
+  }
+
+  if (keys.length === 0) return json({ ok: true, deleted: 0, skipped, freed: 0 });
+
+  if (
+    !(await logAudit(env, {
+      actorEmail: email,
+      action: "content.media.prune",
+      target: "media",
+      detail: { count: keys.length, bytes, keys: keys.slice(0, 20) },
+    }))
+  ) {
+    return json({ error: "audit_failed" }, 500);
+  }
+
+  try {
+    await env.R2.delete(keys);
+  } catch {
+    return json({ error: "r2_error" }, 500);
+  }
+  fileIndexCache = null;
+  return json({ ok: true, deleted: keys.length, skipped, freed: bytes });
 }

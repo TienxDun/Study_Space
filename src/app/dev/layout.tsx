@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { AdminThemeProvider } from "@/components/admin/AdminThemeContext";
 
 /** Ẩn lớp splash tĩnh của trang chủ (root layout luôn render nó).
  *  Dưới 640px lớp này phủ kín màn hình và chỉ MobileSplashScreen mới gỡ,
@@ -9,9 +8,9 @@ const HIDE_PRE_SPLASH = `#pre-splash{display:none}`;
 
 export default function DevLayout({ children }: { children: ReactNode }) {
   return (
-    <AdminThemeProvider>
+    <>
       <style dangerouslySetInnerHTML={{ __html: HIDE_PRE_SPLASH }} />
       {children}
-    </AdminThemeProvider>
+    </>
   );
 }

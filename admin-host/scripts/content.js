@@ -17,10 +17,17 @@
     rate_limited: "bạn vừa lưu quá nhiều lần, chờ một phút rồi thử lại",
     version_conflict: "có người vừa lưu trước, tải lại trang rồi thử lại",
     already_initialized: "kho đã có bản phát hành",
-    missing_binding: "Worker chưa nối D1",
+    missing_binding: "Worker chưa nối D1/R2",
     d1_error: "lỗi cơ sở dữ liệu",
     r2_error: "không đọc được kho tệp",
-    not_found: "không tìm thấy mục này"
+    r2_write_failed: "không ghi được tệp lên kho",
+    not_found: "không tìm thấy mục này",
+    invalid_folder: "thư mục không hợp lệ",
+    invalid_key: "đường dẫn tệp không hợp lệ",
+    unsupported_type: "định dạng tệp không được hỗ trợ",
+    too_large: "tệp vượt quá 50 MB",
+    too_many_keys: "chọn quá nhiều tệp trong một lần",
+    media_in_use: "tệp vẫn còn mục đang dùng"
   };
 
   var CATEGORY_LABELS = {
@@ -263,16 +270,24 @@
   var FIELD = {};
   [
     "scene-name", "scene-category", "scene-type", "scene-badge", "scene-media", "scene-thumb",
+    "scene-media-pick", "scene-media-file", "scene-media-progress",
+    "scene-thumb-pick", "scene-thumb-file", "scene-thumb-progress",
     "scene-description", "scene-tags", "scene-hidden", "scene-form", "scene-form-title",
     "scene-form-note", "scene-form-hint", "scene-save", "scene-cancel", "scene-preview",
     "scene-search", "scene-filter", "scene-add", "scene-rows",
     "sound-name", "sound-category", "sound-icon", "sound-audio", "sound-hidden", "sound-form",
+    "sound-audio-pick", "sound-audio-file", "sound-audio-progress",
     "sound-form-title", "sound-form-note", "sound-form-hint", "sound-save", "sound-cancel",
     "sound-preview", "sound-search", "sound-add", "sound-rows",
     "track-title", "track-artist", "track-genre", "track-mood", "track-audio", "track-cover",
+    "track-audio-pick", "track-audio-file", "track-audio-progress",
+    "track-cover-pick", "track-cover-file", "track-cover-progress",
     "track-hidden", "track-form", "track-form-title", "track-form-note", "track-form-hint",
     "track-save", "track-cancel", "track-preview", "track-search", "track-filter", "track-add",
-    "track-rows"
+    "track-rows",
+    "tab-files", "pane-files", "files-folder", "files-search", "files-orphans", "files-refresh",
+    "files-summary", "files-rows", "files-prune", "files-note", "files-missing-block",
+    "files-missing-list", "count-files"
   ].forEach(function (id) {
     FIELD[id] = document.getElementById(id);
   });
@@ -623,10 +638,22 @@
   function openForm(kind, item) {
     var spec = SPECS[kind];
     var editor = editors[kind];
-    if (editor.open && formDirty(kind) && !window.confirm("Bỏ các thay đổi chưa lưu của " + spec.noun + " đang sửa?")) {
+    if (editor.open && formDirty(kind)) {
+      AdminDialog.confirm({
+        title: "Bỏ thay đổi chưa lưu?",
+        description: "Biểu mẫu " + spec.noun + " đang sửa còn thay đổi chưa lưu. Mở mục khác sẽ bỏ các thay đổi này.",
+        confirmLabel: "Bỏ và mở"
+      }).then(function (ok) {
+        if (ok) fillForm(kind, item);
+      });
       return;
     }
+    fillForm(kind, item);
+  }
 
+  function fillForm(kind, item) {
+    var spec = SPECS[kind];
+    var editor = editors[kind];
     spec.fill(item || {});
     editor.id = item && item.id ? item.id : "";
     editor.open = true;
@@ -658,9 +685,19 @@
   }
 
   function requestClose(kind) {
+    if (!formDirty(kind)) {
+      closeForm(kind);
+      return;
+    }
     var spec = SPECS[kind];
-    if (formDirty(kind) && !window.confirm("Bỏ các thay đổi chưa lưu của " + spec.noun + "?")) return;
-    closeForm(kind);
+    AdminDialog.confirm({
+      title: "Bỏ thay đổi chưa lưu?",
+      description: "Biểu mẫu " + spec.noun + " có thay đổi chưa lưu. Đóng biểu mẫu và bỏ các thay đổi này?",
+      confirmLabel: "Bỏ thay đổi",
+      tone: "danger"
+    }).then(function (ok) {
+      if (ok) closeForm(kind);
+    });
   }
 
   function save(kind) {
@@ -703,12 +740,21 @@
   }
 
   function removeItem(kind, item) {
-    var spec = SPECS[kind];
     if (busy) return;
-    if (!window.confirm("Xóa " + spec.noun + " “" + spec.title(item) + "” khỏi danh sách?\nFile trong kho vẫn giữ nguyên vì có thể dùng chung.")) {
-      return;
-    }
+    var spec = SPECS[kind];
+    AdminDialog.confirm({
+      title: "Xóa " + spec.noun + " khỏi danh sách?",
+      description:
+        "“" + spec.title(item) + "” sẽ biến mất khỏi ứng dụng ở bản phát hành mới. File trong kho vẫn giữ nguyên vì có thể dùng chung.",
+      confirmLabel: "Xóa khỏi danh sách",
+      tone: "danger"
+    }).then(function (ok) {
+      if (ok) deleteItem(kind, item);
+    });
+  }
 
+  function deleteItem(kind, item) {
+    if (busy) return;
     setBusy(true);
     call("/items?kind=" + kind + "&id=" + encodeURIComponent(item.id), { method: "DELETE" })
       .then(function (res) {
@@ -724,6 +770,323 @@
       .catch(function (err) {
         setBusy(false);
         setNote(noteEl, err.message || "Không xóa được.", "error");
+      });
+  }
+
+  // ---------- Tải tệp lên kho ----------
+
+  var UPLOADS = [
+    { id: "scene-media", folder: "scenes", save: "scene-save" },
+    { id: "scene-thumb", folder: "thumbnails", save: "scene-save" },
+    { id: "sound-audio", folder: "sounds", save: "sound-save" },
+    { id: "track-audio", folder: "musics", save: "track-save" },
+    { id: "track-cover", folder: "authors", save: "track-save" }
+  ];
+
+  function setUpload(progress, pct, visible, label) {
+    if (!progress) return;
+    progress.hidden = !visible;
+    var bar = progress.querySelector("span");
+    if (bar) bar.style.width = Math.max(0, Math.min(100, pct)) + "%";
+    if (label) progress.setAttribute("data-label", label);
+    else progress.removeAttribute("data-label");
+  }
+
+  function uploadFile(spec, file) {
+    if (busy || !file) return;
+    var input = FIELD[spec.id];
+    var fileInput = FIELD[spec.id + "-file"];
+    var progress = FIELD[spec.id + "-progress"];
+    var saveBtn = FIELD[spec.save];
+    var pickBtn = FIELD[spec.id + "-pick"];
+    setUpload(progress, 0, true, "Đang tải " + file.name + "…");
+    setNote(noteEl, "");
+    setBusy(true);
+    if (saveBtn) saveBtn.disabled = true;
+    if (pickBtn) pickBtn.disabled = true;
+
+    var xhr = new XMLHttpRequest();
+    xhr.open(
+      "POST",
+      API + "/media?folder=" + encodeURIComponent(spec.folder) + "&name=" + encodeURIComponent(file.name)
+    );
+    xhr.upload.onprogress = function (event) {
+      if (!event.lengthComputable) return;
+      setUpload(progress, Math.round((event.loaded / event.total) * 100), true);
+    };
+    xhr.onload = function () {
+      var data = {};
+      try {
+        data = JSON.parse(xhr.responseText || "{}");
+      } catch {
+        data = {};
+      }
+      if (xhr.status >= 200 && xhr.status < 300 && data.ok === true) {
+        input.value = data.key;
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        setUpload(progress, 100, true, "Đã tải " + fmtBytes(data.size));
+        setNote(noteEl, "Đã tải " + data.key + " lên kho. Bấm Lưu để dùng tệp này.", "ok");
+      } else {
+        setUpload(progress, 0, false);
+        setNote(noteEl, "Tải tệp thất bại: " + errorText(data.error, data.errors), "error");
+      }
+      setBusy(false);
+      if (saveBtn) saveBtn.disabled = false;
+      if (pickBtn) pickBtn.disabled = false;
+      if (fileInput) fileInput.value = "";
+    };
+    xhr.onerror = function () {
+      setUpload(progress, 0, false);
+      setNote(noteEl, "Tải tệp thất bại: mất kết nối tới máy chủ.", "error");
+      setBusy(false);
+      if (saveBtn) saveBtn.disabled = false;
+      if (pickBtn) pickBtn.disabled = false;
+      if (fileInput) fileInput.value = "";
+    };
+    xhr.send(file);
+  }
+
+  // ---------- Kho tệp (P2d) ----------
+
+  var KIND_LABELS = { scenes: "cảnh", sounds: "âm thanh", tracks: "nhạc" };
+
+  function fileStateChip(entry) {
+    return el("span", "content-status " + (entry.orphan ? "is-orphan" : "is-ok"), entry.orphan ? "Mồ côi" : "Đang dùng");
+  }
+
+  function renderFiles(data) {
+    var summary = data.summary || {};
+    var folders = Array.isArray(data.folders) ? data.folders : [];
+    var entries = Array.isArray(data.entries) ? data.entries : [];
+    var missing = Array.isArray(data.missing) ? data.missing : [];
+
+    FIELD["count-files"].textContent = summary.files ? String(summary.files) : "0";
+    var text =
+      (summary.files || 0) + " tệp · " + fmtBytes(summary.bytes) +
+      " · " + (summary.orphans || 0) + " mồ côi (" + fmtBytes(summary.orphanBytes) + ")" +
+      " · " + (summary.missing || 0) + " tệp thiếu";
+    if (summary.partial) text += " · danh sách có thể chưa đầy đủ";
+    if (data.truncated) text += " · chỉ hiện " + entries.length + "/" + data.total + " tệp";
+    FIELD["files-summary"].textContent = text;
+
+    var byFolder = folders
+      .filter(function (folder) { return folder.files > 0; })
+      .map(function (folder) {
+        return folder.prefix + "/: " + folder.files + " tệp · " + fmtBytes(folder.bytes) +
+          (folder.orphans ? " · " + folder.orphans + " mồ côi" : "");
+      })
+      .join("   |   ");
+    if (byFolder) FIELD["files-summary"].textContent += "  —  " + byFolder;
+
+    var body = FIELD["files-rows"];
+    body.textContent = "";
+    entries.forEach(function (entry) {
+      var row = el("tr");
+
+      var keyCell = el("td");
+      keyCell.appendChild(el("div", "files-key", entry.key));
+
+      var sizeCell = el("td", "files-size", fmtBytes(entry.size));
+      var dateCell = el("td", "files-date", entry.uploaded ? fmtTime(entry.uploaded) : "--");
+
+      var usedCell = el("td");
+      if (entry.usedBy && entry.usedBy.length) {
+        entry.usedBy.slice(0, 3).forEach(function (use) {
+          usedCell.appendChild(
+            el("div", "files-use", (use.name || use.id) + " · " + (KIND_LABELS[use.kind] || use.kind))
+          );
+        });
+        if (entry.usedBy.length > 3) {
+          usedCell.appendChild(el("div", "files-use", "… và " + (entry.usedBy.length - 3) + " mục khác"));
+        }
+      } else {
+        usedCell.appendChild(el("span", "content-cell-sub", "Không mục nào"));
+      }
+
+      var statusCellNode = el("td");
+      statusCellNode.appendChild(fileStateChip(entry));
+
+      var actionCell = el("td");
+      var box = el("div", "content-row-actions");
+      var open = el("a", "btn-ghost files-open", "Mở");
+      open.href = mediaUrl(entry.key);
+      open.target = "_blank";
+      open.rel = "noopener";
+      open.setAttribute("referrerpolicy", "origin");
+      var remove = el("button", "btn-ghost", "Xóa");
+      remove.type = "button";
+      remove.disabled = !entry.orphan;
+      remove.title = entry.orphan
+        ? "Xóa vĩnh viễn tệp này khỏi kho"
+        : "Tệp đang được mục khác dùng nên không xóa được";
+      remove.addEventListener("click", function () {
+        deleteFile(entry.key);
+      });
+      box.appendChild(open);
+      box.appendChild(remove);
+      actionCell.appendChild(box);
+
+      row.appendChild(keyCell);
+      row.appendChild(sizeCell);
+      row.appendChild(dateCell);
+      row.appendChild(usedCell);
+      row.appendChild(statusCellNode);
+      row.appendChild(actionCell);
+      body.appendChild(row);
+    });
+
+    if (!entries.length) {
+      var empty = el("tr");
+      var cell = el("td", null, "Không có tệp nào khớp bộ lọc.");
+      cell.colSpan = 6;
+      empty.appendChild(cell);
+      body.appendChild(empty);
+    }
+
+    var orphans = Array.isArray(data.orphanKeys) ? data.orphanKeys : [];
+    var prune = FIELD["files-prune"];
+    prune.disabled = orphans.length === 0;
+    prune.textContent = orphans.length
+      ? "Dọn " + orphans.length + " tệp mồ côi"
+      : "Dọn tệp mồ côi";
+
+    var block = FIELD["files-missing-block"];
+    var list = FIELD["files-missing-list"];
+    list.textContent = "";
+    block.hidden = missing.length === 0;
+    missing.forEach(function (item) {
+      var row = el("div", "files-missing-row");
+      row.appendChild(el("span", "files-key", item.path));
+      row.appendChild(
+        el("span", "content-cell-sub", (item.name || item.id) + " · " + (KIND_LABELS[item.kind] || item.kind))
+      );
+      list.appendChild(row);
+    });
+  }
+
+  var filesLoading = false;
+
+  function loadFiles(force) {
+    if (filesLoading) return Promise.resolve();
+    filesLoading = true;
+    var params = [];
+    var folder = FIELD["files-folder"].value;
+    var query = FIELD["files-search"].value.trim();
+    if (folder) params.push("prefix=" + encodeURIComponent(folder));
+    if (query) params.push("q=" + encodeURIComponent(query));
+    if (FIELD["files-orphans"].checked) params.push("orphans=1");
+    if (force) params.push("fresh=1");
+    FIELD["files-summary"].textContent = "Đang đọc kho tệp…";
+
+    return call("/media" + (params.length ? "?" + params.join("&") : ""))
+      .then(function (res) {
+        if (!res.ok || res.data.ok !== true) {
+          throw new Error(errorText(res.data.error));
+        }
+        renderFiles(res.data);
+      })
+      .catch(function (err) {
+        FIELD["files-rows"].textContent = "";
+        var row = el("tr");
+        var cell = el("td", null, err.message || "Không đọc được kho tệp.");
+        cell.colSpan = 6;
+        row.appendChild(cell);
+        FIELD["files-rows"].appendChild(row);
+        FIELD["files-summary"].textContent = "Không đọc được kho tệp.";
+        setNote(FIELD["files-note"], err.message || "Không đọc được kho tệp.", "error");
+      })
+      .then(function () {
+        filesLoading = false;
+      });
+  }
+
+  function reloadActiveKind() {
+    return SPECS[active] ? reloadKind(active) : Promise.resolve();
+  }
+
+  function deleteFile(key) {
+    if (busy) return;
+    AdminDialog.prompt({
+      title: "Xóa tệp khỏi kho?",
+      description: "Xóa vĩnh viễn tệp này, không hoàn tác được. Gõ đúng tên tệp để bật nút xóa.",
+      detail: key,
+      inputLabel: "Tên tệp",
+      placeholder: "Gõ đúng đường dẫn ở trên",
+      inputHint: "Phải khớp chính xác từng ký tự.",
+      required: key,
+      confirmLabel: "Xóa vĩnh viễn",
+      tone: "danger"
+    }).then(function (typed) {
+      if (typed !== null) removeFile(key);
+    });
+  }
+
+  function removeFile(key) {
+    if (busy) return;
+    setNote(FIELD["files-note"], "");
+    setBusy(true);
+    call("/media?key=" + encodeURIComponent(key), { method: "DELETE" })
+      .then(function (res) {
+        if (!res.ok || res.data.ok !== true) {
+          var used = Array.isArray(res.data.usedBy) ? res.data.usedBy : [];
+          var extra = used.length ? " (" + used.length + " mục đang dùng)" : "";
+          throw new Error(errorText(res.data.error) + extra);
+        }
+        setNote(FIELD["files-note"], "Đã xóa " + key + " khỏi kho.", "ok");
+        return reloadActiveKind();
+      })
+      .then(function () {
+        return loadFiles(true);
+      })
+      .catch(function (err) {
+        setNote(FIELD["files-note"], err.message || "Không xóa được tệp.", "error");
+      })
+      .then(function () {
+        setBusy(false);
+      });
+  }
+
+  function pruneFiles() {
+    if (busy) return;
+    setNote(FIELD["files-note"], "");
+    setBusy(true);
+
+    // Hỏi lại máy chủ để lấy đúng danh sách mồ côi tại thời điểm xóa.
+    call("/media?fresh=1")
+      .then(function (res) {
+        if (!res.ok || res.data.ok !== true) throw new Error(errorText(res.data.error));
+        var keys = Array.isArray(res.data.orphanKeys) ? res.data.orphanKeys : [];
+        if (!keys.length) throw new Error("Không còn tệp mồ côi để dọn.");
+        var bytes = res.data.summary ? res.data.summary.orphanBytes : 0;
+        return AdminDialog.confirm({
+          title: "Dọn tệp mồ côi?",
+          description:
+            "Xóa vĩnh viễn " + keys.length + " tệp mồ côi (" + fmtBytes(bytes) + "). Không hoàn tác được.",
+          confirmLabel: "Xóa " + keys.length + " tệp",
+          tone: "danger"
+        }).then(function (ok) {
+          if (!ok) return null;
+          return call("/media/prune", { method: "POST", body: { keys: keys.slice(0, 50) } });
+        });
+      })
+      .then(function (res) {
+        if (!res) return null;
+        if (!res.ok || res.data.ok !== true) throw new Error(errorText(res.data.error));
+        setNote(
+          FIELD["files-note"],
+          "Đã xóa " + res.data.deleted + " tệp mồ côi, giải phóng " + fmtBytes(res.data.freed) +
+            (res.data.skipped ? ", bỏ qua " + res.data.skipped + " tệp đang dùng." : "."),
+          "ok"
+        );
+        return reloadActiveKind().then(function () {
+          return loadFiles(true);
+        });
+      })
+      .catch(function (err) {
+        setNote(FIELD["files-note"], err.message || "Không dọn được tệp mồ côi.", "error");
+      })
+      .then(function () {
+        setBusy(false);
       });
   }
 
@@ -837,12 +1200,19 @@
 
   function rollback(version) {
     if (busy) return;
-    var ok = window.confirm(
-      "Quay lại bản v" + version + "?\nHệ thống sẽ tạo một bản mới cùng nội dung của v" + version +
-        " và phát hành ngay. Lịch sử vẫn giữ đủ các bản cũ."
-    );
-    if (!ok) return;
+    AdminDialog.confirm({
+      title: "Quay lại bản v" + version + "?",
+      description:
+        "Hệ thống sẽ tạo một bản mới cùng nội dung của v" + version +
+        " và phát hành ngay. Lịch sử vẫn giữ đủ các bản cũ.",
+      confirmLabel: "Phát hành bản v" + version
+    }).then(function (ok) {
+      if (ok) applyRollback(version);
+    });
+  }
 
+  function applyRollback(version) {
+    if (busy) return;
     setBusy(true);
     call("/rollback", { method: "POST", body: { version: version } })
       .then(function (res) {
@@ -936,12 +1306,22 @@
     if (active === kind) return;
     var leaving = SPECS[active];
     if (leaving && editors[active].open && formDirty(active)) {
-      if (!window.confirm("Biểu mẫu " + leaving.noun + " còn thay đổi chưa lưu. Rời tab và bỏ các thay đổi này?")) {
-        return;
-      }
-      closeForm(active);
+      AdminDialog.confirm({
+        title: "Rời tab và bỏ thay đổi?",
+        description: "Biểu mẫu " + leaving.noun + " còn thay đổi chưa lưu. Chuyển tab sẽ bỏ các thay đổi này.",
+        confirmLabel: "Rời tab",
+        tone: "danger"
+      }).then(function (ok) {
+        if (!ok) return;
+        closeForm(active);
+        activateTab(kind);
+      });
+      return;
     }
+    activateTab(kind);
+  }
 
+  function activateTab(kind) {
     active = kind;
     tabs.forEach(function (tab) {
       var isActive = tab.getAttribute("data-tab") === kind;
@@ -951,7 +1331,12 @@
     Object.keys(SPECS).forEach(function (key) {
       SPECS[key].pane.hidden = key !== kind;
     });
+    if (FIELD["pane-files"]) FIELD["pane-files"].hidden = kind !== "files";
 
+    if (kind === "files") {
+      loadFiles(false);
+      return;
+    }
     if (!lists[kind]) {
       loadKind(kind).catch(function (err) {
         setNote(noteEl, err.message || "Không đọc được nội dung.", "error");
@@ -998,6 +1383,37 @@
       save(kind);
     });
   });
+
+  UPLOADS.forEach(function (spec) {
+    var pick = FIELD[spec.id + "-pick"];
+    var fileInput = FIELD[spec.id + "-file"];
+    if (!pick || !fileInput) return;
+    pick.addEventListener("click", function () {
+      if (busy) return;
+      fileInput.click();
+    });
+    fileInput.addEventListener("change", function () {
+      var file = fileInput.files && fileInput.files[0];
+      if (file) uploadFile(spec, file);
+    });
+  });
+
+  FIELD["files-folder"].addEventListener("change", function () {
+    loadFiles(false);
+  });
+  FIELD["files-search"].addEventListener(
+    "input",
+    debounce(function () {
+      loadFiles(false);
+    }, 150)
+  );
+  FIELD["files-orphans"].addEventListener("change", function () {
+    loadFiles(false);
+  });
+  FIELD["files-refresh"].addEventListener("click", function () {
+    loadFiles(true);
+  });
+  FIELD["files-prune"].addEventListener("click", pruneFiles);
 
   FIELD["scene-type"].addEventListener("change", function () {
     var isVideo = FIELD["scene-type"].value === "VIDEO";

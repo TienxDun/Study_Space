@@ -1,6 +1,6 @@
 # Kế Hoạch Mở Rộng Admin Console
 
-Trạng thái: P0 đã xong 2026-10-25; P1 xong và đã đối chiếu production 2026-10-26; P2a/P2b/P2c đợt 1 đã xong và deploy production; P2e (báo cáo nội dung & chặn) đã xong toàn bộ và đưa lên production kèm hiệu lực chặn thực tế (2026-11-03). Còn lại: P2c đợt 2 (upload tệp trực tiếp), P2d (dọn dẹp kho R2) và sửa copy "chỉ xem" sai ở shell. Bản 18 — 2026-11-09.
+Trạng thái: P0 đã xong 2026-10-25; P1 xong và đã đối chiếu production 2026-10-26; P2a/P2b/P2c đợt 1 đã xong và deploy production; P2e (báo cáo nội dung & chặn) đã xong toàn bộ và đưa lên production kèm hiệu lực chặn thực tế (2026-11-03); P2c đợt 2 (upload tệp + tab Kho tệp) và P2d (dọn mồ côi hàng loạt, cảnh báo tệp thiếu) code + test xong 2026-11-10, chờ deploy. Còn lại: kiểm upload/sửa/xóa trên production và sửa copy "chỉ xem" sai ở shell. Bản 19 — 2026-11-10.
 Đã chốt: admin chạy trên Cloudflare Workers + Static Assets sau Cloudflare Access. GitHub Actions đã bỏ; web chính deploy bằng Cloudflare Pages.
 
 Chi tiết từng mục viết khi bắt tay làm. P0 đã đóng, runbook ở `docs/archive/ADMIN_P0_PLAN.md`. P1 đã đóng, hồ sơ ở `docs/archive/ADMIN_P1_PLAN.md`. P2 có kế hoạch riêng ở `docs/features/ADMIN_P2_PLAN.md`. Lịch sử thay đổi ở cuối file.
@@ -29,11 +29,11 @@ Token worker chỉ nằm ở env của Worker admin. Trình duyệt không bao g
 
 - Admin đang chạy: shell tĩnh `admin-host/index.html` tại `admin.zenstudy.space/admin/`, gọi `/api/admin/ping`; có sức khỏe và độ trễ 3 worker, chưa có số liệu sử dụng.
 - Shell đã tách theo cấu trúc thư mục (2026-10-30): `index.html` còn ~191 dòng; HTML panel ở `admin-host/panels/`, CSS ở `admin-host/styles/{base,topbar,dashboard,footer,usage,flags,chat,content,reports}.css`, JS ở `admin-host/scripts/{dashboard,chat,content,reports}.js`, favicon ở `admin-host/assets/`. Build `prepare-admin-bundle.mjs` mở rộng `<!-- include: ... -->`, không publish `panels/` và `assets/`.
-- Các trang admin Next (`/admin`, `/dev/studio`) chỉ tồn tại trên máy local; source bị gitignore và bản web đã strip. P0 không publish các trang này. Trang `/admin/chat` local đã xóa 2026-10-27 (thay bằng panel "Trợ lý chat" trong shell).
+- Các trang admin Next cũ (`/admin`, `/dev/studio`) đã xóa (lần lượt 2026-11-03 và 2026-11-10); source dev từng bị gitignore và bản web đã strip. P0 không publish các trang này. Trang `/admin/chat` local đã xóa 2026-10-27 (thay bằng panel "Trợ lý chat" trong shell).
 - Dữ liệu live hiện có: ping 3 worker. LiveKit `/usage` cần `ADMIN_TOKEN`; trang limits local gọi không token nên nhận 401. Phần còn lại là số hardcode hoặc localStorage.
 - `ADMIN_TOKEN` từng được dán tay và lưu `localStorage` ở trang chat local; trang chat không được publish.
 - ~4.700 dòng cho các trang admin cũ; riêng trang chat ~2.000 dòng tự dựng header/theme riêng. P1 không kế thừa phần này.
-- Studio bối cảnh ghi thẳng `src/data/assets` và `public/study` → chỉ chạy trên máy dev.
+- Studio bối cảnh (đã xóa 2026-11-10) từng ghi thẳng `src/data/assets` và `public/study` → chỉ chạy trên máy dev; giờ mọi thay đổi nội dung đi qua shell admin.
 - D1 đã có `chat_usage`, `user_data` và `admin_audit`; code chat-proxy đã ghi D1 và tự lùi về KV khi chưa gắn `DB`, nhưng bản deploy cần gắn binding D1 rồi deploy lại thì `chat_usage` mới có dữ liệu. Lượt gọi/neurons Workers AI không đếm trong hệ thống, xem trên Cloudflare Dashboard.
 - GitHub Actions cũ (`.github/workflows/deploy-pages.yml`) upload nguyên `out/` lên GitHub Pages và đã được xóa ngày 2026-10-25. Web chính hiện deploy bằng Cloudflare Pages theo `docs/deployment/DEPLOY.md`.
 
@@ -46,7 +46,7 @@ Token worker chỉ nằm ở env của Worker admin. Trình duyệt không bao g
 5. UI không hardcode ngưỡng: lấy từ config hoặc từ worker báo về. Bảng tra cứu dài nằm ở `docs/`, sinh từ config.
 6. Ưu tiên đọc dữ liệu có sẵn (D1 `chat_usage`, `user_data`, LiveKit `/rooms`, `/history`). Không thêm bảng nếu cột cũ đủ.
 7. Không thêm dependency. Không dựng dashboard framework.
-8. Nội dung (cảnh/âm thanh) sống ở R2 + manifest D1/KV. Studio ghi file chỉ là công cụ dev, không phải đường vận hành.
+8. Nội dung (cảnh/âm thanh) sống ở R2 + manifest D1/KV. Studio dev (đã xóa) từng là công cụ dev, không phải đường vận hành; giờ shell admin là đường duy nhất.
 
 ## Giai đoạn
 
@@ -58,7 +58,7 @@ Biên bản triển khai và kiểm tra đầy đủ ở `docs/archive/ADMIN_P0_
 2. **Cloudflare Access — xong.** Một application self-hosted cho `admin.zenstudy.space`, policy Allow đúng 1 email admin, One-time PIN, session 24h; email không ghi vào repo. `workers_dev: false` và `preview_urls: false` ghim trong `wrangler.admin.jsonc`; route `*.workers.dev` trả 404. Team domain hiện là `leutiendung.cloudflareaccess.com` — đổi team domain thì phải cập nhật `ACCESS_TEAM_DOMAIN` cùng lúc, nếu không mọi JWT bị 401.
 3. **Worker làm cổng duy nhất — xong.** `wrangler.admin.jsonc` khai `main` → `admin-worker/_worker.ts`, `assets` → `./dist-admin`, `keep_vars: true`, binding `DB` → D1 `zenspace`. `verifyAccessJwt` kiểm `Cf-Access-Jwt-Assertion` (RS256; `aud`/`iss`/`exp`; cache certs 1 giờ) cho mọi `/api/admin/*`, fail closed; path khác đi qua `env.ASSETS.fetch()`. Env Production: `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`, `ADMIN_TOKEN` (Secret), `CHAT_PROXY_URL`, `DATA_API_URL`, `LIVEKIT_URL`. `GET /api/admin/ping` gọi 3 worker song song, timeout 10 giây, trả 200 kèm `checks[].ok` và `Cache-Control: no-store`; không trả token hay URL nội bộ. Local dùng `wrangler dev` + `ENVIRONMENT=development`, chỉ bỏ Access khi host là localhost; Production không đặt biến này.
    - **Đã dọn (2026-10-27):** trang chat local `/admin/chat` (lưu `chat-admin-token` trong localStorage, gọi `/usage` bằng `?token=`) đã xóa; cấu hình chat giờ qua panel "Trợ lý chat" trong shell admin, browser không giữ token.
-4. **Dọn tab — xong.** Đã xóa `/admin/toasts`; Studio cảnh chuyển sang `/dev/studio` (tracked nhưng bị strip khỏi bản web); `/admin/scenes` trả 404. Sinh `docs/guides/SYSTEM_LIMITS.md` cùng `scripts/gen-limits-docs.mjs` chuyển sang P1.
+4. **Dọn tab — xong.** Đã xóa `/admin/toasts`; Studio cảnh chuyển sang `/dev/studio` (tracked nhưng bị strip khỏi bản web); `/admin/scenes` trả 404. Sinh `docs/guides/SYSTEM_LIMITS.md` cùng `scripts/gen-limits-docs.mjs` chuyển sang P1. Trang `/dev/studio` cùng `AdminHeader` cũ và 2 route dev của nó đã xóa 2026-11-10.
 5. **Audit — xong phần nền.** Bảng `admin_audit` + index trong `workers/schema.sql`, đã chạy trên D1 `zenspace`. Helper `logAudit()` đã bỏ ở P1b vì chưa có endpoint ghi nào gọi; dựng lại cùng hành động ghi đầu tiên ở P2.
 6. **Test cổng — xong.** `src/__tests__/unit/admin/` gồm `access-jwt.test.ts` (thiếu header, hết hạn, sai `aud`/`iss`/chữ ký, `alg: none`, kid lạ, certs lỗi, cache, `aud` dạng mảng), `admin-worker.test.ts` (routing, 401, ping, thiếu env, backend lỗi, 405/404, không lộ token) và `audit.test.ts`. `npm run lint`, `npx tsc --noEmit`, `npm test` sạch; `wrangler deploy --dry-run` thấy `env.DB (zenspace)`.
 
@@ -85,7 +85,7 @@ Kế hoạch chi tiết, chia bước nhỏ và thứ tự deploy ở [`docs/fea
     - Endpoint ghi đầu tiên: `POST /api/admin/flags` sau Access JWT, validate, ghi `admin_audit` trước khi `put` KV, đọc có cache ngắn. Bảng `admin_audit` + index đã có sẵn; helper `logAudit` đã bị xóa ở P1b nên phải dựng lại cùng endpoint này.
     - Cả trang admin và app phải thấy cờ mới trong vài chục giây, không cần deploy lại worker.
 12. **Chat**: chain, provider, prompt — xây UI mới trên shell hoặc giữ local; dùng lại API hiện có, không bê nguyên trang Next cũ; mọi thay đổi ghi audit.
-13. **Nội dung runtime**: manifest cảnh/âm thanh trong D1 (hoặc KV), media trên R2, có version + rollback. Studio dev chỉ để thử trước khi đẩy; không ghi file trên máy chủ production.
+13. **Nội dung runtime**: manifest cảnh/âm thanh trong D1 (hoặc KV), media trên R2, có version + rollback. Mọi thao tác nội dung trong shell admin (thêm/sửa/xóa mục + upload/xóa tệp); không ghi file trên máy chủ production.
 14. **Kho R2**: manifest cảnh/âm thanh, file mồ côi/thiếu, xóa có xác nhận. P1 chỉ hiển thị dung lượng và số object.
 15. **Báo cáo nội dung & chặn (P2e)**: hộp thư báo cáo AI/phòng học, xử lý, hạn chế tài khoản — phục vụ chính sách AI-Generated Content và UGC của Google Play. Chi tiết ở [`ADMIN_P2_PLAN.md`](./ADMIN_P2_PLAN.md) (P2e) và [`P0_5_REPORTING_PLAN.md`](./P0_5_REPORTING_PLAN.md). **Làm trước P2d vì chặn nộp Play.**
 
@@ -97,7 +97,7 @@ Kế hoạch chi tiết, chia bước nhỏ và thứ tự deploy ở [`docs/fea
 
 ## Thứ tự đề nghị
 
-P0 (xong 2026-10-25) → P1a → P1b → P1c → P2.11 → P2.12 → P2c đợt 1 (xong) → P2e (xong) → P2c đợt 2 / P2d → phần còn lại theo nhu cầu thật.
+P0 (xong 2026-10-25) → P1a → P1b → P1c → P2.11 → P2.12 → P2c đợt 1 (xong) → P2e (xong) → P2c đợt 2 + P2d (code xong 2026-11-10) → phần còn lại theo nhu cầu thật.
 
 Lý do: chặn lộ trước; thấy hệ thống trước khi sửa; cờ là cách chặn sự cố rẻ nhất; P2e trước P2d vì là điều kiện nộp Google Play.
 
@@ -154,3 +154,5 @@ P1 có mục kiểm chứng riêng trong `docs/archive/ADMIN_P1_PLAN.md`.
 - **Bản 16** (2026-10-30): tách tiếp `admin.css` 859 dòng thành `admin.css` (nền, 147), `admin-topbar.css` (248), `admin-dashboard.css` (316), `admin-footer.css` (145); giữ 5 file CSS panel. Tổng 9 file CSS, mỗi file dưới 320 dòng; build + local kiểm style/metadata OK, không lỗi console.
 - **Bản 17** (2026-10-30): sắp xếp lại `admin-host/` thành `assets/`, `panels/`, `styles/`, `scripts/`; đổi tên `admin.css` → `styles/base.css`, `admin-chat.js` → `scripts/chat.js`…; cập nhật index, build favicon (copy cả `/admin/favicon.svg`), test DOM. Build + local 9 CSS/4 JS tải 200, không lỗi console.
 - **Bản 18** (2026-11-09): rà tiến độ theo production — P2a, P2b, P2c đợt 1 và P2e đã đóng và lên production; P2.0 đóng mục 0.1, mục 0.2 còn nợ khử trùng ở `chat-proxy`; P2a còn nhánh hạn mức 30 → 35 (chưa có người dùng chạm mức); P2c còn đợt 2 (upload + tab Kho tệp) và bước kiểm sửa/xóa/rollback trên production; P2d và P3 chưa bắt đầu.
+- **Bản 19** (2026-11-10): P2c đợt 2 + P2d code + test xong — upload tệp trực tiếp từ biểu mẫu (thanh tiến trình, ≤ 50 MB, không ghi đè), tab thứ tư "Kho tệp" (đang dùng bởi, mồ côi, tệp thiếu, xóa phải gõ đúng tên, dọn mồ côi hàng loạt). Shell không còn phụ thuộc `/dev/studio` để thêm nội dung. Chưa deploy; còn bước kiểm trên production và copy "chỉ xem".
+- **Bản 20** (2026-11-10): xóa `/dev/studio` cùng code chỉ studio dùng (2 route dev, `AdminHeader`/`AdminThemeContext` cũ, test `admin-header`), gỡ nút mở studio trong bộ chọn cảnh, cập nhật copy hạn mức sang tab Nội dung + Kho tệp. Còn 2 trang thử `/dev/surface-lab` và `/dev/toasts`.

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef, useMemo, useEffect } from "react";
-import Link from "next/link";
 import {
   XIcon,
   SparkleIcon,
@@ -512,18 +511,6 @@ export const SceneSelectorWidget = ({
                 </button>
               )}
             </div>
-          )}
-
-          {/* Nút Mở Studio Quản lý Background (Chỉ hiện ở môi trường Local Development) */}
-          {process.env.NODE_ENV === "development" && (
-            <Link
-              href="/dev/studio/"
-              target="_blank"
-              className="w-8.5 h-8.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 border border-white/10 hover:border-white/20 flex items-center justify-center text-indigo-400 hover:text-indigo-300 transition-all shrink-0 shadow-xs"
-              title="Mở Studio quản lý bối cảnh"
-            >
-              <SparkleIcon className="w-4 h-4" />
-            </Link>
           )}
         </div>
       </div>

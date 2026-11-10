@@ -1,7 +1,7 @@
 # Hạn mức hệ thống ZenStudy
 
 > Sinh tự động từ `src/data/admin/hit-limits.ts` — đừng sửa tay. Chạy `npm run gen:limits` sau khi đổi hạn mức.
-> Cập nhật: 2026-10-26 · 16 mục.
+> Cập nhật: 2026-11-10 · 16 mục.
 
 ## Tổng quan
 
@@ -155,11 +155,11 @@
 - **Dấu hiệu chạm trần:** Vượt quá 10 GB: Bị chặn upload file mới nếu tài khoản chưa add thẻ thanh toán, hoặc tính phí $0.015 / GB-tháng nếu đã liên kết thẻ.
 - **Mã lỗi:** `HTTP 413 / Insufficient Storage`
 - **Cơ chế dự phòng:** Client ZenStudy tích hợp cơ chế dự phòng ảnh tĩnh cục bộ nếu file video từ R2 gặp sự cố kết nối mạng.
-- **Cách xử lý:** Khuyến nghị video tối đa 35-50MB (chuẩn H.264/WebM 1080p 24fps), ảnh nền tối đa 3MB. Dùng Studio /dev/studio để xóa bỏ cảnh thừa.
+- **Cách xử lý:** Khuyến nghị video tối đa 35-50MB (chuẩn H.264/WebM 1080p 24fps), ảnh nền tối đa 3MB. Dùng tab Kho tệp trong admin để xóa bỏ cảnh thừa.
 - **Chu kỳ reset:** Lũy kế theo chu kỳ tháng
 - **Tài liệu:** https://developers.cloudflare.com/r2/pricing/
 - **Các bước kiểm tra:**
-  1. Vào /dev/studio kiểm tra danh sách cảnh hiện có.
+  1. Vào tab Nội dung trong admin để kiểm tra danh sách cảnh hiện có.
   2. Xóa các cảnh chất lượng kém hoặc không dùng để giải phóng dung lượng R2.
   3. Nén video bằng Handbrake hoặc ffmpeg trước khi tải lên.
 
@@ -172,7 +172,7 @@
 - **Dấu hiệu chạm trần:** Vượt quá hạn mức: Script sync-r2 báo lỗi nếu tài khoản bị khóa thao tác ghi hoặc tính phụ phí $4.50/triệu Class A.
 - **Mã lỗi:** `HTTP 429 / Operation Limit Exceeded`
 - **Cơ chế dự phòng:** Script scripts/sync-r2.mjs sử dụng HeadObjectCommand để so sánh kích thước file và chỉ tải lên (PutObject) file mới, tiết kiệm 95% thao tác Class A.
-- **Cách xử lý:** Chỉ bấm nút 'Đẩy ảnh mới lên kho mạng' trong /dev/studio khi thực sự có cảnh mới được thêm vào.
+- **Cách xử lý:** Chỉ tải cảnh mới lên kho qua tab Nội dung trong admin khi thực sự cần; muốn đẩy cả loạt ảnh có sẵn thì dùng `npm run sync:r2`.
 - **Chu kỳ reset:** Reset ngày đầu tiên hàng tháng
 - **Tài liệu:** https://developers.cloudflare.com/r2/pricing/
 - **Các bước kiểm tra:**

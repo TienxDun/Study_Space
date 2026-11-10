@@ -141,7 +141,7 @@ async function main() {
   // File thieu tren R2 = co o may nhung chua co tren R2
   const missing = localKeys.filter((k) => !r2Set.has(k));
 
-  console.log("\n=== FILE THUA TREN R2 (xoa o studio roi, R2 van giu) ===");
+  console.log("\n=== FILE THUA TREN R2 (xoa o admin roi, R2 van giu) ===");
   if (orphans.length === 0) console.log("Khong co. R2 sach.");
   else orphans.forEach((k) => console.log(" - " + k));
 

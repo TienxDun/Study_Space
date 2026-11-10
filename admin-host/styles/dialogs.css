@@ -1,0 +1,175 @@
+/* ---------- Hộp thoại xác nhận dùng chung ---------- */
+
+.admin-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.admin-dialog[hidden] {
+  display: none;
+}
+
+.admin-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 6, 11, 0.72);
+  backdrop-filter: blur(6px);
+  animation: admin-dialog-fade 0.16s ease-out;
+}
+
+.admin-dialog-card {
+  position: relative;
+  width: min(440px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-hover);
+  background: linear-gradient(180deg, rgba(25, 30, 45, 0.98), rgba(14, 17, 26, 0.99));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 24px 60px -12px rgba(0, 0, 0, 0.72);
+  animation: admin-dialog-rise 0.18s var(--ease-spring);
+}
+
+.admin-dialog-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-dialog-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: var(--emerald-soft);
+  color: var(--emerald-400);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-dialog-icon.is-danger {
+  border-color: rgba(251, 113, 133, 0.4);
+  background: var(--rose-soft);
+  color: var(--rose-400);
+}
+
+.admin-dialog-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.admin-dialog-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.admin-dialog-desc[hidden],
+.admin-dialog-detail[hidden],
+.admin-dialog-field[hidden] {
+  display: none;
+}
+
+.admin-dialog-detail {
+  display: block;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-nested);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.admin-dialog-field {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-dialog-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.admin-dialog-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.admin-dialog-hint.is-error {
+  color: var(--rose-400);
+}
+
+.admin-dialog-hint.is-ok {
+  color: var(--emerald-400);
+}
+
+.admin-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.admin-dialog-ok.is-danger {
+  background: linear-gradient(180deg, #fb7185 0%, #e11d48 100%);
+  border-color: rgba(244, 63, 94, 0.5);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 16px rgba(244, 63, 94, 0.22);
+}
+
+.admin-dialog-ok.is-danger:hover {
+  background: linear-gradient(180deg, #fda4af 0%, #e11d48 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 24px rgba(244, 63, 94, 0.35);
+}
+
+body.admin-dialog-open {
+  overflow: hidden;
+}
+
+@keyframes admin-dialog-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes admin-dialog-rise {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 480px) {
+  .admin-dialog-actions {
+    flex-direction: column-reverse;
+  }
+  .admin-dialog-actions .btn-ghost,
+  .admin-dialog-actions .btn-primary {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-dialog-backdrop,
+  .admin-dialog-card {
+    animation: none;
+  }
+}

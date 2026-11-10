@@ -130,6 +130,63 @@ function fakeR2(objects: Record<string, number>) {
   return { list: async () => ({ objects: list, truncated: false }) };
 }
 
+/** Bucket ghi được cho các ca upload/xóa: key → dung lượng, có ghi lại thứ tự thao tác. */
+function fakeMediaR2(seed: Record<string, number> = {}) {
+  const store = new Map<string, number>(Object.entries(seed));
+  const events: string[] = [];
+  const r2 = {
+    async list() {
+      return {
+        objects: [...store.entries()].map(([key, size]) => ({
+          key,
+          size,
+          uploaded: new Date(1_700_000_000_000),
+        })),
+        truncated: false,
+      };
+    },
+    async put(key: string, value: unknown, options?: { httpMetadata?: { contentType?: string } }) {
+      const size =
+        typeof value === "string"
+          ? value.length
+          : ArrayBuffer.isView(value)
+            ? value.byteLength
+            : (value as ArrayBuffer)?.byteLength || 0;
+      store.set(key, size);
+      events.push(`put:${key}:${options?.httpMetadata?.contentType || ""}`);
+      return {};
+    },
+    async delete(keys: string | string[]) {
+      for (const key of Array.isArray(keys) ? keys : [keys]) {
+        store.delete(key);
+        events.push(`delete:${key}`);
+      }
+      return {};
+    },
+  };
+  return { r2, store, events };
+}
+
+function mediaRequest(
+  path: string,
+  options: {
+    method?: string;
+    body?: BodyInit | null;
+    headers?: Record<string, string>;
+    auth?: string | null;
+  } = {},
+): Request {
+  const auth = options.auth === undefined ? token : options.auth;
+  return new Request(`https://admin.zenstudy.space/api/admin/content${path}`, {
+    method: options.method ?? "GET",
+    headers: {
+      ...(auth ? { "Cf-Access-Jwt-Assertion": auth } : {}),
+      ...(options.headers || {}),
+    },
+    body: options.body ?? null,
+  });
+}
+
 function contentRequest(
   path: string,
   options: { method?: string; body?: unknown; auth?: string | null } = {},
@@ -523,6 +580,215 @@ describe("content api — lịch sử và quay lại", () => {
     await call(env, "/init", { method: "POST", body: seedBody() });
     expect((await call(env, "/rollback", { method: "POST", body: { version: 9 } })).status).toBe(404);
     expect((await call(env, "/rollback", { method: "POST", body: { version: "1" } })).status).toBe(400);
+  });
+});
+
+const sceneB = {
+  id: "scene-b",
+  name: "Cảnh B",
+  category: "chill",
+  type: "IMAGE",
+  mediaPath: "scenes/b.webp",
+  thumbnailPath: "thumbnails/b.webp",
+};
+
+function mediaSeedBody() {
+  return {
+    scenes: [{ ...sceneA }, { ...sceneB }],
+    sounds: [{ ...soundA }],
+    tracks: { lofi: [{ ...trackA }], jazz: [], relax: [] },
+  };
+}
+
+function seededMediaEnv(
+  seed: Record<string, number> = {},
+  dbOptions: { failAudit?: boolean; failInsert?: string } = {},
+) {
+  stubCerts();
+  const db = fakeContentDb(dbOptions);
+  const media = fakeMediaR2(seed);
+  const env = baseEnv({ DB: db.db, R2: media.r2 as unknown as AdminEnv["R2"] });
+  return {
+    env,
+    rows: db.rows,
+    dbEvents: db.events,
+    store: media.store,
+    r2Events: media.events,
+  };
+}
+
+describe("content api — tải tệp lên kho", () => {
+  it("đuôi không hỗ trợ thì 415 và không ghi R2", async () => {
+    const { env, r2Events } = seededMediaEnv();
+    const res = await worker.fetch(
+      mediaRequest("/media?folder=scenes&name=evil.exe", { method: "POST", body: "x" }),
+      env,
+    );
+    expect(res.status).toBe(415);
+    expect(r2Events).toEqual([]);
+  });
+
+  it("Content-Length vượt 50 MB thì 413 trước khi đọc thân", async () => {
+    const { env, r2Events } = seededMediaEnv();
+    const res = await worker.fetch(
+      mediaRequest("/media?folder=scenes&name=big.mp4", {
+        method: "POST",
+        headers: { "Content-Length": String(50 * 1024 * 1024 + 1) },
+      }),
+      env,
+    );
+    expect(res.status).toBe(413);
+    expect(r2Events).toEqual([]);
+  });
+
+  it("ghi audit trước, đặt tên mới khi trùng và trả key/dung lượng", async () => {
+    const { env, dbEvents, r2Events, store } = seededMediaEnv({ "scenes/a.webp": 10 });
+    const res = await worker.fetch(
+      mediaRequest("/media?folder=scenes&name=%C6%A1n%20m%C6%B0a.WEBP", {
+        method: "POST",
+        body: "abc",
+      }),
+      env,
+    );
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(200);
+    expect(body).toEqual({
+      ok: true,
+      key: "scenes/on-mua.webp",
+      size: 3,
+      contentType: "image/webp",
+    });
+    expect(dbEvents).toEqual(["audit:content.media.upload"]);
+    expect(r2Events).toEqual(["put:scenes/on-mua.webp:image/webp"]);
+    expect(store.get("scenes/on-mua.webp")).toBe(3);
+
+    const again = await worker.fetch(
+      mediaRequest("/media?folder=scenes&name=on-mua.webp", { method: "POST", body: "abcd" }),
+      env,
+    );
+    expect(((await again.json()) as any).key).toBe("scenes/on-mua-1.webp");
+  });
+
+  it("thiếu JWT thì 401, không ghi R2", async () => {
+    const { env, r2Events } = seededMediaEnv();
+    const res = await worker.fetch(
+      mediaRequest("/media?folder=sounds&name=a.mp3", { method: "POST", body: "x", auth: null }),
+      env,
+    );
+    expect(res.status).toBe(401);
+    expect(r2Events).toEqual([]);
+  });
+
+  it("thư mục và loại tệp phải khớp nhau", async () => {
+    const { env, r2Events } = seededMediaEnv();
+    const res = await worker.fetch(
+      mediaRequest("/media?folder=musics&name=a.mp4", { method: "POST", body: "x" }),
+      env,
+    );
+    expect(res.status).toBe(415);
+    const badFolder = await worker.fetch(
+      mediaRequest("/media?folder=other&name=a.mp3", { method: "POST", body: "x" }),
+      env,
+    );
+    expect(badFolder.status).toBe(400);
+    expect(r2Events).toEqual([]);
+  });
+});
+
+describe("content api — đọc kho tệp", () => {
+  it("đánh dấu mồ côi, đang dùng bởi và liệt kê tệp thiếu", async () => {
+    const { env } = seededMediaEnv({
+      "scenes/a.webp": 100,
+      "thumbnails/a.webp": 40,
+      "sounds/a.mp3": 30,
+      "scenes/orphan.mp4": 999,
+    });
+    await call(env, "/init", { method: "POST", body: mediaSeedBody() });
+
+    const { status, body } = await call(env, "/media");
+    expect(status).toBe(200);
+    expect(body.summary).toMatchObject({ files: 4, bytes: 1169, orphans: 1, orphanBytes: 999, missing: 3 });
+    expect(body.orphanKeys).toEqual(["scenes/orphan.mp4"]);
+
+    const orphan = body.entries.find((entry: any) => entry.key === "scenes/orphan.mp4");
+    expect(orphan).toMatchObject({ orphan: true, usedBy: [] });
+    const used = body.entries.find((entry: any) => entry.key === "scenes/a.webp");
+    expect(used.orphan).toBe(false);
+    expect(used.usedBy[0]).toMatchObject({ kind: "scenes", name: "Cảnh A" });
+
+    expect(body.missing.map((item: any) => item.path)).toEqual(
+      expect.arrayContaining(["scenes/b.webp", "thumbnails/b.webp", "music/a.mp3"]),
+    );
+    const scenesFolder = body.folders.find((folder: any) => folder.prefix === "scenes");
+    expect(scenesFolder).toMatchObject({ files: 2, orphans: 1, orphanBytes: 999 });
+  });
+});
+
+describe("content api — xóa tệp", () => {
+  it("tệp còn mục dùng thì 409 kèm usedBy, không xóa", async () => {
+    const { env, r2Events, store } = seededMediaEnv({ "scenes/a.webp": 100 });
+    await call(env, "/init", { method: "POST", body: mediaSeedBody() });
+
+    const res = await worker.fetch(mediaRequest("/media?key=scenes/a.webp", { method: "DELETE" }), env);
+    const body = (await res.json()) as any;
+    expect(res.status).toBe(409);
+    expect(body.error).toBe("media_in_use");
+    expect(body.usedBy[0]).toMatchObject({ kind: "scenes", name: "Cảnh A" });
+    expect(r2Events).toEqual([]);
+    expect(store.has("scenes/a.webp")).toBe(true);
+  });
+
+  it("tệp mồ côi: ghi audit rồi xóa khỏi kho", async () => {
+    const { env, dbEvents, r2Events, store } = seededMediaEnv({ "scenes/orphan.mp4": 999 });
+    await call(env, "/init", { method: "POST", body: mediaSeedBody() });
+
+    const res = await worker.fetch(mediaRequest("/media?key=scenes/orphan.mp4", { method: "DELETE" }), env);
+    expect(res.status).toBe(200);
+    expect(dbEvents).toEqual(["audit:content.init", "write", "audit:content.media.delete"]);
+    expect(r2Events).toEqual(["delete:scenes/orphan.mp4"]);
+    expect(store.has("scenes/orphan.mp4")).toBe(false);
+  });
+
+  it("audit lỗi thì không xóa tệp", async () => {
+    const { env, r2Events, store } = seededMediaEnv(
+      { "scenes/orphan.mp4": 999 },
+      { failAudit: true },
+    );
+    const res = await worker.fetch(mediaRequest("/media?key=scenes/orphan.mp4", { method: "DELETE" }), env);
+    expect(res.status).toBe(500);
+    expect(r2Events).toEqual([]);
+    expect(store.has("scenes/orphan.mp4")).toBe(true);
+  });
+
+  it("key ngoài thư mục cho phép thì 400", async () => {
+    const { env, r2Events } = seededMediaEnv({ "secrets/a.txt": 1 });
+    const res = await worker.fetch(mediaRequest("/media?key=secrets/a.txt", { method: "DELETE" }), env);
+    expect(res.status).toBe(400);
+    expect(r2Events).toEqual([]);
+  });
+
+  it("dọn hàng loạt chỉ xóa tệp mồ côi, bỏ qua tệp đang dùng", async () => {
+    const { env, dbEvents, r2Events, store } = seededMediaEnv({
+      "scenes/a.webp": 100,
+      "scenes/orphan.mp4": 999,
+    });
+    await call(env, "/init", { method: "POST", body: mediaSeedBody() });
+
+    const res = await worker.fetch(
+      mediaRequest("/media/prune", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keys: ["scenes/orphan.mp4", "scenes/a.webp"] }),
+      }),
+      env,
+    );
+    const body = (await res.json()) as any;
+    expect(res.status).toBe(200);
+    expect(body).toMatchObject({ ok: true, deleted: 1, skipped: 1, freed: 999 });
+    expect(r2Events).toEqual(["delete:scenes/orphan.mp4"]);
+    expect(store.has("scenes/a.webp")).toBe(true);
+    expect(dbEvents).toContain("audit:content.media.prune");
   });
 });
 

@@ -20,7 +20,7 @@ export interface GoatCounterConfig {
 const HOSTED_SCRIPT_SRC = "https://gc.zgo.at/count.js";
 const SITE_CODE_RE = /^[a-z0-9][a-z0-9-]*$/i;
 
-/** Khu vực không đếm: bảng admin và studio nội bộ. */
+/** Khu vực không đếm: bảng admin và các trang thử nội bộ. */
 const IGNORED_PREFIXES = ["/admin", "/dev", "/dev-preview"];
 
 export function resolveGoatCounterConfig(

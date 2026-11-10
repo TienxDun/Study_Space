@@ -3,7 +3,7 @@
         <div class="panel-header">
           <div class="panel-title-group">
             <h2 class="panel-title" id="content-title">Nội dung</h2>
-            <span class="panel-desc">Thêm, sửa, ẩn và xóa cảnh nền, âm thanh, nhạc. Bấm Lưu là lên sóng ngay; mỗi lần lưu tạo một bản trong Lịch sử để quay lại khi cần.</span>
+            <span class="panel-desc">Thêm, sửa, ẩn và xóa cảnh nền, âm thanh, nhạc; tải tệp lên thẳng kho và dọn tệp mồ côi ở tab Kho tệp. Bấm Lưu là lên sóng ngay; mỗi lần lưu tạo một bản trong Lịch sử để quay lại khi cần.</span>
           </div>
           <span class="usage-tag" id="content-state">Đang đọc…</span>
         </div>
@@ -26,6 +26,7 @@
             <button class="content-tab is-active" id="tab-scenes" type="button" role="tab" aria-selected="true" aria-controls="pane-scenes" data-tab="scenes">Cảnh nền <span class="content-tab-count" id="count-scenes">--</span></button>
             <button class="content-tab" id="tab-sounds" type="button" role="tab" aria-selected="false" aria-controls="pane-sounds" data-tab="sounds">Âm thanh <span class="content-tab-count" id="count-sounds">--</span></button>
             <button class="content-tab" id="tab-tracks" type="button" role="tab" aria-selected="false" aria-controls="pane-tracks" data-tab="tracks">Nhạc <span class="content-tab-count" id="count-tracks">--</span></button>
+            <button class="content-tab" id="tab-files" type="button" role="tab" aria-selected="false" aria-controls="pane-files" data-tab="files">Kho tệp <span class="content-tab-count" id="count-files">--</span></button>
           </div>
 
           <!-- Cảnh nền -->
@@ -70,16 +71,26 @@
                     <option value="HOT">HOT</option>
                   </select>
                 </label>
-                <label class="chat-field chat-field-wide">
-                  <span class="chat-label">Đường dẫn file (trong kho)</span>
-                  <input class="flag-input" id="scene-media" type="text" maxlength="200" placeholder="scenes/ten-file.webp" />
-                  <span class="chat-help">Tương đối so với gốc kho, ví dụ <strong>scenes/mua-pho.webp</strong>.</span>
-                </label>
-                <label class="chat-field chat-field-wide">
+                <div class="chat-field chat-field-wide">
+                  <span class="chat-label">File cảnh (trong kho)</span>
+                  <div class="content-file-row">
+                    <input class="flag-input" id="scene-media" type="text" maxlength="200" placeholder="scenes/ten-file.webp" />
+                    <button class="btn-ghost" id="scene-media-pick" type="button">Tải tệp lên</button>
+                  </div>
+                  <input type="file" id="scene-media-file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm" hidden />
+                  <div class="content-progress" id="scene-media-progress" hidden><span></span></div>
+                  <span class="chat-help">Chọn tệp để tải thẳng lên kho (≤ 50 MB), hoặc dán đường dẫn có sẵn. Tệp trùng tên sẽ được đặt tên mới, không ghi đè.</span>
+                </div>
+                <div class="chat-field chat-field-wide">
                   <span class="chat-label">Ảnh xem trước</span>
-                  <input class="flag-input" id="scene-thumb" type="text" maxlength="200" placeholder="thumbnails/mua-pho.webp" />
+                  <div class="content-file-row">
+                    <input class="flag-input" id="scene-thumb" type="text" maxlength="200" placeholder="thumbnails/mua-pho.webp" />
+                    <button class="btn-ghost" id="scene-thumb-pick" type="button">Tải ảnh lên</button>
+                  </div>
+                  <input type="file" id="scene-thumb-file" accept="image/jpeg,image/png,image/webp,image/avif" hidden />
+                  <div class="content-progress" id="scene-thumb-progress" hidden><span></span></div>
                   <span class="chat-help">Video cần ảnh xem trước; ảnh thường dùng lại chính file ảnh.</span>
-                </label>
+                </div>
                 <label class="chat-field chat-field-wide">
                   <span class="chat-label">Mô tả (không bắt buộc)</span>
                   <input class="flag-input" id="scene-description" type="text" maxlength="300" placeholder="Một dòng mô tả không khí của cảnh" />
@@ -186,10 +197,15 @@
                     <option value="Orbit">Orbit — không gian</option>
                   </select>
                 </label>
-                <label class="chat-field">
-                  <span class="chat-label">Đường dẫn file mp3</span>
-                  <input class="flag-input" id="sound-audio" type="text" maxlength="200" placeholder="sounds/mua-rao.mp3" />
-                </label>
+                <div class="chat-field">
+                  <span class="chat-label">File âm thanh</span>
+                  <div class="content-file-row">
+                    <input class="flag-input" id="sound-audio" type="text" maxlength="200" placeholder="sounds/mua-rao.mp3" />
+                    <button class="btn-ghost" id="sound-audio-pick" type="button">Tải tệp lên</button>
+                  </div>
+                  <input type="file" id="sound-audio-file" accept="audio/mpeg,audio/mp4,audio/ogg" hidden />
+                  <div class="content-progress" id="sound-audio-progress" hidden><span></span></div>
+                </div>
                 <div class="chat-field chat-field-wide">
                   <span class="chat-label">Ẩn khỏi ứng dụng</span>
                   <label class="chat-check">
@@ -264,15 +280,25 @@
                     <option value="relax">Thư giãn</option>
                   </select>
                 </label>
-                <label class="chat-field chat-field-wide">
-                  <span class="chat-label">Đường dẫn file mp3</span>
-                  <input class="flag-input" id="track-audio" type="text" maxlength="200" placeholder="musics/lofi/dem-yen.mp3" />
-                </label>
-                <label class="chat-field chat-field-wide">
+                <div class="chat-field chat-field-wide">
+                  <span class="chat-label">File nhạc</span>
+                  <div class="content-file-row">
+                    <input class="flag-input" id="track-audio" type="text" maxlength="200" placeholder="musics/lofi/dem-yen.mp3" />
+                    <button class="btn-ghost" id="track-audio-pick" type="button">Tải tệp lên</button>
+                  </div>
+                  <input type="file" id="track-audio-file" accept="audio/mpeg,audio/mp4,audio/ogg" hidden />
+                  <div class="content-progress" id="track-audio-progress" hidden><span></span></div>
+                </div>
+                <div class="chat-field chat-field-wide">
                   <span class="chat-label">Ảnh bìa</span>
-                  <input class="flag-input" id="track-cover" type="text" maxlength="500" placeholder="https://… hoặc covers/dem-yen.webp" />
-                  <span class="chat-help">Dán URL ngoài hoặc đường dẫn tương đối trong kho.</span>
-                </label>
+                  <div class="content-file-row">
+                    <input class="flag-input" id="track-cover" type="text" maxlength="500" placeholder="https://… hoặc authors/dem-yen.webp" />
+                    <button class="btn-ghost" id="track-cover-pick" type="button">Tải ảnh lên</button>
+                  </div>
+                  <input type="file" id="track-cover-file" accept="image/jpeg,image/png,image/webp,image/avif" hidden />
+                  <div class="content-progress" id="track-cover-progress" hidden><span></span></div>
+                  <span class="chat-help">Dán URL ngoài hoặc tải ảnh lên kho (thư mục authors).</span>
+                </div>
                 <div class="chat-field chat-field-wide">
                   <span class="chat-label">Ẩn khỏi ứng dụng</span>
                   <label class="chat-check">
@@ -323,6 +349,62 @@
                 </tbody>
               </table>
             </div>
+          </div>
+
+          <!-- Kho tệp (P2c đợt 2 + P2d) -->
+          <div class="content-pane" id="pane-files" role="tabpanel" aria-labelledby="tab-files" hidden>
+            <div class="content-toolbar files-toolbar">
+              <select class="flag-input content-filter" id="files-folder">
+                <option value="">Tất cả thư mục</option>
+                <option value="scenes">scenes/</option>
+                <option value="thumbnails">thumbnails/</option>
+                <option value="sounds">sounds/</option>
+                <option value="musics">musics/</option>
+                <option value="authors">authors/</option>
+              </select>
+              <input class="flag-input content-search" id="files-search" type="search" placeholder="Lọc theo tên tệp…" />
+              <label class="files-orphan-toggle">
+                <input type="checkbox" id="files-orphans" />
+                <span>Chỉ tệp mồ côi</span>
+              </label>
+              <button class="btn-ghost" id="files-refresh" type="button">Làm mới</button>
+            </div>
+
+            <p class="files-summary" id="files-summary">Đang đọc kho tệp…</p>
+
+            <div class="content-table-wrap">
+              <table class="services-table content-table files-table">
+                <thead>
+                  <tr>
+                    <th>Tệp</th>
+                    <th>Dung lượng</th>
+                    <th>Ngày tải</th>
+                    <th>Đang dùng bởi</th>
+                    <th>Trạng thái</th>
+                    <th class="text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="files-rows">
+                  <tr><td colspan="6">Đang đọc…</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="chat-actions files-actions">
+              <button class="btn-ghost" id="files-prune" type="button" disabled>Dọn tệp mồ côi</button>
+              <span class="chat-feedback" id="files-note" hidden></span>
+            </div>
+
+            <section class="content-history files-missing" id="files-missing-block" hidden>
+              <header class="chat-section-head">
+                <span class="chat-step" aria-hidden="true">!</span>
+                <div class="chat-section-titles">
+                  <h3 class="chat-section-title">Tệp bị thiếu</h3>
+                  <p class="chat-section-desc">Catalog đang trỏ tới các tệp này nhưng kho không có. Tải tệp lên hoặc sửa mục tương ứng.</p>
+                </div>
+              </header>
+              <div class="files-missing-list" id="files-missing-list"></div>
+            </section>
           </div>
 
           <p class="chat-feedback" id="content-note" hidden></p>

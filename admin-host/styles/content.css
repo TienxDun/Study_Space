@@ -285,6 +285,145 @@
   background: var(--surface-nested);
 }
 
+/* ---------- P2c đợt 2: tải tệp + Kho tệp ---------- */
+
+.content-file-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.content-file-row .flag-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.content-file-row .btn-ghost {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.content-progress {
+  position: relative;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.content-progress[hidden] {
+  display: none;
+}
+
+.content-progress span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--emerald-500), var(--emerald-400));
+  transition: width 0.15s linear;
+}
+
+.content-progress[data-label] {
+  margin-bottom: 18px;
+}
+
+.content-progress[data-label]::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 8px;
+  left: 0;
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--text-faint);
+}
+
+.files-toolbar {
+  flex-wrap: wrap;
+}
+
+.files-orphan-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.files-summary {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.files-table td {
+  vertical-align: top;
+}
+
+.files-key {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.files-size,
+.files-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.files-use {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.content-status.is-orphan {
+  color: var(--amber-400);
+  border-color: rgba(251, 191, 36, 0.35);
+  background: var(--amber-soft);
+}
+
+.files-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.files-actions {
+  align-items: center;
+}
+
+.files-missing {
+  border-color: rgba(251, 113, 133, 0.28);
+}
+
+.files-missing[hidden] {
+  display: none;
+}
+
+.files-missing-list {
+  display: grid;
+  gap: 8px;
+}
+
+.files-missing-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.02);
+}
+
 @media (max-width: 640px) {
   .content-body {
     padding: 16px;

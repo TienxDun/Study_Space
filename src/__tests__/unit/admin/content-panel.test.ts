@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { loadAdminHtml } from "./load-admin-html";
 
 const html = loadAdminHtml();
@@ -9,6 +9,10 @@ const html = loadAdminHtml();
 const bodyHtml = html
   .slice(html.indexOf("<body>") + "<body>".length, html.indexOf("</body>"))
   .replace(/<script[\s\S]*?<\/script>/gi, "");
+const dialogsScript = readFileSync(
+  resolve(__dirname, "../../../../admin-host/scripts/dialogs.js"),
+  "utf8",
+);
 const contentScript = readFileSync(
   resolve(__dirname, "../../../../admin-host/scripts/content.js"),
   "utf8",
@@ -129,6 +133,86 @@ function fakeApi() {
     tracks: { "tracks/lofi-1.mp3": 9000 },
   };
 
+  // Kho R2 giả: key → dung lượng; tệp nào không mục nào dùng thì là mồ côi.
+  const files = new Map<string, { size: number; uploaded: number }>([
+    ["scenes/rain.mp4", { size: 12000, uploaded: CREATED_AT }],
+    ["scenes/orphan.mp4", { size: 2048, uploaded: CREATED_AT }],
+    ["sounds/rain.mp3", { size: 5000, uploaded: CREATED_AT }],
+    ["thumbnails/night.webp", { size: 200, uploaded: CREATED_AT }],
+    ["thumbnails/rain.webp", { size: 300, uploaded: CREATED_AT }],
+    ["tracks/lofi-1.mp3", { size: 9000, uploaded: CREATED_AT }],
+  ]);
+
+  const usage = () => {
+    const map = new Map<string, Array<{ kind: Kind; id: string; name: string }>>();
+    const add = (path: unknown, use: { kind: Kind; id: string; name: string }) => {
+      if (typeof path !== "string" || !path || /^https?:\/\//i.test(path)) return;
+      const list = map.get(path) || [];
+      list.push(use);
+      map.set(path, list);
+    };
+    for (const scene of state.scenes) {
+      add(scene.mediaPath, { kind: "scenes", id: scene.id, name: scene.name });
+      add(scene.thumbnailPath, { kind: "scenes", id: scene.id, name: scene.name });
+    }
+    for (const sound of state.sounds) {
+      add(sound.audioPath, { kind: "sounds", id: sound.id, name: sound.name });
+    }
+    for (const track of tracksFlat()) {
+      add(track.audioPath, { kind: "tracks", id: track.id, name: track.title });
+      add(track.coverPath, { kind: "tracks", id: track.id, name: track.title });
+    }
+    return map;
+  };
+
+  const mediaList = (parsed: URL) => {
+    const prefix = parsed.searchParams.get("prefix") || "";
+    const query = (parsed.searchParams.get("q") || "").toLowerCase();
+    const onlyOrphans = parsed.searchParams.get("orphans") === "1";
+    const used = usage();
+    const folders = new Map<string, Row>();
+    const entries: Row[] = [];
+    const orphanKeys: string[] = [];
+    let bytes = 0;
+    let orphanFiles = 0;
+    let orphanBytes = 0;
+
+    for (const [key, meta] of files) {
+      const folder = key.split("/")[0] || "";
+      const summary = folders.get(folder) || { prefix: folder, files: 0, bytes: 0, orphans: 0, orphanBytes: 0 };
+      summary.files += 1;
+      summary.bytes += meta.size;
+      bytes += meta.size;
+      const usedBy = used.get(key) || [];
+      const orphan = usedBy.length === 0;
+      if (orphan) {
+        summary.orphans += 1;
+        summary.orphanBytes += meta.size;
+        orphanFiles += 1;
+        orphanBytes += meta.size;
+        orphanKeys.push(key);
+      }
+      folders.set(folder, summary);
+      if (prefix && folder !== prefix) continue;
+      if (query && !key.toLowerCase().includes(query)) continue;
+      if (onlyOrphans && !orphan) continue;
+      entries.push({ key, size: meta.size, uploaded: meta.uploaded, usedBy, orphan });
+    }
+    entries.sort((a, b) => String(a.key).localeCompare(String(b.key)));
+
+    return {
+      ok: true,
+      version: state.version,
+      summary: { files: files.size, bytes, orphans: orphanFiles, orphanBytes, missing: 1, partial: false },
+      folders: [...folders.values()].sort((a, b) => String(a.prefix).localeCompare(String(b.prefix))),
+      entries,
+      total: entries.length,
+      truncated: false,
+      orphanKeys,
+      missing: [{ kind: "scenes", id: "scene-night", name: "Phố đêm", path: "scenes/gone.mp4" }],
+    };
+  };
+
   const payload = (kind: Kind) => ({
     ok: true,
     kind,
@@ -203,6 +287,39 @@ function fakeApi() {
         return json({ ok: true, versions: state.versions });
       }
 
+      if (url.startsWith("/api/admin/content/media/prune")) {
+        const body = JSON.parse(String(init?.body || "{}"));
+        const used = usage();
+        let deleted = 0;
+        let skipped = 0;
+        let freed = 0;
+        for (const key of Array.isArray(body.keys) ? body.keys : []) {
+          if ((used.get(key) || []).length) {
+            skipped += 1;
+            continue;
+          }
+          const meta = files.get(key);
+          if (!meta) continue;
+          files.delete(key);
+          deleted += 1;
+          freed += meta.size;
+        }
+        return json({ ok: true, deleted, skipped, freed });
+      }
+
+      if (url.startsWith("/api/admin/content/media")) {
+        const parsed = new URL(url, "https://admin.test");
+        if (method === "GET") return json(mediaList(parsed));
+        if (method === "DELETE") {
+          const key = parsed.searchParams.get("key") || "";
+          const usedBy = usage().get(key) || [];
+          if (usedBy.length) return json({ error: "media_in_use", usedBy }, 409);
+          if (!files.has(key)) return json({ error: "not_found" }, 404);
+          files.delete(key);
+          return json({ ok: true });
+        }
+      }
+
       return json({ error: "not_found" }, 404);
     }),
   );
@@ -237,19 +354,66 @@ async function flush() {
 
 async function boot() {
   document.body.innerHTML = bodyHtml;
+  new Function(dialogsScript)();
   new Function(contentScript)();
   await flush();
 }
 
-function confirmCalls(): string[][] {
-  return (confirm as unknown as { mock: { calls: string[][] } }).mock.calls;
+function dialog(): HTMLElement {
+  const node = document.querySelector(".admin-dialog") as HTMLElement | null;
+  if (!node) throw new Error("Không thấy hộp thoại");
+  return node;
 }
 
-beforeEach(() => {
-  vi.stubGlobal("confirm", vi.fn(() => true));
-});
+function dialogOpen(): boolean {
+  const node = document.querySelector(".admin-dialog") as HTMLElement | null;
+  return !!node && !node.hidden;
+}
+
+function dialogText(): string {
+  return dialog().textContent || "";
+}
+
+function dialogOk(): HTMLButtonElement {
+  return dialog().querySelector(".admin-dialog-ok") as HTMLButtonElement;
+}
+
+function dialogCancel(): HTMLButtonElement {
+  return dialog().querySelector(".admin-dialog-cancel") as HTMLButtonElement;
+}
+
+function dialogInput(): HTMLInputElement {
+  return dialog().querySelector(".admin-dialog-input") as HTMLInputElement;
+}
+
+function typeInDialog(value: string) {
+  const input = dialogInput();
+  input.value = value;
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+function filesRows(): HTMLElement[] {
+  return Array.from(document.querySelectorAll("#files-rows tr")) as HTMLElement[];
+}
+
+function fileRow(key: string): HTMLElement {
+  const row = filesRows().find((node) => (node.textContent || "").includes(key));
+  if (!row) throw new Error(`Không thấy dòng tệp ${key}`);
+  return row;
+}
+
+function rowButtonIn(row: HTMLElement, label: string): HTMLButtonElement {
+  const button = Array.from(row.querySelectorAll("button")).find(
+    (node) => node.textContent === label,
+  );
+  if (!button) throw new Error(`Không thấy nút ${label} trong dòng`);
+  return button as HTMLButtonElement;
+}
 
 afterEach(() => {
+  if (dialogOpen()) {
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  }
   vi.unstubAllGlobals();
   document.body.innerHTML = "";
 });
@@ -350,27 +514,50 @@ describe("panel Nội dung", () => {
     await boot();
 
     rowButton(0, "Xóa").click();
-    await flush();
+    expect(dialogOpen()).toBe(true);
+    expect(dialogText()).toContain("Mưa trên phố Nhật");
+    expect(dialogText()).toContain("File trong kho vẫn giữ nguyên");
+    expect(api.calls.some((call) => call.init?.method === "DELETE")).toBe(false);
 
-    expect(confirm).toHaveBeenCalledTimes(1);
-    expect(String(confirmCalls()[0][0])).toContain("File trong kho vẫn giữ nguyên");
+    dialogOk().click();
+    await flush();
 
     const remove = api.calls.find((call) => call.init?.method === "DELETE");
     expect(remove?.url).toBe("/api/admin/content/items?kind=scenes&id=scene-rain");
+    expect(dialogOpen()).toBe(false);
     expect(rows("scene-rows")).toHaveLength(1);
     expect(el("content-note").textContent).toContain("File trong kho vẫn còn");
   });
 
   it("không xác nhận thì không gọi API xóa", async () => {
     const api = fakeApi();
-    (confirm as unknown as { mockReturnValue: (value: boolean) => void }).mockReturnValue(false);
     await boot();
 
     rowButton(0, "Xóa").click();
+    expect(dialogOpen()).toBe(true);
+    dialogCancel().click();
     await flush();
 
+    expect(dialogOpen()).toBe(false);
     expect(api.calls.some((call) => call.init?.method === "DELETE")).toBe(false);
     expect(rows("scene-rows")).toHaveLength(2);
+  });
+
+  it("Escape đóng hộp thoại xác nhận và trả focus về nút vừa bấm", async () => {
+    const api = fakeApi();
+    await boot();
+
+    const remove = rowButton(0, "Xóa");
+    remove.focus();
+    remove.click();
+    expect(dialogOpen()).toBe(true);
+
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await flush();
+
+    expect(dialogOpen()).toBe(false);
+    expect(document.activeElement).toBe(remove);
+    expect(api.calls.some((call) => call.init?.method === "DELETE")).toBe(false);
   });
 
   it("thêm cảnh mới gửi POST và tự điền ảnh xem trước từ file", async () => {
@@ -404,5 +591,183 @@ describe("panel Nội dung", () => {
     expect(el("content-note").textContent).toContain("Đã lưu và phát hành bản v4");
     expect(rows("scene-rows")).toHaveLength(3);
     expect(el("count-scenes").textContent).toBe("3");
+  });
+});
+
+describe("Kho tệp", () => {
+  it("tab Kho tệp hiện tệp, mục đang dùng, tệp mồ côi và tệp thiếu", async () => {
+    const api = fakeApi();
+    await boot();
+
+    el("tab-files").click();
+    await flush();
+
+    expect(api.calls.some((call) => call.url === "/api/admin/content/media")).toBe(true);
+    expect(el("pane-files").hidden).toBe(false);
+    expect(el("pane-scenes").hidden).toBe(true);
+    expect(el("tab-files").getAttribute("aria-selected")).toBe("true");
+    expect(el("count-files").textContent).toBe("6");
+    expect(el("files-summary").textContent).toContain("6 tệp");
+    expect(el("files-summary").textContent).toContain("1 mồ côi");
+    expect(el("files-summary").textContent).toContain("scenes/: 2 tệp");
+
+    const orphan = fileRow("scenes/orphan.mp4");
+    expect(orphan.textContent).toContain("Mồ côi");
+    expect(orphan.textContent).toContain("Không mục nào");
+    expect(rowButtonIn(orphan, "Xóa").disabled).toBe(false);
+    expect(orphan.querySelector("a.files-open")?.getAttribute("href")).toContain("scenes/orphan.mp4");
+
+    const used = fileRow("scenes/rain.mp4");
+    expect(used.textContent).toContain("Đang dùng");
+    expect(used.textContent).toContain("Mưa trên phố Nhật · cảnh");
+    expect(rowButtonIn(used, "Xóa").disabled).toBe(true);
+
+    expect(el<HTMLButtonElement>("files-prune").disabled).toBe(false);
+    expect(el("files-prune").textContent).toBe("Dọn 1 tệp mồ côi");
+
+    expect(el("files-missing-block").hidden).toBe(false);
+    expect(el("files-missing-list").textContent).toContain("scenes/gone.mp4");
+    expect(el("files-missing-list").textContent).toContain("Phố đêm · cảnh");
+  });
+
+  it("lọc theo thư mục và chỉ tệp mồ côi thì hỏi lại máy chủ", async () => {
+    const api = fakeApi();
+    await boot();
+
+    el("tab-files").click();
+    await flush();
+
+    el<HTMLSelectElement>("files-folder").value = "scenes";
+    el("files-folder").dispatchEvent(new Event("change", { bubbles: true }));
+    await flush();
+
+    expect(api.calls.some((call) => call.url === "/api/admin/content/media?prefix=scenes")).toBe(true);
+    expect(filesRows()).toHaveLength(2);
+
+    el<HTMLInputElement>("files-orphans").checked = true;
+    el("files-orphans").dispatchEvent(new Event("change", { bubbles: true }));
+    await flush();
+
+    expect(api.calls.some((call) => call.url === "/api/admin/content/media?prefix=scenes&orphans=1")).toBe(true);
+    expect(filesRows()).toHaveLength(1);
+    expect(filesRows()[0].textContent).toContain("scenes/orphan.mp4");
+  });
+
+  it("xóa tệp mồ côi chỉ bật nút khi gõ đúng tên tệp", async () => {
+    const api = fakeApi();
+    await boot();
+
+    el("tab-files").click();
+    await flush();
+
+    rowButtonIn(fileRow("scenes/orphan.mp4"), "Xóa").click();
+    expect(dialogOpen()).toBe(true);
+    expect(dialogText()).toContain("scenes/orphan.mp4");
+    expect(dialogOk().disabled).toBe(true);
+
+    typeInDialog("sai-ten.mp4");
+    expect(dialogOk().disabled).toBe(true);
+    expect(dialog().querySelector(".admin-dialog-hint")?.textContent).toContain("Chưa khớp");
+
+    typeInDialog("scenes/orphan.mp4");
+    expect(dialogOk().disabled).toBe(false);
+    expect(dialog().querySelector(".admin-dialog-hint")?.textContent).toContain("Đã khớp");
+
+    dialogOk().click();
+    await flush();
+
+    const remove = api.calls.find((call) => call.init?.method === "DELETE");
+    expect(remove?.url).toBe("/api/admin/content/media?key=scenes%2Forphan.mp4");
+    expect(dialogOpen()).toBe(false);
+    expect(el("files-note").textContent).toContain("Đã xóa scenes/orphan.mp4 khỏi kho");
+    expect(filesRows().some((row) => (row.textContent || "").includes("scenes/orphan.mp4"))).toBe(false);
+    expect(el<HTMLButtonElement>("files-prune").disabled).toBe(true);
+    expect(el("count-files").textContent).toBe("5");
+  });
+
+  it("hủy hộp thoại gõ tên thì không gọi DELETE", async () => {
+    const api = fakeApi();
+    await boot();
+
+    el("tab-files").click();
+    await flush();
+
+    rowButtonIn(fileRow("scenes/orphan.mp4"), "Xóa").click();
+    dialogCancel().click();
+    await flush();
+
+    expect(dialogOpen()).toBe(false);
+    expect(api.calls.some((call) => call.init?.method === "DELETE")).toBe(false);
+    expect(fileRow("scenes/orphan.mp4")).toBeTruthy();
+  });
+
+  it("dọn tệp mồ côi hỏi lại danh sách rồi gọi prune", async () => {
+    const api = fakeApi();
+    await boot();
+
+    el("tab-files").click();
+    await flush();
+
+    el("files-prune").click();
+    await flush();
+
+    expect(api.calls.some((call) => call.url === "/api/admin/content/media?fresh=1")).toBe(true);
+    expect(dialogOpen()).toBe(true);
+    expect(dialogText()).toContain("1 tệp mồ côi");
+    expect(api.calls.some((call) => call.url === "/api/admin/content/media/prune")).toBe(false);
+
+    dialogOk().click();
+    await flush();
+
+    const prune = api.calls.find(
+      (call) => call.init?.method === "POST" && call.url === "/api/admin/content/media/prune",
+    );
+    expect(JSON.parse(String(prune?.init?.body)).keys).toEqual(["scenes/orphan.mp4"]);
+    expect(el("files-note").textContent).toContain("Đã xóa 1 tệp mồ côi");
+    expect(el<HTMLButtonElement>("files-prune").disabled).toBe(true);
+  });
+
+  it("chọn tệp trong biểu mẫu thì tải lên kho và điền đường dẫn mới", async () => {
+    fakeApi();
+    const uploads: Array<{ method: string; url: string }> = [];
+    class FakeUpload {
+      method = "";
+      url = "";
+      status = 0;
+      responseText = "";
+      upload: { onprogress?: unknown } = {};
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      open(method: string, url: string) {
+        this.method = method;
+        this.url = url;
+        uploads.push(this);
+      }
+      send() {
+        this.status = 200;
+        this.responseText = JSON.stringify({ ok: true, key: "scenes/on-mua.webp", size: 3 });
+        this.onload?.();
+      }
+    }
+    vi.stubGlobal("XMLHttpRequest", FakeUpload);
+
+    await boot();
+    el("scene-add").click();
+
+    const fileInput = el<HTMLInputElement>("scene-media-file");
+    const file = new File(["abc"], "ơn mưa.webp", { type: "image/webp" });
+    Object.defineProperty(fileInput, "files", { value: [file], configurable: true });
+    fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+    await flush();
+
+    expect(uploads).toHaveLength(1);
+    expect(uploads[0].method).toBe("POST");
+    expect(uploads[0].url).toBe(
+      "/api/admin/content/media?folder=scenes&name=" + encodeURIComponent("ơn mưa.webp"),
+    );
+    expect(el<HTMLInputElement>("scene-media").value).toBe("scenes/on-mua.webp");
+    expect(el("content-note").textContent).toContain("Đã tải scenes/on-mua.webp lên kho");
+    expect(el("scene-media-progress").hidden).toBe(false);
+    expect(el<HTMLButtonElement>("scene-save").disabled).toBe(false);
   });
 });

@@ -117,7 +117,7 @@ flowchart TD
 
 ### 3.12 Admin (dev-only, NODE_ENV=development)
 
-- `/admin` (hạn mức), `/dev/studio` (edit scenes.json + media). Trang `/admin/chat` local đã xóa 2026-10-27; cấu hình chat nằm ở panel "Trợ lý chat" trong shell admin.
+- Shell admin (`admin-host/`, chạy local ở `http://localhost:8787/admin/`) lo toàn bộ vận hành; `/dev/surface-lab` và `/dev/toasts` vẫn là trang thử nội bộ. Trang `/admin/chat` local đã xóa 2026-10-27; `/dev/studio` và các route dev của nó xóa 2026-11-10 (nội dung chuyển sang tab Nội dung + Kho tệp trong shell).
 - API routes: admin scenes/sync, livekit token/rooms.
 - Hit-limits config.
 
