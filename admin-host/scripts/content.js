@@ -147,10 +147,10 @@
     return CDN_BASE + "/" + value.replace(/^\/+/, "");
   }
 
-  // Trang admin đặt Referrer-Policy: no-referrer nhưng CDN từ chối request không có referer,
-  // nên từng thẻ media phải tự xin gửi origin.
   function mediaNode(node) {
-    node.setAttribute("referrerpolicy", "origin");
+    // Audio/video không hỗ trợ referrerpolicy; CORS gửi Origin để CDN kiểm tra.
+    if (node.tagName === "AUDIO" || node.tagName === "VIDEO") node.crossOrigin = "anonymous";
+    else node.setAttribute("referrerpolicy", "origin");
     return node;
   }
 
@@ -830,6 +830,7 @@
       if (xhr.status >= 200 && xhr.status < 300 && data.ok === true) {
         input.value = data.key;
         input.dispatchEvent(new Event("change", { bubbles: true }));
+        input.dispatchEvent(new Event("input", { bubbles: true }));
         setUpload(progress, 100, true, "Đã tải " + fmtBytes(data.size));
         setNote(noteEl, "Đã tải " + data.key + " lên kho. Bấm Lưu để dùng tệp này.", "ok");
       } else {

@@ -142,6 +142,7 @@ export function sanitizeFileName(raw: string): { base: string; ext: string } {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
+    .replace(/đ/g, "d")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
@@ -224,9 +225,9 @@ export function pickFreeKey(rel: string, used: Set<string>): string {
 export function filesOf(kind: ContentKind, item: unknown): string[] {
   const row = (item || {}) as Record<string, unknown>;
   if (kind === "scenes") {
-    return [row.mediaPath, row.thumbnailPath].filter(
+    return [...new Set([row.mediaPath, row.thumbnailPath].filter(
       (value): value is string => typeof value === "string" && value.length > 0,
-    );
+    ))];
   }
   if (kind === "sounds") {
     return typeof row.audioPath === "string" && row.audioPath ? [row.audioPath] : [];

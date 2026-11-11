@@ -70,6 +70,10 @@ describe("content — tên file và đường dẫn", () => {
     expect(sanitizeFileName("")).toEqual({ base: "tep", ext: "" });
   });
 
+  it.each(["09-Cảnh Mưa Đêm.PNG", "09-cảnh mưa đêm.png"])("chuyển Đ/đ thành d trong %s", (name) => {
+    expect(sanitizeFileName(name)).toEqual({ base: "09-canh-mua-dem", ext: ".png" });
+  });
+
   it("nhận ra loại file theo đuôi", () => {
     expect(detectMediaKind(".MP4")).toBe("video");
     expect(detectMediaKind(".webp")).toBe("image");

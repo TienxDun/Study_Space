@@ -327,6 +327,31 @@ function fakeApi() {
   return { calls, state };
 }
 
+function fakeUpload(key: string, status = 200) {
+  const uploads: Array<{ method: string; url: string }> = [];
+  class FakeUpload {
+    method = "";
+    url = "";
+    status = status;
+    responseText = JSON.stringify(status === 200
+      ? { ok: true, key, size: 3, contentType: "application/octet-stream" }
+      : { error: "unsupported_type" });
+    upload: { onprogress?: unknown } = {};
+    onload: (() => void) | null = null;
+    onerror: (() => void) | null = null;
+    open(method: string, url: string) {
+      this.method = method;
+      this.url = url;
+      uploads.push(this);
+    }
+    send() {
+      this.onload?.();
+    }
+  }
+  vi.stubGlobal("XMLHttpRequest", FakeUpload);
+  return uploads;
+}
+
 function el<T extends HTMLElement>(id: string) {
   return document.getElementById(id) as T;
 }
@@ -475,6 +500,23 @@ describe("panel Nội dung", () => {
     expect(el<HTMLInputElement>("scene-hidden").checked).toBe(false);
     expect(el("pane-scenes").classList.contains("is-editing")).toBe(true);
     expect(el("content-state").textContent).toBe("Đã đọc bản v3");
+  });
+
+  it.each([
+    ["scenes", "scene", "video"],
+    ["sounds", "sound", "audio"],
+    ["tracks", "track", "audio"],
+  ])("preview %s gửi Origin qua CORS ẩn danh", async (tab, prefix, tag) => {
+    const api = fakeApi();
+    api.state.scenes[0].type = "VIDEO";
+    await boot();
+    el("tab-" + tab).click();
+    await flush();
+    rowButtonIn(rows(prefix + "-rows")[0], "Sửa").click();
+
+    const node = el(prefix + "-preview").querySelector(tag) as HTMLMediaElement;
+    expect(node).not.toBeNull();
+    expect(node.crossOrigin).toBe("anonymous");
   });
 
   it("lưu chỉnh sửa gửi PATCH đúng mục rồi phát hành bản mới", async () => {
@@ -727,29 +769,55 @@ describe("Kho tệp", () => {
     expect(el<HTMLButtonElement>("files-prune").disabled).toBe(true);
   });
 
+  it.each([
+    ["scenes", "scene", "scene-thumb", "thumbnails/new.webp", "img"],
+    ["sounds", "sound", "sound-audio", "sounds/new.mp3", "audio"],
+    ["tracks", "track", "track-audio", "musics/new.mp3", "audio"],
+    ["tracks", "track", "track-cover", "authors/new.webp", "img"],
+  ])("upload %s %s %s cập nhật preview ngay", async (tab, prefix, field, key, tag) => {
+    fakeApi();
+    fakeUpload(key);
+    await boot();
+    el("tab-" + tab).click();
+    await flush();
+    rowButtonIn(rows(prefix + "-rows")[0], "Sửa").click();
+    const oldSrc = el(prefix + "-preview").querySelector(tag)?.getAttribute("src");
+
+    const fileInput = el<HTMLInputElement>(field + "-file");
+    Object.defineProperty(fileInput, "files", { value: [new File(["abc"], key.split("/").pop()!)], configurable: true });
+    fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+    await flush();
+
+    expect(el<HTMLInputElement>(field).value).toBe(key);
+    const newSrc = el(prefix + "-preview").querySelector(tag)?.getAttribute("src");
+    expect(newSrc).toBe("https://study-space-shield.leutiendung-hht.workers.dev/" + key);
+    expect(newSrc).not.toBe(oldSrc);
+    expect(el("content-state").textContent).toBe("Có thay đổi chưa lưu");
+    expect(el<HTMLButtonElement>(prefix + "-save").disabled).toBe(false);
+  });
+
+  it("upload thất bại giữ nguyên đường dẫn và preview cũ", async () => {
+    fakeApi();
+    fakeUpload("sounds/new.mp3", 415);
+    await boot();
+    el("tab-sounds").click();
+    await flush();
+    rowButtonIn(rows("sound-rows")[0], "Sửa").click();
+    const oldSrc = el("sound-preview").querySelector("audio")?.getAttribute("src");
+    const fileInput = el<HTMLInputElement>("sound-audio-file");
+    Object.defineProperty(fileInput, "files", { value: [new File(["abc"], "invalid.png")], configurable: true });
+    fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+    await flush();
+
+    expect(el<HTMLInputElement>("sound-audio").value).toBe("sounds/rain.mp3");
+    expect(el("sound-preview").querySelector("audio")?.getAttribute("src")).toBe(oldSrc);
+    expect(el("content-note").textContent).toContain("Tải tệp thất bại");
+    expect(el<HTMLButtonElement>("sound-save").disabled).toBe(false);
+  });
+
   it("chọn tệp trong biểu mẫu thì tải lên kho và điền đường dẫn mới", async () => {
     fakeApi();
-    const uploads: Array<{ method: string; url: string }> = [];
-    class FakeUpload {
-      method = "";
-      url = "";
-      status = 0;
-      responseText = "";
-      upload: { onprogress?: unknown } = {};
-      onload: (() => void) | null = null;
-      onerror: (() => void) | null = null;
-      open(method: string, url: string) {
-        this.method = method;
-        this.url = url;
-        uploads.push(this);
-      }
-      send() {
-        this.status = 200;
-        this.responseText = JSON.stringify({ ok: true, key: "scenes/on-mua.webp", size: 3 });
-        this.onload?.();
-      }
-    }
-    vi.stubGlobal("XMLHttpRequest", FakeUpload);
+    const uploads = fakeUpload("scenes/on-mua.webp");
 
     await boot();
     el("scene-add").click();
@@ -766,6 +834,8 @@ describe("Kho tệp", () => {
       "/api/admin/content/media?folder=scenes&name=" + encodeURIComponent("ơn mưa.webp"),
     );
     expect(el<HTMLInputElement>("scene-media").value).toBe("scenes/on-mua.webp");
+    expect(el<HTMLInputElement>("scene-thumb").value).toBe("scenes/on-mua.webp");
+    expect(el("scene-preview").querySelector("img")?.getAttribute("src")).toContain("scenes/on-mua.webp");
     expect(el("content-note").textContent).toContain("Đã tải scenes/on-mua.webp lên kho");
     expect(el("scene-media-progress").hidden).toBe(false);
     expect(el<HTMLButtonElement>("scene-save").disabled).toBe(false);

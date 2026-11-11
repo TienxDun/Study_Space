@@ -697,6 +697,30 @@ describe("content api — tải tệp lên kho", () => {
 });
 
 describe("content api — đọc kho tệp", () => {
+  it("mỗi cảnh chỉ xuất hiện một lần khi dùng chung ảnh nền và ảnh xem trước", async () => {
+    const { env, r2Events, store } = seededMediaEnv({ "scenes/a.webp": 100 });
+    const seed = mediaSeedBody();
+    seed.scenes = [sceneA, sceneB].map((scene) => ({
+      ...scene,
+      mediaPath: "scenes/a.webp",
+      thumbnailPath: "scenes/a.webp",
+    }));
+    expect((await call(env, "/init", { method: "POST", body: seed })).status).toBe(200);
+    const expectedUses = [
+      { kind: "scenes", id: "scene-a", name: "Cảnh A" },
+      { kind: "scenes", id: "scene-b", name: "Cảnh B" },
+    ];
+
+    const { body } = await call(env, "/media");
+    expect(body.entries.find((entry: any) => entry.key === "scenes/a.webp").usedBy).toEqual(expectedUses);
+
+    const remove = await call(env, "/media?key=scenes/a.webp", { method: "DELETE" });
+    expect(remove.status).toBe(409);
+    expect(remove.body.usedBy).toEqual(expectedUses);
+    expect(r2Events).toEqual([]);
+    expect(store.has("scenes/a.webp")).toBe(true);
+  });
+
   it("đánh dấu mồ côi, đang dùng bởi và liệt kê tệp thiếu", async () => {
     const { env } = seededMediaEnv({
       "scenes/a.webp": 100,

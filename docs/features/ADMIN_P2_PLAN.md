@@ -1,9 +1,37 @@
 # P2 — Quản lý được (kế hoạch triển khai)
 
-Trạng thái (2026-11-10): **P2.0** đóng mục 0.1, còn 1 lỗi nhỏ ở 0.2 (chat-proxy chưa khử trùng); **P2a** đóng 2026-10-27, chỉ để mở nhánh hạn mức 30 → 35 vì chưa có người dùng thật chạm hạn mức; **P2b** đóng 2026-10-28; **P2c đợt 1 đóng** (T1–T20, manifest v1 live), **đợt 2 T21–T24 code xong 2026-11-10** (upload + tab Kho tệp + dọn mồ côi hàng loạt, còn bước kiểm upload trên production); **P2e đóng** (E1–E6 xong, E4 có hiệu lực và QA tay pass 2026-11-03); **P2d đóng** vì phần hàng loạt đã gộp vào P2c đợt 2. P3 chưa bắt đầu. Bản 24 — 2026-11-10.
+Trạng thái (2026-11-11): **P2.0** đóng 0.1; 0.2 đã sửa code chat-proxy, còn xác minh deploy và theo dõi log. **P2a/P2b/P2e đóng**; P2a còn nhánh hạn mức 30 → 35 chưa kiểm. **P2c đợt 1 đã triển khai; đợt 2 đã lên production và kiểm upload/xóa**. Bốn lỗi phát hiện hôm 2026-11-11 (xem trước media CDN 403, preview chưa cập nhật sau upload, mất chữ Đ, usedBy trùng) **đã sửa và kiểm local, chưa deploy** — production còn lỗi tới lần deploy kế tiếp; C7 còn kiểm trên web và rollback. **P2d** đã gộp vào đợt 2; dọn mồ côi đạt trên production. Sau QA, bản hiện hành v4 giữ nguyên 40 cảnh / 20 âm / 49 nhạc; kho về đúng 118 tệp, không còn tệp thử. P3 chưa bắt đầu. Bản 27 — 2026-11-11.
 Thuộc P2 của `docs/features/ADMIN_CONSOLE_PLAN.md`; P1 đã đóng, xem `docs/archive/ADMIN_P1_PLAN.md`.
 
-### Đối chiếu shell production 2026-11-09
+### Kiểm thử production 2026-11-11 — Nội dung và Kho tệp
+
+Mở URL `https://admin.zenstudy.space/admin/#users`, sau đó chuyển sang Nội dung. Chỉ upload bộ QA và tạo một cảnh ẩn; không thao tác tài khoản hay nội dung thật.
+
+| Nhóm | Kết quả |
+| --- | --- |
+| Upload | 18 lượt chọn tệp: 14 lần HTTP 200, đủ `scenes/thumbnails/sounds/musics/authors`; tên trùng được thêm `-1`. |
+| Validation | MP3 vào cảnh và PNG vào âm thanh trả 415; tệp 51 MiB trả 413; tệp rỗng trả 400. Không ghi tệp bị từ chối vào kho. |
+| Kho tệp | Lọc thư mục, tìm tên, chỉ mồ côi, làm mới và thống kê hoạt động. |
+| Xóa riêng | Hộp thoại trong trang; tên trống/sai khóa nút; Escape không xóa; tên đúng mới xóa. |
+| Bảo vệ đang dùng | Cảnh QA ẩn dùng `scenes/14-dang-dung.jpg`: UI khóa nút Xóa; kiểm API bổ sung trả 409 `media_in_use`. |
+| Dọn hàng loạt | Kiểm danh sách chỉ chứa tệp vừa upload rồi dọn 12 mồ côi, giải phóng 192.065 byte; giữ nguyên tệp 14 đang dùng. |
+| CRUD cảnh | Tạo cảnh ẩn ở v2, sửa tên ở v3, xóa mục ở v4; tệp còn nguyên sau xóa mục và được xóa riêng cuối buổi. |
+| Dọn dữ liệu thử | Đã xóa cả 14 tệp QA. Kho về 118 tệp / 449.006.574 byte, 0 mồ côi, 0 thiếu; key/kích thước/thời điểm upload khớp trước test. Danh sách cảnh khớp nguyên bản, số lượng 40/20/49. |
+
+**Bốn lỗi đã sửa local 2026-11-11, chưa deploy — production vẫn còn lỗi tới lần deploy kế tiếp:**
+
+1. Video MP4/WebM và audio MP3 trả CDN 403 trong preview: `audio`/`video` không hỗ trợ `referrerpolicy`, nên đặt `crossOrigin="anonymous"` để trình duyệt gửi `Origin` và CDN trả 206. Ảnh và link "Mở" vẫn dùng `referrerpolicy="origin"`; không đổi cấu hình CDN hay bảo vệ Access.
+2. Preview âm thanh/nhạc không cập nhật sau upload: handler upload phát thêm sự kiện `input` sau `change`, nên preview và trạng thái "Có thay đổi chưa lưu" đổi ngay; upload lỗi giữ nguyên đường dẫn và preview cũ.
+3. `09-Cảnh Mưa Đêm.PNG` từng thành `09-canh-mua-em.png`: thêm `.replace(/đ/g, "d")` sau `toLowerCase()` trong `sanitizeFileName`; nay ra `scenes/09-canh-mua-dem.png`.
+4. `usedBy` lặp khi ảnh cảnh và thumbnail chung đường dẫn: `filesOf("scenes", …)` khử trùng trong cùng một cảnh bằng `Set`. Hai cảnh khác nhau dùng chung tệp vẫn hiện hai dòng, và API vẫn trả 409 khi xóa.
+
+Kiểm local: `npm test` 94 file / 775 test xanh (10 ca mới đỏ trước khi sửa), `npm run lint` 0 lỗi (11 cảnh báo cũ), `tsc --noEmit` sạch, `npm run build:admin` OK. Chromium headless trên `wrangler dev`: video `journey-through-fantasy-world…mp4` và `sounds/rain_forest.mp3` phát được (request 206, `readyState=4`, không lỗi); upload 4 ô đổi preview ngay; tệp sai loại trả 415 và giữ preview cũ; key tiếng Việt đúng `scenes/09-canh-mua-dem.png`; tệp dùng bởi 2 cảnh hiện đúng 2 dòng và nút Xóa bị khóa. Ảnh: [12 video](../../admin-media-test/results-2026-11-11/12-local-video-cors.png), [13 audio](../../admin-media-test/results-2026-11-11/13-local-audio-cors.png), [14 refresh âm thanh](../../admin-media-test/results-2026-11-11/14-local-audio-upload-refresh.png), [15 nhạc](../../admin-media-test/results-2026-11-11/15-local-music-cors.png), [16 refresh nhạc](../../admin-media-test/results-2026-11-11/16-local-music-upload-refresh.png), [17 tên/usedBy](../../admin-media-test/results-2026-11-11/17-local-name-unique-usage.png); số liệu ở `results-2026-11-11/local-fixes.json`, script ở `admin-media-test/verify-local-fixes.py`. Dọn local xong: danh sách tệp và cảnh khớp baseline; D1 local tăng tới v5 do lịch sử thử, không liên quan production.
+
+**Chưa kiểm:** rollback toàn catalog, cảnh mới hiện trên web chính (QA luôn ẩn), CRUD mục âm/nhạc, ca tệp thiếu và đối chiếu từng dòng audit D1. Sau deploy phải chạy lại 4 điểm trên cùng C7 trên production. Không đổi trạng thái P2.0/P2a từ đợt này.
+
+**Bằng chứng local:** [checklist kết quả](../../admin-media-test/CHECKLIST.md), [11 ảnh](../../admin-media-test/results-2026-11-11/), [số liệu kiểm thử](../../admin-media-test/results-2026-11-11/results.json). Input file được tạm hiện cho công cụ gắn tệp, giữ nguyên logic upload và ẩn lại trước khi chụp. Không thay code production; không xóa lịch sử v2–v4 hay audit. Không rollback về v2/v3 sau khi dọn media vì hai bản QA đó tham chiếu tệp đã xóa.
+
+### Đối chiếu shell production 2026-11-09 (lịch sử)
 
 Đăng nhập `admin.zenstudy.space` bằng `jimwork218@gmail.com`: 6 tab tải đủ, không có lỗi console, chỉ gọi `/api/admin/*`.
 
@@ -343,10 +371,10 @@ Vì sao tách xóa mục và xóa file: một file có thể được nhiều m�
 | --- | --- | --- |
 | T21 | `POST /api/admin/content/media` (thân nhị phân, ≤ 50 MB, tên làm sạch) | 4 unit test (sai đuôi, quá 50 MB, tên trùng, thiếu JWT) |
 | T22 | `GET /api/admin/content/media?prefix=` + "đang dùng bởi" + cờ mồ côi | 3 unit test |
-| T23 | `DELETE media` chặn khi còn mục dùng, audit trước khi xóa | 3 unit test, xóa file dùng chung vẫn được nếu mục khác dùng |
+| T23 | `DELETE media` chặn khi còn mục dùng, audit trước khi xóa | 3 unit test; không được xóa tệp nếu còn bất kỳ mục nào dùng |
 | T24 | Tab "Kho tệp" + upload trong form cảnh/âm/nhạc có thanh tiến trình | Kiểm production: upload 1 cảnh mới, xóa file mồ côi, file đang dùng bị chặn |
 
-**Đợt 2 xong 2026-11-10 (code + test):** T21–T24 làm đủ trong `admin-worker/content-api.ts`, `admin-host/panels/content.html`, `admin-host/scripts/content.js`, `admin-host/styles/content.css`; 11 test worker + 5 test DOM mới; `npm test` 94 file / 758 test xanh, `tsc` và `lint` sạch. Còn lại chỉ là bước kiểm trên production (C7 bước 7) sau khi deploy.
+**Đợt 2 xong 2026-11-10 (code + test):** T21–T24 làm đủ trong `admin-worker/content-api.ts`, `admin-host/panels/content.html`, `admin-host/scripts/content.js`, `admin-host/styles/content.css`; 11 test worker + 5 test DOM mới; `npm test` 94 file / 758 test xanh, `tsc` và `lint` sạch. Đã kiểm production ngày 2026-11-11: upload/xóa/dọn mồ côi đạt; còn 4 lỗi trong biên bản đầu tài liệu và phần C7 chưa kiểm, nên chưa nghiệm thu toàn bộ.
 
 Ghi chú triển khai khác bản gốc:
 
@@ -436,9 +464,9 @@ CREATE INDEX IF NOT EXISTS idx_content_manifest_created ON content_manifest (cre
 4. [x] Push web → trang chủ vẫn chạy bằng bundle (chưa có bản nào). — xong.
 5. [x] Trong shell: publish lần đầu bằng chính 3 file bundle → `/content` trả `version: 1`, web vẫn 40 cảnh / 20 âm / 49 nhạc. — probe 2026-11-09: `version: 1`, `counts 40/20/49`.
 6. [ ] Sửa tên 1 cảnh → tải lại web thấy tên mới; xóa 1 cảnh thử → biến mất và file được chừa lại nếu mục khác dùng; rollback → như cũ.
-   - **Chưa làm (2026-11-09):** D1 mới có đúng version 1 (3 dòng), chưa có version 2 nên chưa chứng minh luồng sửa / xóa / quay lại trên production.
+   - **Đã kiểm một phần 2026-11-11:** tạo cảnh QA ẩn ở v2, sửa tên ở v3, xóa mục ở v4; file giữ lại tới khi xóa riêng. Danh sách cảnh cuối buổi khớp bản gốc. Chưa kiểm tên trên web chính, hai mục dùng chung một tệp và rollback.
 7. [ ] Upload 1 cảnh mới (đợt 2) → file nằm trên R2, cảnh hiện trên web sau khi tải lại; thử xóa file đang dùng → bị chặn.
-   - **Code + test xong 2026-11-10, chưa kiểm trên production:** cần deploy admin worker (tự deploy theo push `main`) rồi upload một tệp thật, xác nhận key mới trên R2 và nút Xóa bị tắt với tệp đang dùng.
+   - **Đã kiểm phần upload/xóa trên production 2026-11-11:** đủ 5 thư mục, 14 upload thành công; UI khóa Xóa và API trả 409 với tệp đang dùng, dọn mồ côi đạt. Chưa kiểm cảnh hiện trên web vì QA luôn ẩn; preview audio/video admin còn lỗi CDN 403 và các lỗi ghi trong biên bản. Giữ bước này mở.
 
 Xong khi: thêm/sửa/xóa một cảnh, một âm, một bài nhạc và file của nó đều làm được trong shell **không cần máy local, không build lại web**; mọi lần ghi có đúng 1 dòng `admin_audit`; web vẫn chạy bình thường khi `/content` chết.
 
@@ -599,3 +627,5 @@ npx wrangler kv key put --namespace-id=a16e430f9bbe46afa51ffc9d4f9bce9d --remote
 - **Bản 23** (2026-11-10): **xóa `/dev/studio` và code chỉ studio dùng** — trang studio, 2 route dev `api/admin/scenes` + `api/admin/sync`, `AdminHeader`/`AdminThemeContext` cũ và test `admin-header`; gỡ nút mở studio trong `SceneSelectorWidget`, cập nhật copy `hit-limits`/`SYSTEM_LIMITS` sang tab Nội dung + Kho tệp; `npm test` 93 file / 755 test xanh. Còn lại: `/dev/surface-lab` và `/dev/toasts` (trang thử, bị strip khỏi bản web).
 - **Bản 24** (2026-11-10): **thay hộp thoại native bằng hộp thoại trong trang** ở panel Nội dung. Thêm module dùng chung `admin-host/scripts/dialogs.js` + `styles/dialogs.css` (`window.AdminDialog.confirm/prompt`, Promise, backdrop/Escape đóng, focus trap + trả focus, Enter gửi khi đã khớp, nút xóa chỉ bật khi gõ đúng tên tệp) và chuyển 7 điểm gọi `window.confirm`/`window.prompt` của `content.js` (bỏ thay đổi khi mở mục khác / đóng form / chuyển tab, xóa mục, xóa tệp, dọn mồ côi, rollback). Test DOM chạy `dialogs.js` + `content.js` thật, thêm ca Escape trả focus và ca hủy hộp thoại gõ tên; `npm test` 93 file / 757 test xanh. `chat.js`/`dashboard.js` vẫn dùng `confirm` native — chuyển sau nếu cần đồng bộ.
 - **Bản 25** (2026-11-10): **đồng bộ hộp thoại cho toàn shell** — 5 chỗ `window.confirm` còn lại (`chat.js` ×4: xóa nhà cung cấp, lưu thứ tự, lưu câu lệnh, lưu nhà cung cấp; `dashboard.js` ×1: lưu cờ) chuyển sang `AdminDialog`; thêm `white-space: pre-line` cho mô tả/chi tiết để danh sách nhiều dòng không dồn thành một dòng. Test DOM chạy `dialogs.js` thật (thêm ca xóa nhà cung cấp có xác nhận); `npm test` 94 file / 764 test xanh, lint + tsc + `build:admin` sạch. Kiểm trên `wrangler dev`: hộp thoại lưu cờ và lưu thứ tự hiện đúng, hủy không ghi gì.
+- **Bản 26** (2026-11-11): kiểm trực tiếp production Nội dung/Kho tệp, lưu 11 ảnh. 18 lượt chọn tệp gồm 14 upload thành công và 4 bị chặn đúng; xóa riêng, chặn đang dùng, dọn 12 mồ côi đạt. Tạo/sửa/xóa cảnh ẩn ở v2/v3/v4, dọn sạch 14 tệp QA; kho về đúng 118 tệp / 449.006.574 byte và danh sách cảnh nguyên bản. Ghi 4 lỗi chưa sửa: media preview CDN 403, preview âm/nhạc chưa cập nhật sau upload, chữ Đ bị bỏ, usedBy trùng. C7 giữ mở cho kiểm web/rollback; không sửa code hay deploy.
+- **Bản 27** (2026-11-11): **sửa 4 lỗi biên bản production, kiểm local, chưa deploy.** `mediaNode` đặt `crossOrigin="anonymous"` cho `audio`/`video` (ảnh/link vẫn `referrerpolicy="origin"`); upload phát thêm `input` để preview đổi ngay; `sanitizeFileName` chuyển Đ/đ thành d trước khi lọc ký tự; `filesOf` khử trùng đường dẫn trong cùng một cảnh. Thêm 10 ca hồi quy (đỏ trước khi sửa): Đ/đ hoa–thường, hai cảnh chung tệp chỉ 2 `usedBy`, preview audio/video/ảnh/âm nhạc có `crossorigin`, upload 4 ô đổi preview ngay và ca 415 giữ preview cũ. `npm test` 94 file / 775 test xanh, lint 0 lỗi (11 cảnh báo cũ), `tsc` + `build:admin` sạch. Chromium headless trên `wrangler dev`: media phát 206/`readyState=4`, key `scenes/09-canh-mua-dem.png`, `usedBy` 2 dòng, 409 còn hiệu lực; dọn local khớp baseline. Ảnh 12–17 và `local-fixes.json` trong `admin-media-test/results-2026-11-11/`. Production chưa có bản sửa; C7 giữ mở.

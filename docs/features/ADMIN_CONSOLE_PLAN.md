@@ -1,6 +1,6 @@
 # Kế Hoạch Mở Rộng Admin Console
 
-Trạng thái: P0 đã xong 2026-10-25; P1 xong và đã đối chiếu production 2026-10-26; P2a/P2b/P2c đợt 1 đã xong và deploy production; P2e (báo cáo nội dung & chặn) đã xong toàn bộ và đưa lên production kèm hiệu lực chặn thực tế (2026-11-03); P2c đợt 2 (upload tệp + tab Kho tệp) và P2d (dọn mồ côi hàng loạt, cảnh báo tệp thiếu) code + test xong 2026-11-10, chờ deploy. Còn lại: kiểm upload/sửa/xóa trên production và sửa copy "chỉ xem" sai ở shell. Bản 19 — 2026-11-10.
+Trạng thái (2026-11-11): P0/P1/P2a/P2b/P2e đã đóng; P2c đợt 1 đã triển khai. P2c đợt 2 và P2d đã lên production: upload đủ 5 thư mục, kiểm định dạng/dung lượng, bảo vệ tệp đang dùng, xóa riêng và dọn mồ côi đều đạt. Bốn lỗi xem trước/tên tệp/danh sách sử dụng phát hiện trên production **đã sửa và kiểm local 2026-11-11, chưa deploy**; P2c vẫn chưa nghiệm thu tới khi deploy và kiểm lại cùng C7 (web, rollback); chi tiết trong biên bản P2. Copy "chỉ xem" và hộp thoại native đã thay. QA tạo–sửa–xóa một cảnh ẩn, lịch sử v1 → v4; cuối buổi kho/nội dung trở về đúng trạng thái ban đầu (118 tệp; 40/20/49). P3 chưa bắt đầu. Bản 22 — 2026-11-11.
 Đã chốt: admin chạy trên Cloudflare Workers + Static Assets sau Cloudflare Access. GitHub Actions đã bỏ; web chính deploy bằng Cloudflare Pages.
 
 Chi tiết từng mục viết khi bắt tay làm. P0 đã đóng, runbook ở `docs/archive/ADMIN_P0_PLAN.md`. P1 đã đóng, hồ sơ ở `docs/archive/ADMIN_P1_PLAN.md`. P2 có kế hoạch riêng ở `docs/features/ADMIN_P2_PLAN.md`. Lịch sử thay đổi ở cuối file.
@@ -97,7 +97,7 @@ Kế hoạch chi tiết, chia bước nhỏ và thứ tự deploy ở [`docs/fea
 
 ## Thứ tự đề nghị
 
-P0 (xong 2026-10-25) → P1a → P1b → P1c → P2.11 → P2.12 → P2c đợt 1 (xong) → P2e (xong) → P2c đợt 2 + P2d (code xong 2026-11-10) → phần còn lại theo nhu cầu thật.
+P0 (xong 2026-10-25) → P1a → P1b → P1c → P2.11 → P2.12 → P2c đợt 1 (đã triển khai) → P2e (xong) → P2c đợt 2 + P2d (đã kiểm production 2026-11-11, còn lỗi P2c và các bước C7 chưa kiểm) → phần còn lại theo nhu cầu thật.
 
 Lý do: chặn lộ trước; thấy hệ thống trước khi sửa; cờ là cách chặn sự cố rẻ nhất; P2e trước P2d vì là điều kiện nộp Google Play.
 
@@ -156,3 +156,5 @@ P1 có mục kiểm chứng riêng trong `docs/archive/ADMIN_P1_PLAN.md`.
 - **Bản 18** (2026-11-09): rà tiến độ theo production — P2a, P2b, P2c đợt 1 và P2e đã đóng và lên production; P2.0 đóng mục 0.1, mục 0.2 còn nợ khử trùng ở `chat-proxy`; P2a còn nhánh hạn mức 30 → 35 (chưa có người dùng chạm mức); P2c còn đợt 2 (upload + tab Kho tệp) và bước kiểm sửa/xóa/rollback trên production; P2d và P3 chưa bắt đầu.
 - **Bản 19** (2026-11-10): P2c đợt 2 + P2d code + test xong — upload tệp trực tiếp từ biểu mẫu (thanh tiến trình, ≤ 50 MB, không ghi đè), tab thứ tư "Kho tệp" (đang dùng bởi, mồ côi, tệp thiếu, xóa phải gõ đúng tên, dọn mồ côi hàng loạt). Shell không còn phụ thuộc `/dev/studio` để thêm nội dung. Chưa deploy; còn bước kiểm trên production và copy "chỉ xem".
 - **Bản 20** (2026-11-10): xóa `/dev/studio` cùng code chỉ studio dùng (2 route dev, `AdminHeader`/`AdminThemeContext` cũ, test `admin-header`), gỡ nút mở studio trong bộ chọn cảnh, cập nhật copy hạn mức sang tab Nội dung + Kho tệp. Còn 2 trang thử `/dev/surface-lab` và `/dev/toasts`.
+- **Bản 21** (2026-11-11): kiểm production P2c/P2d bằng bộ media thử: upload đủ 5 thư mục, validation, bảo vệ tệp đang dùng, xóa riêng và dọn 12 mồ côi đạt. Cảnh QA luôn ẩn, tạo/sửa/xóa làm lịch sử tăng tới v4; đã dọn toàn bộ 14 tệp và trả kho/nội dung về trạng thái ban đầu. Ghi nhận 4 lỗi chưa sửa (preview CDN 403, preview chậm cập nhật, mất chữ Đ, usedBy lặp); chưa đóng toàn P2c/C7. Có 11 ảnh và checklist local; không sửa code hay deploy.
+- **Bản 22** (2026-11-11): sửa 4 lỗi từ biên bản production Nội dung/Kho tệp — preview video/audio dùng CORS ẩn danh thay `referrerpolicy` (CDN trả 206 thay vì 403), upload cập nhật preview ngay, Đ/đ chuyển thành d, `usedBy` không lặp trong cùng một cảnh. 10 ca hồi quy mới; `npm test` 94 file / 775 test xanh, lint/tsc/`build:admin` sạch. Kiểm bằng Chromium headless trên `wrangler dev`, ảnh 12–17 trong `admin-media-test/results-2026-11-11/`. **Chưa deploy** — production còn 4 lỗi; phải kiểm lại 4 điểm và C7 sau deploy.
