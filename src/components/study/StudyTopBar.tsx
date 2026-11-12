@@ -4,21 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  CornersOutIcon,
-  CornersInIcon,
   SpeakerHighIcon,
   SpeakerXIcon,
   EyeIcon,
   EyeSlashIcon,
-  SlidersIcon,
-  QuestionIcon,
-  ChartBarIcon,
-  InfoIcon,
+  GearSixIcon,
 } from "@phosphor-icons/react";
 import { ZenStudyLogo } from "./brand/ZenStudyLogo";
 import { FocusStatsModal } from "./stats/FocusStatsModal";
 import { StudyAboutModal } from "./StudyAboutModal";
 import { TopBarUserProfile } from "./auth";
+import { TopBarMoreMenu } from "./layout/TopBarMoreMenu";
 import type { TimerTab } from "./pomodoro/types";
 
 export interface StudyTopBarProps {
@@ -39,6 +35,8 @@ export interface StudyTopBarProps {
   onToggleFullscreen: () => void;
   isStatsOpen?: boolean;
   onToggleStats?: () => void;
+  /** Mở hộp gửi góp ý/báo lỗi (P3.16) */
+  onOpenFeedback?: () => void;
 }
 
 /** Đồng hồ giữa TopBar: tự tick mỗi giây, chỉ hiển thị giờ tĩnh không click */
@@ -95,6 +93,7 @@ export const StudyTopBar = ({
   onToggleFullscreen,
   isStatsOpen: controlledStatsOpen,
   onToggleStats,
+  onOpenFeedback,
 }: StudyTopBarProps) => {
   const [internalStatsOpen, setInternalStatsOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
@@ -147,44 +146,6 @@ export const StudyTopBar = ({
               aria-label="Thanh công cụ nhanh Study Space"
               className="flex items-center h-9 sm:h-10 gap-0.5 sm:gap-1 pointer-events-auto select-none transition-all shrink-0 drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]"
             >
-              {/* Giới thiệu website (nằm bên trái nút Phím tắt) */}
-              <button
-                onClick={() => setIsAboutOpen(true)}
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-200 hover:text-white glass-hover transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
-                title="Giới thiệu website"
-                aria-label="Mở giới thiệu website"
-              >
-                <InfoIcon className="w-4 h-4" />
-              </button>
-
-              {/* Keyboard Shortcuts Cheat Sheet Button (Ẩn trên mobile không có bàn phím cứng) */}
-              <button
-                onClick={onToggleShortcuts}
-                className="hidden sm:flex w-8 h-8 rounded-xl items-center justify-center text-slate-200 hover:text-white glass-hover transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
-                title="Bảng tra cứu phím tắt (?)"
-              >
-                <QuestionIcon className="w-4 h-4" />
-              </button>
-
-              {/* Focus Stats Button */}
-              <button
-                onClick={() => (onToggleStats ? onToggleStats() : setInternalStatsOpen(true))}
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-200 hover:text-white glass-hover transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
-                title="Thống kê thời gian tập trung"
-                aria-label="Mở thống kê thời gian tập trung"
-              >
-                <ChartBarIcon className="w-4 h-4" />
-              </button>
-
-              {/* Zen Mode Toggle (Ẩn thanh công cụ để tập trung) */}
-              <button
-                onClick={onEnterZen}
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-200 hover:text-white glass-hover transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
-                title="Chế độ Zen: Ẩn toàn bộ UI (Z)"
-              >
-                <EyeSlashIcon className="w-4 h-4" />
-              </button>
-
               {/* Global Mute Toggle */}
               <button
                 onClick={onToggleMute}
@@ -208,17 +169,27 @@ export const StudyTopBar = ({
                 }`}
                 title="Cài đặt không gian học tập"
               >
-                <SlidersIcon className="w-4 h-4" />
+                <GearSixIcon className="w-4 h-4" />
               </button>
 
-              {/* Fullscreen Toggle */}
+              {/* Zen Mode Toggle (Ẩn thanh công cụ để tập trung) */}
               <button
-                onClick={onToggleFullscreen}
+                onClick={onEnterZen}
                 className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-200 hover:text-white glass-hover transition-all active:scale-90 cursor-pointer drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
-                title={isFullscreen ? "Thoát toàn màn hình (F)" : "Toàn màn hình (F)"}
+                title="Chế độ Zen: Ẩn toàn bộ UI (Z)"
               >
-                {isFullscreen ? <CornersInIcon className="w-4 h-4" /> : <CornersOutIcon className="w-4 h-4" />}
+                <EyeSlashIcon className="w-4 h-4" />
               </button>
+
+              {/* Thông tin & trợ giúp: thống kê, phím tắt, góp ý, giới thiệu, toàn màn hình */}
+              <TopBarMoreMenu
+                isFullscreen={isFullscreen}
+                onToggleStats={() => (onToggleStats ? onToggleStats() : setInternalStatsOpen(true))}
+                onToggleShortcuts={onToggleShortcuts}
+                onToggleFullscreen={onToggleFullscreen}
+                onOpenAbout={() => setIsAboutOpen(true)}
+                onOpenFeedback={onOpenFeedback}
+              />
 
               {/* Vạch chia ngăn cách */}
               <div className="w-[1px] h-4 bg-white/15 mx-0.5 sm:mx-1 shrink-0" />

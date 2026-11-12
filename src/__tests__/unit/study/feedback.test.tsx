@@ -267,16 +267,23 @@ describe("FeedbackDialog", () => {
     el.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
-  it("chưa đăng nhập thì mời đăng nhập và khóa nút gửi", () => {
+  it("chưa đăng nhập thì chỉ hiện lời mời đăng nhập, không dựng form", () => {
     authState.user = null;
     renderDialog();
 
-    expect(container.textContent).toContain("Đăng nhập để gửi góp ý");
+    expect(container.textContent).toContain("Đăng nhập để góp ý nhé");
     const signIn = Array.from(container.querySelectorAll("button")).find(
       (b) => b.textContent?.trim() === "Đăng nhập với Google",
     );
     expect(signIn).toBeTruthy();
-    expect(submitButton().disabled).toBe(true);
+    expect(container.querySelector("textarea")).toBeNull();
+    expect(container.querySelectorAll('button[role="radio"]').length).toBe(0);
+    expect(container.querySelector('input[type="file"]')).toBeNull();
+    expect(
+      Array.from(container.querySelectorAll("button")).some(
+        (b) => b.textContent?.trim() === "Gửi",
+      ),
+    ).toBe(false);
   });
 
   it("bắt buộc chọn loại và nội dung đủ 10 ký tự", () => {
@@ -408,6 +415,21 @@ describe("FeedbackSheet", () => {
     expect(dialog()?.textContent).toContain("Đính kèm ảnh");
     const fileInput = dialog()?.querySelector('input[type="file"]') as HTMLInputElement;
     expect(fileInput?.accept).toBe("image/jpeg,image/png,image/webp");
+  });
+
+  it("chưa đăng nhập thì khay chỉ có lời mời đăng nhập", () => {
+    authState.user = null;
+    renderSheet(true);
+
+    expect(dialog()?.textContent).toContain("Đăng nhập để góp ý nhé");
+    expect(dialog()?.querySelector("textarea")).toBeNull();
+    expect(dialog()?.querySelectorAll('button[role="radio"]').length).toBe(0);
+    expect(dialog()?.querySelector('input[type="file"]')).toBeNull();
+    expect(
+      Array.from(document.querySelectorAll("button")).some(
+        (b) => b.textContent?.trim() === "Gửi",
+      ),
+    ).toBe(false);
   });
 
   it("có nút quay lại khi mở từ màn hình trước", () => {

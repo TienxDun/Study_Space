@@ -9,7 +9,6 @@ import {
   MinusIcon,
   PlusIcon,
   CompassIcon,
-  ChatCircleDotsIcon,
 } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { ModalShell } from "../ui/ModalShell";
@@ -59,8 +58,6 @@ export interface StudySettingsProps {
   onClose: () => void;
   // Tour walkthrough
   onOpenTour?: () => void;
-  // Góp ý/báo lỗi chung
-  onOpenFeedback?: () => void;
   // Clock settings
   showClockSeconds: boolean;
   onToggleClockSeconds: () => void;
@@ -122,7 +119,7 @@ const ToggleSwitch = ({ checked, onChange, activeColor = "bg-emerald-500", disab
   );
 };
 
-/** Khung nhóm + tiêu đề dùng chung cho 4 nhóm cài đặt. */
+/** Nhóm cài đặt: chỉ tiêu đề + đường kẻ giữa các hàng, không thêm khung lồng. */
 function SettingsSection({
   icon,
   title,
@@ -133,34 +130,46 @@ function SettingsSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-2.5 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.08]">
-      <h4 className="flex items-center gap-1.5 text-xs font-bold text-slate-300 uppercase tracking-wider">
+    <section>
+      <h4 className="flex items-center gap-1.5 mb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
         {icon}
         <span>{title}</span>
       </h4>
-      {children}
+      <div className="divide-y divide-white/10">{children}</div>
     </section>
   );
 }
 
-/** 1 hàng: tên + mô tả bên trái, nút gạt bên phải. */
+/** 1 hàng: tên + mô tả bên trái, điều khiển bên phải. */
 function SettingRow({
   title,
   desc,
   control,
 }: {
   title: string;
-  desc?: string;
+  desc?: React.ReactNode;
   control: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+    <div className="flex items-center justify-between gap-2 py-2.5">
       <div className="space-y-0.5 min-w-0">
         <div className="font-bold text-slate-200 text-xs">{title}</div>
         {desc && <div className="text-[11px] text-slate-400">{desc}</div>}
       </div>
       <div className="shrink-0">{control}</div>
     </div>
+  );
+}
+
+/** Số giờ chạy thật, đặt ngay dưới công tắc mà nó phản ánh. */
+function PreviewValue({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="flex items-baseline gap-1.5">
+      <span className="text-[10px] font-medium text-slate-500">Xem trước</span>
+      <span className="font-mono text-xs font-bold text-white tabular-nums tracking-wide">
+        {children}
+      </span>
+    </span>
   );
 }
 
@@ -182,7 +191,6 @@ export const StudySettingsModal = ({
   isOpen,
   onClose,
   onOpenTour,
-  onOpenFeedback,
   showClockSeconds,
   onToggleClockSeconds,
   isClock12Hour,
@@ -206,9 +214,31 @@ export const StudySettingsModal = ({
     enabled: isOpen,
   });
 
+  // Số phút đang gõ trong ô nhập (chỉ 1 ô tại một thời điểm), lưu khi Enter/blur.
+  const [durationDraft, setDurationDraft] = useState<{ key: DurationKey; value: string } | null>(null);
+
+  const clampDuration = (key: DurationKey, value: number) =>
+    clamp(value, DURATION_LIMITS[key].min, DURATION_LIMITS[key].max);
+
+  /** Đọc số đang gõ; rỗng hoặc không phải số thì giữ giá trị cũ. */
+  const readDraft = (key: DurationKey, fallback: number) => {
+    if (!durationDraft || durationDraft.key !== key) return fallback;
+    const parsed = Number.parseInt(durationDraft.value, 10);
+    return Number.isNaN(parsed) ? fallback : clampDuration(key, parsed);
+  };
+
+  const commitDuration = (key: DurationKey) => {
+    if (!durationDraft || durationDraft.key !== key) return;
+    const next = readDraft(key, durations[key]);
+    setDurationDraft(null);
+    if (next !== durations[key]) {
+      onSaveDurations({ ...durations, [key]: next });
+    }
+  };
+
   const stepDuration = (key: DurationKey, delta: number) => {
-    const { min, max } = DURATION_LIMITS[key];
-    const next = clamp(durations[key] + delta, min, max);
+    const next = clampDuration(key, readDraft(key, durations[key]) + delta);
+    setDurationDraft(null);
     if (next !== durations[key]) {
       onSaveDurations({ ...durations, [key]: next });
     }
@@ -255,19 +285,14 @@ export const StudySettingsModal = ({
         icon={<ClockIcon className="w-3.5 h-3.5 text-emerald-400" />}
         title="Hiển thị"
       >
-        {/* Xem trước chạy thật theo đúng nút gạt bên dưới */}
-        <div
-          className="rounded-xl bg-black/40 border border-white/10 py-2 px-3 text-center font-mono text-sm font-bold text-white tabular-nums tracking-wider"
-          title="Xem trước kiểu giờ đã chọn"
-        >
-          <div className="text-[10px] font-sans font-medium text-slate-500 tracking-normal mb-0.5">Đồng hồ</div>
-          {clockDigits || "-- : --"}
-          {clockPeriod ? <span className="text-white/60 text-xs ml-1.5">{clockPeriod}</span> : null}
-        </div>
-
         <SettingRow
           title="Hiển thị giây (:ss)"
-          desc="23:52:48 ⟷ 23:52"
+          desc={
+            <PreviewValue>
+              {clockDigits || "-- : --"}
+              {clockPeriod ? <span className="text-white/60 ml-1">{clockPeriod}</span> : null}
+            </PreviewValue>
+          }
           control={
             <ToggleSwitch
               checked={showClockSeconds}
@@ -277,38 +302,42 @@ export const StudySettingsModal = ({
           }
         />
 
-        <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-          <div className="space-y-0.5">
-            <div className="font-bold text-slate-200 text-xs">Định dạng thời gian</div>
-            <div className="text-xs text-slate-400">24 Giờ hoặc 12 Giờ (AM/PM)</div>
-          </div>
-          <div className="flex items-center p-0.5 rounded-xl bg-white/10 border border-white/10 shrink-0">
-            <button
-              type="button"
-              onClick={() => isClock12Hour && onToggleClock12Hour()}
-              aria-pressed={!isClock12Hour}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                !isClock12Hour ? "bg-white text-black shadow-sm" : "text-slate-400 hover:text-white"
-              }`}
-            >
-              24h
-            </button>
-            <button
-              type="button"
-              onClick={() => !isClock12Hour && onToggleClock12Hour()}
-              aria-pressed={isClock12Hour}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                isClock12Hour ? "bg-white text-black shadow-sm" : "text-slate-400 hover:text-white"
-              }`}
-            >
-              12h
-            </button>
-          </div>
-        </div>
+        <SettingRow
+          title="Định dạng thời gian"
+          desc="24 Giờ hoặc 12 Giờ (AM/PM)"
+          control={
+            <div className="flex items-center p-0.5 rounded-xl bg-white/10 border border-white/10 shrink-0">
+              <button
+                type="button"
+                onClick={() => isClock12Hour && onToggleClock12Hour()}
+                aria-pressed={!isClock12Hour}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  !isClock12Hour ? "bg-white text-black shadow-sm" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                24h
+              </button>
+              <button
+                type="button"
+                onClick={() => !isClock12Hour && onToggleClock12Hour()}
+                aria-pressed={isClock12Hour}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  isClock12Hour ? "bg-white text-black shadow-sm" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                12h
+              </button>
+            </div>
+          }
+        />
 
         <SettingRow
           title="Phần trăm giây bấm giờ (.00)"
-          desc="00:00.00 ⟷ 00:00"
+          desc={
+            <PreviewValue>
+              <StopwatchPreview showMs={showStopwatchMilliseconds} enabled={isOpen} />
+            </PreviewValue>
+          }
           control={
             <ToggleSwitch
               checked={showStopwatchMilliseconds}
@@ -317,15 +346,6 @@ export const StudySettingsModal = ({
             />
           }
         />
-
-        {/* Demo bấm giờ chạy riêng để thấy ngay .00 khác gì */}
-        <div
-          className="rounded-xl bg-black/40 border border-white/10 py-2 px-3 text-center font-mono text-sm font-bold text-white tabular-nums tracking-wider"
-          title="Demo kiểu bấm giờ đã chọn"
-        >
-          <div className="text-[10px] font-sans font-medium text-slate-500 tracking-normal mb-0.5">Bấm giờ (demo)</div>
-          <StopwatchPreview showMs={showStopwatchMilliseconds} enabled={isOpen} />
-        </div>
       </SettingsSection>
 
       {/* NHÓM 2: PHIÊN HỌC */}
@@ -333,30 +353,67 @@ export const StudySettingsModal = ({
         icon={<FlameIcon className="w-3.5 h-3.5 text-emerald-400" />}
         title="Phiên học"
       >
-        {/* Chỉnh tay từng phút bằng nút cộng trừ */}
+        {/* Gõ số phút trực tiếp, hoặc lùi/tới từng bước bằng nút cộng trừ */}
         {(Object.keys(DURATION_LIMITS) as DurationKey[]).map((key) => (
           <div
             key={key}
-            className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/[0.03] border border-white/[0.06]"
+            className="flex items-center justify-between gap-2 py-2.5"
           >
             <span className="text-xs font-bold text-slate-200">{DURATION_LABELS[key]}</span>
             <div className="flex items-center gap-1 shrink-0">
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => stepDuration(key, -DURATION_LIMITS[key].step)}
-                disabled={durations[key] <= DURATION_LIMITS[key].min}
+                disabled={readDraft(key, durations[key]) <= DURATION_LIMITS[key].min}
                 aria-label={`Giảm ${DURATION_LABELS[key]}`}
                 className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center transition-all active:scale-90 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <MinusIcon className="w-3.5 h-3.5" />
               </button>
-              <span className="w-10 text-center text-xs font-bold font-mono text-white tabular-nums">
-                {durations[key]}′
-              </span>
+              <label
+                className="flex items-center gap-0.5 px-1 rounded-lg hover:bg-white/5 focus-within:bg-white/10 focus-within:ring-1 focus-within:ring-accent-music-bright/50 transition-colors cursor-text"
+                title={`Gõ số phút (${DURATION_LIMITS[key].min}–${DURATION_LIMITS[key].max}), hoặc ↑↓ / Shift+↑↓`}
+              >
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  aria-label={`Số phút ${DURATION_LABELS[key]}`}
+                  value={
+                    durationDraft?.key === key ? durationDraft.value : String(durations[key])
+                  }
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "").slice(0, 3);
+                    setDurationDraft({ key, value: digits });
+                  }}
+                  onFocus={(e) => {
+                    setDurationDraft({ key, value: String(durations[key]) });
+                    e.currentTarget.select();
+                  }}
+                  onBlur={() => commitDuration(key)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      commitDuration(key);
+                      e.currentTarget.blur();
+                    } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                      e.preventDefault();
+                      const step = e.shiftKey ? 5 : 1;
+                      const next = clampDuration(
+                        key,
+                        readDraft(key, durations[key]) + (e.key === "ArrowUp" ? step : -step)
+                      );
+                      setDurationDraft({ key, value: String(next) });
+                    }
+                  }}
+                  className="w-8 py-1 bg-transparent text-right text-xs font-bold font-mono text-white tabular-nums focus:outline-none"
+                />
+                <span className="text-[11px] font-bold text-slate-400">′</span>
+              </label>
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => stepDuration(key, DURATION_LIMITS[key].step)}
-                disabled={durations[key] >= DURATION_LIMITS[key].max}
+                disabled={readDraft(key, durations[key]) >= DURATION_LIMITS[key].max}
                 aria-label={`Tăng ${DURATION_LABELS[key]}`}
                 className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center transition-all active:scale-90 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
               >
@@ -384,7 +441,7 @@ export const StudySettingsModal = ({
         />
 
         {soundEnabled && (
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-2 gap-1.5 pt-2.5 pb-1">
             {POMODORO_SOUND_OPTIONS.map((opt) => {
               const isSelected = soundType === opt.id;
               const isPreviewing = previewingSoundId === opt.id;
@@ -395,15 +452,15 @@ export const StudySettingsModal = ({
                   onClick={() => handleSelectSound(opt.id)}
                   aria-pressed={isSelected}
                   title="Bấm để chọn + nghe thử"
-                  className={`px-2 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 cursor-pointer truncate ${
+                  className={`px-2 py-2 rounded-xl text-xs font-bold leading-tight text-left border transition-all active:scale-95 cursor-pointer ${
                     isSelected
                       ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-200"
-                      : "bg-white/[0.02] hover:bg-white/[0.06] border-white/[0.06] text-slate-300"
+                      : "bg-white/[0.04] hover:bg-white/[0.08] border-transparent text-slate-300"
                   }`}
                 >
-                  <span className="truncate block">{opt.name}</span>
+                  <span className="block">{opt.name}</span>
                   <span
-                    className={`block text-[10px] font-medium mt-0.5 ${
+                    className={`block text-[10px] font-medium leading-tight mt-0.5 ${
                       isPreviewing ? "text-emerald-300 animate-pulse" : "text-slate-500"
                     }`}
                   >
@@ -416,51 +473,27 @@ export const StudySettingsModal = ({
         )}
       </SettingsSection>
 
-      {/* Hỗ trợ: góp ý/báo lỗi chung (P3.16) */}
-      {onOpenFeedback && (
-        <SettingsSection
-          icon={<ChatCircleDotsIcon className="w-3.5 h-3.5 text-emerald-400" />}
-          title="Hỗ trợ"
-        >
-          <SettingRow
-            title="Gửi góp ý / báo lỗi"
-            desc="Cho quản trị viên biết lỗi bạn gặp"
-            control={
-              <button
-                type="button"
-                onClick={onOpenFeedback}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 border border-emerald-400/30 transition-all active:scale-95 cursor-pointer"
-              >
-                Gửi
-              </button>
-            }
-          />
-        </SettingsSection>
-      )}
-
       {/* Tour hướng dẫn sử dụng */}
       {onOpenTour && (
-        <div className="pt-2 border-t border-white/10">
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] transition-colors">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
-                <CompassIcon className="w-3.5 h-3.5 text-accent-music-glow" />
-                <span>Tour hướng dẫn sử dụng</span>
-              </div>
-                    <p className="text-xs text-slate-400">Xem lại cách dùng các tính năng</p>
+        <div className="flex items-center justify-between gap-3 pt-3 border-t border-white/10">
+          <div className="space-y-0.5 min-w-0">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
+              <CompassIcon className="w-3.5 h-3.5 text-accent-music-glow" />
+              <span>Tour hướng dẫn sử dụng</span>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onOpenTour();
-              }}
-              className="px-3 py-1.5 rounded-full text-xs font-semibold bg-accent-music/20 hover:bg-accent-music/30 text-accent-music-bright border border-accent-music-glow/30 transition-all active:scale-95 cursor-pointer flex items-center gap-1 shadow-sm shrink-0"
-              title="Mở lại Onboarding Tour"
-            >
-              <span>Xem lại</span>
-            </button>
+            <p className="text-[11px] text-slate-400">Xem lại cách dùng các tính năng</p>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onOpenTour();
+            }}
+            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-accent-music/20 hover:bg-accent-music/30 text-accent-music-bright border border-accent-music-glow/30 transition-all active:scale-95 cursor-pointer flex items-center gap-1 shadow-sm shrink-0"
+            title="Mở lại Onboarding Tour"
+          >
+            <span>Xem lại</span>
+          </button>
         </div>
       )}
 

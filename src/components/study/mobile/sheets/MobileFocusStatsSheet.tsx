@@ -79,7 +79,6 @@ export function MobileFocusStatsSheet({
       backLabel={backLabel}
       sheetId="stats"
       title="Thống kê tập trung"
-      maxHeightClassName="h-auto max-h-[82dvh]"
     >
       <div className="flex-1 flex flex-col px-4 pt-3.5 pb-6 space-y-4 text-white select-none">
         {all.totalSeconds <= 0 ? (
@@ -97,10 +96,10 @@ export function MobileFocusStatsSheet({
             <button
               type="button"
               onClick={handleStartPomodoro}
-              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold lg-btn-action text-white transition-all active:scale-95 cursor-pointer shadow-md"
+              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold bg-gradient-to-r from-amber-500/25 via-amber-400/20 to-amber-500/25 border border-amber-400/40 text-amber-100 hover:from-amber-500/35 hover:via-amber-400/30 hover:to-amber-500/35 transition-all active:scale-95 cursor-pointer shadow-[0_4px_16px_rgba(245,158,11,0.22)]"
             >
-              <PlayIcon className="w-3.5 h-3.5 relative z-10" weight="fill" />
-              <span className="relative z-10">Bắt đầu học ngay</span>
+              <PlayIcon className="w-3.5 h-3.5 text-amber-300" weight="fill" />
+              <span>Bắt đầu học ngay</span>
             </button>
           </div>
         ) : (

@@ -5,11 +5,11 @@ import {
   BrainIcon,
   PlusIcon,
   ClockCounterClockwiseIcon,
-  GoogleLogoIcon,
+  CircleNotchIcon,
   SparkleIcon,
 } from "@phosphor-icons/react";
 import { MobileSheetShell } from "./core/MobileSheetShell";
-import { useAuth, GoogleSignInButton } from "@/components/study/auth";
+import { useAuth, GoogleIcon } from "@/components/study/auth";
 import { firebaseConfigured } from "@/lib/firebase-config";
 import { useChatSessions } from "../../chat/hooks/useChatSessions";
 import { useChatMessages } from "../../chat/hooks/useChatMessages";
@@ -33,7 +33,7 @@ export function MobileChatSheet({
   onBack,
   backLabel,
 }: MobileChatSheetProps) {
-  const { user, loading, redirectError, signIn, getToken } = useAuth();
+  const { user, loading, redirectError, signIn, isSigningIn, getToken } = useAuth();
   const [input, setInput] = useState("");
   const attachmentsApi = useImageAttachments(notifyChat);
 
@@ -152,7 +152,6 @@ export function MobileChatSheet({
       sheetId="chat"
       keepMounted={false}
       title="Trợ lý học tập"
-      heightClassName="h-[68dvh] max-h-[72dvh]"
       contentScroll={false}
       headerRight={
         user ? (
@@ -279,18 +278,25 @@ export function MobileChatSheet({
                 Đăng nhập tài khoản Google để hỏi bài, tóm tắt kiến thức và lưu trữ lịch sử đoạn chat.
               </p>
             </div>
-            <div className="pt-2">
-              <GoogleSignInButton />
-              {!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
-                <button
-                  type="button"
-                  onClick={signIn}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black text-xs font-bold hover:scale-[1.02] active:scale-95 transition-all cursor-pointer shadow-md"
-                >
-                  <GoogleLogoIcon className="w-4 h-4" weight="bold" />
-                  <span>Đăng nhập với Google</span>
-                </button>
-              )}
+            <div className="w-full max-w-xs pt-2">
+              <button
+                type="button"
+                onClick={() => void signIn()}
+                disabled={isSigningIn}
+                className="relative group overflow-hidden w-full px-5 py-2.5 rounded-full text-xs font-bold text-slate-950 bg-white hover:bg-slate-100 shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-95 disabled:opacity-60"
+              >
+                {isSigningIn ? (
+                  <>
+                    <CircleNotchIcon className="w-4 h-4 animate-spin text-slate-700" />
+                    <span>Đang mở Google...</span>
+                  </>
+                ) : (
+                  <>
+                    <GoogleIcon />
+                    <span>Đăng nhập với Google</span>
+                  </>
+                )}
+              </button>
             </div>
             {redirectError && (
               <p className="text-xs text-rose-300 leading-relaxed max-w-[260px]">

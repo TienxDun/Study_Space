@@ -117,7 +117,6 @@ export const MobileMixerSheet = memo(function MobileMixerSheet({
       sheetId="mixer"
       title="Âm thanh & Nhạc Chill"
       panelRef={mobileSheetRef}
-      heightClassName="h-[68dvh] max-h-[72dvh]"
       onSwipeLeft={() => onTabChange("ambience")}
       onSwipeRight={() => onTabChange("music")}
       headerRight={

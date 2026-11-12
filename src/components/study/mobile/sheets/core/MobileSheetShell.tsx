@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, startTransition, createContext, useContext, type ReactNode } from "react";
+import { useState, useRef, useEffect, useCallback, startTransition, createContext, useContext, type ReactNode, type RefObject } from "react";
 import { XIcon, ArrowsInSimpleIcon, ArrowsOutSimpleIcon, CaretLeftIcon } from "@phosphor-icons/react";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
@@ -28,13 +28,13 @@ interface MobileSheetShellProps {
   headerRight?: ReactNode;
   onBack?: () => void;
   backLabel?: string;
-  maxHeightClassName?: string;
-  heightClassName?: string;
   defaultZenMode?: boolean;
   allowZenMode?: boolean;
   footer?: ReactNode;
   footerClassName?: string;
   panelRef?: React.Ref<HTMLDivElement>;
+  /** Vùng cuộn nội dung, cho khay có màn con cần lưu/khôi phục vị trí cuộn. */
+  contentRef?: RefObject<HTMLDivElement | null>;
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
   contentScroll?: boolean;
@@ -64,13 +64,12 @@ export function MobileSheetShell({
   headerRight,
   onBack,
   backLabel,
-  maxHeightClassName,
-  heightClassName,
   defaultZenMode = false,
   allowZenMode = true,
   footer,
   footerClassName,
   panelRef,
+  contentRef,
   onSwipeLeft,
   onSwipeRight,
   contentScroll = true,
@@ -103,6 +102,7 @@ export function MobileSheetShell({
 
   const [isZenMode, setIsZenMode] = useState<boolean>(defaultZenMode);
   const localPanelRef = useRef<HTMLDivElement | null>(null);
+  const contentScrollRef = useRef<HTMLDivElement | null>(null);
   const effectiveZenMode = allowZenMode ? isZenMode : false;
 
   // Khi mở bảng, đồng bộ chế độ xem theo lựa chọn đã lưu của người dùng
@@ -200,9 +200,7 @@ export function MobileSheetShell({
         "fixed z-50 flex flex-col text-white overflow-hidden sm:hidden transform-gpu will-change-transform sheet-motion-panel",
         effectiveZenMode
           ? "inset-x-2 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] h-[calc(100dvh-var(--app-safe-top)-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] max-h-[calc(100dvh-var(--app-safe-top)-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] rounded-[32px] bg-neutral-950/94 backdrop-blur-xl border border-white/[0.18] shadow-[0_24px_60px_rgba(0,0,0,0.85),inset_0_1px_2px_rgba(255,255,255,0.25)]"
-          : `inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] rounded-[28px] bg-neutral-950/90 backdrop-blur-lg border border-white/[0.16] shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.2)] max-h-[calc(100dvh-var(--app-safe-top)-var(--mobile-nav-height)-var(--app-safe-bottom)-var(--mobile-nav-safe-gap)-1.25rem)] ${
-              heightClassName || maxHeightClassName || "h-[68dvh] max-h-[72dvh]"
-            }`
+          : "inset-x-3 bottom-[calc(var(--mobile-nav-height)+var(--app-safe-bottom)+var(--mobile-nav-safe-gap)+0.75rem)] rounded-[28px] bg-neutral-950/90 backdrop-blur-lg border border-white/[0.16] shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.2)] h-[68dvh] max-h-[72dvh]"
       )}
     >
       <MobileSheetShellContext.Provider
@@ -298,6 +296,10 @@ export function MobileSheetShell({
 
       {/* Nội dung cuộn bên trong - nhận diện vuốt ở toàn bộ 100% diện tích gồm cả khoảng trống */}
       <div
+        ref={(el) => {
+          contentScrollRef.current = el;
+          assignRef(contentRef, el);
+        }}
         onTouchStart={handleContentTouchStart}
         onTouchEnd={handleContentTouchEnd}
         className={cn(

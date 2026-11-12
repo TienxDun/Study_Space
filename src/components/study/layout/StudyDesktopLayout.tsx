@@ -125,6 +125,7 @@ export const StudyDesktopLayout = React.memo(function StudyDesktopLayout({
           isFullscreen={isFullscreen}
           isStatsOpen={isStatsOpen}
           onToggleStats={() => setIsStatsOpen((prev) => !prev)}
+          onOpenFeedback={handleOpenFeedback}
           showClockSeconds={showClockSeconds}
           isClock12Hour={isClock12Hour}
           onToggleClock={handleToggleClock}
@@ -218,7 +219,6 @@ export const StudyDesktopLayout = React.memo(function StudyDesktopLayout({
         isOpen={isSettingsOpen}
         onClose={handleCloseSettings}
         onOpenTour={() => setIsTourOpen(true)}
-        onOpenFeedback={handleOpenFeedback}
         showClockSeconds={showClockSeconds}
         onToggleClockSeconds={handleToggleClockSeconds}
         isClock12Hour={isClock12Hour}

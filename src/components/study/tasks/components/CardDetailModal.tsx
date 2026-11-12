@@ -237,14 +237,14 @@ export const CardDetailModal = React.memo(function CardDetailModal({
             <AnimatePresence>
               {isStatusDropdownOpen && statusCoords && (
                 <div className="select-none">
-                  {/* Lớp nền mờ tối phủ toàn màn hình bắt chạm để đóng */}
+                  {/* Lớp bắt chạm phủ toàn màn hình để đóng; phải nằm trên panel z-[100] */}
                   <motion.div
                     key="status-dropdown-backdrop"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.16 }}
-                    className="fixed inset-0 z-[70] bg-black/45 cursor-pointer touch-none"
+                    className="fixed inset-0 z-[105] cursor-pointer touch-none"
                     onPointerDown={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -266,7 +266,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                     exit={{ opacity: 0, scale: 0.95, y: -4 }}
                     transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
                     style={{ top: statusCoords.top, left: statusCoords.left }}
-                    className="fixed z-[71] w-48 p-1.5 rounded-2xl border border-white/15 bg-neutral-950/88 shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] max-h-48 overflow-y-auto custom-study-scroll space-y-0.5 select-none"
+                    className="fixed z-[106] w-48 p-1.5 rounded-2xl border border-white/15 bg-neutral-950/88 shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] max-h-48 overflow-y-auto custom-study-scroll space-y-0.5 select-none"
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -397,14 +397,14 @@ export const CardDetailModal = React.memo(function CardDetailModal({
             <AnimatePresence>
               {isDueDatePopoverOpen && dueDateCoords && (
                 <div className="select-none">
-                  {/* Lớp nền mờ tối phủ toàn màn hình bắt chạm để đóng */}
+                  {/* Lớp bắt chạm phủ toàn màn hình để đóng; phải nằm trên panel z-[100] */}
                   <motion.div
                     key="duedate-popover-backdrop"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.16 }}
-                    className="fixed inset-0 z-[70] bg-black/45 cursor-pointer touch-none"
+                    className="fixed inset-0 z-[105] cursor-pointer touch-none"
                     onPointerDown={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -426,7 +426,7 @@ export const CardDetailModal = React.memo(function CardDetailModal({
                     exit={{ opacity: 0, scale: 0.95, y: -4 }}
                     transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
                     style={{ top: dueDateCoords.top, right: dueDateCoords.right }}
-                    className="fixed z-[71] w-80 p-3.5 rounded-2xl border border-white/15 bg-neutral-950/88 shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] space-y-3 select-none"
+                    className="fixed z-[106] w-80 p-3.5 rounded-2xl border border-white/15 bg-neutral-950/88 shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] space-y-3 select-none"
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -823,13 +823,8 @@ export const CardDetailModal = React.memo(function CardDetailModal({
         exit={{ opacity: 0, y: 60 }}
         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="relative pointer-events-auto w-full max-w-[640px] max-h-[88vh] flex flex-col rounded-2xl border border-white/15 bg-neutral-950/88 shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] text-white overflow-hidden transform-gpu will-change-transform"
+        className="dialog-glass pointer-events-auto w-full max-w-[640px] max-h-[88vh] flex flex-col text-white overflow-hidden transform-gpu will-change-transform"
       >
-        {/* Mép kính bắt sáng trên đỉnh tấm kính */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-x-8 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none z-10"
-        />
 
         {/* Header: Title, Board Info & Action Bar */}
         <div className="px-6 pt-5 pb-3 border-b border-white/[0.08] space-y-3">

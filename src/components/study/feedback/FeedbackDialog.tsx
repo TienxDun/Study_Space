@@ -157,32 +157,55 @@ function FeedbackPanel({ variant, isOpen, onClose, onBack, backLabel }: Feedback
     onClose();
   };
 
-  const fields = (
-    <>
-      {!loading && !user ? (
-        <div className="mt-3 space-y-2">
-          <p className="text-xs leading-relaxed text-white/60">Đăng nhập để gửi góp ý.</p>
-          <button
-            type="button"
-            onClick={() => void signIn()}
-            disabled={isSigningIn}
-            className="relative group overflow-hidden w-full px-5 py-2.5 rounded-full text-xs font-bold text-slate-950 bg-white hover:bg-slate-100 shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-          >
-            {isSigningIn ? (
-              <>
-                <CircleNotchIcon className="w-4 h-4 animate-spin text-slate-700" />
-                <span>Đang mở Google...</span>
-              </>
-            ) : (
-              <>
-                <GoogleIcon />
-                <span>Đăng nhập với Google</span>
-              </>
-            )}
-          </button>
+  // Chưa có tài khoản thì không dựng form: mọi trường đều không dùng được.
+  const signedOut = !user;
+
+  const loginGate = loading ? (
+    <div className="flex items-center justify-center py-10 text-white/40">
+      <CircleNotchIcon size={18} className="animate-spin" aria-hidden="true" />
+    </div>
+  ) : (
+    <div className="flex flex-col items-center px-1 py-4 text-center">
+      {/* Khay mobile có tiêu đề chữ trơn nên cần ô icon riêng cho trạng thái này. */}
+      {variant === "sheet" ? (
+        <div className="relative mb-4">
+          <span
+            aria-hidden="true"
+            className="absolute -inset-2.5 rounded-full bg-sky-400/20 blur-xl"
+          />
+          <span className="relative grid h-14 w-14 place-items-center rounded-2xl border border-sky-400/25 bg-white/[0.045] text-sky-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.10)]">
+            <ChatCircleDotsIcon size={26} weight="duotone" aria-hidden="true" />
+          </span>
         </div>
       ) : null}
+      <p className="text-sm font-semibold text-white/90">Đăng nhập để góp ý nhé</p>
+      <p className="mt-1.5 max-w-[270px] text-xs leading-relaxed text-white/45">
+        Mỗi góp ý giúp ZenStudy tốt hơn mỗi ngày. Đăng nhập Google để đội ngũ ghi nhận và phản hồi
+        khi cần.
+      </p>
+      <button
+        type="button"
+        onClick={() => void signIn()}
+        disabled={isSigningIn}
+        className="relative group overflow-hidden mt-4 w-full max-w-[280px] px-5 py-2.5 rounded-full text-xs font-bold text-slate-950 bg-white hover:bg-slate-100 shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+      >
+        {isSigningIn ? (
+          <>
+            <CircleNotchIcon className="w-4 h-4 animate-spin text-slate-700" />
+            <span>Đang mở Google...</span>
+          </>
+        ) : (
+          <>
+            <GoogleIcon />
+            <span>Đăng nhập với Google</span>
+          </>
+        )}
+      </button>
+    </div>
+  );
 
+  const fields = (
+    <>
       <fieldset className="mt-4" disabled={submitting}>
         <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Loại góp ý">
           {FEEDBACK_KINDS.map((item) => {
@@ -333,18 +356,23 @@ function FeedbackPanel({ variant, isOpen, onClose, onBack, backLabel }: Feedback
         backLabel={backLabel}
         sheetId="feedback"
         title="Gửi góp ý"
-        maxHeightClassName="h-auto max-h-[82dvh]"
         footer={
-          <div className="flex items-center justify-end gap-2 px-4 py-3">{actions}</div>
+          signedOut ? undefined : (
+            <div className="flex items-center justify-end gap-2 px-4 py-3">{actions}</div>
+          )
         }
       >
-        {/* my-auto: khay thường ôm nội dung, còn chế độ mở rộng thì form đứng giữa
-            thay vì dồn lên trên và để khoảng trống lớn phía dưới. */}
-        <div className="my-auto flex flex-col px-4 py-3 text-white">
-          <p className="text-[11px] leading-relaxed text-white/50">
-            Chỉ quản trị viên ZenStudy đọc được.
-          </p>
-          {fields}
+        <div className="flex flex-1 flex-col px-4 py-3 text-white">
+          {signedOut ? (
+            <div className="flex flex-1 flex-col justify-center">{loginGate}</div>
+          ) : (
+            <>
+              <p className="text-[11px] leading-relaxed text-white/50">
+                Chỉ quản trị viên ZenStudy đọc được.
+              </p>
+              {fields}
+            </>
+          )}
         </div>
       </MobileSheetShell>
     );
@@ -360,33 +388,29 @@ function FeedbackPanel({ variant, isOpen, onClose, onBack, backLabel }: Feedback
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md max-h-[88dvh] overflow-y-auto custom-study-scroll rounded-2xl border border-white/12 bg-[#0b0f16]/98 p-5 text-white shadow-[0_24px_70px_rgba(0,0,0,0.8)]"
+        className="dialog-glass w-full max-w-md max-h-[88dvh] overflow-y-auto custom-study-scroll p-5 text-white"
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-sky-400/10 border border-sky-400/25 text-sky-300">
-              <ChatCircleDotsIcon size={17} weight="fill" aria-hidden="true" />
-            </span>
-            <div>
-              <h2 className="text-sm font-semibold leading-tight">Gửi góp ý</h2>
-              <p className="text-[11px] text-zinc-400 leading-relaxed">
-                Chỉ quản trị viên ZenStudy đọc được.
-              </p>
-            </div>
-          </div>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold leading-tight">Gửi góp ý</h2>
           <button
             type="button"
             onClick={close}
             disabled={submitting}
             aria-label="Đóng"
             title="Đóng (Esc)"
-            className="h-8 w-8 shrink-0 grid place-items-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            className="h-8 w-8 shrink-0 grid place-items-center rounded-lg border border-white/10 bg-white/[0.06] text-zinc-300 hover:text-white hover:bg-white/15 transition-colors cursor-pointer disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             <XIcon size={15} weight="bold" aria-hidden="true" />
           </button>
         </div>
-        {fields}
-        <div className="mt-4 flex items-center justify-end gap-2">{actions}</div>
+        {signedOut ? (
+          <div className="mt-1">{loginGate}</div>
+        ) : (
+          <>
+            {fields}
+            <div className="mt-4 flex items-center justify-end gap-2">{actions}</div>
+          </>
+        )}
       </div>
     </div>
   );

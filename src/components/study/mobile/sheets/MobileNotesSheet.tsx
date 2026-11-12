@@ -269,7 +269,6 @@ export const MobileNotesSheet = React.memo(function MobileNotesSheet({
             ? (currentEditingNote.title.trim() || "Chi tiết ghi chú")
             : `Ghi chú (${sortedNotes.length})`
         }
-        heightClassName="h-[68dvh] max-h-[72dvh]"
         headerRight={
           currentEditingNote ? (
             <div className="flex items-center gap-1.5 shrink-0">

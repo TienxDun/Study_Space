@@ -84,11 +84,36 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
   roomsEnabled = true,
 }: MobileMoreSheetProps) {
   const [activeSubScreen, setActiveSubScreen] = React.useState<"blocked" | null>(null);
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
+  const savedScrollRef = React.useRef(0);
+  const restoreScrollRef = React.useRef<number | null>(null);
+
+  // Màn con dùng chung vùng cuộn với danh sách Thêm; nội dung ngắn của màn con
+  // ép scrollTop về 0 nên phải nhớ vị trí cũ để trả lại khi quay về.
+  const openSubScreen = React.useCallback((id: "blocked") => {
+    savedScrollRef.current = contentRef.current?.scrollTop ?? 0;
+    setActiveSubScreen(id);
+  }, []);
+
+  const closeSubScreen = React.useCallback(() => {
+    restoreScrollRef.current = savedScrollRef.current;
+    setActiveSubScreen(null);
+  }, []);
+
+  React.useLayoutEffect(() => {
+    if (activeSubScreen !== null || !isOpen) return;
+    const target = restoreScrollRef.current;
+    if (target === null) return;
+    restoreScrollRef.current = null;
+    const el = contentRef.current;
+    if (el) el.scrollTop = target;
+  }, [activeSubScreen, isOpen]);
 
   // Tự động quay về menu chính của Thêm khi đóng sheet
   React.useEffect(() => {
     if (!isOpen) {
       setActiveSubScreen(null);
+      restoreScrollRef.current = null;
     }
   }, [isOpen]);
 
@@ -110,11 +135,11 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
     <MobileSheetShell
       isOpen={isOpen}
       onClose={handleClose}
-      onBack={activeSubScreen ? () => setActiveSubScreen(null) : undefined}
+      onBack={activeSubScreen ? closeSubScreen : undefined}
       backLabel={activeSubScreen ? "Thêm" : undefined}
       sheetId="more"
       title={activeSubScreen === "blocked" ? "Người đã chặn" : "Thêm"}
-      heightClassName="h-[68dvh] max-h-[72dvh]"
+      contentRef={contentRef}
     >
       {activeSubScreen === "blocked" ? (
         <MobileBlockedUsersView />
@@ -195,7 +220,7 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
             <MoreButton
               label="Người đã chặn"
               sub="Danh sách chặn trong phòng học"
-              onClick={() => setActiveSubScreen("blocked")}
+              onClick={() => openSubScreen("blocked")}
               icon={<ProhibitIcon className="w-4 h-4 text-rose-300" />}
               iconBg="bg-rose-400/12"
             />

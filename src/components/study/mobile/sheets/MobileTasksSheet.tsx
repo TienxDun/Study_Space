@@ -260,7 +260,6 @@ export const MobileTasksSheet = React.memo(function MobileTasksSheet({
             />
           )
         }
-        heightClassName="h-[68dvh] max-h-[72dvh]"
         contentScroll={false}
         onSwipeLeft={selectedCard ? undefined : goToNextFilter}
         onSwipeRight={selectedCard ? undefined : goToPrevFilter}

@@ -239,6 +239,18 @@ export function useStudySpaceState() {
         run: () => panelState.handleOpenSettings(),
       },
       {
+        id: "nav-stats",
+        group: "Mở nhanh",
+        label: "Thống kê thời gian tập trung",
+        run: () => panelState.setIsStatsOpen(true),
+      },
+      {
+        id: "act-feedback",
+        group: "Hành động",
+        label: "Gửi góp ý / báo lỗi",
+        run: () => panelState.handleOpenFeedback(),
+      },
+      {
         id: "nav-tour",
         group: "Mở nhanh",
         label: "Xem lại tour hướng dẫn",
@@ -283,6 +295,8 @@ export function useStudySpaceState() {
       displayState.systemFlags.chatEnabled,
       panelState.setChatOpenGated,
       panelState.handleOpenSettings,
+      panelState.setIsStatsOpen,
+      panelState.handleOpenFeedback,
       panelState.setIsTourOpen,
       displayState.setIsZenMode,
       displayState.toggleGlobalMute,

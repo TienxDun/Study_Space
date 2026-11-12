@@ -190,7 +190,6 @@ export function MobileSettingsSheet({
       backLabel={backLabel}
       sheetId="settings"
       title="Cài đặt không gian"
-      maxHeightClassName="h-auto max-h-[82dvh]"
     >
       <div className="flex-1 flex flex-col px-4 pt-3.5 pb-6 space-y-4 text-white select-none">
         {/* NHÓM 1: HIỂN THỊ */}

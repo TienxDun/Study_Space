@@ -176,7 +176,6 @@ function MobileRoomsSheetBase({
               {joinedRoom}
             </span>
           }
-          heightClassName="h-[84dvh] max-h-[88dvh]"
           contentScroll={false}
         >
           <MobileRoomView
@@ -223,7 +222,6 @@ function MobileRoomsSheetBase({
           title={
             <span>Kiểm tra thiết bị</span>
           }
-          maxHeightClassName="h-auto max-h-[88dvh]"
         >
           <RoomPreJoinView
             roomName={preJoinConfig.room}
@@ -248,7 +246,6 @@ function MobileRoomsSheetBase({
       sheetId="rooms"
       keepMounted={false}
       title="Phòng học nhóm"
-      maxHeightClassName="h-auto max-h-[85dvh]"
       headerRight={
         user ? (
           <button

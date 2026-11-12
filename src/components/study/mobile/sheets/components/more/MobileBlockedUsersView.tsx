@@ -1,15 +1,61 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { CircleNotchIcon } from "@phosphor-icons/react";
+import {
+  ArrowsClockwiseIcon,
+  CircleNotchIcon,
+  ProhibitIcon,
+  UsersIcon,
+  WarningCircleIcon,
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
-import { useAuth } from "@/components/study/auth";
+import { GoogleIcon, useAuth } from "@/components/study/auth";
 import { fetchBlockedUsers, unblockUser, type BlockedUser } from "@/lib/user-blocks";
 import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
+import { cn } from "@/lib/utils";
 
 function shortUid(uid: string): string {
   if (uid.length <= 12) return uid;
   return `${uid.slice(0, 6)}…${uid.slice(-4)}`;
+}
+
+const ACCENT = {
+  rose: { glow: "bg-rose-500/12", tile: "border-rose-300/15 text-rose-300/80" },
+  amber: { glow: "bg-amber-500/12", tile: "border-amber-300/15 text-amber-300/80" },
+} as const;
+
+// Khối trạng thái rỗng dùng chung cho sheet Người đã chặn: icon phát sáng + tiêu đề + mô tả + hành động
+function StateScreen({
+  accent,
+  icon,
+  title,
+  description,
+  children,
+}: {
+  accent: keyof typeof ACCENT;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="flex-1 min-h-0 flex flex-col items-center justify-center text-center px-4 py-10">
+      <div className="relative mb-4">
+        <span aria-hidden="true" className={cn("absolute -inset-2.5 rounded-full blur-xl", ACCENT[accent].glow)} />
+        <span
+          className={cn(
+            "relative grid place-items-center w-14 h-14 rounded-2xl bg-white/[0.045] border shadow-[inset_0_1px_1px_rgba(255,255,255,0.10)]",
+            ACCENT[accent].tile
+          )}
+        >
+          {icon}
+        </span>
+      </div>
+      <p className="text-sm font-semibold text-white/90">{title}</p>
+      <p className="mt-1.5 text-xs text-white/45 leading-relaxed max-w-[260px]">{description}</p>
+      {children}
+    </div>
+  );
 }
 
 /**
@@ -17,7 +63,7 @@ function shortUid(uid: string): string {
  * Thiết kế phẳng, tối giản, loại bỏ hoàn toàn nested boxes và icon dư thừa.
  */
 export function MobileBlockedUsersView() {
-  const { user, getToken } = useAuth();
+  const { user, getToken, signIn, isSigningIn } = useAuth();
   const [blocks, setBlocks] = useState<BlockedUser[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [busyUid, setBusyUid] = useState<string | null>(null);
@@ -63,43 +109,72 @@ export function MobileBlockedUsersView() {
     }
   };
 
+  const hasList = Boolean(user) && blocks !== null && blocks.length > 0;
+
   return (
-    <div className="px-3 pt-2 pb-4 space-y-4 select-none">
-      {/* Ghi chú ngắn gọn, thanh thoát, không viền hộp */}
-      <p className="px-1 text-xs text-white/50 leading-relaxed">
-        Bạn và người bị chặn sẽ không thể vào chung phòng học nhóm.
-      </p>
+    <div className="flex-1 flex flex-col px-3 pt-2 pb-4 select-none">
+      {/* Ghi chú ngắn gọn, chỉ hiện khi đã có danh sách để tránh trùng lặp với trạng thái rỗng */}
+      {hasList && (
+        <p className="px-1 pb-3 text-xs text-white/50 leading-relaxed">
+          Bạn và người bị chặn sẽ không thể vào chung phòng học nhóm.
+        </p>
+      )}
 
       {/* Nội dung danh sách */}
       {!user ? (
-        <div className="py-12 text-center">
-          <p className="text-xs text-white/50">
-            Đăng nhập Google để quản lý danh sách người đã chặn.
-          </p>
-        </div>
+        <StateScreen
+          accent="rose"
+          icon={<ProhibitIcon className="w-6 h-6" weight="duotone" />}
+          title="Đăng nhập để quản lý danh sách chặn"
+          description="Danh sách người đã chặn được lưu theo tài khoản Google và đồng bộ trên mọi thiết bị."
+        >
+          <button
+            type="button"
+            onClick={() => void signIn()}
+            disabled={isSigningIn}
+            className="mt-5 inline-flex items-center justify-center gap-2 h-10 px-5 rounded-xl bg-white text-slate-950 text-xs font-bold shadow-sm active:scale-[0.97] disabled:opacity-60 cursor-pointer touch-manipulation transition-transform"
+          >
+            {isSigningIn ? (
+              <CircleNotchIcon className="w-4 h-4 animate-spin" />
+            ) : (
+              <GoogleIcon />
+            )}
+            Đăng nhập bằng Google
+          </button>
+        </StateScreen>
       ) : loading && blocks === null ? (
-        <div className="py-12 flex flex-col items-center justify-center gap-2 text-white/40">
+        <div className="flex-1 flex flex-col items-center justify-center gap-2.5 text-white/40">
           <CircleNotchIcon className="w-5 h-5 animate-spin text-white/60" />
-          <span className="text-xs">Đang tải danh sách chặn...</span>
+          <span className="text-xs">Đang tải danh sách chặn…</span>
         </div>
       ) : blocks === null ? (
-        <div className="py-10 text-center space-y-2">
-          <p className="text-xs text-rose-300">Không tải được danh sách chặn.</p>
+        <StateScreen
+          accent="amber"
+          icon={<WarningCircleIcon className="w-6 h-6" weight="duotone" />}
+          title="Không tải được danh sách chặn"
+          description="Kết nối mạng có thể đang chập chờn. Kiểm tra rồi thử lại nhé."
+        >
           <button
             type="button"
             onClick={() => void load()}
-            className="px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-xs font-medium text-white transition-colors cursor-pointer"
+            className="mt-5 inline-flex items-center justify-center gap-2 h-9 px-4 rounded-xl bg-white/[0.10] hover:bg-white/[0.16] border border-white/15 text-xs font-semibold text-white active:scale-95 transition-[background-color,transform] cursor-pointer touch-manipulation"
           >
+            <ArrowsClockwiseIcon className="w-3.5 h-3.5" weight="bold" />
             Thử lại
           </button>
-        </div>
+        </StateScreen>
       ) : blocks.length === 0 ? (
-        <div className="py-16 text-center">
-          <p className="text-sm font-medium text-white/75">Chưa chặn ai</p>
-          <p className="text-xs text-white/40 max-w-[250px] mx-auto mt-1 leading-relaxed">
-            Bạn có thể chặn người tham gia trực tiếp trong bảng thành viên phòng học.
-          </p>
-        </div>
+        <StateScreen
+          accent="rose"
+          icon={<ProhibitIcon className="w-6 h-6" weight="duotone" />}
+          title="Chưa chặn ai"
+          description="Khi bạn chặn một người, hai bạn sẽ không vào chung phòng học nhóm được nữa."
+        >
+          <span className="mt-5 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.06] text-[11px] text-white/45 whitespace-nowrap">
+            <UsersIcon className="w-3.5 h-3.5 text-white/35" weight="bold" />
+            Chặn từ danh sách thành viên phòng
+          </span>
+        </StateScreen>
       ) : (
         <div className="space-y-2">
           <div className="px-1 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-white/40">

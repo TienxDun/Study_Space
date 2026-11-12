@@ -52,9 +52,8 @@ export const ConfirmDeleteModal = ({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 4 }}
         transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 w-full max-w-[320px] rounded-2xl border border-white/15 bg-neutral-950/88 shadow-[0_20px_50px_rgba(0,0,0,0.75),inset_0_1px_1.5px_rgba(255,255,255,0.18)] p-5 text-white select-none pointer-events-auto transform-gpu will-change-transform space-y-4 overflow-hidden"
+        className="dialog-glass relative z-10 w-full max-w-[320px] p-5 text-white select-none pointer-events-auto transform-gpu will-change-transform space-y-4 overflow-hidden"
       >
-        <div className="absolute inset-x-8 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none z-10" />
         {/* Content */}
         <div className="space-y-1.5">
           <h3 className="text-sm font-bold text-white tracking-tight leading-snug">

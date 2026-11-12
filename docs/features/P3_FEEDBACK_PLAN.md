@@ -33,7 +33,7 @@
 | Trạng thái panel | `src/components/study/hooks/usePanelState.ts` → `useStudySpaceState.ts` | Thêm `isFeedbackOpen` vào đây, render ở cả hai layout |
 | Đăng nhập | `useAuth()` trả `getToken`, `signIn` | Dùng cho nút gửi và lời mời đăng nhập |
 | Xóa tài khoản | `DELETE /account` trong `workers/data-api/worker.js` đã dọn `user_data`, `chat_usage`, `content_reports`, `user_blocks`, `meet_*` | Bổ sung `user_feedback` vào cùng danh sách |
-| Chỗ đặt nút | Desktop: `StudySettingsModal.tsx`; mobile: `MobileMoreSheet.tsx` (mục "Chung") | Thêm một dòng/nút, không tạo màn hình mới |
+| Chỗ đặt nút | Desktop: icon góp ý trên `StudyTopBar.tsx` (thanh công cụ màn hình chính); mobile: `MobileMoreSheet.tsx` (mục "Chung") | Thêm một icon/nút, không tạo màn hình mới |
 | Deploy data-api | Dán tay trên Cloudflare Dashboard (`docs/deployment/DEPLOY.md` Bước 1c) | Phải là bước riêng trong thứ tự deploy |
 
 Chưa có bảng, API, UI hay bản ghi nào cho góp ý. Không có gì phải di trú.
@@ -121,7 +121,7 @@ File này **deploy bằng cách dán tay** trên dashboard; đừng quên bướ
 
 **Điểm mở**
 
-- Desktop: `StudySettingsModal.tsx` thêm nhóm "Hỗ trợ" (cùng khung `SettingsSection` như các nhóm khác) với một nút "Gửi góp ý / báo lỗi".
+- Desktop: icon `ChatCircleDotsIcon` trên `StudyTopBar.tsx` (nhóm hành động phải, cạnh Thống kê), title/aria-label "Gửi góp ý / báo lỗi". Bấm là mở hộp thoại ngay, không đi qua Cài đặt.
 - Mobile: `MobileMoreSheet.tsx`, mục "Chung", thêm dòng "Gửi góp ý" theo đúng `MoreButton` (icon Phosphor, ô icon màu). Đóng sheet rồi mở hộp thoại.
 - State: thêm `isFeedbackOpen` + `handleOpenFeedback`/`handleCloseFeedback` vào `usePanelState`, xuất qua `useStudySpaceState`, gắn `<FeedbackDialog>` ở `StudyDesktopLayout` và `StudyMobileLayout` để cả hai dùng chung một hộp thoại.
 
@@ -190,8 +190,9 @@ Mỗi bước không khóa bước khác, nhưng thứ tự dưới đây tránh
 
 **Rà thiết kế hộp góp ý** (2026-11-12, Chromium 390×844 và 360×640): lượt hai lược bớt chữ thừa — bỏ dòng gợi ý dưới mỗi ô loại góp ý, bỏ nhãn "Nội dung"/"Liên hệ" (thay bằng `aria-label`), rút câu mời đăng nhập còn một dòng, nút gửi đổi thành "Gửi"; ô nội dung và ô liên hệ dùng biến thể ô lõm `.lg-input-inset` (nền tối đặc, viền mảnh, bỏ lớp kính nổi) thay cho `lg-input` để cảnh nền không lọt vào chữ; nút gửi khi chưa đủ điều kiện dùng nền xám mờ chữ trắng 35% thay cho nền emerald mờ 40% (không đọc được); hàng nút Hủy/Gửi chuyển xuống khay `footer` của `MobileSheetShell` nên dính đáy khi ruột dài; mọi nút bấm cao 40 px. Trong ảnh kiểm, đầu trang (thanh trên) vẫn hiện đúng như các sheet khác; độ mờ của cả tấm là quy tắc kính chung của app, không sửa riêng cho hộp này. Nhịp dọc 16 px giữa các nhóm (ô đăng nhập → loại góp ý → ô nội dung), 12 px trước ô email, đệm đáy 12 px. Hộp mời đăng nhập xếp một hàng: câu nhắc bên trái, nút "Đăng nhập" trắng bên phải. Khay giữ nút mở rộng toàn màn hình; ở chế độ đó form đứng giữa theo chiều dọc (`my-auto`) thay vì dồn lên trên và để khoảng trống lớn phía dưới. Khay thường cao theo nội dung: 390×844 cao 498 px, cách thanh điều hướng 78 px.
 
-## 11. Điểm cần chốt
+**Chuyển điểm mở desktop** (2026-11-12): bỏ nhóm "Hỗ trợ" khỏi `StudySettingsModal` (không còn prop `onOpenFeedback`), thêm icon `ChatCircleDotsIcon` vào nhóm hành động phải của `StudyTopBar` ngay sau nút Thống kê — người dùng thấy nút mà không phải mở Cài đặt. Mobile giữ nguyên dòng "Gửi góp ý" ở bảng "Thêm". Kiểm trên dev 1440×900: icon hiện, bấm mở thẳng hộp thoại, Cài đặt không còn mục Hỗ trợ; thanh trên không chồng đồng hồ ở 640/1024/1280 px. Test `study-topbar-feedback` (2 ca) + `npm test` 99 file / 830 test.
 
+## 11. Điểm cần chốt
 1. **Bắt buộc đăng nhập** — đã chốt, đã code: khớp `/report`, không phải lưu IP, xóa tài khoản dọn sạch được. Người dùng local-only bấm nút sẽ thấy lời mời đăng nhập. Nếu sau này cần nhận cả từ người chưa đăng nhập, mở nhánh **P3.16c**: cho gửi ẩn danh, giới hạn theo IP đã băm, thêm mục riêng trong `/privacy`.
 2. **Hạn lưu 180 ngày** — đã chốt, đã code, giống báo cáo vi phạm. Muốn giữ lâu hơn để làm roadmap thì nâng riêng cho `user_feedback`.
 3. **Tên tab**: "Phản hồi" — đã chốt, đã code — ngắn, đủ nghĩa, không lẫn với "Báo cáo" vi phạm.
@@ -207,10 +208,11 @@ Khoảng 1.100–1.300 dòng gồm test: SQL 40; data-api 90; admin worker 240 +
 - **Lẫn hai hàng chờ**: tiêu đề tab và mô tả ghi rõ "góp ý/báo lỗi chung", khác "báo cáo vi phạm".
 - **Dữ liệu cá nhân**: chỉ lưu tên, nội dung và liên hệ tự nguyện; không IP, không user-agent; hiển thị tên thay UID; nói rõ trong hộp thoại và `/privacy`.
 - **Spam**: 5 lượt/ngày/UID, cắt độ dài, không endpoint đọc công khai.
-- **Nút khó thấy**: đặt trong Cài đặt (desktop) và mục "Chung" của mobile — hai nơi người dùng đã quen tìm.
+- **Nút khó thấy**: desktop đặt icon ngay trên thanh công cụ màn hình chính (phải mở Cài đặt mới thấy là quá kín), mobile giữ ở mục "Chung" của bảng Thêm.
 
 ## 14. Lịch sử thay đổi
 
+- **Bản 3** (2026-11-12): P3.16b ảnh đính kèm (mục 15); chuyển điểm mở desktop từ nhóm "Hỗ trợ" trong Cài đặt ra icon trên `StudyTopBar`.
 - **Bản 2** (2026-11-12): triển khai xong trong repo — schema, data-api, admin worker + tab "Phản hồi", hộp thoại trong app, privacy, 5 bộ test mới; cổng chất lượng đạt; kiểm tay trên dev đạt phần chưa đăng nhập. Chưa deploy.
 - **Bản 1** (2026-11-12): lên plan P3.16 — nút góp ý trong app, `user_feedback` trên D1, `POST /feedback` ở data-api, tab "Phản hồi" trong admin shell, audit mỗi lần xử lý, cập nhật privacy và xóa tài khoản. Kèm thứ tự deploy 7 bước và 3 điểm cần chốt.
 
