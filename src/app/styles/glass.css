@@ -11,9 +11,10 @@
 }
 
 
-/* Tablet / điện thoại (cảm ứng): giảm mờ kính còn 1/3 để mở bảng mượt hơn.
-   Máy tính giữ nguyên không đổi. */
-@media (pointer: coarse), (max-width: 639px) {
+/* Điện thoại (layout mobile, < 640px): giảm mờ kính còn 1/3 để mở bảng mượt hơn.
+   Dùng bề rộng chứ không dùng pointer: coarse - DevTools bật giả lập cảm ứng
+   sẽ khiến máy tính hiện layout desktop mà vẫn bị coi là máy cảm ứng. */
+@media (max-width: 639px) {
   .glass-panel {
     background: rgba(0, 0, 0, 0.55);
     backdrop-filter: blur(14px);
@@ -34,7 +35,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-@media (pointer: coarse), (max-width: 639px) {
+@media (max-width: 639px) {
   .glass-popover {
     background: rgba(0, 0, 0, 0.72);
     backdrop-filter: blur(14px);
@@ -443,11 +444,13 @@
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Máy cảm ứng (điện thoại/tablet): bỏ hẳn backdrop-filter.
+/* Layout mobile (< 640px) hoặc cây có `mobile-scope` (shell Android luôn chạy
+   layout mobile dù bề rộng lớn): bỏ hẳn backdrop-filter.
    Nền là video đang phát, nên mỗi khung hình trình duyệt phải làm mờ lại
    vùng kính phía sau -> tụt frame, giật khi cuộn/mở bảng.
-   Thay bằng nền đặc hơn, chữ vẫn đọc rõ. Máy tính (chuột) giữ nguyên kính mờ. */
-@media (pointer: coarse), (max-width: 639px) {
+   Thay bằng nền đặc hơn, chữ vẫn đọc rõ. Layout máy tính giữ nguyên kính mờ,
+   kể cả khi trình duyệt giả lập cảm ứng trong DevTools. */
+@media (max-width: 639px) {
   .glass-panel,
   .glass-popover,
   .glass-hover:hover,
@@ -553,6 +556,25 @@
   }
 }
 
+/* Cùng luật bỏ mờ cho cây mobile ở bề rộng >= 640px (shell Android trên
+   tablet): dấu `mobile-scope` do useIsMobile/layout.tsx gắn, không dựa
+   vào pointer. */
+.mobile-scope .glass-panel,
+.mobile-scope .glass-popover,
+.mobile-scope .glass-hover:hover,
+.mobile-scope .lg-bar,
+.mobile-scope .lg-pill,
+.mobile-scope .lg-bubble,
+.mobile-scope .lg-input,
+.mobile-scope .lg-btn-action,
+.mobile-scope .lg-seg-active,
+.mobile-scope .study-bg-overlay,
+.mobile-scope [class*="backdrop-blur"] {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  --tw-backdrop-blur: initial;
+}
+
 /* ============================================================
    ĐỒNG BỘ CHẤT LIỆU SURFACE TOÀN MOBILE
    useIsMobile gắn class `mobile-scope` lên <html> (và layout.tsx gắn
@@ -646,7 +668,7 @@
 }
 
 /* Nút kính của màn chào đặt backdrop-filter trong <style> inline nên
-   khối @media (pointer: coarse) phía trên không bắt được - tắt thủ công */
+   khối @media (max-width: 639px) phía trên không bắt được - tắt thủ công */
 .mobile-scope .u001-btn {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
