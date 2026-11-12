@@ -155,8 +155,8 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                 exit={{ opacity: 0, scale: 0.95, y: 4 }}
                 className={`absolute left-0 top-full mt-1.5 w-72 max-h-72 overflow-y-auto custom-study-scroll p-1.5 rounded-2xl border z-50 ${
                   isLight
-                    ? "bg-white/85 border-slate-200/90 text-slate-800 shadow-[0_16px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl"
-                    : "bg-black/75 border-white/15 text-white shadow-[0_20px_50px_rgba(0,0,0,0.65)] backdrop-blur-2xl"
+                    ? "bg-white/95 border-slate-200/90 text-slate-800 shadow-[0_16px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl"
+                    : "glass-popover-solid text-white"
                 }`}
               >
                 <div className="flex items-center justify-between px-2 py-1 text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -313,8 +313,8 @@ export const CompactStickyNote = React.memo(function CompactStickyNote({
                   exit={{ opacity: 0, scale: 0.95, y: 4 }}
                   className={`absolute right-0 top-full mt-1.5 w-44 p-1.5 rounded-2xl border z-50 ${
                     isLight
-                      ? "bg-white/85 border-slate-200/90 text-slate-800 shadow-[0_16px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl"
-                      : "bg-black/75 border-white/15 text-white shadow-[0_20px_50px_rgba(0,0,0,0.65)] backdrop-blur-2xl"
+                      ? "bg-white/95 border-slate-200/90 text-slate-800 shadow-[0_16px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl"
+                      : "glass-popover-solid text-white"
                   }`}
                 >
                   {/* Hỏi Trợ lý AI */}

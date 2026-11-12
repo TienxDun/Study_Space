@@ -195,7 +195,8 @@ export function NoteChatPromptMenu({
             aria-label="Đóng menu hỏi AI"
           />
 
-          {/* Menu Kính mờ (Frosted Glass) */}
+          {/* Menu nổi đè lên thân ghi chú: dùng kính nền gần đặc (vẫn blur +
+              viền sáng) để chữ note phía sau không lộ qua và chồng lên nhãn. */}
           <motion.div
             key="note-chat-popover"
             ref={menuRef}
@@ -204,10 +205,10 @@ export function NoteChatPromptMenu({
             exit={{ opacity: 0, scale: 0.95, y: -4 }}
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
             style={{ top: coords.top, right: coords.right }}
-            className={`fixed z-[71] w-[min(320px,calc(100vw-24px))] sm:w-[340px] p-1.5 rounded-2xl border select-none ${
+            className={`fixed z-[71] w-[min(320px,calc(100vw-24px))] sm:w-[340px] p-1.5 select-none ${
               isLight
-                ? "bg-white/95 backdrop-blur-xl border-slate-200 text-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.18)]"
-                : "surface-frost border shadow-[0_16px_40px_rgba(0,0,0,0.85)] text-white"
+                ? "rounded-2xl border bg-white/95 backdrop-blur-xl border-slate-200 text-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.18)]"
+                : "glass-popover-solid text-white"
             }`}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}

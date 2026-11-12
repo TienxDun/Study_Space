@@ -23,6 +23,10 @@ interface FocusStatsModalProps {
   onClose: () => void;
 }
 
+/** Khoảng trắng không ngắt giữa số và đơn vị: thẻ hẹp thì xuống dòng cả cụm
+ *  ("3 giờ" / "41 phút"), không để chữ "phút" rơi xuống một mình. */
+const keepUnitWithNumber = (text: string) => text.replace(/ (\D)/g, "\u00A0$1");
+
 /** Toàn bộ thời gian Pomodoro đã tích lũy: hôm nay / tuần / tháng + theo task. */
 export function FocusStatsModal({ isOpen, onClose }: FocusStatsModalProps) {
   const today = useFocusStats("today");
@@ -112,14 +116,14 @@ export function FocusStatsModal({ isOpen, onClose }: FocusStatsModalProps) {
               {cards.map((c, i) => (
                 <div
                   key={c.label}
-                  className="rounded-2xl bg-white/[0.04] border border-white/10 p-2.5 text-center"
+                  className="rounded-2xl bg-white/[0.04] border border-white/10 p-2.5 text-center flex flex-col justify-center min-h-[76px]"
                   title={cardRanges[i]}
                 >
                   <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                     {c.label}
                   </div>
-                  <div className="mt-0.5 text-sm font-bold text-white leading-tight">
-                    {formatFocusDuration(c.summary.totalSeconds)}
+                  <div className="mt-0.5 text-sm font-bold text-white leading-tight text-balance">
+                    {keepUnitWithNumber(formatFocusDuration(c.summary.totalSeconds))}
                   </div>
                 </div>
               ))}

@@ -1,10 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import {
+  BugIcon,
   ChatCircleDotsIcon,
   CircleNotchIcon,
+  DotsThreeIcon,
   ImageSquareIcon,
+  LightbulbIcon,
+  LockSimpleIcon,
   XIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
@@ -27,6 +31,17 @@ import {
 interface FeedbackSurfaceProps {
   onClose: () => void;
 }
+
+const KIND_ICONS: Record<FeedbackKind, ReactNode> = {
+  bug: <BugIcon size={14} weight="bold" aria-hidden="true" />,
+  idea: <LightbulbIcon size={14} weight="bold" aria-hidden="true" />,
+  other: <DotsThreeIcon size={16} weight="bold" aria-hidden="true" />,
+};
+
+/* Ô nhập dùng đúng chất liệu kính của hệ thống (lg-input: gradient trắng +
+   viền sáng + vệt sáng mép trên) để ăn khớp với các ô nhập khác trong app,
+   thay vì mảng đặc tối hơn cả tấm kính. */
+const fieldClass = "lg-input w-full px-3 text-sm text-white disabled:opacity-60";
 
 // Hộp thoại góp ý/báo lỗi chung (P3.16).
 // Desktop: hộp kính tối giữa màn hình. Mobile: khay đáy dùng chung MobileSheetShell
@@ -218,12 +233,15 @@ function FeedbackPanel({ variant, isOpen, onClose, onBack, backLabel }: Feedback
                 aria-checked={checked}
                 onClick={() => setKind(item.value)}
                 className={cn(
-                  "h-10 rounded-xl border text-xs font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
+                  "h-10 rounded-xl border text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 active:scale-[0.98]",
                   checked
-                    ? "border-emerald-300/50 bg-emerald-500/20 text-white"
-                    : "border-white/10 bg-black/30 text-zinc-300 hover:border-white/20 hover:text-white"
+                    ? "border-accent-music-bright/60 bg-accent-music/20 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
+                    : "border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10 hover:text-white"
                 )}
               >
+                <span className={checked ? "text-accent-music-bright" : "text-slate-400"}>
+                  {KIND_ICONS[item.value]}
+                </span>
                 {item.label}
               </button>
             );
@@ -240,13 +258,17 @@ function FeedbackPanel({ variant, isOpen, onClose, onBack, backLabel }: Feedback
           maxLength={FEEDBACK_MESSAGE_MAX}
           rows={4}
           placeholder="Mô tả lỗi hoặc điều bạn muốn thêm"
-          className="lg-input lg-input-inset w-full resize-none px-3 py-2.5 text-sm text-white disabled:opacity-60"
+          className={cn(fieldClass, "resize-none py-2.5")}
         />
         <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px]">
-          <span className={tooShort ? "text-amber-300" : "text-white/45"}>
-            {tooShort ? `Cần thêm ${FEEDBACK_MESSAGE_MIN - trimmed.length} ký tự` : ""}
+          <span className={tooShort ? "text-amber-300" : "text-white/40"}>
+            {tooShort
+              ? `Cần thêm ${FEEDBACK_MESSAGE_MIN - trimmed.length} ký tự`
+              : trimmed.length === 0
+                ? `Tối thiểu ${FEEDBACK_MESSAGE_MIN} ký tự`
+                : ""}
           </span>
-          <span className="text-white/45 tabular-nums">
+          <span className="text-white/40 tabular-nums">
             {message.length}/{FEEDBACK_MESSAGE_MAX}
           </span>
         </div>
@@ -261,7 +283,7 @@ function FeedbackPanel({ variant, isOpen, onClose, onBack, backLabel }: Feedback
         disabled={submitting}
         maxLength={FEEDBACK_CONTACT_MAX}
         placeholder="Email liên hệ (không bắt buộc)"
-        className="lg-input lg-input-inset mt-3 h-10 w-full px-3 text-sm text-white disabled:opacity-60"
+        className={cn(fieldClass, "mt-3 h-10")}
       />
 
       <input
@@ -274,7 +296,7 @@ function FeedbackPanel({ variant, isOpen, onClose, onBack, backLabel }: Feedback
       />
       <div className="mt-3">
         {image ? (
-          <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-black/30 p-2">
+          <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 p-2 backdrop-blur-sm">
             <span
               role="img"
               aria-label="Ảnh đính kèm"
@@ -302,7 +324,7 @@ function FeedbackPanel({ variant, isOpen, onClose, onBack, backLabel }: Feedback
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={submitting || preparingImage}
-            className="h-10 w-full rounded-xl border border-dashed border-white/15 bg-black/20 text-xs font-medium text-zinc-300 hover:border-white/25 hover:text-white transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            className="h-10 w-full rounded-xl border border-dashed border-white/20 bg-white/5 text-xs font-medium text-slate-200 hover:border-white/35 hover:bg-white/10 hover:text-white transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             {preparingImage ? (
               <CircleNotchIcon size={14} className="animate-spin" aria-hidden="true" />
@@ -325,7 +347,7 @@ function FeedbackPanel({ variant, isOpen, onClose, onBack, backLabel }: Feedback
         type="button"
         onClick={close}
         disabled={submitting}
-        className="h-10 px-3.5 rounded-xl text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-40"
+        className="h-10 px-3.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-40"
       >
         Hủy
       </button>
@@ -334,12 +356,12 @@ function FeedbackPanel({ variant, isOpen, onClose, onBack, backLabel }: Feedback
         onClick={() => void handleSubmit()}
         disabled={!canSubmit || submitting || preparingImage}
         className={cn(
-          "h-10 px-4 rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300",
+          "h-10 px-4 rounded-xl border text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-music-bright/70",
           submitting
-            ? "bg-emerald-500 text-slate-950 opacity-70 cursor-wait"
+            ? "border-accent-music-bright/40 bg-accent-music/20 text-white/80 cursor-wait"
             : canSubmit
-              ? "bg-emerald-500 text-slate-950 hover:bg-emerald-400 active:scale-[0.98] cursor-pointer"
-              : "bg-white/[0.06] text-white/35 cursor-not-allowed"
+              ? "border-accent-music-bright/70 bg-accent-music/35 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_0_18px_rgba(16,185,129,0.22)] hover:border-accent-music-bright hover:bg-accent-music/45 active:scale-[0.98] cursor-pointer"
+              : "border-white/15 bg-white/5 text-white/35 cursor-not-allowed"
         )}
       >
         {submitting ? "Đang gửi…" : "Gửi"}
@@ -384,33 +406,42 @@ function FeedbackPanel({ variant, isOpen, onClose, onBack, backLabel }: Feedback
       aria-modal="true"
       aria-label="Gửi góp ý hoặc báo lỗi"
       onClick={close}
-      className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150"
+      className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-150"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="dialog-glass w-full max-w-md max-h-[88dvh] overflow-y-auto custom-study-scroll p-5 text-white"
+        className="glass-panel hover:bg-black/45 relative w-full max-w-md max-h-[88dvh] overflow-hidden text-white"
       >
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold leading-tight">Gửi góp ý</h2>
-          <button
-            type="button"
-            onClick={close}
-            disabled={submitting}
-            aria-label="Đóng"
-            title="Đóng (Esc)"
-            className="h-8 w-8 shrink-0 grid place-items-center rounded-lg border border-white/10 bg-white/[0.06] text-zinc-300 hover:text-white hover:bg-white/15 transition-colors cursor-pointer disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-          >
-            <XIcon size={15} weight="bold" aria-hidden="true" />
-          </button>
+        <div className="absolute inset-x-6 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none z-10" />
+        <div className="max-h-[88dvh] overflow-y-auto custom-study-scroll p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold leading-tight">Gửi góp ý</h2>
+            <button
+              type="button"
+              onClick={close}
+              disabled={submitting}
+              aria-label="Đóng"
+              title="Đóng (Esc)"
+              className="h-8 w-8 shrink-0 grid place-items-center rounded-lg border border-white/12 bg-white/[0.07] text-slate-300 hover:text-white hover:bg-white/15 transition-colors cursor-pointer disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            >
+              <XIcon size={15} weight="bold" aria-hidden="true" />
+            </button>
+          </div>
+          {signedOut ? (
+            <div className="mt-1">{loginGate}</div>
+          ) : (
+            <>
+              {fields}
+              <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-3.5">
+                <p className="flex items-center gap-1.5 text-[11px] text-white/40">
+                  <LockSimpleIcon size={12} aria-hidden="true" />
+                  Chỉ quản trị viên đọc được
+                </p>
+                <div className="flex items-center gap-2">{actions}</div>
+              </div>
+            </>
+          )}
         </div>
-        {signedOut ? (
-          <div className="mt-1">{loginGate}</div>
-        ) : (
-          <>
-            {fields}
-            <div className="mt-4 flex items-center justify-end gap-2">{actions}</div>
-          </>
-        )}
       </div>
     </div>
   );
