@@ -264,7 +264,9 @@ async function readFileIndex(env: AdminEnv, force = false): Promise<FileIndex> {
         const res = await env.R2.list({ limit: R2_LIST_PAGE, cursor });
         for (const object of res?.objects || []) {
           const key = typeof object?.key === "string" ? object.key : "";
-          if (key) {
+          // Ảnh góp ý dùng chung bucket nhưng không thuộc kho nội dung:
+          // lẫn vào đây sẽ bị tính là mồ côi và có nguy cơ bị dọn.
+          if (key && !key.startsWith("feedback/")) {
             objects.set(key, {
               size: Number(object?.size) || 0,
               uploaded: uploadedAt(object?.uploaded),

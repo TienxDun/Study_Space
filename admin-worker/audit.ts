@@ -120,3 +120,27 @@ export function allowReportWrite(email: string): boolean {
   reportWriteLog.set(email, hits);
   return true;
 }
+
+// P3.16: xử lý góp ý dùng bộ đếm riêng để không chiếm hạn mức xử lý báo cáo.
+const FEEDBACK_WRITE_LIMIT = 30;
+const FEEDBACK_WRITE_WINDOW_MS = 60 * 1000;
+const feedbackWriteLog = new Map<string, number[]>();
+
+/** Test dùng để xóa bộ đếm giới hạn xử lý góp ý giữa các ca. */
+export function __resetFeedbackWriteLog(): void {
+  feedbackWriteLog.clear();
+}
+
+export function allowFeedbackWrite(email: string): boolean {
+  const now = Date.now();
+  const hits = (feedbackWriteLog.get(email) || []).filter(
+    (at) => now - at < FEEDBACK_WRITE_WINDOW_MS,
+  );
+  if (hits.length >= FEEDBACK_WRITE_LIMIT) {
+    feedbackWriteLog.set(email, hits);
+    return false;
+  }
+  hits.push(now);
+  feedbackWriteLog.set(email, hits);
+  return true;
+}

@@ -6,6 +6,7 @@
  *   GET    /data    -> tải toàn bộ dữ liệu của người dùng
  *   POST   /data    -> lưu toàn bộ dữ liệu của người dùng
  *   POST   /report  -> báo cáo nội dung AI hoặc hành vi trong phòng học
+ *   POST   /feedback -> góp ý/báo lỗi chung từ app
  *   GET    /blocks  -> danh sách người dùng đã chặn
  *   POST   /blocks  -> chặn người dùng
  *   DELETE /blocks/:uid -> bỏ chặn
@@ -63,8 +64,128 @@ const REPORT_ROOM_MAX = 32;
 const REPORT_ID_MAX = 128;
 const BLOCK_LIST_MAX = 500;
 
+// Góp ý/báo lỗi chung (P3.16) — khác báo cáo vi phạm ở trên.
+const FEEDBACK_KINDS = new Set(["bug", "idea", "other"]);
+const FEEDBACK_DAILY_LIMIT = 5;
+const FEEDBACK_MESSAGE_MIN = 10;
+const FEEDBACK_MESSAGE_MAX = 2000;
+const FEEDBACK_CONTACT_MAX = 120;
+const FEEDBACK_NAME_MAX = 30;
+const FEEDBACK_VERSION_MAX = 20;
+const FEEDBACK_PLATFORM_MAX = 12;
+const FEEDBACK_VIEWPORT_MAX = 20;
+const FEEDBACK_LOCALE_MAX = 12;
+const FEEDBACK_RETENTION_MS = 180 * 24 * 60 * 60 * 1000;
+
+// Ảnh đính kèm góp ý (P3.16b): app nén sẵn nên chỉ nhận 1 ảnh ≤1 MB,
+// tối đa 3 ảnh/ngày/UID. Ảnh nằm trong R2, D1 chỉ giữ khóa.
+const FEEDBACK_IMAGE_DAILY_LIMIT = 3;
+const FEEDBACK_IMAGE_MAX_BYTES = 1024 * 1024;
+const FEEDBACK_REQUEST_MAX_BYTES = 8 * 1024 * 1024;
+const FEEDBACK_FIELDS = [
+  "kind",
+  "message",
+  "contact",
+  "name",
+  "appVersion",
+  "platform",
+  "viewport",
+  "locale",
+];
+
 function cleanText(value, max) {
   return String(value ?? "").trim().slice(0, max);
+}
+
+function detectFeedbackImageType(bytes) {
+  const b = bytes || [];
+  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) {
+    return { ext: "jpg", contentType: "image/jpeg" };
+  }
+  if (b.length >= 4 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) {
+    return { ext: "png", contentType: "image/png" };
+  }
+  if (
+    b.length >= 12 &&
+    b[0] === 0x52 &&
+    b[1] === 0x49 &&
+    b[2] === 0x46 &&
+    b[3] === 0x46 &&
+    b[8] === 0x57 &&
+    b[9] === 0x45 &&
+    b[10] === 0x42 &&
+    b[11] === 0x50
+  ) {
+    return { ext: "webp", contentType: "image/webp" };
+  }
+  return null;
+}
+
+// Góp ý có thể là JSON (không ảnh) hoặc multipart/form-data (kèm ảnh).
+async function readFeedbackRequest(req) {
+  const contentType = String(req.headers.get("content-type") || "").toLowerCase();
+  if (contentType.startsWith("multipart/form-data")) {
+    let form = null;
+    try {
+      form = await req.formData();
+    } catch {
+      form = null;
+    }
+    if (!form) return { body: null, image: null };
+    const body = {};
+    for (const field of FEEDBACK_FIELDS) {
+      const value = form.get(field);
+      if (typeof value === "string") body[field] = value;
+    }
+    const file = form.get("image");
+    return {
+      body,
+      image: file && typeof file !== "string" && Number(file.size) > 0 ? file : null,
+    };
+  }
+  try {
+    const body = await req.json();
+    return {
+      body: body && typeof body === "object" && !Array.isArray(body) ? body : null,
+      image: null,
+    };
+  } catch {
+    return { body: null, image: null };
+  }
+}
+
+function feedbackImageKey(id, ext, now) {
+  const d = new Date(now);
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  return `feedback/${d.getUTCFullYear()}-${month}/${id}.${ext}`;
+}
+
+async function deleteFeedbackImages(env, keys) {
+  if (!keys.length || !env || !env.R2 || typeof env.R2.delete !== "function") return;
+  try {
+    await env.R2.delete(keys);
+  } catch {
+    // Dọn ảnh lỗi không được chặn luồng chính.
+  }
+}
+
+// Dọn góp ý quá hạn kèm ảnh: phải lấy khóa ảnh TRƯỚC khi xoá dòng.
+async function pruneExpiredFeedback(env, cutoff) {
+  let keys = [];
+  try {
+    const res = await env.DB.prepare(
+      "SELECT image_key FROM user_feedback WHERE created_at < ? AND image_key IS NOT NULL"
+    )
+      .bind(cutoff)
+      .all();
+    keys = (Array.isArray(res?.results) ? res.results : [])
+      .map((row) => String(row?.image_key || ""))
+      .filter(Boolean);
+  } catch {
+    keys = [];
+  }
+  await env.DB.prepare("DELETE FROM user_feedback WHERE created_at < ?").bind(cutoff).run();
+  await deleteFeedbackImages(env, keys);
 }
 
 function utcDayStart(now = Date.now()) {
@@ -209,7 +330,7 @@ async function isAccountDeleted(db, uid) {
   }
 }
 
-async function deleteAccountData(db, uid) {
+async function deleteAccountData(db, uid, env) {
   const deleted = {
     userData: 0,
     chatUsage: 0,
@@ -218,6 +339,7 @@ async function deleteAccountData(db, uid) {
     meetCohosts: 0,
     meetAudit: 0,
     reports: 0,
+    feedback: 0,
     blocks: 0,
     restrictions: 0,
   };
@@ -301,6 +423,29 @@ async function deleteAccountData(db, uid) {
       .bind(uid)
       .run();
     deleted.restrictions = Number(res?.meta?.changes || 0);
+  }
+
+  // Bảng P3.16 chỉ có sau khi chạy feedback-schema.sql
+  if (await tableExists(db, "user_feedback")) {
+    // Ảnh góp ý nằm trong R2: lấy khóa trước khi xoá dòng rồi dọn theo.
+    let feedbackKeys = [];
+    try {
+      const keysRes = await db
+        .prepare("SELECT image_key FROM user_feedback WHERE uid = ? AND image_key IS NOT NULL")
+        .bind(uid)
+        .all();
+      feedbackKeys = (Array.isArray(keysRes?.results) ? keysRes.results : [])
+        .map((row) => String(row?.image_key || ""))
+        .filter(Boolean);
+    } catch {
+      feedbackKeys = [];
+    }
+    const res = await db
+      .prepare("DELETE FROM user_feedback WHERE uid = ?")
+      .bind(uid)
+      .run();
+    deleted.feedback = Number(res?.meta?.changes || 0);
+    await deleteFeedbackImages(env, feedbackKeys);
   }
 
   // Tạo tại chỗ để DB cũ chưa chạy lại schema.sql vẫn dùng được
@@ -525,6 +670,7 @@ const workerHandler = {
         {
           ok: true,
           db: !!env.DB,
+          r2: !!env.R2,
           authAdmin: !!readServiceAccount(env),
           time: Date.now(),
         },
@@ -670,6 +816,7 @@ const workerHandler = {
     const deletedGuarded =
       url.pathname === "/data" ||
       url.pathname === "/report" ||
+      url.pathname === "/feedback" ||
       url.pathname === "/blocks" ||
       url.pathname.startsWith("/blocks/");
     if (deletedGuarded && (await isAccountDeleted(db, uid))) {
@@ -774,6 +921,177 @@ const workerHandler = {
       } catch (err) {
         return json(
           { error: "Không thể gửi báo cáo.", detail: String(err?.message || err) },
+          500,
+          cors
+        );
+      }
+    }
+
+    // 3b. POST /feedback — góp ý/báo lỗi chung (P3.16), kèm tối đa 1 ảnh (P3.16b).
+    if (req.method === "POST" && url.pathname === "/feedback") {
+      const declared = Number(req.headers.get("content-length") || 0);
+      if (declared > FEEDBACK_REQUEST_MAX_BYTES) {
+        return json(
+          { error: "Tệp gửi lên quá lớn, bạn chọn ảnh nhỏ hơn nhé.", code: "PAYLOAD_TOO_LARGE" },
+          413,
+          cors
+        );
+      }
+
+      const { body, image } = await readFeedbackRequest(req);
+      if (!body) {
+        return json({ error: "Dữ liệu góp ý không đúng định dạng." }, 400, cors);
+      }
+
+      const kind = cleanText(body.kind, 16).toLowerCase();
+      if (!FEEDBACK_KINDS.has(kind)) {
+        return json(
+          { error: "Loại góp ý không hợp lệ.", code: "INVALID_KIND" },
+          400,
+          cors
+        );
+      }
+
+      const message = cleanText(body.message, FEEDBACK_MESSAGE_MAX);
+      if (message.length < FEEDBACK_MESSAGE_MIN) {
+        return json(
+          {
+            error: `Nội dung góp ý cần ít nhất ${FEEDBACK_MESSAGE_MIN} ký tự.`,
+            code: "VALIDATION",
+          },
+          400,
+          cors
+        );
+      }
+
+      const name = cleanText(body.name, FEEDBACK_NAME_MAX);
+      const contact = cleanText(body.contact, FEEDBACK_CONTACT_MAX);
+      const appVersion = cleanText(body.appVersion, FEEDBACK_VERSION_MAX);
+      const platform = cleanText(body.platform, FEEDBACK_PLATFORM_MAX);
+      const viewport = cleanText(body.viewport, FEEDBACK_VIEWPORT_MAX);
+      const locale = cleanText(body.locale, FEEDBACK_LOCALE_MAX);
+
+      let imageType = null;
+      if (image) {
+        if (image.size > FEEDBACK_IMAGE_MAX_BYTES) {
+          return json(
+            {
+              error: "Ảnh vượt quá 1 MB sau khi nén, bạn chọn ảnh khác hoặc gỡ ảnh nhé.",
+              code: "IMAGE_TOO_LARGE",
+            },
+            400,
+            cors
+          );
+        }
+        imageType = detectFeedbackImageType(
+          new Uint8Array(await image.slice(0, 12).arrayBuffer())
+        );
+        if (!imageType) {
+          return json(
+            { error: "Chỉ nhận ảnh JPG, PNG hoặc WebP.", code: "IMAGE_INVALID_TYPE" },
+            400,
+            cors
+          );
+        }
+        if (!env.R2 || typeof env.R2.put !== "function") {
+          return json(
+            {
+              error: "Máy chủ chưa bật kho ảnh, bạn gửi góp ý không kèm ảnh nhé.",
+              code: "IMAGE_DISABLED",
+            },
+            503,
+            cors
+          );
+        }
+      }
+
+      try {
+        const counted = await db
+          .prepare(
+            "SELECT COUNT(*) AS n FROM user_feedback WHERE uid = ? AND created_at >= ?"
+          )
+          .bind(uid, utcDayStart())
+          .first();
+        if (Number(counted?.n || 0) >= FEEDBACK_DAILY_LIMIT) {
+          return json(
+            { error: "Bạn đã gửi quá nhiều góp ý hôm nay.", code: "RATE_LIMITED" },
+            429,
+            cors
+          );
+        }
+
+        if (image) {
+          const withImage = await db
+            .prepare(
+              "SELECT COUNT(*) AS n FROM user_feedback WHERE uid = ? AND created_at >= ? AND image_key IS NOT NULL"
+            )
+            .bind(uid, utcDayStart())
+            .first();
+          if (Number(withImage?.n || 0) >= FEEDBACK_IMAGE_DAILY_LIMIT) {
+            return json(
+              {
+                error: `Bạn đã gửi ${FEEDBACK_IMAGE_DAILY_LIMIT} ảnh hôm nay, mai bạn gửi tiếp nhé.`,
+                code: "IMAGE_RATE_LIMITED",
+              },
+              429,
+              cors
+            );
+          }
+        }
+
+        const id = crypto.randomUUID();
+        const now = Date.now();
+        let imageKey = null;
+        if (image) {
+          const key = feedbackImageKey(id, imageType.ext, now);
+          try {
+            await env.R2.put(key, await image.arrayBuffer(), {
+              httpMetadata: { contentType: imageType.contentType },
+            });
+            imageKey = key;
+          } catch {
+            return json(
+              { error: "Không lưu được ảnh đính kèm, bạn thử lại nhé.", code: "IMAGE_UPLOAD_FAILED" },
+              500,
+              cors
+            );
+          }
+        }
+
+        try {
+          await db
+            .prepare(
+              `INSERT INTO user_feedback
+                 (id, uid, name, kind, message, contact, app_version, platform, viewport, locale, image_key, status, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)`
+            )
+            .bind(
+              id,
+              uid,
+              name || null,
+              kind,
+              message,
+              contact || null,
+              appVersion || null,
+              platform || null,
+              viewport || null,
+              locale || null,
+              imageKey,
+              now
+            )
+            .run();
+        } catch (err) {
+          if (imageKey) await deleteFeedbackImages(env, [imageKey]);
+          throw err;
+        }
+
+        // Giữ 180 ngày; dọn dòng lẫn ảnh ngay khi có ghi mới.
+        await pruneExpiredFeedback(env, now - FEEDBACK_RETENTION_MS);
+
+        return json({ ok: true, id, status: "open", createdAt: now, hasImage: Boolean(imageKey) }, 200, cors);
+      } catch (err) {
+        return json(
+          { error: "Không thể gửi góp ý.", detail: String(err?.message || err) },
           500,
           cors
         );
@@ -958,7 +1276,7 @@ const workerHandler = {
         );
       }
       try {
-        const deleted = await deleteAccountData(db, uid);
+        const deleted = await deleteAccountData(db, uid, env);
         try {
           await deleteFirebaseAuthUser(env, uid);
         } catch (err) {

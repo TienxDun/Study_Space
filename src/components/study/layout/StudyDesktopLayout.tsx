@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { StudyTopBar } from "@/components/study/StudyTopBar";
 import { StudyLeftDock } from "@/components/study/StudyLeftDock";
 import { StudySettingsModal } from "@/components/study/StudySettingsModal";
+import { FeedbackDialog } from "@/components/study/feedback/FeedbackDialog";
 import { FocusStatsModal } from "@/components/study/stats/FocusStatsModal";
 import { StudyCommandPalette } from "@/components/study/command/StudyCommandPalette";
 import type { StudySpaceState } from "@/components/study/hooks/useStudySpaceState";
@@ -44,6 +45,9 @@ export const StudyDesktopLayout = React.memo(function StudyDesktopLayout({
     centerTab,
     isGlobalMuted,
     isSettingsOpen,
+    isFeedbackOpen,
+    handleOpenFeedback,
+    handleCloseFeedback,
     isFullscreen,
     isStatsOpen,
     setIsStatsOpen,
@@ -214,6 +218,7 @@ export const StudyDesktopLayout = React.memo(function StudyDesktopLayout({
         isOpen={isSettingsOpen}
         onClose={handleCloseSettings}
         onOpenTour={() => setIsTourOpen(true)}
+        onOpenFeedback={handleOpenFeedback}
         showClockSeconds={showClockSeconds}
         onToggleClockSeconds={handleToggleClockSeconds}
         isClock12Hour={isClock12Hour}
@@ -252,6 +257,9 @@ export const StudyDesktopLayout = React.memo(function StudyDesktopLayout({
         onClose={() => setIsCommandOpen(false)}
         actions={commandActions}
       />
+
+      {/* Hộp thoại góp ý/báo lỗi chung */}
+      {isFeedbackOpen && <FeedbackDialog onClose={handleCloseFeedback} />}
     </>
   );
 });

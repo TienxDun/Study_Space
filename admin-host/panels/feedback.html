@@ -1,0 +1,94 @@
+<!-- P3.16: hàng chờ góp ý/báo lỗi chung từ app -->
+      <section class="panel-card feedback-panel" id="feedback-panel" aria-labelledby="feedback-title">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <h2 class="panel-title" id="feedback-title">Góp ý &amp; Báo lỗi</h2>
+            <span class="panel-desc">Phản hồi người dùng gửi từ ứng dụng: lỗi gặp phải, đề xuất cải thiện hoặc ý kiến khác. Đọc xong thì đánh dấu đã xử lý hoặc bỏ qua kèm ghi chú.</span>
+          </div>
+          <span class="usage-tag" id="feedback-state">Đang đọc…</span>
+        </div>
+
+        <div class="feedback-body">
+          <div class="feedback-toolbar">
+            <label class="feedback-filter">
+              <span class="chat-label">Trạng thái</span>
+              <select class="flag-input" id="feedback-status">
+                <option value="open">Chờ xử lý</option>
+                <option value="resolved">Đã xử lý</option>
+                <option value="dismissed">Đã bỏ qua</option>
+                <option value="all">Tất cả</option>
+              </select>
+            </label>
+            <label class="feedback-filter">
+              <span class="chat-label">Loại</span>
+              <select class="flag-input" id="feedback-kind">
+                <option value="all">Tất cả</option>
+                <option value="bug">Báo lỗi</option>
+                <option value="idea">Đề xuất cải thiện</option>
+                <option value="other">Khác</option>
+              </select>
+            </label>
+            <button class="btn-ghost" id="feedback-refresh" type="button">Làm mới</button>
+          </div>
+
+          <div class="feedback-counts" id="feedback-counts">
+            <span class="feedback-count">Chờ xử lý <strong id="feedback-count-open">0</strong></span>
+            <span class="feedback-count">Đã xử lý <strong id="feedback-count-resolved">0</strong></span>
+            <span class="feedback-count">Đã bỏ qua <strong id="feedback-count-dismissed">0</strong></span>
+          </div>
+
+          <div class="content-table-wrap">
+            <table class="services-table content-table feedback-table">
+              <thead>
+                <tr>
+                  <th>Thời gian</th>
+                  <th>Người gửi</th>
+                  <th>Loại</th>
+                  <th>Nội dung</th>
+                  <th>Trạng thái</th>
+                  <th class="text-right">Chi tiết</th>
+                </tr>
+              </thead>
+              <tbody id="feedback-rows">
+                <tr><td colspan="6">Đang đọc…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="chat-actions feedback-more-wrap">
+            <button class="btn-ghost" id="feedback-more" type="button" hidden>Xem thêm</button>
+          </div>
+          <p class="chat-feedback" id="feedback-note" hidden></p>
+
+          <section class="feedback-detail" id="feedback-detail" aria-labelledby="feedback-detail-title" hidden>
+            <header class="content-form-head">
+              <h3 class="chat-section-title" id="feedback-detail-title">Chi tiết góp ý</h3>
+              <button class="btn-ghost" id="feedback-detail-close" type="button">Đóng</button>
+            </header>
+
+            <div class="feedback-meta" id="feedback-detail-meta"></div>
+
+            <div class="feedback-content-wrap">
+              <p class="chat-label">Nội dung người dùng gửi</p>
+              <pre class="feedback-content" id="feedback-detail-message"></pre>
+            </div>
+
+            <figure class="feedback-image" id="feedback-detail-image-wrap" hidden>
+              <figcaption class="chat-label">Ảnh đính kèm</figcaption>
+              <a id="feedback-detail-image-link" href="#" target="_blank" rel="noopener">
+                <img id="feedback-detail-image" alt="Ảnh người dùng gửi kèm góp ý" decoding="async" />
+              </a>
+            </figure>
+
+            <label class="chat-field">
+              <span class="chat-label">Ghi chú xử lý (tối đa 500 ký tự)</span>
+              <textarea class="flag-input" id="feedback-resolve-note" rows="2" maxlength="500"></textarea>
+            </label>
+            <p class="chat-feedback" id="feedback-detail-note" hidden></p>
+            <div class="chat-actions">
+              <button class="btn-primary" id="feedback-resolve" type="button">Đánh dấu đã xử lý</button>
+              <button class="btn-ghost" id="feedback-dismiss" type="button">Bỏ qua</button>
+            </div>
+          </section>
+        </div>
+      </section>

@@ -13,6 +13,7 @@ import {
   ImageIcon,
   ProhibitIcon,
   CaretRightIcon,
+  ChatCircleDotsIcon,
 } from "@phosphor-icons/react";
 import { MobileSheetShell } from "./core/MobileSheetShell";
 import { MobileAccountCard } from "./components/more/MobileAccountCard";
@@ -197,6 +198,13 @@ export const MobileMoreSheet = React.memo(function MobileMoreSheet({
               onClick={() => setActiveSubScreen("blocked")}
               icon={<ProhibitIcon className="w-4 h-4 text-rose-300" />}
               iconBg="bg-rose-400/12"
+            />
+            <MoreButton
+              label="Gửi góp ý"
+              sub="Báo lỗi hoặc đề xuất cải thiện"
+              onClick={() => go("feedback")}
+              icon={<ChatCircleDotsIcon className="w-4 h-4 text-emerald-300" />}
+              iconBg="bg-emerald-400/12"
             />
           </div>
         </section>

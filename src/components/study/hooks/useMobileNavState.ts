@@ -20,6 +20,7 @@ interface PanelStateRefs {
   isMoreOpen: boolean;
   isStatsOpen: boolean;
   isSettingsOpen: boolean;
+  isFeedbackOpen: boolean;
 }
 
 interface PanelSetters {
@@ -32,6 +33,7 @@ interface PanelSetters {
   setIsChatOpen: (v: boolean) => void;
   setIsStatsOpen: (v: boolean) => void;
   setIsSettingsOpen: (v: boolean) => void;
+  setIsFeedbackOpen: (v: boolean) => void;
   setIsMoreOpen: (v: boolean) => void;
 }
 
@@ -81,6 +83,7 @@ export function useMobileNavState({
     setters.setIsChatOpen(false);
     setters.setIsStatsOpen(false);
     setters.setIsSettingsOpen(false);
+    setters.setIsFeedbackOpen(false);
     setters.setIsMoreOpen(false);
 
     if (!screen) return;
@@ -91,6 +94,7 @@ export function useMobileNavState({
     else if (screen.id === "scenes") setters.setIsScenesOpen(true);
     else if (screen.id === "stats") setters.setIsStatsOpen(true);
     else if (screen.id === "settings") setters.setIsSettingsOpen(true);
+    else if (screen.id === "feedback") setters.setIsFeedbackOpen(true);
     else if (screen.id === "rooms") setters.setIsRoomsOpen(true);
     else if (screen.id === "chat") setters.setIsChatOpen(true);
     else if (screen.id === "embed") setters.setIsEmbedPlayerOpen(true);
@@ -183,7 +187,8 @@ export function useMobileNavState({
         states.isRoomsOpen ||
         states.isChatOpen ||
         states.isStatsOpen ||
-        states.isSettingsOpen;
+        states.isSettingsOpen ||
+        states.isFeedbackOpen;
 
       if (id === "pomodoro") {
         if (isAnySheetOpen) {
@@ -205,7 +210,8 @@ export function useMobileNavState({
         states.isRoomsOpen ||
         states.isChatOpen ||
         states.isStatsOpen ||
-        states.isSettingsOpen;
+        states.isSettingsOpen ||
+        states.isFeedbackOpen;
 
       const isCurrentlyActive =
         (id === "more" && isMoreGroupActive) ||
@@ -251,6 +257,8 @@ export function useMobileNavState({
           if (systemFlags.chatEnabled) mobilePush("chat", "Trợ lý AI");
         } else if (id === "settings") {
           mobilePush("settings", "Cài đặt");
+        } else if (id === "feedback") {
+          mobilePush("feedback", "Gửi góp ý");
         } else if (id === "stats") {
           mobilePush("stats", "Thống kê");
         } else if (id === "pomodoro") {
@@ -283,13 +291,15 @@ export function useMobileNavState({
       currentId === "chat" ||
       currentId === "stats" ||
       currentId === "settings" ||
+      currentId === "feedback" ||
       states.isMoreOpen ||
       states.isScenesOpen ||
       states.isEmbedPlayerOpen ||
       states.isRoomsOpen ||
       states.isChatOpen ||
       states.isStatsOpen ||
-      states.isSettingsOpen
+      states.isSettingsOpen ||
+      states.isFeedbackOpen
     ) {
       return "more";
     }

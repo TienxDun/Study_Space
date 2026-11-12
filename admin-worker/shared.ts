@@ -36,6 +36,12 @@ export interface R2PutOptions {
   httpMetadata?: { contentType?: string; cacheControl?: string };
 }
 
+export interface R2ObjectBodyLike {
+  body?: ReadableStream;
+  size?: number;
+  httpMetadata?: { contentType?: string };
+}
+
 export interface R2BucketLike {
   list(options?: { limit?: number; cursor?: string }): Promise<R2ListPage>;
   put?(
@@ -43,6 +49,7 @@ export interface R2BucketLike {
     value: ReadableStream | ArrayBuffer | ArrayBufferView | string | Blob,
     options?: R2PutOptions,
   ): Promise<unknown>;
+  get?(key: string): Promise<R2ObjectBodyLike | null>;
   delete?(keys: string | string[]): Promise<unknown>;
 }
 

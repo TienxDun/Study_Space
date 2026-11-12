@@ -57,6 +57,10 @@ const MobileRadioSheet = dynamic(
   () => loadRadioSheet().then((mod) => mod.MobileRadioSheet),
   { ssr: false, loading: () => <SheetGlassSkeleton title="Đài phát thanh" sheetId="radio" /> }
 );
+const FeedbackSheet = dynamic(
+  () => import("@/components/study/feedback/FeedbackDialog").then((mod) => mod.FeedbackSheet),
+  { ssr: false }
+);
 
 interface StudyMobileLayoutProps {
   state: StudySpaceState;
@@ -76,6 +80,7 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
     isNotesOpen,
     isScenesOpen,
     isSettingsOpen,
+    isFeedbackOpen,
     isStatsOpen,
     isChatOpen,
     isMoreOpen,
@@ -141,6 +146,7 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
   if (isStatsOpen) mountedSheetsRef.current.stats = true;
   if (isChatOpen) mountedSheetsRef.current.chat = true;
   if (isMoreOpen) mountedSheetsRef.current.more = true;
+  if (isFeedbackOpen) mountedSheetsRef.current.feedback = true;
   if (isEmbedPlayerOpen || Boolean(externalActiveItem)) mountedSheetsRef.current.radio = true;
   const mountedSheets = mountedSheetsRef.current;
 
@@ -156,6 +162,7 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
     isNotesOpen ||
     isScenesOpen ||
     isSettingsOpen ||
+    isFeedbackOpen ||
     isStatsOpen ||
     isChatOpen ||
     isMoreOpen ||
@@ -363,6 +370,20 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
               onSelect={handleMoreSelect}
               chatEnabled={systemFlags.chatEnabled}
               roomsEnabled={systemFlags.roomsEnabled}
+            />
+          </MobilePerfProbe>
+        </ErrorBoundary>
+      )}
+
+      {/* Khay góp ý/báo lỗi chung */}
+      {mountedSheets.feedback && (
+        <ErrorBoundary>
+          <MobilePerfProbe name="sheet:feedback">
+            <FeedbackSheet
+              isOpen={isFeedbackOpen}
+              onClose={handleMobileCloseAllSheets}
+              onBack={mobileCanGoBack ? handleMobileBack : undefined}
+              backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
             />
           </MobilePerfProbe>
         </ErrorBoundary>

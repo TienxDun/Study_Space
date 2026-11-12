@@ -41,7 +41,7 @@ describe("tab quản trị", () => {
     expect(el("tab-btn-overview").classList.contains("is-active")).toBe(true);
     expect(el("tab-btn-overview").getAttribute("aria-selected")).toBe("true");
     expect(visible("tab-panel-overview")).toBe(true);
-    ["diagnostics", "flags", "chat", "content", "reports", "users"].forEach((name) => {
+    ["diagnostics", "flags", "chat", "content", "reports", "feedback", "users"].forEach((name) => {
       expect(el("tab-btn-" + name).getAttribute("aria-selected")).toBe("false");
       expect(visible("tab-panel-" + name)).toBe(false);
     });

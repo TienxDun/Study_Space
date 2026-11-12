@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const UPDATED_AT = "03/11/2026";
+const UPDATED_AT = "12/11/2026";
 const CONTACT_EMAIL = "leutiendung.htt@gmail.com";
 
 function Section({
@@ -72,6 +72,7 @@ export default function PrivacyPage() {
           <li>Không bán dữ liệu, không gắn quảng cáo làm phiền. Công cụ đếm truy cập hoàn toàn ẩn danh, không dùng cookie và không theo dõi bạn sang trang web khác.</li>
           <li>Phòng học nhóm truyền hình ảnh và âm thanh trực tiếp; ZenStudy tuyệt đối không ghi âm, không ghi hình cuộc gọi.</li>
           <li>Tính năng báo cáo và chặn thành viên có sẵn ngay trong ứng dụng; thông tin báo cáo chỉ dùng để xem xét xử lý vi phạm và tự động xóa sau khoảng 180 ngày.</li>
+          <li>Bạn có thể gửi góp ý hoặc báo lỗi ngay trong ứng dụng, kèm tối đa một ảnh chụp màn hình (nén sẵn, tối đa 1 MB); nội dung và ảnh chỉ quản trị viên đọc được và tự động xóa sau khoảng 180 ngày.</li>
         </ul>
       </div>
 
@@ -218,7 +219,10 @@ export default function PrivacyPage() {
             Thời gian lưu trữ báo cáo: Báo cáo chỉ do người quản trị ZenStudy kiểm tra để giữ môi trường học tập an toàn. Thông tin báo cáo được lưu trữ tối đa khoảng 180 ngày để theo dõi và xử lý vi phạm, sau đó hệ thống sẽ tự động xóa sạch. Danh sách chặn được giữ cho đến khi bạn tự bỏ chặn hoặc khi bạn xóa tài khoản.
           </p>
           <p>
-            Trong quá trình xử lý, chúng tôi có thể tạm khóa tính năng trợ lý AI hoặc quyền vào phòng học của tài khoản có hành vi quấy rối. Khi bạn xóa tài khoản của mình, tất cả dữ liệu báo cáo và danh sách chặn liên quan cũng sẽ được xóa sạch. Nếu bạn muốn phản ánh trực tiếp qua email, vui lòng xem mục 13.
+            Gửi góp ý và báo lỗi: Bạn có thể bấm &ldquo;Gửi góp ý&rdquo; trong phần Cài đặt (máy tính) hoặc mục &ldquo;Chung&rdquo; của bảng Thêm (điện thoại) để báo lỗi hay đề xuất cải thiện. Hệ thống lưu mã số tài khoản, tên hiển thị, loại góp ý, nội dung bạn viết (tối đa 2.000 ký tự), email liên hệ nếu bạn tự nguyện nhập, và vài thông tin kỹ thuật nhỏ để tìm lỗi (phiên bản ứng dụng, nền tảng web/Android, kích thước màn hình, ngôn ngữ). Bạn cũng có thể đính kèm một ảnh chụp màn hình mỗi lần gửi: ảnh được nén ngay trên máy xuống tối đa 1 MB, mỗi tài khoản gửi tối đa 3 ảnh mỗi ngày, và ảnh được lưu trong kho tệp của Cloudflare. Hãy cân nhắc che hoặc cắt bỏ thông tin riêng tư trước khi gửi ảnh. Góp ý không lưu địa chỉ IP hay thông tin trình duyệt đầy đủ, chỉ người quản trị ZenStudy đọc được, được lưu tối đa khoảng 180 ngày rồi tự động xóa (ảnh đính kèm bị xóa cùng).
+          </p>
+          <p>
+            Trong quá trình xử lý, chúng tôi có thể tạm khóa tính năng trợ lý AI hoặc quyền vào phòng học của tài khoản có hành vi quấy rối. Khi bạn xóa tài khoản của mình, tất cả dữ liệu báo cáo, góp ý và danh sách chặn liên quan cũng sẽ được xóa sạch. Nếu bạn muốn phản ánh trực tiếp qua email, vui lòng xem mục 13.
           </p>
         </Section>
 

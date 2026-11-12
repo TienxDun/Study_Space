@@ -1,0 +1,208 @@
+/* ================= P3.16 — Góp ý & Báo lỗi ================= */
+.feedback-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.feedback-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.feedback-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+
+.feedback-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.feedback-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: var(--surface-nested);
+  border: 1px solid var(--border-subtle);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.feedback-count strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.feedback-table td {
+  vertical-align: top;
+}
+
+.feedback-time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.feedback-person {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.feedback-preview {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.feedback-more-wrap {
+  display: flex;
+}
+
+.feedback-more-wrap .btn-ghost {
+  margin-left: auto;
+}
+
+/* .btn-ghost có display nên thuộc tính hidden bị đè: ép ẩn khi hết trang. */
+.feedback-more-wrap .btn-ghost[hidden] {
+  display: none;
+}
+
+.feedback-detail {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.feedback-detail[hidden] {
+  display: none;
+}
+
+.feedback-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 20px;
+}
+
+.feedback-meta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.feedback-meta-row span {
+  color: var(--text-muted);
+}
+
+.feedback-meta-row strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.feedback-content {
+  margin: 6px 0 0;
+  padding: 12px;
+  max-height: 240px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.feedback-image {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.feedback-image[hidden] {
+  display: none;
+}
+
+.feedback-image a {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.feedback-image img {
+  display: block;
+  max-width: 100%;
+  max-height: 420px;
+  width: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Cột thao tác gộp nhãn ảnh và nút Xem trên cùng một hàng. */
+.feedback-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.feedback-image-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--surface-nested);
+  border: 1px solid var(--border-subtle);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .feedback-body {
+    padding: 16px;
+  }
+  .feedback-filter {
+    flex: 1 1 100%;
+  }
+  .feedback-meta {
+    grid-template-columns: 1fr;
+  }
+}
+
+.feedback-panel .panel-title {
+  white-space: nowrap;
+}
+
+.feedback-table th,
+.feedback-table td {
+  padding: 10px 12px;
+}
+
+.feedback-table .badge-ok,
+.feedback-table .badge-bad,
+.feedback-table .badge-wait {
+  white-space: nowrap;
+}

@@ -94,6 +94,7 @@ export function useStudySpaceState() {
       isMoreOpen: panelState.isMoreOpen,
       isStatsOpen: panelState.isStatsOpen,
       isSettingsOpen: panelState.isSettingsOpen,
+      isFeedbackOpen: panelState.isFeedbackOpen,
     }),
     [
       panelState.isTasksOpen,
@@ -106,6 +107,7 @@ export function useStudySpaceState() {
       panelState.isMoreOpen,
       panelState.isStatsOpen,
       panelState.isSettingsOpen,
+      panelState.isFeedbackOpen,
     ]
   );
 
@@ -120,6 +122,7 @@ export function useStudySpaceState() {
       setIsChatOpen: panelState.setIsChatOpen,
       setIsStatsOpen: panelState.setIsStatsOpen,
       setIsSettingsOpen: panelState.setIsSettingsOpen,
+      setIsFeedbackOpen: panelState.setIsFeedbackOpen,
       setIsMoreOpen: panelState.setIsMoreOpen,
     }),
     [
@@ -132,6 +135,7 @@ export function useStudySpaceState() {
       panelState.setIsChatOpen,
       panelState.setIsStatsOpen,
       panelState.setIsSettingsOpen,
+      panelState.setIsFeedbackOpen,
       panelState.setIsMoreOpen,
     ]
   );
@@ -332,6 +336,10 @@ export function useStudySpaceState() {
       handleOpenSettings: panelState.handleOpenSettings,
       handleCloseSettings: panelState.handleCloseSettings,
       handleToggleSettings: panelState.handleToggleSettings,
+      isFeedbackOpen: panelState.isFeedbackOpen,
+      setIsFeedbackOpen: panelState.setIsFeedbackOpen,
+      handleOpenFeedback: panelState.handleOpenFeedback,
+      handleCloseFeedback: panelState.handleCloseFeedback,
       showClockSeconds: displayState.showClockSeconds,
       handleToggleClockSeconds: displayState.handleToggleClockSeconds,
       isClock12Hour: displayState.isClock12Hour,

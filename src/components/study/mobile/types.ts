@@ -12,5 +12,6 @@ export type MobilePanelId =
   | "rooms"
   | "chat"
   | "settings"
+  | "feedback"
   | "stats"
   | "more";

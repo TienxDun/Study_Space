@@ -40,6 +40,7 @@ export function usePanelState({
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   // Thứ tự hiển thị nổi (z-index) cho các bảng desktop: cái nào mở sau hoặc được click vào sẽ ở trên cùng
   const [panelStack, setPanelStack] = useState<FloatingPanelId[]>(["tasks", "notes", "rooms"]);
@@ -132,6 +133,16 @@ export function usePanelState({
       handleOpenSettings();
     }
   }, [isSettingsOpen, handleCloseSettings, handleOpenSettings]);
+
+  // Hộp thoại góp ý mở từ Cài đặt (desktop) hoặc bảng Thêm (mobile).
+  const handleOpenFeedback = useCallback(() => {
+    handleCloseSettings();
+    setIsFeedbackOpen(true);
+  }, [handleCloseSettings]);
+
+  const handleCloseFeedback = useCallback(() => {
+    setIsFeedbackOpen(false);
+  }, []);
 
   const handleToggleShortcutsHelp = useCallback(() => {
     setIsShortcutsHelpOpen((prev) => {
@@ -236,6 +247,7 @@ export function usePanelState({
   const isAnyModalOpen =
     isSettingsOpen ||
     isStatsOpen ||
+    isFeedbackOpen ||
     isTasksOpen ||
     isScenesOpen ||
     (isEmbedPlayerOpen && !isPipActive) ||
@@ -251,6 +263,7 @@ export function usePanelState({
     isScenesOpen ||
     isSettingsOpen ||
     isStatsOpen ||
+    isFeedbackOpen ||
     isChatOpen ||
     isMoreOpen ||
     isMixerOpen ||
@@ -294,6 +307,10 @@ export function usePanelState({
       handleOpenSettings,
       handleCloseSettings,
       handleToggleSettings,
+      isFeedbackOpen,
+      setIsFeedbackOpen,
+      handleOpenFeedback,
+      handleCloseFeedback,
       openPanelOnly,
       isAnyModalOpen,
       isAnyMobileSheetOpen,
@@ -324,6 +341,9 @@ export function usePanelState({
       handleOpenSettings,
       handleCloseSettings,
       handleToggleSettings,
+      isFeedbackOpen,
+      handleOpenFeedback,
+      handleCloseFeedback,
       openPanelOnly,
       isAnyModalOpen,
       isAnyMobileSheetOpen,

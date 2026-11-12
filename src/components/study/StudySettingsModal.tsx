@@ -9,6 +9,7 @@ import {
   MinusIcon,
   PlusIcon,
   CompassIcon,
+  ChatCircleDotsIcon,
 } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import { ModalShell } from "../ui/ModalShell";
@@ -58,6 +59,8 @@ export interface StudySettingsProps {
   onClose: () => void;
   // Tour walkthrough
   onOpenTour?: () => void;
+  // Góp ý/báo lỗi chung
+  onOpenFeedback?: () => void;
   // Clock settings
   showClockSeconds: boolean;
   onToggleClockSeconds: () => void;
@@ -179,6 +182,7 @@ export const StudySettingsModal = ({
   isOpen,
   onClose,
   onOpenTour,
+  onOpenFeedback,
   showClockSeconds,
   onToggleClockSeconds,
   isClock12Hour,
@@ -411,6 +415,28 @@ export const StudySettingsModal = ({
           </div>
         )}
       </SettingsSection>
+
+      {/* Hỗ trợ: góp ý/báo lỗi chung (P3.16) */}
+      {onOpenFeedback && (
+        <SettingsSection
+          icon={<ChatCircleDotsIcon className="w-3.5 h-3.5 text-emerald-400" />}
+          title="Hỗ trợ"
+        >
+          <SettingRow
+            title="Gửi góp ý / báo lỗi"
+            desc="Cho quản trị viên biết lỗi bạn gặp"
+            control={
+              <button
+                type="button"
+                onClick={onOpenFeedback}
+                className="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 border border-emerald-400/30 transition-all active:scale-95 cursor-pointer"
+              >
+                Gửi
+              </button>
+            }
+          />
+        </SettingsSection>
+      )}
 
       {/* Tour hướng dẫn sử dụng */}
       {onOpenTour && (

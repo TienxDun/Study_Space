@@ -94,4 +94,20 @@ describe("Floating panels dynamic z-index layering", () => {
     expect(notesZ5).toBeGreaterThan(roomsZ5);
     expect(notesZ5).toBeGreaterThan(tasksZ5);
   });
+
+  it("counts the feedback sheet as an open mobile sheet", () => {
+    act(() => {
+      root.render(React.createElement(TestHarness));
+    });
+
+    expect(hookResult.isAnyMobileSheetOpen).toBe(false);
+
+    act(() => {
+      hookResult.setIsFeedbackOpen(true);
+    });
+
+    expect(hookResult.isFeedbackOpen).toBe(true);
+    expect(hookResult.isAnyModalOpen).toBe(true);
+    expect(hookResult.isAnyMobileSheetOpen).toBe(true);
+  });
 });

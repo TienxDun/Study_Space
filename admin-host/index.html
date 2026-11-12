@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="styles/content.css" />
     <link rel="stylesheet" href="styles/dialogs.css" />
     <link rel="stylesheet" href="styles/reports.css" />
+    <link rel="stylesheet" href="styles/feedback.css" />
     <link rel="stylesheet" href="styles/users.css" />
   </head>
   <body>
@@ -66,6 +67,7 @@
         <button class="admin-tab" id="tab-btn-chat" type="button" role="tab" aria-selected="false" aria-controls="tab-panel-chat" tabindex="-1" data-admin-tab="chat">Trợ lý chat</button>
         <button class="admin-tab" id="tab-btn-content" type="button" role="tab" aria-selected="false" aria-controls="tab-panel-content" tabindex="-1" data-admin-tab="content">Nội dung</button>
         <button class="admin-tab" id="tab-btn-reports" type="button" role="tab" aria-selected="false" aria-controls="tab-panel-reports" tabindex="-1" data-admin-tab="reports">Báo cáo</button>
+        <button class="admin-tab" id="tab-btn-feedback" type="button" role="tab" aria-selected="false" aria-controls="tab-panel-feedback" tabindex="-1" data-admin-tab="feedback">Phản hồi</button>
         <button class="admin-tab" id="tab-btn-users" type="button" role="tab" aria-selected="false" aria-controls="tab-panel-users" tabindex="-1" data-admin-tab="users">Người dùng</button>
       </div>
     </nav>
@@ -210,6 +212,11 @@
         <!-- include: panels/reports.html -->
       </div>
 
+      <!-- Tab: Phản hồi -->
+      <div class="tab-panel" id="tab-panel-feedback" role="tabpanel" aria-labelledby="tab-btn-feedback" data-tab-panel="feedback" hidden>
+        <!-- include: panels/feedback.html -->
+      </div>
+
       <!-- Tab: Người dùng -->
       <div class="tab-panel" id="tab-panel-users" role="tabpanel" aria-labelledby="tab-btn-users" data-tab-panel="users" hidden>
         <!-- include: panels/users.html -->
@@ -233,6 +240,7 @@
     <script src="scripts/dialogs.js" defer></script>
     <script src="scripts/content.js" defer></script>
     <script src="scripts/reports.js" defer></script>
+    <script src="scripts/feedback.js" defer></script>
     <script src="scripts/users.js" defer></script>
     <script src="scripts/chat.js" defer></script>
     <script src="scripts/dashboard.js" defer></script>

@@ -71,10 +71,12 @@ Các key từng dán ở khung chat coi như đã lộ:
    | `FIREBASE_PROJECT_ID` | Text  | `zenspace-d10m13y26`                           |
    | `ALLOWED_ORIGINS`     | Text  | `https://zenstudy.space,http://localhost:3001` |
 3. Settings → Bindings → Add → D1 database: Variable name: `DB` → Database: `zenspace`.
+   - Thêm R2 bucket: Variable name: `R2` → bucket `study-space` (chỉ dùng cho ảnh đính kèm góp ý, P3.16b). Thiếu binding này thì gửi ảnh trả **503**, góp ý dạng chữ vẫn chạy.
+   - DB đã có `user_feedback` từ trước (P3.16 không kèm ảnh) thì chạy thêm một lần `workers/feedback-image.sql` để thêm cột `image_key`.
 4. Settings → Variables and Secrets → Add secret: `FIREBASE_SERVICE_ACCOUNT` = **toàn bộ nội dung file JSON service account** (cùng project `zenspace-d10m13y26`, role **Firebase Authentication Admin**).
    - Tạo khoá: Google Cloud Console → IAM & Admin → Service Accounts → Create service account → gán role Firebase Authentication Admin → Keys → Add key → JSON.
    - Worker dùng khoá này để xoá tài khoản Firebase khi người dùng bấm "Xoá tài khoản" (client không cần reauth). Thiếu secret thì `DELETE /account` trả **503** và không xoá gì.
-   - Kiểm tra: `https://<worker>/health` phải có `"authAdmin": true`. Nếu lần xoá đầu báo `SERVICE_DISABLED` thì bật Identity Toolkit API trong project.
+   - Kiểm tra: `https://<worker>/health` phải có `"authAdmin": true` và `"r2": true` (r2 là binding ảnh góp ý ở bước 3). Nếu lần xoá đầu báo `SERVICE_DISABLED` thì bật Identity Toolkit API trong project.
 5. Mở D1 Database `zenspace` → tab **Console** → dán toàn bộ file `workers/schema.sql` → bấm **Execute** (để xóa sạch bảng thừa và tạo `user_data`, `chat_usage`, `admin_audit`, `deleted_accounts`). DB đang chạy chỉ cần dán riêng phần `CREATE TABLE IF NOT EXISTS deleted_accounts`; Worker cũng tự tạo bảng này ở lần xóa đầu tiên.
 6. Lấy địa chỉ Worker: `https://data-api.<bạn>.workers.dev` → điền vào `NEXT_PUBLIC_DATA_API_URL` ở Bước 3.
 7. Kiểm tra route xóa tài khoản: `curl.exe -i -X DELETE https://<worker>/account` phải trả **401** (thiếu vé Firebase). Bản Worker mới là bản có `DELETE /account`; dán lại code mỗi khi file `workers/data-api/worker.js` thay đổi.

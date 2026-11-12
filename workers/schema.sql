@@ -124,3 +124,25 @@ CREATE TABLE IF NOT EXISTS user_restrictions (
   updated_at     INTEGER NOT NULL,
   updated_by     TEXT
 );
+
+-- P3.16 — góp ý/báo lỗi chung từ app (chi tiết ở workers/feedback-schema.sql).
+CREATE TABLE IF NOT EXISTS user_feedback (
+  id              TEXT PRIMARY KEY,
+  uid             TEXT NOT NULL,
+  name            TEXT,
+  kind            TEXT NOT NULL,               -- 'bug' | 'idea' | 'other'
+  message         TEXT NOT NULL,
+  contact         TEXT,
+  app_version     TEXT,
+  platform        TEXT,                        -- 'web' | 'android'
+  viewport        TEXT,
+  locale          TEXT,
+  status          TEXT NOT NULL DEFAULT 'open', -- open | resolved | dismissed
+  created_at      INTEGER NOT NULL,
+  resolved_at     INTEGER,
+  resolved_by     TEXT,
+  resolution_note TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_feedback_status_created ON user_feedback (status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_feedback_uid_created ON user_feedback (uid, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_feedback_created ON user_feedback (created_at);

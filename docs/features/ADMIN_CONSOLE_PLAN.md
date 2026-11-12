@@ -91,7 +91,7 @@ Kế hoạch chi tiết, chia bước nhỏ và thứ tự deploy ở [`docs/fea
 
 ### P3 — Vận hành lâu dài
 
-16. **Phản hồi chung** (báo lỗi/góp ý, khác P2e báo cáo nội dung): nút gửi trong app → D1 → hàng chờ admin.
+16. **Phản hồi chung** (báo lỗi/góp ý, khác P2e báo cáo nội dung): nút gửi trong app → D1 → hàng chờ admin. Kế hoạch chi tiết ở [`P3_FEEDBACK_PLAN.md`](./P3_FEEDBACK_PLAN.md) (lên plan 2026-11-12).
 17. **Chu kỳ dọn**: log lỗi, audit, feedback theo cửa sổ 30 ngày.
 18. **Rà hạn mức**: mỗi tháng đối chiếu số worker báo với dashboard nhà cung cấp.
 

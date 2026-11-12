@@ -130,6 +130,13 @@ function createMockD1(options: { withMeet?: boolean } = {}) {
       return { meta: { changes: before - tables.user_restrictions.length } };
     }
 
+    if (s.startsWith("DELETE FROM user_feedback WHERE uid = ?")) {
+      const [uid] = params;
+      const before = table("user_feedback").length;
+      tables.user_feedback = table("user_feedback").filter((row) => row.uid !== uid);
+      return { meta: { changes: before - tables.user_feedback.length } };
+    }
+
     if (s.startsWith("INSERT INTO deleted_accounts")) {
       const [uid, deletedAt] = params;
       const existing = table("deleted_accounts").find((row) => row.uid === uid);
@@ -179,6 +186,14 @@ function createMockD1(options: { withMeet?: boolean } = {}) {
         results: table("meet_rooms").filter((row) =>
           String(row.co_host_uids || "").includes(needle)
         ),
+      };
+    }
+    if (s.startsWith("SELECT image_key FROM user_feedback WHERE uid = ?")) {
+      const [uid] = params;
+      return {
+        results: table("user_feedback")
+          .filter((row) => row.uid === uid && row.image_key)
+          .map((row) => ({ image_key: row.image_key })),
       };
     }
     return { results: [] };
@@ -518,8 +533,29 @@ describe("Worker Data-API — Xoá tài khoản", () => {
     expect(mockDb._tables.user_data).toHaveLength(0);
   });
 
-  it("Test 9: gọi lại lần hai vẫn 200 và dùng lại token Admin", async () => {
+  it("Test 8b: xoá tài khoản thì dọn luôn ảnh góp ý trong R2", async () => {
     seed();
+    mockDb._tables.user_feedback = [
+      { id: "f1", uid: "user_alice", image_key: "feedback/2026-11/f1.jpg", created_at: 1 },
+      { id: "f2", uid: "user_bob", image_key: null, created_at: 2 },
+    ];
+    const deletedKeys: string[][] = [];
+    const r2 = {
+      async delete(keys: string[] | string) {
+        deletedKeys.push(Array.isArray(keys) ? keys : [keys]);
+      },
+    };
+    stubAdminFetch();
+
+    const res = await worker.fetch(deleteRequest("valid-token-alice"), env({ R2: r2 }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.deleted.feedback).toBe(1);
+    expect(mockDb._tables.user_feedback.map((row) => row.id)).toEqual(["f2"]);
+    expect(deletedKeys.flat()).toEqual(["feedback/2026-11/f1.jpg"]);
+  });
+
+  it("Test 9: gọi lại lần hai vẫn 200 và dùng lại token Admin", async () => {    seed();
     const fetchMock = stubAdminFetch();
 
     await worker.fetch(deleteRequest("valid-token-alice"), env());
