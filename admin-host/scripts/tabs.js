@@ -8,6 +8,20 @@
   var DEFAULT_TAB = "overview";
   var activeId = null;
 
+  // Rail dọc ở desktop, dải ngang ở mobile — đổi aria-orientation theo bố cục.
+  var wideQuery = typeof window.matchMedia === "function" ? window.matchMedia("(min-width: 1024px)") : null;
+  var tablist = document.querySelector(".admin-tabs-inner");
+
+  function syncOrientation() {
+    if (!tablist) return;
+    tablist.setAttribute("aria-orientation", wideQuery && wideQuery.matches ? "vertical" : "horizontal");
+  }
+
+  syncOrientation();
+  if (wideQuery && wideQuery.addEventListener) {
+    wideQuery.addEventListener("change", syncOrientation);
+  }
+
   function tabIds() {
     return tabs.map(function (tab) {
       return tab.getAttribute("data-admin-tab");
@@ -54,8 +68,8 @@
 
     tab.addEventListener("keydown", function (event) {
       var next = null;
-      if (event.key === "ArrowRight") next = tabs[(index + 1) % tabs.length];
-      else if (event.key === "ArrowLeft") next = tabs[(index - 1 + tabs.length) % tabs.length];
+      if (event.key === "ArrowRight" || event.key === "ArrowDown") next = tabs[(index + 1) % tabs.length];
+      else if (event.key === "ArrowLeft" || event.key === "ArrowUp") next = tabs[(index - 1 + tabs.length) % tabs.length];
       else if (event.key === "Home") next = tabs[0];
       else if (event.key === "End") next = tabs[tabs.length - 1];
       if (!next) return;

@@ -18,6 +18,14 @@
   gap: 20px;
 }
 
+/* Desktop có rail dọc: logo neo mép trái cho thẳng hàng với rail. */
+@media (min-width: 1024px) {
+  .topbar .container {
+    max-width: none;
+    padding-inline: 24px;
+  }
+}
+
 .brand {
   display: flex;
   align-items: center;

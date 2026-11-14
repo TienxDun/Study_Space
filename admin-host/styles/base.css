@@ -81,6 +81,35 @@ a {
   padding-inline: clamp(20px, 3.5vw, 40px);
 }
 
+/* Bố cục shell desktop: nav thành rail dọc bên trái, nội dung nằm cột phải. */
+@media (min-width: 1024px) {
+  body {
+    display: grid;
+    grid-template-columns: 232px minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "topbar topbar"
+      "rail main"
+      "rail footer";
+  }
+
+  body > .topbar {
+    grid-area: topbar;
+  }
+
+  body > .admin-tabs {
+    grid-area: rail;
+  }
+
+  body > main {
+    grid-area: main;
+  }
+
+  body > .footer {
+    grid-area: footer;
+  }
+}
+
 /* ================= SECTION LAYOUT ================= */
 .section-layout {
   display: grid;

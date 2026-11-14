@@ -1,4 +1,7 @@
-/* ================= ADMIN TABS ================= */
+/* ================= ADMIN TABS =================
+   Dưới 1024px: dải pill cuộn ngang ngay dưới topbar.
+   Từ 1024px: rail dọc bên trái, nhóm theo mục đích. */
+
 .admin-tabs {
   position: sticky;
   top: 64px;
@@ -66,6 +69,12 @@
   outline-offset: 2px;
 }
 
+/* Icon và tiêu đề nhóm chỉ có nghĩa ở dạng rail dọc. */
+.admin-tab-icon,
+.admin-tabs-group {
+  display: none;
+}
+
 .tab-panel[hidden] {
   display: none;
 }
@@ -81,5 +90,99 @@
 
   .admin-tab {
     padding: 8px 12px;
+  }
+}
+
+/* ================= RAIL DỌC (desktop) ================= */
+@media (min-width: 1024px) {
+  .admin-tabs {
+    border-bottom: 0;
+    border-right: 1px solid var(--border-subtle);
+    background: rgba(9, 10, 15, 0.45);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .admin-tabs::after {
+    display: none;
+  }
+
+  .admin-tabs-inner {
+    position: sticky;
+    top: 64px;
+    flex-direction: column;
+    gap: 2px;
+    max-height: calc(100vh - 64px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    max-width: none;
+    margin-inline: 0;
+    padding: 14px 12px 22px;
+  }
+
+  .admin-tabs-inner::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+  }
+
+  .admin-tabs-inner::-webkit-scrollbar-thumb {
+    background: var(--border-hover);
+    border-radius: var(--radius-full);
+  }
+
+  .admin-tabs-group {
+    display: block;
+    padding: 14px 10px 6px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  .admin-tabs-group:first-child {
+    padding-top: 2px;
+  }
+
+  .admin-tab {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+  }
+
+  .admin-tab-icon {
+    display: block;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    opacity: 0.7;
+  }
+
+  .admin-tab:hover .admin-tab-icon {
+    opacity: 1;
+  }
+
+  .admin-tab-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .admin-tab.is-active {
+    border-color: rgba(16, 185, 129, 0.22);
+    box-shadow: inset 2px 0 0 0 var(--emerald-400);
+    font-weight: 600;
+  }
+
+  .admin-tab.is-active .admin-tab-icon {
+    opacity: 1;
   }
 }
