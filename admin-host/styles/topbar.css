@@ -124,6 +124,23 @@
   transform: translateY(-1px);
 }
 
+.btn-ghost.is-danger {
+  color: var(--rose-400);
+}
+
+.btn-ghost.is-danger:hover {
+  color: var(--rose-400);
+  border-color: rgba(251, 113, 133, 0.45);
+  background: var(--rose-soft);
+}
+
+.btn-ghost:disabled,
+.btn-ghost.is-danger:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* ================= HERO HEADER ================= */
 .page-header {
   padding-top: clamp(28px, 4vw, 44px);

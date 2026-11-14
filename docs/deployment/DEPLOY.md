@@ -80,6 +80,7 @@ Các key từng dán ở khung chat coi như đã lộ:
 5. Mở D1 Database `zenspace` → tab **Console** → dán toàn bộ file `workers/schema.sql` → bấm **Execute** (để xóa sạch bảng thừa và tạo `user_data`, `chat_usage`, `admin_audit`, `deleted_accounts`). DB đang chạy chỉ cần dán riêng phần `CREATE TABLE IF NOT EXISTS deleted_accounts`; Worker cũng tự tạo bảng này ở lần xóa đầu tiên.
 6. Lấy địa chỉ Worker: `https://data-api.<bạn>.workers.dev` → điền vào `NEXT_PUBLIC_DATA_API_URL` ở Bước 3.
 7. Kiểm tra route xóa tài khoản: `curl.exe -i -X DELETE https://<worker>/account` phải trả **401** (thiếu vé Firebase). Bản Worker mới là bản có `DELETE /account`; dán lại code mỗi khi file `workers/data-api/worker.js` thay đổi.
+8. P3.17 (2026-11-15): `workers/data-api/worker.js` và `workers/chat-proxy/worker.js` bỏ toàn bộ cơ chế tự xoá dữ liệu — **phải dán lại thủ công** hai Worker này trên dashboard thì thay đổi mới có hiệu lực. Không cần đổi schema; xoá dữ liệu sau này chỉ xảy ra khi admin bấm nút trên shell admin.
 
 ## Bước 2 — Firebase (Xác thực Google)
 

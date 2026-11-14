@@ -64,6 +64,15 @@
   display: flex;
 }
 
+/* Cột thao tác gộp nút Xem và Xóa trên cùng một hàng (P3.17). */
+.reports-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  white-space: nowrap;
+}
+
 .reports-more-wrap .btn-ghost {
   margin-left: auto;
 }

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const UPDATED_AT = "12/11/2026";
+const UPDATED_AT = "15/11/2026";
 const CONTACT_EMAIL = "leutiendung.htt@gmail.com";
 
 function Section({
@@ -71,8 +71,8 @@ export default function PrivacyPage() {
           <li>Lịch sử trò chuyện với AI được lưu riêng trong tài khoản của bạn để bạn xem lại bất cứ lúc nào trên mọi thiết bị.</li>
           <li>Không bán dữ liệu, không gắn quảng cáo làm phiền. Công cụ đếm truy cập hoàn toàn ẩn danh, không dùng cookie và không theo dõi bạn sang trang web khác.</li>
           <li>Phòng học nhóm truyền hình ảnh và âm thanh trực tiếp; ZenStudy tuyệt đối không ghi âm, không ghi hình cuộc gọi.</li>
-          <li>Tính năng báo cáo và chặn thành viên có sẵn ngay trong ứng dụng; thông tin báo cáo chỉ dùng để xem xét xử lý vi phạm và tự động xóa sau khoảng 180 ngày.</li>
-          <li>Bạn có thể gửi góp ý hoặc báo lỗi ngay trong ứng dụng, kèm tối đa một ảnh chụp màn hình (nén sẵn, tối đa 1 MB); nội dung và ảnh chỉ quản trị viên đọc được và tự động xóa sau khoảng 180 ngày.</li>
+          <li>Tính năng báo cáo và chặn thành viên có sẵn ngay trong ứng dụng; thông tin báo cáo chỉ dùng để xem xét xử lý vi phạm và được quản trị viên xóa khi không còn cần thiết.</li>
+          <li>Bạn có thể gửi góp ý hoặc báo lỗi ngay trong ứng dụng, kèm tối đa một ảnh chụp màn hình (nén sẵn, tối đa 1 MB); nội dung và ảnh chỉ quản trị viên đọc được và được quản trị viên xóa khi không còn cần thiết.</li>
         </ul>
       </div>
 
@@ -216,10 +216,10 @@ export default function PrivacyPage() {
             Tính năng chặn (Block): Khi bạn bấm chặn một thành viên, việc chặn này có hiệu lực hai chiều (cả hai bạn sẽ không còn nhìn thấy nhau hay vào chung một phòng học nào nữa). Đồng thời, bạn sẽ tự động rời khỏi phòng học hiện tại ngay lập tức. Bạn có thể xem lại và bỏ chặn bất cứ lúc nào trong phần Cài đặt.
           </p>
           <p>
-            Thời gian lưu trữ báo cáo: Báo cáo chỉ do người quản trị ZenStudy kiểm tra để giữ môi trường học tập an toàn. Thông tin báo cáo được lưu trữ tối đa khoảng 180 ngày để theo dõi và xử lý vi phạm, sau đó hệ thống sẽ tự động xóa sạch. Danh sách chặn được giữ cho đến khi bạn tự bỏ chặn hoặc khi bạn xóa tài khoản.
+            Thời gian lưu trữ báo cáo: Báo cáo chỉ do người quản trị ZenStudy kiểm tra để giữ môi trường học tập an toàn. Thông tin báo cáo được giữ lại để theo dõi và xử lý vi phạm, và được quản trị viên xóa khi không còn cần thiết. Danh sách chặn được giữ cho đến khi bạn tự bỏ chặn hoặc khi bạn xóa tài khoản.
           </p>
           <p>
-            Gửi góp ý và báo lỗi: Bạn có thể bấm biểu tượng góp ý trên thanh công cụ ở màn hình chính (máy tính) hoặc mục &ldquo;Chung&rdquo; của bảng Thêm (điện thoại) để báo lỗi hay đề xuất cải thiện. Hệ thống lưu mã số tài khoản, tên hiển thị, loại góp ý, nội dung bạn viết (tối đa 2.000 ký tự), email liên hệ nếu bạn tự nguyện nhập, và vài thông tin kỹ thuật nhỏ để tìm lỗi (phiên bản ứng dụng, nền tảng web/Android, kích thước màn hình, ngôn ngữ). Bạn cũng có thể đính kèm một ảnh chụp màn hình mỗi lần gửi: ảnh được nén ngay trên máy xuống tối đa 1 MB, mỗi tài khoản gửi tối đa 3 ảnh mỗi ngày, và ảnh được lưu trong kho tệp của Cloudflare. Hãy cân nhắc che hoặc cắt bỏ thông tin riêng tư trước khi gửi ảnh. Góp ý không lưu địa chỉ IP hay thông tin trình duyệt đầy đủ, chỉ người quản trị ZenStudy đọc được, được lưu tối đa khoảng 180 ngày rồi tự động xóa (ảnh đính kèm bị xóa cùng).
+            Gửi góp ý và báo lỗi: Trên máy tính, bạn mở menu &ldquo;⋯&rdquo; ở góc trên bên phải màn hình chính rồi chọn &ldquo;Gửi góp ý / báo lỗi&rdquo;; trên điện thoại, mục &ldquo;Chung&rdquo; của bảng Thêm. Hệ thống lưu mã số tài khoản, tên hiển thị, loại góp ý, nội dung bạn viết (tối đa 2.000 ký tự), email liên hệ nếu bạn tự nguyện nhập, và vài thông tin kỹ thuật nhỏ để tìm lỗi (phiên bản ứng dụng, nền tảng web/Android, kích thước màn hình, ngôn ngữ). Bạn cũng có thể đính kèm một ảnh chụp màn hình mỗi lần gửi: ảnh được nén ngay trên máy xuống tối đa 1 MB, mỗi tài khoản gửi tối đa 3 ảnh mỗi ngày, và ảnh được lưu trong kho tệp của Cloudflare. Hãy cân nhắc che hoặc cắt bỏ thông tin riêng tư trước khi gửi ảnh. Góp ý không lưu địa chỉ IP hay thông tin trình duyệt đầy đủ, chỉ người quản trị ZenStudy đọc được và được quản trị viên xóa khi không còn cần thiết (ảnh đính kèm bị xóa cùng).
           </p>
           <p>
             Trong quá trình xử lý, chúng tôi có thể tạm khóa tính năng trợ lý AI hoặc quyền vào phòng học của tài khoản có hành vi quấy rối. Khi bạn xóa tài khoản của mình, tất cả dữ liệu báo cáo, góp ý và danh sách chặn liên quan cũng sẽ được xóa sạch. Nếu bạn muốn phản ánh trực tiếp qua email, vui lòng xem mục 13.
@@ -236,7 +236,7 @@ export default function PrivacyPage() {
             <li>Hạ tầng truyền phát âm thanh/hình ảnh phòng học trực tiếp và các nhà cung cấp mô hình AI.</li>
           </ul>
           <p>
-            Để bảo vệ hệ thống trước các cuộc tấn công mạng và duy trì độ ổn định, các máy chủ có thể lưu tạm thời nhật ký kỹ thuật (như địa chỉ IP, loại trình duyệt, dòng thiết bị và các lỗi hệ thống phát sinh). Nhật ký lỗi kỹ thuật nội bộ của ZenStudy sẽ tự động xóa sau khoảng 14 ngày.
+            Để bảo vệ hệ thống trước các cuộc tấn công mạng và duy trì độ ổn định, các máy chủ có thể lưu tạm thời nhật ký kỹ thuật (như địa chỉ IP, loại trình duyệt, dòng thiết bị và các lỗi hệ thống phát sinh). Nhật ký lỗi kỹ thuật nội bộ của ZenStudy chỉ được quản trị viên xóa khi không còn cần thiết.
           </p>
           <p>
             Công cụ thống kê hoàn toàn ẩn danh (GoatCounter): Chúng tôi dùng công cụ GoatCounter để đếm số lượt xem trang và một số hành động chính (như bắt đầu phiên tập trung, vào phòng học, đăng nhập, gửi câu hỏi cho AI). Công cụ này tuyệt đối không dùng cookie, không nhận dạng bạn, không theo dõi bạn sang các trang web khác và không đọc nội dung bạn viết. Mọi số liệu chỉ dừng ở mức tổng quan (ví dụ: tổng lượt học trong ngày, quốc gia truy cập, loại thiết bị).

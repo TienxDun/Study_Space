@@ -93,13 +93,22 @@ function fakeDb(options: { failAudit?: boolean } = {}) {
           events.push(`audit:${String(bound[1])}`);
           return {};
         }
-        if (q.startsWith("DELETE FROM user_feedback WHERE created_at <")) {
-          const [cutoff] = bound;
-          const before = items.length;
+        if (q.startsWith("DELETE FROM user_feedback WHERE id = ?")) {
+          const [id] = bound;
+          const index = items.findIndex((row) => row.id === id);
+          if (index === -1) return { meta: { changes: 0 } };
+          items.splice(index, 1);
+          return { meta: { changes: 1 } };
+        }
+        if (q.startsWith("DELETE FROM user_feedback WHERE status IN")) {
+          let removed = 0;
           for (let i = items.length - 1; i >= 0; i -= 1) {
-            if (Number(items[i].created_at) < Number(cutoff)) items.splice(i, 1);
+            if (items[i].status === "resolved" || items[i].status === "dismissed") {
+              items.splice(i, 1);
+              removed += 1;
+            }
           }
-          return { meta: { changes: before - items.length } };
+          return { meta: { changes: removed } };
         }
         if (q.startsWith("UPDATE user_feedback SET status")) {
           const [status, resolvedAt, resolvedBy, note, id] = bound;
@@ -114,6 +123,10 @@ function fakeDb(options: { failAudit?: boolean } = {}) {
         return { meta: { changes: 0 } };
       },
       async first() {
+        if (q.startsWith("SELECT id, uid, kind, status, image_key FROM user_feedback")) {
+          const [id] = bound;
+          return items.find((row) => row.id === id) || null;
+        }
         if (q.startsWith("SELECT id, uid, kind, status FROM user_feedback")) {
           const [id] = bound;
           return items.find((row) => row.id === id) || null;
@@ -133,12 +146,11 @@ function fakeDb(options: { failAudit?: boolean } = {}) {
         return null;
       },
       async all() {
-        if (q.startsWith("SELECT image_key FROM user_feedback WHERE created_at <")) {
-          const [cutoff] = bound;
+        if (q.startsWith("SELECT id, image_key FROM user_feedback WHERE status IN")) {
           return {
             results: items
-              .filter((row) => Number(row.created_at) < Number(cutoff) && row.image_key)
-              .map((row) => ({ image_key: row.image_key })),
+              .filter((row) => row.status === "resolved" || row.status === "dismissed")
+              .map((row) => ({ id: row.id, image_key: row.image_key || null })),
           };
         }
         if (q.startsWith("SELECT status, COUNT(*) AS n FROM user_feedback")) {
@@ -299,7 +311,7 @@ describe("Admin P3.16 — API góp ý", () => {
     expect(badKind.status).toBe(400);
   });
 
-  it("phân trang bằng before và dọn góp ý quá 180 ngày", async () => {
+  it("phân trang bằng before, không tự dọn góp ý cũ", async () => {
     const fake = fakeDb();
     fake.items.push({
       id: "feedback-old-1",
@@ -321,7 +333,7 @@ describe("Admin P3.16 — API góp ý", () => {
     expect(firstBody.nextBefore).toBe(
       fake.items.find((row) => row.id === "feedback-0001")!.created_at,
     );
-    expect(fake.items.some((row) => row.id === "feedback-old-1")).toBe(false);
+    expect(fake.items.some((row) => row.id === "feedback-old-1")).toBe(true);
 
     const second = await worker.fetch(
       req(`/api/admin/feedback?status=open&kind=all&limit=1&before=${firstBody.nextBefore}`),
@@ -391,28 +403,90 @@ describe("Admin P3.16 — API góp ý", () => {
     expect(lost.status).toBe(404);
   });
 
-  it("dọn góp ý quá 180 ngày xoá luôn ảnh trong R2", async () => {
+  it("xoá một góp ý: audit trước, xoá dòng và ảnh R2", async () => {
+    const fake = fakeDb();
+    const r2 = fakeR2();
+    stubCerts();
+
+    const res = await worker.fetch(
+      req("/api/admin/feedback/feedback-0001", { method: "DELETE" }),
+      envFor(fake, { R2: r2.bucket }),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, deleted: 1 });
+    expect(fake.events).toContain("audit:feedback.delete");
+    expect(fake.items.some((row) => row.id === "feedback-0001")).toBe(false);
+    expect(r2.deleted).toEqual(["feedback/2026-11/feedback-0001.jpg"]);
+
+    const missing = await worker.fetch(
+      req("/api/admin/feedback/feedback-0001", { method: "DELETE" }),
+      envFor(fake, { R2: r2.bucket }),
+    );
+    expect(missing.status).toBe(404);
+  });
+
+  it("xoá góp ý khi audit lỗi thì giữ nguyên dòng", async () => {
+    const broken = fakeDb({ failAudit: true });
+    stubCerts();
+    const res = await worker.fetch(
+      req("/api/admin/feedback/feedback-0001", { method: "DELETE" }),
+      envFor(broken),
+    );
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toBe("audit_failed");
+    expect(broken.items.some((row) => row.id === "feedback-0001")).toBe(true);
+  });
+
+  it("xóa loạt chỉ đụng góp ý đã xử lý/đã bỏ qua và xoá ảnh kèm", async () => {
     const fake = fakeDb();
     const r2 = fakeR2();
     fake.items.push({
-      id: "feedback-old-1",
-      uid: "user_alice",
-      name: "Bạn An",
+      id: "feedback-0004",
+      uid: "user_bob",
+      name: "Bạn Bình",
       kind: "bug",
-      message: "góp ý cũ",
-      status: "open",
-      created_at: Date.now() - 181 * DAY,
-      image_key: "feedback/2026-05/feedback-old-1.jpg",
+      message: "góp ý đã bỏ qua",
+      status: "dismissed",
+      created_at: NOW - 4000,
+      image_key: "feedback/2026-11/feedback-0004.jpg",
     });
     stubCerts();
 
     const res = await worker.fetch(
-      req("/api/admin/feedback?status=open&kind=all&limit=50"),
+      req("/api/admin/feedback/purge", { method: "POST" }),
       envFor(fake, { R2: r2.bucket }),
     );
     expect(res.status).toBe(200);
-    expect(fake.items.some((row) => row.id === "feedback-old-1")).toBe(false);
-    expect(r2.deleted).toEqual(["feedback/2026-05/feedback-old-1.jpg"]);
+    expect(await res.json()).toEqual({ ok: true, deleted: 2 });
+    expect(fake.events).toContain("audit:feedback.purge");
+    expect(fake.items.map((row) => row.id).sort()).toEqual([
+      "feedback-0001",
+      "feedback-0002",
+    ]);
+    expect(r2.deleted).toEqual(["feedback/2026-11/feedback-0004.jpg"]);
+  });
+
+  it("xóa loạt khi không có mục đã xử lý thì không audit", async () => {
+    const fake = fakeDb();
+    fake.items.splice(2, 1);
+    stubCerts();
+    const res = await worker.fetch(
+      req("/api/admin/feedback/purge", { method: "POST" }),
+      envFor(fake),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, deleted: 0 });
+    expect(fake.events).toEqual([]);
+  });
+
+  it("chỉ nhận DELETE ở endpoint chi tiết", async () => {
+    const fake = fakeDb();
+    stubCerts();
+    const res = await worker.fetch(
+      req("/api/admin/feedback/feedback-0001", { method: "POST", body: {} }),
+      envFor(fake),
+    );
+    expect(res.status).toBe(405);
   });
 
   it("xử lý góp ý: audit trước, đổi trạng thái; audit lỗi thì không ghi", async () => {

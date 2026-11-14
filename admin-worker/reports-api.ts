@@ -14,7 +14,6 @@ const REPORT_STATUS = new Set(["open", "resolved", "dismissed"]);
 const REPORT_SOURCE = new Set(["ai", "room"]);
 const REPORT_LIST_MAX = 100;
 const REPORT_NOTE_MAX = 500;
-const REPORT_RETENTION_MS = 180 * 24 * 60 * 60 * 1000;
 const UID_RE = /^[A-Za-z0-9_-]{1,128}$/;
 
 type Row = Record<string, unknown>;
@@ -82,10 +81,6 @@ async function listReports(url: URL, env: AdminEnv): Promise<Response> {
   const before = Number.isFinite(beforeRaw) && beforeRaw > 0 ? Math.floor(beforeRaw) : 0;
 
   try {
-    await env.DB!.prepare("DELETE FROM content_reports WHERE created_at < ?")
-      .bind(Date.now() - REPORT_RETENTION_MS)
-      .run();
-
     const countsRes = await env.DB!.prepare(
       "SELECT status, COUNT(*) AS n FROM content_reports GROUP BY status",
     ).all<Row>();
@@ -307,6 +302,74 @@ export async function handleRestrictionsApi(
   });
 }
 
+// P3.17: xoá thủ công, không có cơ chế tự dọn nào.
+async function deleteReport(env: AdminEnv, id: string, email: string): Promise<Response> {
+  let existing: Row | null = null;
+  try {
+    existing = await env.DB!.prepare(
+      "SELECT id, source, reporter_uid, status FROM content_reports WHERE id = ?",
+    )
+      .bind(id)
+      .first<Row>();
+  } catch {
+    return json({ error: "d1_error" }, 500);
+  }
+  if (!existing) return json({ error: "not_found" }, 404);
+  if (!allowReportWrite(email)) return json({ error: "rate_limited" }, 429);
+
+  const audited = await logAudit(env, {
+    actorEmail: email,
+    action: "report.delete",
+    target: id,
+    detail: {
+      source: existing.source,
+      reporterUid: existing.reporter_uid,
+      status: existing.status,
+    },
+  });
+  if (!audited) return json({ error: "audit_failed" }, 500);
+
+  try {
+    const res = await env.DB!.prepare("DELETE FROM content_reports WHERE id = ?").bind(id).run();
+    const changes = Number((res as { meta?: { changes?: number } })?.meta?.changes || 0);
+    if (changes === 0) return json({ error: "not_found" }, 404);
+  } catch {
+    return json({ error: "d1_error" }, 500);
+  }
+  return json({ ok: true, deleted: 1 });
+}
+
+async function purgeClosedReports(env: AdminEnv, email: string): Promise<Response> {
+  let count = 0;
+  try {
+    const counted = await env.DB!.prepare(
+      "SELECT COUNT(*) AS n FROM content_reports WHERE status IN ('resolved', 'dismissed')",
+    ).first<Row>();
+    count = Number(counted?.n) || 0;
+  } catch {
+    return json({ error: "d1_error" }, 500);
+  }
+  if (count === 0) return json({ ok: true, deleted: 0 });
+  if (!allowReportWrite(email)) return json({ error: "rate_limited" }, 429);
+
+  const audited = await logAudit(env, {
+    actorEmail: email,
+    action: "report.purge",
+    target: "content_reports:closed",
+    detail: { count },
+  });
+  if (!audited) return json({ error: "audit_failed" }, 500);
+
+  try {
+    await env.DB!.prepare(
+      "DELETE FROM content_reports WHERE status IN ('resolved', 'dismissed')",
+    ).run();
+  } catch {
+    return json({ error: "d1_error" }, 500);
+  }
+  return json({ ok: true, deleted: count });
+}
+
 export async function handleReportsApi(
   request: Request,
   env: AdminEnv,
@@ -328,10 +391,16 @@ export async function handleReportsApi(
     return resolveReport(request, env, resolveMatch[1], email);
   }
 
+  if (rest === "/purge") {
+    if (method !== "POST") return json({ error: "Chỉ hỗ trợ POST." }, 405);
+    return purgeClosedReports(env, email);
+  }
+
   const detailMatch = /^\/([A-Za-z0-9-]{8,64})$/.exec(rest);
   if (detailMatch) {
-    if (method !== "GET") return json({ error: "Chỉ hỗ trợ GET." }, 405);
-    return getReport(env, detailMatch[1]);
+    if (method === "GET") return getReport(env, detailMatch[1]);
+    if (method === "DELETE") return deleteReport(env, detailMatch[1], email);
+    return json({ error: "Chỉ hỗ trợ GET hoặc DELETE." }, 405);
   }
 
   return json({ error: "Không có endpoint này." }, 404);

@@ -34,6 +34,7 @@ import {
 import { handleContentApi } from "./content-api";
 import { FLAGS_KEY, parseFlagsBody, readFlags, type SystemFlags } from "./flags";
 import { handleFeedbackApi } from "./feedback-api";
+import { handleMaintenanceApi } from "./maintenance-api";
 import { handleReportsApi, handleRestrictionsApi } from "./reports-api";
 import { handleUsersApi } from "./users-api";
 import { API_PREFIX, json, type AdminEnv } from "./shared";
@@ -52,6 +53,7 @@ export {
   __resetContentWriteLog,
   __resetReportWriteLog,
   __resetFeedbackWriteLog,
+  __resetAuditWriteLog,
 } from "./audit";
 export { mapChatConfig, parseChatCfgBody } from "./chat-config";
 export { __resetContentCaches } from "./content-api";
@@ -81,6 +83,10 @@ async function handleApi(
 
   if (pathname === `${API_PREFIX}/feedback` || pathname.startsWith(`${API_PREFIX}/feedback/`)) {
     return handleFeedbackApi(request, env, pathname, identity.email);
+  }
+
+  if (pathname === `${API_PREFIX}/errors` || pathname === `${API_PREFIX}/audit`) {
+    return handleMaintenanceApi(request, env, pathname, identity.email);
   }
 
   const restrictionsMatch = new RegExp(`^${API_PREFIX}/users/([^/]+)/restrictions$`).exec(pathname);

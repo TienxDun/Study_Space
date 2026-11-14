@@ -75,7 +75,6 @@ const FEEDBACK_VERSION_MAX = 20;
 const FEEDBACK_PLATFORM_MAX = 12;
 const FEEDBACK_VIEWPORT_MAX = 20;
 const FEEDBACK_LOCALE_MAX = 12;
-const FEEDBACK_RETENTION_MS = 180 * 24 * 60 * 60 * 1000;
 
 // Ảnh đính kèm góp ý (P3.16b): app nén sẵn nên chỉ nhận 1 ảnh ≤1 MB,
 // tối đa 3 ảnh/ngày/UID. Ảnh nằm trong R2, D1 chỉ giữ khóa.
@@ -169,24 +168,8 @@ async function deleteFeedbackImages(env, keys) {
   }
 }
 
-// Dọn góp ý quá hạn kèm ảnh: phải lấy khóa ảnh TRƯỚC khi xoá dòng.
-async function pruneExpiredFeedback(env, cutoff) {
-  let keys = [];
-  try {
-    const res = await env.DB.prepare(
-      "SELECT image_key FROM user_feedback WHERE created_at < ? AND image_key IS NOT NULL"
-    )
-      .bind(cutoff)
-      .all();
-    keys = (Array.isArray(res?.results) ? res.results : [])
-      .map((row) => String(row?.image_key || ""))
-      .filter(Boolean);
-  } catch {
-    keys = [];
-  }
-  await env.DB.prepare("DELETE FROM user_feedback WHERE created_at < ?").bind(cutoff).run();
-  await deleteFeedbackImages(env, keys);
-}
+// Không tự xoá góp ý/ảnh: quản trị viên xoá thủ công trên trang admin
+// (P3.17). Xoá tài khoản thì ảnh và dòng góp ý bị xoá theo người dùng.
 
 function utcDayStart(now = Date.now()) {
   const d = new Date(now);
@@ -911,12 +894,6 @@ const workerHandler = {
           )
           .run();
 
-        // Giữ báo cáo 180 ngày; dọn ngay khi có ghi mới.
-        await db
-          .prepare("DELETE FROM content_reports WHERE created_at < ?")
-          .bind(now - 180 * 24 * 60 * 60 * 1000)
-          .run();
-
         return json({ ok: true, id, status: "open", createdAt: now }, 200, cors);
       } catch (err) {
         return json(
@@ -1084,9 +1061,6 @@ const workerHandler = {
           if (imageKey) await deleteFeedbackImages(env, [imageKey]);
           throw err;
         }
-
-        // Giữ 180 ngày; dọn dòng lẫn ảnh ngay khi có ghi mới.
-        await pruneExpiredFeedback(env, now - FEEDBACK_RETENTION_MS);
 
         return json({ ok: true, id, status: "open", createdAt: now, hasImage: Boolean(imageKey) }, 200, cors);
       } catch (err) {

@@ -319,22 +319,19 @@ function resetCfgCache() {
   mem.promptAt = 0;
 }
 
-// ---------- Nhật ký lỗi cuối cho trang admin (bảng admin_error_log, giữ 14 ngày) ----------
+// ---------- Nhật ký lỗi cuối cho trang admin (bảng admin_error_log) ----------
 // message lấy từ bảng tĩnh: không chứa câu hỏi, uid, email, key hay body provider.
 const ERROR_MESSAGES = {
   provider_bad_key: "Key của một hãng bị từ chối.",
   all_busy: "Tất cả đường dự phòng đều bận hoặc đang nghỉ.",
   fallback_failed: "Đường dự phòng cuối trả lỗi.",
 };
-const ERROR_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
 const ERROR_THROTTLE_MS = 60 * 60 * 1000;
 const errorLogThrottle = new Map();
-let errorCleanupAt = 0;
 
 // Test dùng để xóa bộ nhớ khử trùng giữa các ca.
 function resetErrorLogThrottle() {
   errorLogThrottle.clear();
-  errorCleanupAt = 0;
 }
 
 // Cùng một code chỉ ghi tối đa 1 dòng/giờ. Map trong RAM chỉ chặn trong một
@@ -361,12 +358,6 @@ async function logAdminError(env, code) {
       "INSERT INTO admin_error_log (source, code, message, created_at) VALUES (?, ?, ?, ?)"
     ).bind("chat-proxy", code, message, now).run();
 
-    // Dọn bản ghi quá 14 ngày, tối đa 1 lần/giờ, chỉ ở đường ghi.
-    if (now - errorCleanupAt >= ERROR_THROTTLE_MS) {
-      errorCleanupAt = now;
-      await db.prepare("DELETE FROM admin_error_log WHERE created_at < ?")
-        .bind(now - ERROR_RETENTION_MS).run();
-    }
     return true;
   } catch { /* bảng chưa có hoặc D1 lỗi: bỏ qua, không làm hỏng câu trả lời */ return false; }
 }

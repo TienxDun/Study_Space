@@ -95,13 +95,22 @@ function fakeDb(options: { failAudit?: boolean } = {}) {
           events.push(`audit:${String(bound[1])}`);
           return {};
         }
-        if (q.startsWith("DELETE FROM content_reports WHERE created_at <")) {
-          const [cutoff] = bound;
-          const before = reports.length;
+        if (q.startsWith("DELETE FROM content_reports WHERE id = ?")) {
+          const [id] = bound;
+          const index = reports.findIndex((row) => row.id === id);
+          if (index === -1) return { meta: { changes: 0 } };
+          reports.splice(index, 1);
+          return { meta: { changes: 1 } };
+        }
+        if (q.startsWith("DELETE FROM content_reports WHERE status IN")) {
+          let removed = 0;
           for (let i = reports.length - 1; i >= 0; i -= 1) {
-            if (Number(reports[i].created_at) < Number(cutoff)) reports.splice(i, 1);
+            if (reports[i].status === "resolved" || reports[i].status === "dismissed") {
+              reports.splice(i, 1);
+              removed += 1;
+            }
           }
-          return { meta: { changes: before - reports.length } };
+          return { meta: { changes: removed } };
         }
         if (q.startsWith("UPDATE content_reports SET status")) {
           const [status, resolvedAt, resolvedBy, note, id] = bound;
@@ -128,6 +137,12 @@ function fakeDb(options: { failAudit?: boolean } = {}) {
         return { meta: { changes: 0 } };
       },
       async first() {
+        if (q.startsWith("SELECT COUNT(*) AS n FROM content_reports WHERE status IN")) {
+          const n = reports.filter(
+            (row) => row.status === "resolved" || row.status === "dismissed",
+          ).length;
+          return { n };
+        }
         if (q.startsWith("SELECT id, source, reporter_uid, status FROM content_reports")) {
           const [id] = bound;
           return reports.find((row) => row.id === id) || null;
@@ -268,7 +283,7 @@ describe("Admin P2e — API báo cáo", () => {
     expect(body.reports[0].content).toBeUndefined();
   });
 
-  it("phân trang bằng before và dọn báo cáo quá 180 ngày", async () => {
+  it("phân trang bằng before, không tự dọn báo cáo cũ", async () => {
     const fake = fakeDb();
     fake.reports.push({
       id: "report-old-1",
@@ -290,7 +305,7 @@ describe("Admin P2e — API báo cáo", () => {
     expect(firstBody.nextBefore).toBe(
       fake.reports.find((row) => row.id === "report-0001")!.created_at,
     );
-    expect(fake.reports.some((row) => row.id === "report-old-1")).toBe(false);
+    expect(fake.reports.some((row) => row.id === "report-old-1")).toBe(true);
 
     const second = await worker.fetch(
       req(
@@ -359,6 +374,76 @@ describe("Admin P2e — API báo cáo", () => {
       envFor(fake),
     );
     expect(res.status).toBe(400);
+  });
+
+  it("xoá một báo cáo: audit trước, rồi xoá dòng", async () => {
+    const fake = fakeDb();
+    stubCerts();
+    const res = await worker.fetch(
+      req("/api/admin/reports/report-0001", { method: "DELETE" }),
+      envFor(fake),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, deleted: 1 });
+    expect(fake.events).toContain("audit:report.delete");
+    expect(fake.reports.some((row) => row.id === "report-0001")).toBe(false);
+
+    const missing = await worker.fetch(
+      req("/api/admin/reports/report-0001", { method: "DELETE" }),
+      envFor(fake),
+    );
+    expect(missing.status).toBe(404);
+  });
+
+  it("xoá báo cáo khi audit lỗi thì giữ nguyên dòng", async () => {
+    const broken = fakeDb({ failAudit: true });
+    stubCerts();
+    const res = await worker.fetch(
+      req("/api/admin/reports/report-0001", { method: "DELETE" }),
+      envFor(broken),
+    );
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toBe("audit_failed");
+    expect(broken.reports.some((row) => row.id === "report-0001")).toBe(true);
+  });
+
+  it("xóa loạt chỉ đụng báo cáo đã xử lý/đã bỏ qua", async () => {
+    const fake = fakeDb();
+    stubCerts();
+    const res = await worker.fetch(
+      req("/api/admin/reports/purge", { method: "POST" }),
+      envFor(fake),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, deleted: 1 });
+    expect(fake.events).toContain("audit:report.purge");
+    expect(fake.reports.map((row) => row.id).sort()).toEqual([
+      "report-0001",
+      "report-0002",
+    ]);
+  });
+
+  it("xóa loạt khi không có mục đã xử lý thì không audit", async () => {
+    const fake = fakeDb();
+    fake.reports.splice(2, 1);
+    stubCerts();
+    const res = await worker.fetch(
+      req("/api/admin/reports/purge", { method: "POST" }),
+      envFor(fake),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, deleted: 0 });
+    expect(fake.events).toEqual([]);
+  });
+
+  it("chỉ nhận DELETE ở endpoint chi tiết", async () => {
+    const fake = fakeDb();
+    stubCerts();
+    const res = await worker.fetch(
+      req("/api/admin/reports/report-0001", { method: "POST", body: {} }),
+      envFor(fake),
+    );
+    expect(res.status).toBe(405);
   });
 
   it("đọc mặc định và lưu hạn chế tài khoản", async () => {

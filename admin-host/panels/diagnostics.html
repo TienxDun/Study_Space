@@ -5,7 +5,7 @@
           <div class="panel-header">
             <div class="panel-title-group">
               <h2 class="panel-title" id="errors-title">Nhật ký sự cố &amp; chuyển đổi dự phòng</h2>
-              <span class="panel-desc">20 sự cố mới nhất được ghi nhận; tự động dọn dẹp sau 14 ngày</span>
+              <span class="panel-desc">20 sự cố mới nhất được ghi nhận; chỉ bị xoá khi quản trị viên bấm xoá</span>
             </div>
           </div>
           <table class="services-table">
@@ -22,7 +22,43 @@
             </tbody>
           </table>
           <div class="panel-footer">
-            <p class="usage-note" id="errors-note">Hệ thống hoạt động ổn định, không ghi nhận sự cố trong 14 ngày qua.</p>
+            <p class="usage-note" id="errors-note">Hệ thống hoạt động ổn định, chưa ghi nhận sự cố nào.</p>
+            <div class="panel-actions">
+              <button class="btn-ghost is-danger" id="errors-clear" type="button" disabled>Xóa toàn bộ nhật ký</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- P3.17: nhật ký thao tác quản trị (bảng admin_audit) -->
+        <section class="panel-card" id="audit-card" aria-labelledby="audit-title">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <h2 class="panel-title" id="audit-title">Nhật ký thao tác quản trị</h2>
+              <span class="panel-desc">50 thao tác gần nhất; chỉ bị xoá khi quản trị viên bấm xoá</span>
+            </div>
+            <span class="usage-tag" id="audit-state">Đang đọc…</span>
+          </div>
+          <div class="content-table-wrap">
+            <table class="services-table content-table">
+              <thead>
+                <tr>
+                  <th>Thời gian</th>
+                  <th>Người thao tác</th>
+                  <th>Hành động</th>
+                  <th>Đối tượng</th>
+                </tr>
+              </thead>
+              <tbody id="audit-rows">
+                <tr><td colspan="4">Đang đọc…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel-footer">
+            <p class="usage-note" id="audit-note">Nhật ký do hệ thống ghi lại, không tự xoá.</p>
+            <div class="panel-actions">
+              <button class="btn-ghost" id="audit-refresh" type="button">Làm mới</button>
+              <button class="btn-ghost is-danger" id="audit-clear" type="button" disabled>Xóa toàn bộ</button>
+            </div>
           </div>
         </section>
 

@@ -63,21 +63,33 @@ const json = (body: unknown, status = 200) =>
     headers: { "Content-Type": "application/json" },
   });
 
-function fakeApi(options: { failList?: boolean; failResolve?: boolean; nextBefore?: number | null } = {}) {
+function fakeApi(options: { failList?: boolean; failResolve?: boolean; nextBefore?: number | null; resolved?: number } = {}) {
   const calls: Call[] = [];
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: unknown, init?: RequestInit) => {
       const url = String(input);
       calls.push({ url, init });
+      const method = init?.method || "GET";
       if (url.startsWith("/api/admin/feedback?")) {
         if (options.failList) return json({ error: "d1_error" }, 500);
         return json({
           ok: true,
           feedback: LIST,
-          counts: { open: 2, resolved: 0, dismissed: 0, total: 2 },
+          counts: {
+            open: 2,
+            resolved: options.resolved || 0,
+            dismissed: 0,
+            total: 2 + (options.resolved || 0),
+          },
           nextBefore: options.nextBefore ?? null,
         });
+      }
+      if (url === "/api/admin/feedback/purge" && method === "POST") {
+        return json({ ok: true, deleted: 1 });
+      }
+      if (url === "/api/admin/feedback/feedback-0001" && method === "DELETE") {
+        return json({ ok: true, deleted: 1 });
       }
       if (url === "/api/admin/feedback/feedback-0001") {
         return json({ ok: true, feedback: { ...LIST[0], message: DETAIL_XSS } });
@@ -109,8 +121,9 @@ async function flush() {
   }
 }
 
-async function boot() {
+async function boot(confirmResult = true) {
   document.body.innerHTML = bodyHtml;
+  (window as any).AdminDialog = { confirm: vi.fn(async () => confirmResult) };
   new Function(script)();
   await flush();
 }
@@ -317,5 +330,48 @@ describe("panel Phản hồi", () => {
 
     expect(el("feedback-detail").hidden).toBe(false);
     expect(el("feedback-detail-note").textContent).toContain("Không tải được dữ liệu");
+  });
+
+  it("nút Xóa gửi DELETE sau khi xác nhận", async () => {
+    const api = fakeApi();
+    await boot();
+    const deleteButton = rows()[0].querySelectorAll("button")[1] as HTMLButtonElement;
+    expect(deleteButton.textContent).toBe("Xóa");
+
+    deleteButton.click();
+    await flush();
+
+    const del = api.calls.find((call) => call.init?.method === "DELETE");
+    expect(del?.url).toBe("/api/admin/feedback/feedback-0001");
+    expect(el("feedback-note").textContent).toContain("Đã xóa góp ý");
+  });
+
+  it("hủy hộp xác nhận thì không xóa", async () => {
+    const api = fakeApi();
+    await boot(false);
+    (rows()[0].querySelectorAll("button")[1] as HTMLButtonElement).click();
+    await flush();
+    expect(api.calls.some((call) => call.init?.method === "DELETE")).toBe(false);
+  });
+
+  it("nút xóa loạt tắt khi chưa có mục đã xử lý, bật khi có", async () => {
+    await boot();
+    expect(el<HTMLButtonElement>("feedback-purge").disabled).toBe(true);
+  });
+
+  it("xóa loạt gửi POST /purge", async () => {
+    const api = fakeApi({ resolved: 1 });
+    await boot();
+    const purge = el<HTMLButtonElement>("feedback-purge");
+    expect(purge.disabled).toBe(false);
+
+    purge.click();
+    await flush();
+
+    const post = api.calls.find(
+      (call) => call.url === "/api/admin/feedback/purge" && call.init?.method === "POST",
+    );
+    expect(post).toBeTruthy();
+    expect(el("feedback-note").textContent).toContain("Đã xóa 1 góp ý");
   });
 });

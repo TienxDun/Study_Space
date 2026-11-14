@@ -188,6 +188,17 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* P3.17: đối tượng trong nhật ký thao tác có thể là UID dài. */
+.audit-target {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 .badge-ok {
   display: inline-flex;
   align-items: center;

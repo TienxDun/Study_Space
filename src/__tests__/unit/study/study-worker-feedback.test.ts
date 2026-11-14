@@ -297,7 +297,7 @@ describe("Worker Data-API — Góp ý/báo lỗi chung", () => {
     expect(allowed.status).toBe(200);
   });
 
-  it("dọn góp ý cũ hơn 180 ngày khi ghi mới", async () => {
+  it("không tự dọn góp ý cũ khi ghi mới", async () => {
     mockDb._tables.user_feedback.push({
       id: "too-old",
       uid: "user_alice",
@@ -313,8 +313,8 @@ describe("Worker Data-API — Góp ý/báo lỗi chung", () => {
       body: { kind: "idea", message: "Mong có thêm chế độ học nhóm." },
     });
     expect(res.status).toBe(200);
-    expect(mockDb._tables.user_feedback.some((row) => row.id === "too-old")).toBe(false);
-    expect(mockDb._tables.user_feedback).toHaveLength(1);
+    expect(mockDb._tables.user_feedback.some((row) => row.id === "too-old")).toBe(true);
+    expect(mockDb._tables.user_feedback).toHaveLength(2);
   });
 
   it("tài khoản đã xoá thì không gửi được", async () => {
@@ -432,7 +432,7 @@ describe("Worker Data-API — Góp ý/báo lỗi chung", () => {
     expect(textOnly.status).toBe(200);
   });
 
-  it("dọn ảnh của góp ý quá 180 ngày khi ghi mới", async () => {
+  it("không tự dọn ảnh của góp ý cũ khi ghi mới", async () => {
     const r2 = createMockR2();
     await r2.put("feedback/2026-05/cu.jpg", JPEG.buffer as ArrayBuffer);
     mockDb._tables.user_feedback.push({
@@ -452,7 +452,7 @@ describe("Worker Data-API — Góp ý/báo lỗi chung", () => {
       extra: { R2: r2 },
     });
     expect(res.status).toBe(200);
-    expect(r2.deleted.flat()).toContain("feedback/2026-05/cu.jpg");
-    expect(r2.objects.size).toBe(0);
+    expect(r2.deleted.flat()).not.toContain("feedback/2026-05/cu.jpg");
+    expect(r2.objects.has("feedback/2026-05/cu.jpg")).toBe(true);
   });
 });

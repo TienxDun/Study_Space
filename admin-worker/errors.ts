@@ -6,7 +6,6 @@
 import type { AdminEnv } from "./shared";
 
 const ERROR_ROWS_LIMIT = 20;
-const ERROR_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
 const ERROR_THROTTLE_MS = 60 * 60 * 1000;
 const ERROR_MESSAGE_MAX = 200;
 
@@ -20,12 +19,10 @@ const ERROR_SOURCE_LABELS: Record<string, string> = {
 };
 
 const errorLogThrottle = new Map<string, number>();
-let errorCleanupAt = 0;
 
 /** Test dùng để xóa bộ nhớ đệm giới hạn tần suất giữa các ca. */
 export function __resetErrorLogThrottle(): void {
   errorLogThrottle.clear();
-  errorCleanupAt = 0;
 }
 
 /**
@@ -66,13 +63,6 @@ export async function logAdminError(
       .bind(source, code, message.slice(0, ERROR_MESSAGE_MAX), now)
       .run();
 
-    // Dọn bản ghi quá 14 ngày, tối đa 1 lần/giờ, chỉ ở đường ghi.
-    if (now - errorCleanupAt >= ERROR_THROTTLE_MS) {
-      errorCleanupAt = now;
-      await env.DB.prepare("DELETE FROM admin_error_log WHERE created_at < ?")
-        .bind(now - ERROR_RETENTION_MS)
-        .run();
-    }
     return true;
   } catch {
     return false;

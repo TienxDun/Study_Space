@@ -138,8 +138,9 @@ export default function AccountDeletionPage() {
               email, chỉ dùng để theo dõi hạn mức hạ tầng.
             </li>
             <li>
-              Nhật ký lỗi kỹ thuật của hạ tầng (Cloudflare, Firebase, LiveKit): tối đa
-              14 ngày, không chứa nội dung ghi chú hay trò chuyện.
+              Nhật ký lỗi kỹ thuật của hạ tầng (Cloudflare, Firebase, LiveKit): không
+              chứa nội dung ghi chú hay trò chuyện và chỉ bị xoá khi hết hạn lưu của nhà
+              cung cấp hạ tầng.
             </li>
             <li>
               Bản ghi tối thiểu mà pháp luật yêu cầu phải lưu (nếu có), chỉ dùng cho mục

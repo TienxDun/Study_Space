@@ -14,6 +14,12 @@
   var globalStatusText = document.getElementById("global-status-text");
   var autoRefreshCheck = document.getElementById("auto-refresh-check");
   var errorRowsEl = document.getElementById("error-rows");
+  var errorsClearBtn = document.getElementById("errors-clear");
+  var auditRowsEl = document.getElementById("audit-rows");
+  var auditStateEl = document.getElementById("audit-state");
+  var auditNoteEl = document.getElementById("audit-note");
+  var auditRefreshBtn = document.getElementById("audit-refresh");
+  var auditClearBtn = document.getElementById("audit-clear");
   var flagsCard = document.getElementById("flags-card");
   var flagsStateEl = document.getElementById("flags-state");
   var flagChat = document.getElementById("flag-chat");
@@ -344,7 +350,7 @@
       setText("errors-note", "Không đọc được nhật ký lỗi: " + errorLabel(block && block.error) + ".");
     } else if (items.length === 0) {
       errorRowsEl.innerHTML = '<tr><td colspan="4">Chưa có lỗi nào.</td></tr>';
-      setText("errors-note", "Không có lỗi nào trong 14 ngày gần đây.");
+      setText("errors-note", "Chưa ghi nhận sự cố nào.");
     } else {
       errorRowsEl.innerHTML = "";
       items.forEach(function (item) {
@@ -356,11 +362,189 @@
           '<td>' + escapeHtml(String(item.message || "").slice(0, 200)) + '</td>';
         errorRowsEl.appendChild(tr);
       });
-      setText("errors-note", "Hiện " + items.length + " lỗi mới nhất. Giữ 14 ngày.");
+      setText("errors-note", "Hiện " + items.length + " lỗi mới nhất. Nhật ký chỉ bị xoá khi quản trị viên bấm xoá.");
     }
+
+    if (errorsClearBtn) errorsClearBtn.disabled = !ok || items.length === 0;
 
     var card = document.getElementById("errors-card");
     if (card) card.classList.toggle("is-degraded", !ok);
+  }
+
+  // P3.17: nhật ký thao tác quản trị (bảng admin_audit) + xoá thủ công.
+  var AUDIT_ACTION_LABELS = {
+    "audit.clear": "Xóa nhật ký thao tác",
+    "errors.clear": "Xóa nhật ký lỗi",
+    "flags.update": "Đổi cờ hệ thống",
+    "chat.config.update": "Đổi cấu hình trợ lý chat",
+    "content.init": "Khởi tạo kho nội dung",
+    "content.item.create": "Tạo mục nội dung",
+    "content.item.update": "Sửa mục nội dung",
+    "content.item.delete": "Xóa mục nội dung",
+    "content.rollback": "Quay lại bản cũ",
+    "content.media.upload": "Tải tệp lên kho",
+    "content.media.delete": "Xóa tệp khỏi kho",
+    "content.media.prune": "Dọn tệp mồ côi",
+    "feedback.resolve": "Xử lý góp ý",
+    "feedback.delete": "Xóa góp ý",
+    "feedback.purge": "Xóa loạt góp ý đã xử lý",
+    "report.resolve": "Xử lý báo cáo",
+    "report.delete": "Xóa báo cáo",
+    "report.purge": "Xóa loạt báo cáo đã xử lý",
+    "user.restrictions": "Đổi hạn chế tài khoản",
+    "user.chat_reset": "Đặt lại lượt chat"
+  };
+
+  function auditLabel(action) {
+    return AUDIT_ACTION_LABELS[action] || action || "—";
+  }
+
+  var auditNoteIsError = false;
+
+  function setAuditNote(text, isError) {
+    if (!auditNoteEl) return;
+    auditNoteIsError = !!isError;
+    auditNoteEl.textContent = text || "";
+    auditNoteEl.style.color = isError ? "var(--rose-400)" : "";
+  }
+
+  function renderAudit(data) {
+    if (!auditRowsEl) return;
+    var items = data && Array.isArray(data.items) ? data.items : [];
+    auditRowsEl.textContent = "";
+    if (!data || data.ok !== true) {
+      var failedRow = document.createElement("tr");
+      failedRow.innerHTML = '<td colspan="4">Không đọc được nhật ký thao tác.</td>';
+      auditRowsEl.appendChild(failedRow);
+      setText("audit-state", "Lỗi đọc");
+      setAuditNote("Không đọc được nhật ký thao tác.", true);
+      if (auditClearBtn) auditClearBtn.disabled = true;
+      return;
+    }
+    if (!items.length) {
+      var emptyRow = document.createElement("tr");
+      emptyRow.innerHTML = '<td colspan="4">Chưa có thao tác nào.</td>';
+      auditRowsEl.appendChild(emptyRow);
+    } else {
+      items.forEach(function (item) {
+        var tr = document.createElement("tr");
+        tr.innerHTML =
+          '<td class="latency-cell">' + escapeHtml(formatTime(item.createdAt)) + '</td>' +
+          '<td>' + escapeHtml(item.actorEmail || "—") + '</td>' +
+          '<td>' + escapeHtml(auditLabel(item.action)) + '</td>' +
+          '<td class="audit-target">' + escapeHtml(item.target || "—") + '</td>';
+        var targetCell = tr.lastChild;
+        if (item.detail) targetCell.title = String(item.detail).slice(0, 400);
+        auditRowsEl.appendChild(tr);
+      });
+    }
+    setText("audit-state", items.length + " dòng");
+    // Giữ thông báo vừa xoá xong; chỉ trả lại câu mặc định khi đang là cảnh báo lỗi.
+    if (auditNoteIsError) setAuditNote("Nhật ký do hệ thống ghi lại, không tự xoá.");
+    if (auditClearBtn) auditClearBtn.disabled = items.length === 0;
+  }
+
+  function loadAudit() {
+    if (!auditRowsEl) return;
+    setText("audit-state", "Đang đọc…");
+    fetch("/api/admin/audit?limit=50", {
+      headers: { Accept: "application/json" },
+      credentials: "same-origin",
+      cache: "no-store"
+    })
+      .then(function (res) {
+        return res
+          .json()
+          .catch(function () {
+            return {};
+          })
+          .then(function (data) {
+            if (!res.ok || data.ok !== true) {
+              renderAudit({ ok: false });
+              return;
+            }
+            renderAudit(data);
+          });
+      })
+      .catch(function () {
+        renderAudit({ ok: false });
+      });
+  }
+
+  function clearErrors() {
+    if (!errorsClearBtn) return;
+    AdminDialog.confirm({
+      title: "Xóa toàn bộ nhật ký lỗi?",
+      description: "Toàn bộ dòng trong nhật ký sự cố sẽ bị xóa vĩnh viễn. Không khôi phục được.",
+      detail: "admin_error_log",
+      confirmLabel: "Xóa toàn bộ",
+      tone: "danger"
+    }).then(function (ok) {
+      if (!ok) return;
+      errorsClearBtn.disabled = true;
+      setText("errors-note", "Đang xóa…");
+      fetch("/api/admin/errors", {
+        method: "DELETE",
+        headers: { Accept: "application/json" },
+        credentials: "same-origin",
+        cache: "no-store"
+      })
+        .then(function (res) {
+          return res.json().catch(function () {
+            return {};
+          }).then(function (data) {
+            if (!res.ok || data.ok === false) throw new Error(data.error || "HTTP " + res.status);
+            return data;
+          });
+        })
+        .then(function (data) {
+          setText("errors-note", "Đã xóa " + (Number(data.deleted) || 0) + " dòng nhật ký lỗi.");
+          runCheck();
+          loadAudit();
+        })
+        .catch(function () {
+          setText("errors-note", "Không xóa được nhật ký lỗi, thử lại sau.");
+          errorsClearBtn.disabled = false;
+        });
+    });
+  }
+
+  function clearAudit() {
+    if (!auditClearBtn) return;
+    AdminDialog.confirm({
+      title: "Xóa toàn bộ nhật ký thao tác?",
+      description:
+        "Toàn bộ nhật ký thao tác quản trị sẽ bị xóa vĩnh viễn. Một dòng ghi chú việc xóa này sẽ được giữ lại.",
+      detail: "admin_audit",
+      confirmLabel: "Xóa toàn bộ",
+      tone: "danger"
+    }).then(function (ok) {
+      if (!ok) return;
+      auditClearBtn.disabled = true;
+      setAuditNote("Đang xóa…");
+      fetch("/api/admin/audit", {
+        method: "DELETE",
+        headers: { Accept: "application/json" },
+        credentials: "same-origin",
+        cache: "no-store"
+      })
+        .then(function (res) {
+          return res.json().catch(function () {
+            return {};
+          }).then(function (data) {
+            if (!res.ok || data.ok === false) throw new Error(data.error || "HTTP " + res.status);
+            return data;
+          });
+        })
+        .then(function (data) {
+          setAuditNote("Đã xóa " + (Number(data.deleted) || 0) + " dòng nhật ký thao tác.");
+          loadAudit();
+        })
+        .catch(function () {
+          setAuditNote("Không xóa được nhật ký thao tác, thử lại sau.", true);
+          auditClearBtn.disabled = false;
+        });
+    });
   }
 
   var FLAG_ERROR_MESSAGES = {
@@ -586,6 +770,8 @@
     flagsStateEl.textContent = "Không đọc được";
     flagsNote.textContent = errText || "Có lỗi kết nối";
     syncFlagsButtons();
+    // Mất kết nối thì không đọc được nhật ký lỗi nên cũng không cho xoá.
+    renderErrors({ ok: false });
   }
 
   function runCheck() {
@@ -623,6 +809,10 @@
 
   refreshBtn.addEventListener("click", runCheck);
 
+  if (errorsClearBtn) errorsClearBtn.addEventListener("click", clearErrors);
+  if (auditRefreshBtn) auditRefreshBtn.addEventListener("click", loadAudit);
+  if (auditClearBtn) auditClearBtn.addEventListener("click", clearAudit);
+
   // Auto Refresh
   function setupAutoRefresh() {
     if (autoTimer) clearInterval(autoTimer);
@@ -647,5 +837,6 @@
   // Run initial check
   syncFlagsButtons();
   runCheck();
+  loadAudit();
   setupAutoRefresh();
 })();

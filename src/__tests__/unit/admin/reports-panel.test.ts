@@ -65,7 +65,7 @@ const json = (body: unknown, status = 200) =>
     headers: { "Content-Type": "application/json" },
   });
 
-function fakeApi(options: { failResolve?: boolean } = {}) {
+function fakeApi(options: { failResolve?: boolean; resolved?: number } = {}) {
   const calls: Call[] = [];
   vi.stubGlobal(
     "fetch",
@@ -78,9 +78,20 @@ function fakeApi(options: { failResolve?: boolean } = {}) {
         return json({
           ok: true,
           reports: LIST,
-          counts: { open: 2, resolved: 0, dismissed: 0, total: 2 },
+          counts: {
+            open: 2,
+            resolved: options.resolved || 0,
+            dismissed: 0,
+            total: 2 + (options.resolved || 0),
+          },
           nextBefore: null,
         });
+      }
+      if (url === "/api/admin/reports/purge" && method === "POST") {
+        return json({ ok: true, deleted: 1 });
+      }
+      if (url === "/api/admin/reports/report-0001" && method === "DELETE") {
+        return json({ ok: true, deleted: 1 });
       }
       if (url === "/api/admin/reports/report-0001") {
         return json({
@@ -140,8 +151,9 @@ async function flush() {
   }
 }
 
-async function boot() {
+async function boot(confirmResult = true) {
   document.body.innerHTML = bodyHtml;
+  (window as any).AdminDialog = { confirm: vi.fn(async () => confirmResult) };
   new Function(script)();
   await flush();
 }
@@ -288,5 +300,48 @@ describe("panel Báo cáo", () => {
       roomsDisabled: false,
       note: "Tạm khóa AI.",
     });
+  });
+
+  it("nút Xóa gửi DELETE sau khi xác nhận", async () => {
+    const api = fakeApi();
+    await boot();
+    const deleteButton = rows()[0].querySelectorAll("button")[1] as HTMLButtonElement;
+    expect(deleteButton.textContent).toBe("Xóa");
+
+    deleteButton.click();
+    await flush();
+
+    const del = api.calls.find((call) => call.init?.method === "DELETE");
+    expect(del?.url).toBe("/api/admin/reports/report-0001");
+    expect(el("reports-note").textContent).toContain("Đã xóa báo cáo");
+  });
+
+  it("hủy hộp xác nhận thì không xóa", async () => {
+    const api = fakeApi();
+    await boot(false);
+    (rows()[0].querySelectorAll("button")[1] as HTMLButtonElement).click();
+    await flush();
+    expect(api.calls.some((call) => call.init?.method === "DELETE")).toBe(false);
+  });
+
+  it("nút xóa loạt tắt khi chưa có mục đã xử lý", async () => {
+    await boot();
+    expect(el<HTMLButtonElement>("reports-purge").disabled).toBe(true);
+  });
+
+  it("xóa loạt gửi POST /purge", async () => {
+    const api = fakeApi({ resolved: 2 });
+    await boot();
+    const purge = el<HTMLButtonElement>("reports-purge");
+    expect(purge.disabled).toBe(false);
+
+    purge.click();
+    await flush();
+
+    const post = api.calls.find(
+      (call) => call.url === "/api/admin/reports/purge" && call.init?.method === "POST",
+    );
+    expect(post).toBeTruthy();
+    expect(el("reports-note").textContent).toContain("Đã xóa 1 báo cáo");
   });
 });

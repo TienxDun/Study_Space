@@ -138,6 +138,14 @@ a {
   color: var(--text-faint);
 }
 
+/* Nút thao tác đẩy về cuối footer (P3.17). */
+.panel-footer .panel-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 #errors-card.is-degraded {
   border-color: rgba(251, 113, 133, 0.4);
 }

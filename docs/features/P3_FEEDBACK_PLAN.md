@@ -1,6 +1,6 @@
 # P3.16 — Góp ý trong ứng dụng (plan triển khai)
 
-> Trạng thái: **đã code xong trong repo 2026-11-12 (gồm cả ảnh đính kèm P3.16b, mục 15), đã deploy schema D1 + data-api; chưa deploy web/admin** — cổng chất lượng đạt, kiểm tay trên dev đạt; bước 1–2 mục 10 xong 2026-11-12 (chủ repo xác nhận), còn bước 3–7. Ảnh đính kèm có thêm 5 bước deploy riêng ở mục 15. Bản 3.
+> Trạng thái: **code xong 2026-11-12 (gồm cả ảnh đính kèm P3.16b, mục 15) và đã deploy đủ 5 bước ảnh 2026-11-13** — D1 `image_key`, binding R2, data-api, admin worker, Pages web đều live; kiểm production 2026-11-14 đạt phần không cần đăng nhập (832 test xanh). **Đóng 2026-11-15:** chủ repo gửi thật 1 góp ý có ảnh trên production, admin hiện nhãn "Có ảnh" và ảnh R2 render trong chi tiết (bước 7 mục 10). Câu hướng dẫn vị trí nút trong `/privacy` mục 7 đã sửa trong cây làm việc (chưa commit/push). Bản 5 — 2026-11-15.
 > Thuộc P3 mục 16 của [ADMIN_CONSOLE_PLAN.md](./ADMIN_CONSOLE_PLAN.md).
 > Mục tiêu: người dùng gửi báo lỗi/góp ý ngay trong app; dữ liệu vào D1; quản trị viên đọc và đánh dấu xử lý trong shell admin — không cần email, không cần máy local.
 
@@ -33,7 +33,7 @@
 | Trạng thái panel | `src/components/study/hooks/usePanelState.ts` → `useStudySpaceState.ts` | Thêm `isFeedbackOpen` vào đây, render ở cả hai layout |
 | Đăng nhập | `useAuth()` trả `getToken`, `signIn` | Dùng cho nút gửi và lời mời đăng nhập |
 | Xóa tài khoản | `DELETE /account` trong `workers/data-api/worker.js` đã dọn `user_data`, `chat_usage`, `content_reports`, `user_blocks`, `meet_*` | Bổ sung `user_feedback` vào cùng danh sách |
-| Chỗ đặt nút | Desktop: icon góp ý trên `StudyTopBar.tsx` (thanh công cụ màn hình chính); mobile: `MobileMoreSheet.tsx` (mục "Chung") | Thêm một icon/nút, không tạo màn hình mới |
+| Chỗ đặt nút | Desktop: mục "Gửi góp ý / báo lỗi" trong menu `⋯` của `StudyTopBar.tsx` (đổi 2026-11-13 khi topbar thu gọn còn 3 icon + `⋯`); mobile: `MobileMoreSheet.tsx` (mục "Chung") | Thêm một mục menu/nút, không tạo màn hình mới |
 | Deploy data-api | Dán tay trên Cloudflare Dashboard (`docs/deployment/DEPLOY.md` Bước 1c) | Phải là bước riêng trong thứ tự deploy |
 
 Chưa có bảng, API, UI hay bản ghi nào cho góp ý. Không có gì phải di trú.
@@ -178,11 +178,18 @@ Mỗi bước không khóa bước khác, nhưng thứ tự dưới đây tránh
 
 1. [x] Chạy `workers/feedback-schema.sql` trên D1 `zenspace` — xong 2026-11-12 (chủ repo xác nhận); muốn kiểm lại: `SELECT name FROM sqlite_master WHERE name='user_feedback'`.
 2. [x] Dán `workers/data-api/worker.js` mới lên dashboard — xong 2026-11-12 (chủ repo xác nhận).
-3. [ ] Kiểm API bằng curl: không token → 401; `kind` lạ → 400; nội dung ngắn → 400; hợp lệ → 200 và có dòng trong D1; gửi lần thứ 6 trong ngày → 429.
-4. [ ] Push code admin (worker + shell) — Workers Builds tự deploy; nếu check vắng thì `npm run build:admin` + `npx wrangler deploy --config wrangler.admin.jsonc`.
-5. [ ] Push web (hộp thoại + nút + `/privacy` đã sửa sẵn trong repo). Sau bước này người dùng mới thấy nút.
+3. [x] Kiểm API bằng curl — 2026-11-14: `POST /feedback` không token trả 401 `{"error":"Cần đăng nhập để sử dụng tính năng này."}` và `/health` trả `{"ok":true,"db":true,"r2":true,"authAdmin":true}`. Các nhánh `kind` lạ → 400, nội dung ngắn → 400, hợp lệ → 200, lần thứ 6 → 429 cần token nên gộp vào bước 7.
+4. [x] Push code admin (worker + shell) — Workers Builds tự deploy; bản `c91fa636` ngày 2026-11-13, các push sau (`d9a9bb5`, `d350bcc`, `2cdaa19`) tự deploy lại.
+5. [x] Push web (hộp thoại + nút + `/privacy` đã sửa sẵn trong repo) — Pages đã build, kiểm 2026-11-14: `/privacy/` hiện "Cập nhật lần cuối: 12/11/2026", topbar compact + menu `⋯` lên production.
 6. [x] Cập nhật `/privacy` (mục 7) và ghi chú xóa tài khoản — đã sửa trong repo, live sau bước 5.
-7. [ ] Kiểm tay: đăng nhập trên production, gửi 1 góp ý từ desktop và 1 từ mobile; admin thấy trong ≤ 10 giây sau khi bấm Làm mới; đánh dấu đã xử lý kèm ghi chú; kiểm 1 dòng `admin_audit`.
+7. [x] Kiểm tay có đăng nhập — **2026-11-15**: chủ repo (tài khoản `tomboytmn`) gửi thật 1 góp ý loại "Khác" kèm 1 ảnh trên production; tab "Phản hồi" của admin hiện hàng mới, nhãn "Có ảnh", khối chi tiết render ảnh từ R2 đúng. Chưa làm riêng: lượt gửi thứ hai từ khung mobile, thời gian xuất hiện ≤ 10 giây sau "Làm mới", và dòng `admin_audit` khi bấm "Đã xử lý" — kiểm bổ sung khi có dịp, không chặn đóng P3.16.
+
+**Kiểm chứng production 2026-11-14** (không cần đăng nhập, chạy từ máy dev):
+- `GET /privacy/` (zenstudy.space) → 200, "Cập nhật lần cuối: 12/11/2026"; có câu "tối đa một ảnh chụp màn hình", "3 ảnh mỗi ngày", "ảnh được lưu trong kho tệp của Cloudflare".
+- `zenstudy.space` → topbar đúng bản thu gọn (mute / cài đặt / Zen / `⋯` + Đăng nhập); menu `⋯` có mục "Mở hộp gửi góp ý hoặc báo lỗi"; bấm vào mở hộp "Gửi góp ý" ở trạng thái chưa đăng nhập = đúng một khối cổng đăng nhập ("Đăng nhập để góp ý nhé" + nút Google trắng), không còn 3 pill/textarea/footer.
+- Panel "Thống kê thời gian tập trung" (mở từ cùng menu) render đúng khay kính, trạng thái rỗng "Chưa ghi nhận phiên nào" + nút mở Pomodoro.
+- Cổng chất lượng tại HEAD `2cdaa19`: `npm test` 99 file / 832 test đạt (không chạy lại `tsc`/lint vì cây làm việc không đổi so với commit đã qua cổng).
+- **Copy `/privacy` mục 7 đã sửa 2026-11-14** (`src/app/privacy/page.tsx:222`): thay "bấm biểu tượng góp ý trên thanh công cụ" bằng mô tả đúng — máy tính mở menu `⋯` ở góc trên bên phải rồi chọn "Gửi góp ý / báo lỗi"; điện thoại vào mục "Chung" của bảng Thêm. Không đổi cách xử lý dữ liệu nên giữ ngày "Cập nhật lần cuối: 12/11/2026"; câu mới chỉ lên production sau lần push/Pages build kế tiếp. `tsc` và `lint` sạch sau khi sửa.
 
 **Đã kiểm trên dev** (2026-11-12, `localhost:3001`, chưa đăng nhập): Cài đặt → mục HỖ TRỢ hiện dòng "Gửi góp ý / báo lỗi"; bấm Gửi mở hộp thoại đúng kính tối; 3 pill loại + đếm ký tự 26/2000 cập nhật; chưa đăng nhập thì hiện lời mời đăng nhập và nút gửi khóa; Escape đóng hộp thoại; console không có lỗi. Chưa kiểm luồng gửi thật trên dev vì cần đăng nhập + data-api mới; chưa kiểm bố cục mobile bằng mắt (in-app browser không xuất được ảnh chụp). Từ 2026-11-12 data-api mới đã deploy nên bước gửi thật trên dev (đăng nhập rồi gửi 1 góp ý) giờ làm được, gộp vào bước 3 và bước 7 ở trên.
 
@@ -208,15 +215,17 @@ Khoảng 1.100–1.300 dòng gồm test: SQL 40; data-api 90; admin worker 240 +
 - **Lẫn hai hàng chờ**: tiêu đề tab và mô tả ghi rõ "góp ý/báo lỗi chung", khác "báo cáo vi phạm".
 - **Dữ liệu cá nhân**: chỉ lưu tên, nội dung và liên hệ tự nguyện; không IP, không user-agent; hiển thị tên thay UID; nói rõ trong hộp thoại và `/privacy`.
 - **Spam**: 5 lượt/ngày/UID, cắt độ dài, không endpoint đọc công khai.
-- **Nút khó thấy**: desktop đặt icon ngay trên thanh công cụ màn hình chính (phải mở Cài đặt mới thấy là quá kín), mobile giữ ở mục "Chung" của bảng Thêm.
+- **Nút khó thấy**: desktop để mục "Gửi góp ý / báo lỗi" trong menu `⋯` của thanh trên màn hình chính (vào Cài đặt mới thấy là quá kín, đặt icon riêng thì thanh trên quá dày — chốt menu `⋯` 2026-11-13), mobile giữ ở mục "Chung" của bảng Thêm.
 
 ## 14. Lịch sử thay đổi
 
+- **Bản 5** (2026-11-15): đóng P3.16 — chủ repo gửi thật 1 góp ý có ảnh trên production (01:05, tài khoản `tomboytmn`, loại "Khác"); admin tab "Phản hồi" hiện nhãn "Có ảnh" và ảnh R2 render trong khối chi tiết. Phần còn lại của bước 7 (lượt mobile riêng, độ trễ xuất hiện, `admin_audit`) chuyển sang kiểm bổ sung khi có dịp.
+- **Bản 4** (2026-11-14): kiểm chứng production phần không cần đăng nhập (privacy 12/11/2026, topbar `⋯`, hộp góp ý ở cổng đăng nhập, panel Thống kê, `/health` + 401 của data-api, 832 test); đóng bước 3–5 của mục 10 và toàn bộ thứ tự deploy ở mục 15; cập nhật chỗ đặt nút desktop sang menu `⋯`; sửa câu hướng dẫn trong `/privacy` mục 7 sang menu `⋯` (chưa push).
 - **Bản 3** (2026-11-12): P3.16b ảnh đính kèm (mục 15); chuyển điểm mở desktop từ nhóm "Hỗ trợ" trong Cài đặt ra icon trên `StudyTopBar`.
 - **Bản 2** (2026-11-12): triển khai xong trong repo — schema, data-api, admin worker + tab "Phản hồi", hộp thoại trong app, privacy, 5 bộ test mới; cổng chất lượng đạt; kiểm tay trên dev đạt phần chưa đăng nhập. Chưa deploy.
 - **Bản 1** (2026-11-12): lên plan P3.16 — nút góp ý trong app, `user_feedback` trên D1, `POST /feedback` ở data-api, tab "Phản hồi" trong admin shell, audit mỗi lần xử lý, cập nhật privacy và xóa tài khoản. Kèm thứ tự deploy 7 bước và 3 điểm cần chốt.
 
-## 15. P3.16b — Ảnh đính kèm (2026-11-12, code xong trong repo, chưa deploy)
+## 15. P3.16b — Ảnh đính kèm (2026-11-12, deploy xong 2026-11-13)
 
 **Đã chốt phạm vi**
 
@@ -256,11 +265,13 @@ Khoảng 1.100–1.300 dòng gồm test: SQL 40; data-api 90; admin worker 240 +
 
 **Thứ tự deploy (thêm vào mục 10, làm trước bước 4–5)**
 
-1. [ ] `npx wrangler d1 execute zenspace --remote --file=workers/feedback-image.sql` (chạy lại lần hai chỉ báo "duplicate column name", bỏ qua được).
-2. [ ] Thêm binding **R2** tên `R2` → bucket `study-space` cho Worker data-api trên Cloudflare Dashboard (Worker này không có wrangler config trong repo). Thiếu bước này ảnh trả 503, chữ vẫn chạy.
-3. [ ] Dán `workers/data-api/worker.js` mới.
-4. [ ] Deploy admin worker + shell (`npm run build:admin` nếu Workers Builds không chạy) để có endpoint ảnh và nhãn "Có ảnh".
-5. [ ] Push web (nút đính kèm + nén ảnh + privacy).
+1. [x] `npx wrangler d1 execute zenspace --remote --file=workers/feedback-image.sql` — xong 2026-11-13, kiểm lại bằng `pragma_table_info`.
+2. [x] Thêm binding **R2** tên `R2` → bucket `study-space` cho Worker data-api (Dashboard) — xong 2026-11-13; `/health` trả `r2:true`.
+3. [x] Dán `workers/data-api/worker.js` mới — xong 2026-11-13; kiểm 2026-11-14: `/health` `db/r2/authAdmin` đều true, POST không token → 401.
+4. [x] Deploy admin worker + shell (`npm run build:admin` nếu Workers Builds không chạy) để có endpoint ảnh và nhãn "Có ảnh" — xong 2026-11-13 và mỗi push sau đó tự deploy.
+5. [x] Push web (nút đính kèm + nén ảnh + privacy) — Pages đã build; 2026-11-14 `/privacy/` hiện "Cập nhật lần cuối: 12/11/2026" và hộp góp ý trên production đúng bản mới.
+
+Đợt ảnh đóng 2026-11-15: gửi thật 1 ảnh từ tài khoản chủ repo trên production, hàng "Phản hồi" hiện nhãn "Có ảnh" và ảnh render trong chi tiết.
 
 **Test** (đạt 2026-11-12)
 

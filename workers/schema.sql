@@ -3,7 +3,7 @@
 -- 1. user_data       : Kho dữ liệu học tập cá nhân (Snapshot Save Game cho data-api)
 -- 2. chat_usage      : Sổ đếm câu chat theo ngày của từng học sinh (30 câu/ngày cho chat-proxy)
 -- 3. admin_audit     : Nhật ký hành động admin (ai, làm gì, lúc nào) cho Worker zenstudy-admin
--- 4. admin_error_log : Lỗi cuối của chat-proxy và lỗi D1/cấu hình của Worker admin (giữ 14 ngày)
+-- 4. admin_error_log : Lỗi cuối của chat-proxy và lỗi D1/cấu hình của Worker admin (xoá thủ công)
 -- 5. deleted_accounts: UID đã xoá tài khoản — chặn thiết bị còn token cũ đẩy dữ liệu trở lại
 -- Lượt gọi/neurons Workers AI không lưu ở đây; xem số thật trên Cloudflare Dashboard.
 -- Đây là script cài mới: đầu file có DROP TABLE. DB đang chạy thì dán riêng phần bảng cần thêm.
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS admin_audit (
 CREATE INDEX IF NOT EXISTS idx_admin_audit_created ON admin_audit (created_at);
 
 -- 5. NHẬT KÝ LỖI CUỐI (chat-proxy + Worker zenstudy-admin)
--- created_at là mili giây. Xóa bản ghi quá 14 ngày ở lần ghi kế tiếp.
+-- created_at là mili giây. Không tự xoá; quản trị viên xoá thủ công (P3.17).
 CREATE TABLE IF NOT EXISTS admin_error_log (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   source     TEXT NOT NULL,
@@ -79,7 +79,7 @@ CREATE INDEX IF NOT EXISTS idx_content_manifest_created ON content_manifest (cre
 
 -- 7. BÁO CÁO NỘI DUNG & CHẶN NGƯỜI DÙNG (P0.5 — chính sách AI/UGC của Google Play)
 -- Báo cáo AI/phòng học do người dùng gửi qua data-api; admin xử lý qua admin-worker.
--- Giữ 180 ngày, dọn ở lần đọc/ghi kế tiếp.
+-- Không tự xoá; quản trị viên xoá thủ công trên tab Báo cáo (P3.17).
 CREATE TABLE IF NOT EXISTS content_reports (
   id              TEXT PRIMARY KEY,
   source          TEXT NOT NULL,              -- 'ai' | 'room'

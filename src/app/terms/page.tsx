@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const UPDATED_AT = "03/11/2026";
+const UPDATED_AT = "15/11/2026";
 const CONTACT_EMAIL = "leutiendung.htt@gmail.com";
 
 function Section({
@@ -224,7 +224,7 @@ export default function TermsPage() {
             kèm theo mô tả sự việc, thời gian xảy ra và tài khoản liên quan. Đội ngũ quản trị sẽ xem xét và phản hồi trong vòng tối đa 7 ngày làm việc.
           </p>
           <p>
-            Dữ liệu báo cáo được lưu trữ tối đa khoảng 180 ngày để phục vụ việc đối chiếu xử lý, sau đó hệ thống sẽ tự động xóa sạch; các thông tin lưu gồm nội dung bị phản ánh, lý do, ghi chú của bạn và tên hiển thị như được mô tả trong Chính sách quyền riêng tư.
+            Dữ liệu báo cáo được giữ lại để phục vụ việc đối chiếu xử lý và được quản trị viên xóa khi không còn cần thiết; các thông tin lưu gồm nội dung bị phản ánh, lý do, ghi chú của bạn và tên hiển thị như được mô tả trong Chính sách quyền riêng tư.
           </p>
           <p>
             Tùy theo mức độ vi phạm, chúng tôi có thể đưa ra lời nhắc nhở, xóa nội dung vi phạm, tạm khóa tính năng AI / phòng học, hoặc khóa tài khoản vĩnh viễn đối với hành vi nghiêm trọng. Chúng tôi nghiêm cấm việc cố ý gửi báo cáo sai sự thật hoặc vu khống người khác.

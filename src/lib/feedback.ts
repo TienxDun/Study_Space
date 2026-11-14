@@ -1,5 +1,5 @@
 // Gửi góp ý/báo lỗi chung lên data-api (P3.16), khác báo cáo vi phạm ở content-reports.ts.
-// Giới hạn 5 lượt/ngày/UID và hạn lưu 180 ngày đều kiểm ở Worker.
+// Giới hạn 5 lượt/ngày/UID kiểm ở Worker; không có cơ chế tự xoá, quản trị viên xoá tay.
 
 import { APP_VERSION_LABEL } from "@/lib/version";
 

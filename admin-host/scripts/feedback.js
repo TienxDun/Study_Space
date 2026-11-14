@@ -15,6 +15,8 @@
     loading: false,
     pendingReset: false,
     resolving: false,
+    deleting: false,
+    purging: false,
   };
 
   var KIND_LABEL = { bug: "Báo lỗi", idea: "Đề xuất cải thiện", other: "Khác" };
@@ -121,10 +123,20 @@
     return td;
   }
 
+  function closedCount() {
+    return (state.counts.resolved || 0) + (state.counts.dismissed || 0);
+  }
+
+  function syncPurgeButton() {
+    var btn = $("feedback-purge");
+    if (btn) btn.disabled = state.loading || state.purging || closedCount() === 0;
+  }
+
   function renderCounts() {
     setText("feedback-count-open", state.counts.open);
     setText("feedback-count-resolved", state.counts.resolved);
     setText("feedback-count-dismissed", state.counts.dismissed);
+    syncPurgeButton();
   }
 
   function renderRows() {
@@ -175,6 +187,16 @@
           openDetail(item.id);
         });
         actionTd.appendChild(button);
+
+        // P3.17: xoá thủ công, không có cơ chế tự dọn nào.
+        var deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "btn-ghost is-danger";
+        deleteButton.textContent = "Xóa";
+        deleteButton.addEventListener("click", function () {
+          deleteItem(item);
+        });
+        actionTd.appendChild(deleteButton);
         tr.appendChild(actionTd);
         tbody.appendChild(tr);
       });
@@ -286,6 +308,7 @@
     if (!reset && !state.nextBefore) return;
     state.loading = true;
     setState("Đang đọc…", false);
+    syncPurgeButton();
     showNote($("feedback-note"), "");
     var params = new URLSearchParams({
       status: state.status,
@@ -314,6 +337,7 @@
       })
       .then(function () {
         state.loading = false;
+        syncPurgeButton();
         if (state.pendingReset) {
           state.pendingReset = false;
           loadList(true);
@@ -355,6 +379,72 @@
     resetDetailImage();
   }
 
+  function deleteItem(item) {
+    if (state.deleting || state.purging) return;
+    var label = kindLabel(item) + " · " + formatTime(item.createdAt);
+    AdminDialog.confirm({
+      title: "Xóa góp ý?",
+      description:
+        "Góp ý (" + label + ") sẽ bị xóa vĩnh viễn, kèm ảnh đính kèm nếu có. Không khôi phục được.",
+      detail: item.id,
+      confirmLabel: "Xóa vĩnh viễn",
+      tone: "danger",
+    }).then(function (ok) {
+      if (!ok) return;
+      state.deleting = true;
+      syncPurgeButton();
+      showNote($("feedback-note"), "Đang xóa…");
+      apiFetch(API + "/" + encodeURIComponent(item.id), { method: "DELETE" })
+        .then(function () {
+          if (state.selected && state.selected.id === item.id) closeDetail();
+          // Gọi loadList trước rồi mới báo: loadList tự xoá ghi chú cũ khi bắt đầu.
+          loadList(true);
+          showNote($("feedback-note"), "Đã xóa góp ý.");
+        })
+        .catch(function (err) {
+          showNote($("feedback-note"), errorText(err), true);
+        })
+        .then(function () {
+          state.deleting = false;
+          syncPurgeButton();
+        });
+    });
+  }
+
+  function purgeClosed() {
+    if (state.purging || state.deleting) return;
+    var count = closedCount();
+    if (!count) return;
+    AdminDialog.confirm({
+      title: "Xóa mục đã xử lý?",
+      description:
+        "Xóa vĩnh viễn " +
+        count +
+        " góp ý đã xử lý hoặc đã bỏ qua, kèm ảnh đính kèm. Góp ý đang chờ xử lý không bị ảnh hưởng.",
+      detail: "resolved + dismissed",
+      confirmLabel: "Xóa " + count + " mục",
+      tone: "danger",
+    }).then(function (ok) {
+      if (!ok) return;
+      state.purging = true;
+      syncPurgeButton();
+      showNote($("feedback-note"), "Đang xóa…");
+      apiFetch(API + "/purge", { method: "POST" })
+        .then(function (data) {
+          closeDetail();
+          loadList(true);
+          showNote($("feedback-note"), "Đã xóa " + (Number(data.deleted) || count) + " góp ý.");
+        })
+        .catch(function (err) {
+          showNote($("feedback-note"), errorText(err), true);
+        })
+        .then(function () {
+          state.purging = false;
+          syncPurgeButton();
+        });
+    });
+  }
+
   function wire() {
     $("feedback-status").addEventListener("change", function (event) {
       state.status = event.target.value;
@@ -371,6 +461,7 @@
     $("feedback-refresh").addEventListener("click", function () {
       loadList(true);
     });
+    $("feedback-purge").addEventListener("click", purgeClosed);
     $("feedback-more").addEventListener("click", function () {
       loadList(false);
     });

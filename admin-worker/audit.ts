@@ -144,3 +144,27 @@ export function allowFeedbackWrite(email: string): boolean {
   feedbackWriteLog.set(email, hits);
   return true;
 }
+
+// P3.17: xoá nhật ký lỗi/audit là thao tác hiếm; 10 lần/phút là quá đủ.
+const AUDIT_WRITE_LIMIT = 10;
+const AUDIT_WRITE_WINDOW_MS = 60 * 1000;
+const auditWriteLog = new Map<string, number[]>();
+
+/** Test dùng để xóa bộ đếm giới hạn xoá nhật ký giữa các ca. */
+export function __resetAuditWriteLog(): void {
+  auditWriteLog.clear();
+}
+
+export function allowAuditWrite(email: string): boolean {
+  const now = Date.now();
+  const hits = (auditWriteLog.get(email) || []).filter(
+    (at) => now - at < AUDIT_WRITE_WINDOW_MS,
+  );
+  if (hits.length >= AUDIT_WRITE_LIMIT) {
+    auditWriteLog.set(email, hits);
+    return false;
+  }
+  hits.push(now);
+  auditWriteLog.set(email, hits);
+  return true;
+}

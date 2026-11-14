@@ -14,6 +14,8 @@
     selected: null,
     loading: false,
     resolving: false,
+    deleting: false,
+    purging: false,
     restrictUid: "",
   };
 
@@ -137,10 +139,20 @@
     return td;
   }
 
+  function closedCount() {
+    return (state.counts.resolved || 0) + (state.counts.dismissed || 0);
+  }
+
+  function syncPurgeButton() {
+    var btn = $("reports-purge");
+    if (btn) btn.disabled = state.loading || state.purging || closedCount() === 0;
+  }
+
   function renderCounts() {
     setText("reports-count-open", state.counts.open);
     setText("reports-count-resolved", state.counts.resolved);
     setText("reports-count-dismissed", state.counts.dismissed);
+    syncPurgeButton();
   }
 
   function renderRows() {
@@ -180,7 +192,7 @@
         tr.appendChild(statusTd);
 
         var actionTd = document.createElement("td");
-        actionTd.className = "text-right";
+        actionTd.className = "text-right reports-actions";
         var button = document.createElement("button");
         button.type = "button";
         button.className = "btn-ghost";
@@ -189,6 +201,16 @@
           openDetail(report.id);
         });
         actionTd.appendChild(button);
+
+        // P3.17: xoá thủ công, không có cơ chế tự dọn nào.
+        var deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "btn-ghost is-danger";
+        deleteButton.textContent = "Xóa";
+        deleteButton.addEventListener("click", function () {
+          deleteReportItem(report);
+        });
+        actionTd.appendChild(deleteButton);
         tr.appendChild(actionTd);
         tbody.appendChild(tr);
       });
@@ -296,6 +318,7 @@
     if (!reset && !state.nextBefore) return;
     state.loading = true;
     setState("Đang đọc…", false);
+    syncPurgeButton();
     showNote($("reports-note"), "");
     var params = new URLSearchParams({
       status: state.status,
@@ -324,6 +347,7 @@
       })
       .then(function () {
         state.loading = false;
+        syncPurgeButton();
       });
   }
 
@@ -349,6 +373,76 @@
       .then(function () {
         state.resolving = false;
       });
+  }
+
+  function deleteReportItem(report) {
+    if (state.deleting || state.purging) return;
+    var label = (SOURCE_LABEL[report.source] || report.source) + " · " + formatTime(report.createdAt);
+    AdminDialog.confirm({
+      title: "Xóa báo cáo?",
+      description:
+        "Báo cáo (" + label + ") sẽ bị xóa vĩnh viễn. Không khôi phục được.",
+      detail: report.id,
+      confirmLabel: "Xóa vĩnh viễn",
+      tone: "danger",
+    }).then(function (ok) {
+      if (!ok) return;
+      state.deleting = true;
+      syncPurgeButton();
+      showNote($("reports-note"), "Đang xóa…");
+      apiFetch(API + "/" + encodeURIComponent(report.id), { method: "DELETE" })
+        .then(function () {
+          if (state.selected && state.selected.id === report.id) {
+            $("reports-detail").hidden = true;
+            state.selected = null;
+          }
+          // Gọi loadList trước rồi mới báo: loadList tự xoá ghi chú cũ khi bắt đầu.
+          loadList(true);
+          showNote($("reports-note"), "Đã xóa báo cáo.");
+        })
+        .catch(function (err) {
+          showNote($("reports-note"), errorText(err), true);
+        })
+        .then(function () {
+          state.deleting = false;
+          syncPurgeButton();
+        });
+    });
+  }
+
+  function purgeClosed() {
+    if (state.purging || state.deleting) return;
+    var count = closedCount();
+    if (!count) return;
+    AdminDialog.confirm({
+      title: "Xóa báo cáo đã xử lý?",
+      description:
+        "Xóa vĩnh viễn " +
+        count +
+        " báo cáo đã xử lý hoặc đã bỏ qua. Báo cáo đang chờ xử lý không bị ảnh hưởng.",
+      detail: "resolved + dismissed",
+      confirmLabel: "Xóa " + count + " mục",
+      tone: "danger",
+    }).then(function (ok) {
+      if (!ok) return;
+      state.purging = true;
+      syncPurgeButton();
+      showNote($("reports-note"), "Đang xóa…");
+      apiFetch(API + "/purge", { method: "POST" })
+        .then(function (data) {
+          $("reports-detail").hidden = true;
+          state.selected = null;
+          loadList(true);
+          showNote($("reports-note"), "Đã xóa " + (Number(data.deleted) || count) + " báo cáo.");
+        })
+        .catch(function (err) {
+          showNote($("reports-note"), errorText(err), true);
+        })
+        .then(function () {
+          state.purging = false;
+          syncPurgeButton();
+        });
+    });
   }
 
   function loadRestrictions(uid) {
@@ -409,6 +503,7 @@
     $("reports-refresh").addEventListener("click", function () {
       loadList(true);
     });
+    $("reports-purge").addEventListener("click", purgeClosed);
     $("reports-more").addEventListener("click", function () {
       loadList(false);
     });
