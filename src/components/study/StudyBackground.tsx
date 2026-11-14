@@ -96,6 +96,7 @@ export const StudyBackground = memo(function StudyBackground({
           // Đổi cảnh nhanh tay (0.5s): 2 video cùng giải mã càng ngắn càng đỡ giật
           transition={{ duration: 0.5, ease: "easeInOut" }}
           className="absolute inset-0 w-full h-full will-change-[opacity] transform-gpu"
+          aria-hidden="true"
         >
           {scene.type === "VIDEO" && !hasVideoError ? (
             <video
@@ -116,11 +117,16 @@ export const StudyBackground = memo(function StudyBackground({
               className="w-full h-full object-cover transform-gpu"
             />
           ) : (
-            <div
-              className="w-full h-full bg-cover bg-center transform-gpu"
-              style={{
-                backgroundImage: `url('${hasVideoError ? scene.thumbnailUrl : scene.bgUrl}')`,
-              }}
+            // Dùng <img> thay vì background-image: trình duyệt mới đưa ảnh vào
+            // ứng viên LCP, ưu tiên tải trước các request phụ và gỡ decode khỏi main thread.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={hasVideoError ? scene.thumbnailUrl : scene.bgUrl}
+              alt=""
+              fetchPriority="high"
+              decoding="async"
+              draggable={false}
+              className="w-full h-full object-cover transform-gpu"
             />
           )}
         </motion.div>

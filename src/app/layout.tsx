@@ -24,6 +24,18 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://zenstudy.space";
 const isMobileShell = process.env.NEXT_PUBLIC_MOBILE_SHELL === "1";
 
+// Nối DNS + TLS tới CDN asset trước khi hydrate: cảnh nền (video/poster) là
+// request lớn đầu tiên sau JS, preconnect cắt được một vòng DNS + bắt tay TLS.
+const cdnOrigin = (() => {
+  const raw = process.env.NEXT_PUBLIC_STUDY_CDN_URL;
+  if (!raw) return null;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return null;
+  }
+})();
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
@@ -156,6 +168,12 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans overflow-x-hidden bg-[#090d16] text-white">
+        {cdnOrigin && (
+          <>
+            <link rel="preconnect" href={cdnOrigin} />
+            <link rel="dns-prefetch" href={cdnOrigin} />
+          </>
+        )}
         {/* Lớp Splash tĩnh: vẽ ngay từ HTML, không chờ JavaScript, để khỏi chớp màn hình
             trong khoảng splash Android tắt cho tới khi Splash React xuất hiện */}
         {MOBILE_SPLASH_ENABLED && (
