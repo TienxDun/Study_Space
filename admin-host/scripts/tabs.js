@@ -8,6 +8,44 @@
   var DEFAULT_TAB = "overview";
   var activeId = null;
 
+  // Tiêu đề lớn đổi theo tab; pill trạng thái ở topbar đã thay cho dòng eyebrow cũ.
+  var PAGE_COPY = {
+    overview: [
+      "Bảng điều khiển hệ thống",
+      "Theo dõi tình trạng hoạt động, quản lý kho nội dung, cấu hình trợ lý AI và xử lý tài khoản tại một nơi tập trung."
+    ],
+    diagnostics: [
+      "Chẩn đoán hệ thống",
+      "Xem sự cố gần đây, nhật ký thao tác quản trị và tình trạng từng dịch vụ thành phần."
+    ],
+    flags: [
+      "Tính năng & giới hạn",
+      "Bật tắt trợ lý AI, phòng học nhóm, chế độ bảo trì và đặt hạn mức câu hỏi mỗi ngày."
+    ],
+    chat: [
+      "Trợ lý chat",
+      "Sắp thứ tự chuỗi mô hình dự phòng và quản lý nhà cung cấp kèm khoá kết nối."
+    ],
+    content: [
+      "Kho nội dung",
+      "Quản lý cảnh nền, âm thanh, bài nhạc và tệp lưu trữ; thay đổi lên sóng ngay và có lịch sử để hoàn tác."
+    ],
+    reports: [
+      "Báo cáo vi phạm",
+      "Tiếp nhận phản ánh từ trợ lý AI và phòng học nhóm, đánh dấu xử lý hoặc áp dụng hạn chế tài khoản."
+    ],
+    feedback: [
+      "Góp ý & báo lỗi",
+      "Đọc góp ý của học viên, đánh dấu đã xử lý hoặc bỏ qua kèm ghi chú."
+    ],
+    users: [
+      "Người dùng",
+      "Tra cứu tài khoản theo email, xem mức sử dụng và hạn chế tính năng khi cần."
+    ]
+  };
+  var pageTitleEl = document.getElementById("page-title");
+  var pageSubtitleEl = document.getElementById("page-subtitle");
+
   // Rail dọc ở desktop, dải ngang ở mobile — đổi aria-orientation theo bố cục.
   var wideQuery = typeof window.matchMedia === "function" ? window.matchMedia("(min-width: 1024px)") : null;
   var tablist = document.querySelector(".admin-tabs-inner");
@@ -37,6 +75,12 @@
     if (tabIds().indexOf(id) < 0) id = DEFAULT_TAB;
     var changed = id !== activeId;
     activeId = id;
+
+    var copy = PAGE_COPY[id];
+    if (copy) {
+      if (pageTitleEl) pageTitleEl.textContent = copy[0];
+      if (pageSubtitleEl) pageSubtitleEl.textContent = copy[1];
+    }
 
     tabs.forEach(function (tab) {
       var on = tab.getAttribute("data-admin-tab") === id;

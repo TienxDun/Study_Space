@@ -117,7 +117,7 @@ describe("panel Cờ hệ thống", () => {
     expect((el("flag-banner") as HTMLInputElement).value).toBe("Bảo trì 30 phút");
     expect((el("flag-limit") as HTMLInputElement).value).toBe("45");
     expect(el("flag-limit-current").textContent).toBe("45");
-    expect(el("flags-state").textContent).toBe("Đang tắt bớt");
+    expect(el("flags-state").textContent).toBe("Đang tắt một phần");
     expect((el("flags-save") as HTMLButtonElement).disabled).toBe(true);
   });
 
@@ -154,7 +154,7 @@ describe("panel Cờ hệ thống", () => {
       chatDailyLimit: 35,
     });
     expect((el("flag-chat") as HTMLInputElement).checked).toBe(false);
-    expect(el("flags-state").textContent).toBe("Đang tắt bớt");
+    expect(el("flags-state").textContent).toBe("Đang tắt một phần");
     expect(el("flags-note").textContent).toContain("bởi admin@example.com");
   });
 

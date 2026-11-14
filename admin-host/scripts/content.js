@@ -126,17 +126,25 @@
     var value = Number(ms);
     if (!value) return "--";
     var d = new Date(value);
-    var pad = function (n) {
-      return n < 10 ? "0" + n : String(n);
-    };
-    return pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    if (isNaN(d.getTime())) return "--";
+    return d.toLocaleString("vi-VN", {
+      hour12: false,
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
   }
 
   function fmtBytes(value) {
     var num = Number(value);
     if (!Number.isFinite(num) || num <= 0) return "0 KB";
-    if (num >= 1000 * 1000 * 1000) return (num / 1000 / 1000 / 1000).toFixed(1) + " GB";
-    if (num >= 1000 * 1000) return (num / 1000 / 1000).toFixed(1) + " MB";
+    var fixed = function (n) {
+      return n.toLocaleString("vi-VN", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    };
+    if (num >= 1000 * 1000 * 1000) return fixed(num / 1000 / 1000 / 1000) + " GB";
+    if (num >= 1000 * 1000) return fixed(num / 1000 / 1000) + " MB";
     return Math.max(1, Math.round(num / 1000)) + " KB";
   }
 
@@ -469,7 +477,7 @@
           preview.appendChild(el("span", "content-thumb-badge is-video", "VIDEO"));
         }
         thumbCell.appendChild(preview);
-        return [thumbCell, makeNameCell(item.name, item.id, null, item.hidden, item.badge), el("td", null, CATEGORY_LABELS[item.category] || item.category || "--"), el("td", null, item.type === "VIDEO" ? "Video" : "Ảnh"), statusCell("scenes", item.mediaPath)];
+        return [thumbCell, makeNameCell(item.name, item.id, null, item.hidden, item.badge), el("td", "content-cell-nowrap", CATEGORY_LABELS[item.category] || item.category || "--"), el("td", null, item.type === "VIDEO" ? "Video" : "Ảnh"), statusCell("scenes", item.mediaPath)];
       }
     },
     sounds: {
@@ -497,7 +505,7 @@
       cells: function (item) {
         var iconCell = el("td");
         iconCell.appendChild(el("span", "content-tag", item.icon || "--"));
-        return [iconCell, makeNameCell(item.name, item.id, null, item.hidden), el("td", null, CATEGORY_LABELS[item.category] || item.category || "--"), statusCell("sounds", item.audioPath)];
+        return [iconCell, makeNameCell(item.name, item.id, null, item.hidden), el("td", "content-cell-nowrap", CATEGORY_LABELS[item.category] || item.category || "--"), statusCell("sounds", item.audioPath)];
       }
     },
     tracks: {
@@ -527,7 +535,7 @@
       cells: function (item) {
         var coverCell = el("td");
         coverCell.appendChild(item.coverPath ? thumbNode(mediaUrl(item.coverPath), item.title || "", true) : el("div", "content-thumb is-empty is-square", "Chưa có bìa"));
-        return [coverCell, makeNameCell(item.title, item.id, (item.artist || "--") + " · " + (item.genre || "--"), item.hidden), el("td", null, MOOD_LABELS[item.category] || item.category || "--"), statusCell("tracks", item.audioPath)];
+        return [coverCell, makeNameCell(item.title, item.id, (item.artist || "--") + " · " + (item.genre || "--"), item.hidden), el("td", "content-cell-nowrap", MOOD_LABELS[item.category] || item.category || "--"), statusCell("tracks", item.audioPath)];
       }
     }
   };

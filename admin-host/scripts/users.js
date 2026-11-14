@@ -52,12 +52,20 @@
     });
   }
 
+  // Dùng dấu phẩy thập phân theo vi-VN: "2,00 MB" thay vì "2.00 MB".
+  function fixedLocale(value, digits) {
+    return Number(value).toLocaleString("vi-VN", {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    });
+  }
+
   function formatBytes(bytes) {
     var n = Number(bytes);
     if (!n || n < 0) return "—";
     if (n < 1024) return n + " B";
-    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
-    return (n / (1024 * 1024)).toFixed(2) + " MB";
+    if (n < 1024 * 1024) return fixedLocale(n / 1024, 1) + " KB";
+    return fixedLocale(n / (1024 * 1024), 2) + " MB";
   }
 
   function shortUid(uid) {

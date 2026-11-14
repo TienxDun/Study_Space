@@ -167,7 +167,7 @@ describe("panel Người dùng", () => {
     expect(el("users-detail").hidden).toBe(false);
     const meta = el("users-detail-meta").textContent || "";
     expect(meta).toContain("alice@example.com");
-    expect(meta).toContain("2.00 MB");
+    expect(meta).toContain("2,00 MB");
     expect(el("users-chat-days").textContent).toContain("4 câu");
     expect(el("users-chat-days").textContent).toContain("9 câu");
     expect(el("users-reports").textContent).toContain("Bị báo cáo");

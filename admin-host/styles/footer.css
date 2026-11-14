@@ -116,6 +116,10 @@
     align-items: flex-start;
     gap: 4px;
   }
+  .panel-desc {
+    overflow: visible;
+    white-space: normal;
+  }
   .desc-extra {
     display: none;
   }

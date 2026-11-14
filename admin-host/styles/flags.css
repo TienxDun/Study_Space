@@ -100,8 +100,8 @@
 }
 
 .switch input:checked + .switch-track {
-  background: var(--emerald-soft);
-  border-color: var(--border-active);
+  background: rgba(16, 185, 129, 0.28);
+  border-color: rgba(16, 185, 129, 0.55);
 }
 
 .switch input:checked + .switch-track::after {

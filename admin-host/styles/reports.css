@@ -20,26 +20,23 @@
   min-width: 160px;
 }
 
+/* Tóm tắt số lượng theo trạng thái; bộ lọc duy nhất là select ở thanh công cụ. */
 .reports-counts {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 4px 16px;
+  font-size: 12px;
+  color: var(--text-faint);
 }
 
 .reports-count {
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
   gap: 6px;
-  padding: 6px 12px;
-  border-radius: var(--radius-full);
-  background: var(--surface-nested);
-  border: 1px solid var(--border-subtle);
-  font-size: 12px;
-  color: var(--text-muted);
 }
 
 .reports-count strong {
-  color: var(--text-primary);
+  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
 

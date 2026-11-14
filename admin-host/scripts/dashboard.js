@@ -16,9 +16,7 @@
   var errorRowsEl = document.getElementById("error-rows");
   var errorsClearBtn = document.getElementById("errors-clear");
   var auditRowsEl = document.getElementById("audit-rows");
-  var auditStateEl = document.getElementById("audit-state");
   var auditNoteEl = document.getElementById("audit-note");
-  var auditRefreshBtn = document.getElementById("audit-refresh");
   var auditClearBtn = document.getElementById("audit-clear");
   var flagsCard = document.getElementById("flags-card");
   var flagsStateEl = document.getElementById("flags-state");
@@ -105,15 +103,14 @@
   function formatTime(val) {
     var d = new Date(val);
     if (isNaN(d.getTime())) return "Chưa có";
-    var opts = {
+    return d.toLocaleString("vi-VN", {
       hour12: false,
       day: "2-digit",
       month: "2-digit",
+      year: "numeric",
       hour: "2-digit",
       minute: "2-digit"
-    };
-    if (d.getFullYear() !== new Date().getFullYear()) opts.year = "numeric";
-    return d.toLocaleString("vi-VN", opts);
+    });
   }
 
   function formatNumber(val) {
@@ -130,13 +127,21 @@
     return m ? "Tháng " + Number(m[2]) + "/" + m[1] : val || "--";
   }
 
+  // Dấu phẩy thập phân theo vi-VN để không lẫn với dấu ngăn cách hàng nghìn.
+  function fixedLocale(value, digits) {
+    return Number(value).toLocaleString("vi-VN", {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits
+    });
+  }
+
   function formatBytes(val) {
     if (typeof val !== "number" || !isFinite(val) || val < 0) return "--";
     if (val < 1024) return val + " B";
-    if (val < 1024 * 1024) return (val / 1024).toFixed(1) + " KB";
-    if (val < 1024 * 1024 * 1024) return (val / (1024 * 1024)).toFixed(2) + " MB";
-    if (val < 1024 ** 4) return (val / 1024 ** 3).toFixed(2) + " GB";
-    return (val / 1024 ** 4).toFixed(2) + " TB";
+    if (val < 1024 * 1024) return fixedLocale(val / 1024, 1) + " KB";
+    if (val < 1024 * 1024 * 1024) return fixedLocale(val / (1024 * 1024), 2) + " MB";
+    if (val < 1024 ** 4) return fixedLocale(val / 1024 ** 3, 2) + " GB";
+    return fixedLocale(val / 1024 ** 4, 2) + " TB";
   }
 
   // R2 dashboard dùng GB thập phân; card kho tệp theo cùng đơn vị để dễ đối chiếu.
@@ -150,7 +155,7 @@
       value /= 1000;
       index += 1;
     } while (value >= 1000 && index < units.length - 1);
-    return value.toFixed(2) + " " + units[index];
+    return fixedLocale(value, 2) + " " + units[index];
   }
 
   function setWidth(id, ratio) {
@@ -227,7 +232,7 @@
         ? '<span class="auth-badge token">' + meta.auth + '</span>'
         : '<span class="auth-badge">' + meta.auth + '</span>';
 
-      var msDisplay = typeof c.ms === "number" ? c.ms + " ms" : "--";
+      var msDisplay = typeof c.ms === "number" ? Math.round(c.ms) + " ms" : "--";
 
       tr.innerHTML =
         '<td>' +
@@ -610,7 +615,7 @@
 
     flagsReadable = true;
     flagsCard.classList.remove("is-degraded");
-    flagsStateEl.textContent = block.chatEnabled && block.roomsEnabled ? "Đang bật đủ" : "Đang tắt bớt";
+    flagsStateEl.textContent = block.chatEnabled && block.roomsEnabled ? "Đang bật tất cả" : "Đang tắt một phần";
     flagLimitCurrent.textContent = formatNumber(block.chatDailyLimit);
 
     // Người đang sửa dở thì không ghi đè ô nhập mỗi lần trang tự cập nhật.
@@ -804,13 +809,16 @@
       .catch(function () {
         setBusy(false);
         handleFailure("Không thể kết nối đến máy chủ");
+      })
+      .then(function () {
+        // Nhật ký thao tác là endpoint riêng: "Cập nhật ngay" đọc lại cả hai.
+        loadAudit();
       });
   }
 
   refreshBtn.addEventListener("click", runCheck);
 
   if (errorsClearBtn) errorsClearBtn.addEventListener("click", clearErrors);
-  if (auditRefreshBtn) auditRefreshBtn.addEventListener("click", loadAudit);
   if (auditClearBtn) auditClearBtn.addEventListener("click", clearAudit);
 
   // Auto Refresh
@@ -837,6 +845,5 @@
   // Run initial check
   syncFlagsButtons();
   runCheck();
-  loadAudit();
   setupAutoRefresh();
 })();

@@ -86,6 +86,16 @@ describe("tab quản trị", () => {
     expect(visible("tab-panel-users")).toBe(true);
   });
 
+  it("tiêu đề lớn và phụ đề đổi theo tab đang mở", () => {
+    boot("#reports");
+    expect(el("page-title").textContent).toBe("Báo cáo vi phạm");
+    expect(el("page-subtitle").textContent).toContain("phản ánh");
+
+    el<HTMLButtonElement>("tab-btn-content").click();
+    expect(el("page-title").textContent).toBe("Kho nội dung");
+    expect(el("page-subtitle").textContent).toContain("hoàn tác");
+  });
+
   it("tiêu đề tab bỏ qua badge số mục chờ", () => {
     boot();
     el("tab-badge-feedback").textContent = "7";
