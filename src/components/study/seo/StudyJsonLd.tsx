@@ -54,7 +54,12 @@ export function StudyJsonLd({
       "@type": "Organization",
       name: "ZenStudy Space",
       url: `${siteUrl}/`,
-      logo: `${siteUrl}/icon.svg`,
+      logo: {
+        "@type": "ImageObject",
+        url: `${siteUrl}/icon-512.png`,
+        width: 512,
+        height: 512,
+      },
       sameAs: ["https://github.com/TienxDun/Study_Space"],
     },
     {

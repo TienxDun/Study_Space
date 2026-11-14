@@ -16,6 +16,7 @@ export const PaginationDots = memo(function PaginationDots({ completedSessions, 
       }
       title={`Chu kỳ Pomodoro: Phiên ${(completedSessions % 4) + 1}/4`}
       aria-label={`Chu kỳ Pomodoro: Phiên ${(completedSessions % 4) + 1} trên 4`}
+      role="img"
     >
       {[0, 1, 2, 3].map((dot) => (
         <span

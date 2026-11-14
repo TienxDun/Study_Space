@@ -71,6 +71,7 @@ const TopBarClockDisplay = ({
     <div
       className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 h-9 hidden lg:inline-flex items-center justify-center font-mono text-xs sm:text-sm font-semibold tracking-wider tabular-nums text-slate-100 drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] select-none pointer-events-none"
       aria-label="Đồng hồ hiện tại"
+      role="timer"
     >
       {currentTime || (showClockSeconds ? "00:00:00" : "00:00")}
     </div>
@@ -144,6 +145,7 @@ export const StudyTopBar = ({
             <div
               id="tour-topbar-actions"
               aria-label="Thanh công cụ nhanh Study Space"
+              role="group"
               className="flex items-center h-9 sm:h-10 gap-0.5 sm:gap-1 pointer-events-auto select-none transition-all shrink-0 drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]"
             >
               {/* Global Mute Toggle */}
