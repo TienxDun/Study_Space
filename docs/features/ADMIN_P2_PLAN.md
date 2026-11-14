@@ -1,6 +1,6 @@
 # P2 — Quản lý được (kế hoạch triển khai)
 
-Trạng thái (2026-11-11): **P2.0** đóng 0.1; 0.2 đã sửa code chat-proxy, còn xác minh deploy và theo dõi log. **P2a/P2b/P2e đóng**; P2a còn nhánh hạn mức 30 → 35 chưa kiểm. **P2c đợt 1 đã triển khai; đợt 2 và P2d đã lên production**; bốn lỗi xem trước/tên tệp/danh sách sử dụng **đã sửa, kiểm local và deploy tự động qua commit `49a1cb2`**. Theo quyết định 2026-11-11, **P2c/P2d được đóng, không kiểm lại trên production**; bước C7 mục 6–7 đóng theo quyết định, phần chưa kiểm được ghi lại bên dưới. Bản hiện hành v4 giữ nguyên 40 cảnh / 20 âm / 49 nhạc; kho về đúng 118 tệp, không còn tệp thử. Việc tiếp theo: P3 và hai mục P2 còn mở. Bản 28 — 2026-11-11.
+Trạng thái (2026-11-15): **P2.0** đóng cả 0.1 và 0.2 (khử trùng log lỗi ở `chat-proxy`, chủ repo xác nhận 2026-11-15). **P2a/P2b/P2e đóng**; nhánh hạn mức 30 → 35 đã test đạt (chạm trần chặn gửi, nâng hạn mức gửi lại được). **P2c đợt 1 đã triển khai; đợt 2 và P2d đã lên production**; bốn lỗi xem trước/tên tệp/danh sách sử dụng **đã sửa, kiểm local và deploy tự động qua commit `49a1cb2`**. Theo quyết định 2026-11-11, **P2c/P2d được đóng, không kiểm lại trên production**; bước C7 mục 6–7 đóng theo quyết định, phần chưa kiểm được ghi lại bên dưới. Bản hiện hành v4 giữ nguyên 40 cảnh / 20 âm / 49 nhạc; kho về đúng 118 tệp, không còn tệp thử. Việc tiếp theo: không còn mục P2 nào mở. Bản 29 — 2026-11-15.
 Thuộc P2 của `docs/features/ADMIN_CONSOLE_PLAN.md`; P1 đã đóng, xem `docs/archive/ADMIN_P1_PLAN.md`.
 
 ### Kiểm thử production 2026-11-11 — Nội dung và Kho tệp

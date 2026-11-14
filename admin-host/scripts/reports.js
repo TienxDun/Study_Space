@@ -148,10 +148,20 @@
     if (btn) btn.disabled = state.loading || state.purging || closedCount() === 0;
   }
 
+  function setNavBadge(id, count) {
+    var badge = $(id);
+    if (!badge) return;
+    var n = Number(count) || 0;
+    badge.hidden = n <= 0;
+    badge.textContent = n > 99 ? "99+" : String(n);
+    badge.title = n + " mục chờ xử lý";
+  }
+
   function renderCounts() {
     setText("reports-count-open", state.counts.open);
     setText("reports-count-resolved", state.counts.resolved);
     setText("reports-count-dismissed", state.counts.dismissed);
+    setNavBadge("tab-badge-reports", state.counts.open);
     syncPurgeButton();
   }
 

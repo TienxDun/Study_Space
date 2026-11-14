@@ -63,7 +63,7 @@ const json = (body: unknown, status = 200) =>
     headers: { "Content-Type": "application/json" },
   });
 
-function fakeApi(options: { failList?: boolean; failResolve?: boolean; nextBefore?: number | null; resolved?: number } = {}) {
+function fakeApi(options: { failList?: boolean; failResolve?: boolean; nextBefore?: number | null; resolved?: number; open?: number } = {}) {
   const calls: Call[] = [];
   vi.stubGlobal(
     "fetch",
@@ -75,12 +75,12 @@ function fakeApi(options: { failList?: boolean; failResolve?: boolean; nextBefor
         if (options.failList) return json({ error: "d1_error" }, 500);
         return json({
           ok: true,
-          feedback: LIST,
+          feedback: options.open === 0 ? [] : LIST,
           counts: {
-            open: 2,
+            open: options.open ?? 2,
             resolved: options.resolved || 0,
             dismissed: 0,
-            total: 2 + (options.resolved || 0),
+            total: (options.open ?? 2) + (options.resolved || 0),
           },
           nextBefore: options.nextBefore ?? null,
         });
@@ -156,6 +156,20 @@ describe("panel Phản hồi", () => {
     const personCell = rows()[1].querySelectorAll("td")[1] as HTMLElement;
     expect(personCell.textContent).toBe("user_bob");
     expect(personCell.title).toBe("user_bob");
+  });
+
+  it("badge trên rail hiện số mục chờ và ẩn khi hết", async () => {
+    await boot();
+    const badge = el("tab-badge-feedback");
+    expect(badge.hidden).toBe(false);
+    expect(badge.textContent).toBe("2");
+    expect(badge.title).toBe("2 mục chờ xử lý");
+  });
+
+  it("badge ẩn khi không còn mục chờ", async () => {
+    fakeApi({ open: 0 });
+    await boot();
+    expect(el("tab-badge-feedback").hidden).toBe(true);
   });
 
   it("mở chi tiết và render nội dung dạng text, không chạy HTML", async () => {

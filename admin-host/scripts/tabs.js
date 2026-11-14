@@ -44,7 +44,9 @@
       tab.setAttribute("aria-selected", on ? "true" : "false");
       tab.tabIndex = on ? 0 : -1;
       if (on) {
-        document.title = "ZenStudy · " + tab.textContent.trim() + " · Bảng điều khiển hệ thống";
+        // Dùng nhãn, không dùng textContent: badge số mục chờ cũng nằm trong nút.
+        var label = tab.querySelector(".admin-tab-label");
+        document.title = "ZenStudy · " + (label ? label.textContent : tab.textContent).trim() + " · Bảng điều khiển hệ thống";
       }
     });
 

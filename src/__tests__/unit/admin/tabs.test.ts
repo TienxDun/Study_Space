@@ -85,4 +85,11 @@ describe("tab quản trị", () => {
     overview.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
     expect(visible("tab-panel-users")).toBe(true);
   });
+
+  it("tiêu đề tab bỏ qua badge số mục chờ", () => {
+    boot();
+    el("tab-badge-feedback").textContent = "7";
+    el<HTMLButtonElement>("tab-btn-feedback").click();
+    expect(document.title).toBe("ZenStudy · Phản hồi · Bảng điều khiển hệ thống");
+  });
 });

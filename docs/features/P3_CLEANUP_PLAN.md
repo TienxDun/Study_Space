@@ -1,6 +1,6 @@
 # P3.17 — Không tự xoá dữ liệu; admin xoá thủ công (plan triển khai)
 
-> Trạng thái: **code xong 2026-11-15 — chưa deploy, chưa kiểm production.** Quyết định: bỏ toàn bộ cơ chế tự xoá dữ liệu trong hệ thống; chỉ xoá khi quản trị viên bấm nút trên shell admin (hoặc khi người dùng chủ động xoá tài khoản). Văn bản policy không nêu mốc ngày lưu trữ.
+> Trạng thái: **ĐÓNG 2026-11-15** — code + push `6446e0a`, data-api/chat-proxy dán lại tay, admin Worker + shell deploy qua Workers Builds; chủ repo đã kiểm checklist mục 8 trên production và xác nhận đạt. Quyết định: bỏ toàn bộ cơ chế tự xoá dữ liệu trong hệ thống; chỉ xoá khi quản trị viên bấm nút trên shell admin (hoặc khi người dùng chủ động xoá tài khoản). Văn bản policy không nêu mốc ngày lưu trữ.
 > Đã chạy: `npm test` (101 file / 862 test), `npx tsc --noEmit`, `npm run lint`, `npm run build:admin` — đều xanh.
 > Thuộc P3 mục 17 của [ADMIN_CONSOLE_PLAN.md](./ADMIN_CONSOLE_PLAN.md) (định nghĩa lại: chu kỳ dọn tự động → xoá thủ công).
 > Liên quan: [P3_FEEDBACK_PLAN.md](./P3_FEEDBACK_PLAN.md) (góp ý + ảnh), P2e (báo cáo nội dung), P1 (nhật ký lỗi).
@@ -92,4 +92,4 @@
 - UI: `feedback.js`/`reports.js` có nút "Xóa" từng dòng + "Xóa mục đã xử lý" (disable khi 0 mục đóng); `dashboard.js` có "Xóa toàn bộ nhật ký" + card "Nhật ký thao tác quản trị"; CSS thêm `.btn-ghost.is-danger`, `.panel-actions`, `.reports-actions`, `.audit-target`.
 - Test: thêm `maintenance-api.test.ts` (9 ca) và `dashboard-panel.test.ts` (4 ca: nhật ký thao tác, xoá nhật ký lỗi/audit, nút xoá disable khi lỗi đọc); sửa `feedback-api` (+5 ca xoá/purge), `reports-api` (+5 ca), `feedback-panel` (+5 ca), `reports-panel` (+4 ca); hai ca retention ở `study-worker-feedback` đảo thành "không tự dọn".
 - Policy: privacy (74/75/219/222/239 + mốc 15/11/2026), terms (227 + mốc), account-deletion (142); giữ SLA 30 ngày. Comment `src/lib/feedback.ts` cập nhật theo.
-- Còn lại: deploy data-api + chat-proxy (dán tay), deploy admin Worker, chạy checklist mục 8 trên production.
+- Còn lại: không. Checklist mục 8 đóng 2026-11-15 theo xác nhận của chủ repo (xoá góp ý/báo cáo, bulk, xoá log lỗi, audit, policy không còn mốc ngày — đều đạt).

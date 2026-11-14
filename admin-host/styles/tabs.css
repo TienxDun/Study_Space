@@ -75,6 +75,29 @@
   display: none;
 }
 
+/* Số mục đang chờ xử lý, hiện cạnh nhãn Phản hồi/Báo cáo. */
+.admin-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--amber-soft);
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  color: var(--amber-400);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-tab-badge[hidden] {
+  display: none;
+}
+
 .tab-panel[hidden] {
   display: none;
 }
@@ -174,6 +197,10 @@
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .admin-tab-badge {
+    margin-left: auto;
   }
 
   .admin-tab.is-active {

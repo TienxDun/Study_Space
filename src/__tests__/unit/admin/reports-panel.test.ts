@@ -65,7 +65,7 @@ const json = (body: unknown, status = 200) =>
     headers: { "Content-Type": "application/json" },
   });
 
-function fakeApi(options: { failResolve?: boolean; resolved?: number } = {}) {
+function fakeApi(options: { failResolve?: boolean; resolved?: number; open?: number } = {}) {
   const calls: Call[] = [];
   vi.stubGlobal(
     "fetch",
@@ -77,12 +77,12 @@ function fakeApi(options: { failResolve?: boolean; resolved?: number } = {}) {
       if (url.startsWith("/api/admin/reports?")) {
         return json({
           ok: true,
-          reports: LIST,
+          reports: options.open === 0 ? [] : LIST,
           counts: {
-            open: 2,
+            open: options.open ?? 2,
             resolved: options.resolved || 0,
             dismissed: 0,
-            total: 2 + (options.resolved || 0),
+            total: (options.open ?? 2) + (options.resolved || 0),
           },
           nextBefore: null,
         });
@@ -177,6 +177,18 @@ describe("panel Báo cáo", () => {
     expect(rows()[1].textContent).toContain("Phòng học");
     expect(rows()[0].textContent).toContain("Bạn An");
     expect(rows()[1].textContent).toContain("Bạn An → Bạn Bình");
+  });
+
+  it("badge trên rail hiện số báo cáo chờ và ẩn khi hết", async () => {
+    await boot();
+    const badge = el("tab-badge-reports");
+    expect(badge.hidden).toBe(false);
+    expect(badge.textContent).toBe("2");
+    expect(badge.title).toBe("2 mục chờ xử lý");
+
+    fakeApi({ open: 0 });
+    await boot();
+    expect(el("tab-badge-reports").hidden).toBe(true);
   });
 
   it("mở chi tiết và render nội dung dạng text, không chạy HTML", async () => {
