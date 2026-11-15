@@ -89,6 +89,9 @@ export default function StudySpacePage() {
   // Kiểm soát hiệu ứng hiển thị tuần tự (Fly in from bottom) khi vào trang chính
   // Khởi tạo true đồng nhất giữa máy chủ và trình duyệt để tránh lỗi Hydration mismatch (#418)
   const [hasEntered, setHasEntered] = useState(true);
+  // Đã đọc xong storage chưa: dùng để trì hoãn video nền đúng một nhịp render
+  // cho người mới, tránh video 4K bắt đầu tải ngay khung hình đầu.
+  const [entryResolved, setEntryResolved] = useState(false);
 
   useEffect(() => {
     try {
@@ -105,10 +108,20 @@ export default function StudySpacePage() {
     } catch {
       // Giữ nguyên true nếu không đọc được storage
     }
+    setEntryResolved(true);
   }, []);
 
   // Theo dõi trạng thái nạp bối cảnh ban đầu để đồng bộ đóng Splash Screen chuẩn xác
   const [isBackgroundReady, setIsBackgroundReady] = useState(false);
+
+  // Splash không chờ media nền mãi: quá 1.5s thì mở với poster tĩnh.
+  // Tránh cảnh người dùng nhìn logo 14s chỉ vì video nền còn đang tải.
+  const [splashFallbackReady, setSplashFallbackReady] = useState(false);
+  useEffect(() => {
+    if (!MOBILE_SPLASH_ENABLED) return;
+    const timer = setTimeout(() => setSplashFallbackReady(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Callback ổn định: tránh tạo closure mới mỗi lần state đổi (React.memo của con sẽ vô hiệu)
   const handleBackgroundLoaded = useCallback(() => setIsBackgroundReady(true), []);
@@ -176,6 +189,9 @@ export default function StudySpacePage() {
           scene={state.currentScene}
           isBlurActive={state.isMobile ? state.isAnyMobileSheetOpen : state.isAnyModalOpen}
           isMobile={state.isMobile}
+          // Chưa đọc xong storage thì luôn trì hoãn: khung hình đầu không được dựng
+          // <video>, nếu không trình duyệt đã kịp bắt đầu tải file 4K trước khi biết là mobile.
+          deferVideo={!entryResolved || (state.isMobile && !hasEntered)}
           onLoaded={handleBackgroundLoaded}
         />
       </MobilePerfProbe>
@@ -216,7 +232,7 @@ export default function StudySpacePage() {
       {state.isMobile && MOBILE_SPLASH_ENABLED && (
         <MobileSplashScreen
           preview={isSplashPreview}
-          isReady={isBackgroundReady && !state.isPreloadingScene}
+          isReady={splashFallbackReady || (isBackgroundReady && !state.isPreloadingScene)}
           onFinish={handleSplashFinish}
         />
       )}

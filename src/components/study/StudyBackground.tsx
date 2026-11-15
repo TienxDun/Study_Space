@@ -11,6 +11,8 @@ export interface StudyBackgroundProps {
   isBlurActive?: boolean;
   /** Điện thoại: tạm dừng video khi bảng che gần hết màn hình. */
   isMobile?: boolean;
+  /** Điện thoại lúc onboarding: chỉ dựng poster, chưa tải video nền. */
+  deferVideo?: boolean;
   onLoaded?: () => void;
 }
 
@@ -19,9 +21,10 @@ export const StudyBackground = memo(function StudyBackground({
   scene,
   isBlurActive = false,
   isMobile = false,
+  deferVideo = false,
   onLoaded,
 }: StudyBackgroundProps) {
-  useRenderTrace("background props", { scene, isBlurActive, isMobile, onLoaded });
+  useRenderTrace("background props", { scene, isBlurActive, isMobile, deferVideo, onLoaded });
   const [hasVideoError, setHasVideoError] = useState(false);
 
   useEffect(() => {
@@ -84,6 +87,9 @@ export const StudyBackground = memo(function StudyBackground({
     };
   }, [scene.bgUrl, scene.thumbnailUrl, scene.type, hasVideoError, onLoaded]);
 
+  // Khung hình tĩnh đại diện cảnh: video dùng thumbnail, ảnh dùng file gốc.
+  const posterSrc = scene.type === "VIDEO" ? scene.thumbnailUrl : scene.bgUrl;
+
   return (
     <div className="absolute inset-0 bg-slate-950 overflow-hidden pointer-events-none select-none">
       {/* Dynamic Background Media with Clean Opacity Crossfade */}
@@ -98,11 +104,11 @@ export const StudyBackground = memo(function StudyBackground({
           className="absolute inset-0 w-full h-full will-change-[opacity] transform-gpu"
           aria-hidden="true"
         >
-          {scene.type === "VIDEO" && !hasVideoError ? (
+          {scene.type === "VIDEO" && !hasVideoError && !deferVideo ? (
             <video
               data-scene-id={scene.id}
               src={scene.bgUrl}
-              poster={scene.thumbnailUrl}
+              poster={posterSrc}
               autoPlay
               loop
               muted
@@ -119,9 +125,11 @@ export const StudyBackground = memo(function StudyBackground({
           ) : (
             // Dùng <img> thay vì background-image: trình duyệt mới đưa ảnh vào
             // ứng viên LCP, ưu tiên tải trước các request phụ và gỡ decode khỏi main thread.
+            // Trong lúc onboarding (deferVideo) đây cũng là poster của cảnh video:
+            // chỉ tải một ảnh WebP thay vì kéo cả file 4K trước khi người dùng vào không gian.
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={hasVideoError ? scene.thumbnailUrl : scene.bgUrl}
+              src={posterSrc}
               alt=""
               fetchPriority="high"
               decoding="async"
