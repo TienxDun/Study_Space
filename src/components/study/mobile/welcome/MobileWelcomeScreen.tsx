@@ -4,8 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowRightIcon,
-  HouseIcon,
   CaretLeftIcon,
   CaretRightIcon,
 } from "@phosphor-icons/react";
@@ -227,6 +225,30 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
           <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F1A] via-[#0B0F1A]/80 via-50% to-black/35 pointer-events-none" />
         </div>
 
+        {/* Nút lùi: neo vào góc màn hình chứ không theo cột nội dung max-w-md,
+            để trên màn hình rộng vẫn dính góc trái; lề trái = lề trên = 20px
+            (+ safe-area), canh tâm trùng tiêu đề bước 2 */}
+        <AnimatePresence>
+          {step === 2 && (
+            <motion.button
+              key="welcome-back"
+              type="button"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.18 }}
+              onClick={() => {
+                triggerHaptic();
+                setStep(1);
+              }}
+              className="absolute left-5 top-[calc(env(safe-area-inset-top,0px)+20px)] z-30 w-9 h-9 rounded-full flex items-center justify-center text-white/90 bg-black/35 border border-white/25 active:scale-95 cursor-pointer"
+              aria-label="Quay lại trang giới thiệu"
+            >
+              <CaretLeftIcon className="w-4 h-4" weight="bold" />
+            </motion.button>
+          )}
+        </AnimatePresence>
+
         {/* ============================================================== */}
         {/* BƯỚC 1: MÀN HÌNH CHÀO MỪNG CINEMATIC SPLASH                    */}
         {/* ============================================================== */}
@@ -280,19 +302,27 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
             exit={{ opacity: 0, x: 30, transition: { duration: 0.25 } }}
             className="relative z-20 flex-1 flex flex-col justify-between px-5 pb-safe pt-safe max-w-md mx-auto w-full h-full"
           >
-            {/* Header: "Chọn không gian học tập." */}
-            <div className="pt-2 text-center">
-              <span className="text-[13px] font-medium tracking-tight text-white/80 block leading-tight">
-                Chọn không gian
-              </span>
-              <span className="text-[15px] font-bold tracking-tight text-white block leading-tight mt-0.5">
-                học tập.
-              </span>
+            {/* Header: tiêu đề canh giữa toàn bề ngang để không bị bẻ đôi ở
+                máy hẹp (320px); nút lùi neo ở góc màn hình (xem trên) */}
+            <div className="relative mt-4 min-h-11 flex items-center justify-center">
+              <h2 className="text-center text-[15px] min-[360px]:text-[16px] font-semibold tracking-tight text-white leading-tight">
+                Chọn không gian học tập.
+              </h2>
             </div>
 
-            {/* Khung chứa Card Stack 3D Native siêu nhẹ, vuốt tay cực nhạy */}
+            {/* Khung chứa Card Stack 3D Native siêu nhẹ, vuốt tay cực nhạy.
+                Chevron đổi thẻ neo theo mép thẻ (cách 12px) chứ không theo cột
+                nội dung, để màn hình rộng vẫn dính sát thẻ. */}
             <div className="relative w-full flex-1 my-auto flex items-center justify-center min-h-[350px] max-h-[420px] touch-pan-y">
               <div className="relative w-[280px] h-[360px] flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={handlePrevCard}
+                  className="absolute -left-11 max-[359px]:-left-1 min-[400px]:-left-14 top-1/2 -translate-y-1/2 z-40 w-10 h-10 flex items-center justify-center text-white/85 active:scale-90 transition-transform cursor-pointer"
+                  aria-label="Không gian trước"
+                >
+                  <CaretLeftIcon className="w-6 h-6 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]" weight="bold" />
+                </button>
                 {curatedCards.map((card, idx) => {
                   // Khoảng cách theo vòng lặp so với activeCardIndex
                   const diff = (idx - activeCardIndex + totalCards) % totalCards;
@@ -315,10 +345,13 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
                         }
                       }}
                       animate={{
-                        scale: isFront ? 1 : diff === 1 ? 0.93 : 0.86,
-                        y: isFront ? 0 : diff === 1 ? 16 : 30,
-                        rotate: isFront ? 0 : diff === 1 ? 1.5 : -1.5,
-                        opacity: isFront ? 1 : diff === 1 ? 0.75 : 0.45,
+                        // Quạt bài 3 lớp: thẻ sau lệch xuống + lệch ngang theo hai
+                        // hướng + xoay nhẹ, để thấy rõ còn thẻ phía sau.
+                        scale: isFront ? 1 : diff === 1 ? 0.95 : 0.9,
+                        x: isFront ? 0 : diff === 1 ? 12 : -12,
+                        y: isFront ? 0 : diff === 1 ? 24 : 40,
+                        rotate: isFront ? 0 : diff === 1 ? 2.5 : -2.5,
+                        opacity: isFront ? 1 : diff === 1 ? 0.94 : 0.85,
                         zIndex: 30 - diff * 10,
                       }}
                       transition={{
@@ -334,114 +367,80 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
                           setActiveCardIndex(idx);
                         }
                       }}
-                      className="absolute inset-0 rounded-[24px] p-3.5 surface-graphite border shadow-[0_20px_45px_rgba(0,0,0,0.65)] flex flex-col justify-between cursor-pointer select-none transform-gpu will-change-transform"
+                      className="absolute inset-0 rounded-[24px] overflow-hidden surface-graphite border cursor-pointer select-none transform-gpu will-change-transform"
                       style={{
                         boxShadow: isFront
                           ? `0 24px 50px -10px rgba(0,0,0,0.7), 0 0 25px ${card.glowColor}`
                           : "0 15px 30px -10px rgba(0,0,0,0.5)",
                       }}
                     >
+                      {/* Ảnh phủ kín thẻ (poster); card overflow-hidden cắt góc 24px */}
+                      <img
+                        src={card.scene.thumbnailUrl || "/thumbnails/journey-through-fantasy-world.webp"}
+                        alt={card.displayTitle}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        loading="eager"
+                      />
+
+                      {/* Scrim đỉnh để tiêu đề luôn đọc được kể cả khi ảnh sáng */}
+                      <div
+                        className="absolute inset-x-0 top-0 h-[104px] bg-gradient-to-b from-black/75 via-black/30 to-transparent pointer-events-none"
+                        aria-hidden="true"
+                      />
+
                       {/* Tiêu đề: luôn hiện đủ chữ, không cắt */}
-                      <div className="px-1 pt-0.5 pb-2">
-                        <h3 className="text-[13px] leading-snug font-bold tracking-wide uppercase text-white">
+                      <div className="absolute inset-x-0 top-0 px-4 pt-3.5">
+                        <h3 className="text-[13px] leading-snug font-bold tracking-wide uppercase text-white drop-shadow-[0_1px_6px_rgba(0,0,0,0.55)]">
                           {card.displayTitle}
                         </h3>
-                      </div>
-
-                      {/* Khung ảnh xem trước không gian học tập */}
-                      <div className="relative flex-1 rounded-[18px] overflow-hidden bg-black/40 border border-white/10 mt-1 mb-2">
-                        <img
-                          src={card.scene.thumbnailUrl || "/thumbnails/journey-through-fantasy-world.webp"}
-                          alt={card.displayTitle}
-                          className="w-full h-full object-cover"
-                          loading="eager"
-                        />
-                        {/* Nhãn click-to-enter trên thẻ trước */}
-                        {isFront && (
-                          <div className="absolute inset-x-0 bottom-0 py-2 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-center gap-1.5 text-white/90 text-[11px] font-medium">
-                            <span>Chạm để vào không gian</span>
-                            <ArrowRightIcon className="w-3 h-3" weight="bold" />
-                          </div>
-                        )}
                       </div>
                     </motion.div>
                   );
                 })}
-              </div>
-            </div>
 
-            {/* Điều hướng Next/Prev & Dots indicator */}
-            <div className="flex items-center justify-between px-3 pt-1 pb-3">
-              <button
-                type="button"
-                onClick={handlePrevCard}
-                className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/80 active:scale-95 transition-transform"
-                aria-label="Không gian trước"
-              >
-                <CaretLeftIcon className="w-4 h-4" weight="bold" />
-              </button>
-
-              {/* Dots indicator */}
-              <div className="flex items-center gap-2">
-                {curatedCards.map((card, dotIdx) => (
-                  <button
-                    key={dotIdx}
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic();
-                      setActiveCardIndex(dotIdx);
-                    }}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      dotIdx === activeCardIndex ? "w-6 bg-white" : "w-2 bg-white/25"
-                    }`}
-                    aria-label={`Chọn ${card.displayTitle}`}
-                  />
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={handleNextCard}
-                className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/80 active:scale-95 transition-transform"
-                aria-label="Không gian tiếp theo"
-              >
-                <CaretRightIcon className="w-4 h-4" weight="bold" />
-              </button>
-            </div>
-
-            {/* Bottom Dock Navigation ở đáy */}
-            <div className="pb-3 w-full max-w-[340px] mx-auto select-none">
-              <div className="lg-bar h-[54px] p-1.5 flex items-center gap-2 shadow-2xl relative w-full overflow-hidden">
-                {/* Nút phụ: Về trang giới thiệu */}
                 <button
+                  type="button"
+                  onClick={handleNextCard}
+                  className="absolute -right-11 max-[359px]:-right-1 min-[400px]:-right-14 top-1/2 -translate-y-1/2 z-40 w-10 h-10 flex items-center justify-center text-white/85 active:scale-90 transition-transform cursor-pointer"
+                  aria-label="Không gian tiếp theo"
+                >
+                  <CaretRightIcon className="w-6 h-6 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]" weight="bold" />
+                </button>
+              </div>
+            </div>
+
+            {/* Dots indicator — nút cao 24px, tâm cách nhau ≥24px để đạt
+                WCAG 2.2 (2.5.8 Target Size); chấm vẽ bên trong giữ nguyên 8px */}
+            <div className="flex items-center justify-center gap-4 pb-2">
+              {curatedCards.map((card, dotIdx) => (
+                <button
+                  key={dotIdx}
                   type="button"
                   onClick={() => {
                     triggerHaptic();
-                    setStep(1);
+                    setActiveCardIndex(dotIdx);
                   }}
-                  className="h-full px-3.5 rounded-full flex items-center gap-1.5 text-white/70 hover:text-white hover:bg-white/[0.08] active:scale-95 transition-all cursor-pointer group select-none relative z-10 shrink-0"
-                  aria-label="Về trang giới thiệu"
+                  className="flex h-6 items-center justify-center"
+                  aria-label={`Chọn ${card.displayTitle}`}
                 >
-                  <HouseIcon className="w-4 h-4 transition-transform group-hover:scale-110" weight="regular" />
-                  <span className="text-[12px] font-medium tracking-tight text-white/80 group-hover:text-white transition-colors">
-                    Giới thiệu
-                  </span>
+                  <span
+                    className={`block h-2 rounded-full transition-all duration-300 ${
+                      dotIdx === activeCardIndex ? "w-6 bg-white" : "w-2 bg-white/25"
+                    }`}
+                  />
                 </button>
+              ))}
+            </div>
 
-                {/* Vạch chia hairline */}
-                <div className="h-4 w-[1px] bg-white/15 shrink-0" aria-hidden="true" />
-
-                {/* Nút hành động chính: Vào không gian ngay */}
-                <button
-                  type="button"
-                  onClick={() => handleSelectAndEnter(activeCard)}
-                  disabled={isEntering}
-                  className="lg-pill flex-1 h-full flex items-center justify-center gap-2 text-white font-semibold text-[13px] tracking-wide shadow-md active:scale-95 hover:bg-white/[0.22] hover:border-white/40 transition-all cursor-pointer group select-none relative z-10"
-                >
-                  <span>Vào không gian</span>
-                  <ArrowRightIcon className="w-3.5 h-3.5 text-white/90 group-hover:translate-x-0.5 transition-transform" weight="bold" />
-                </button>
-              </div>
+            {/* CTA duy nhất ở đáy: dùng đúng LiquidGlassButton của bước 1 để
+                đồng bộ nền kính và hiệu ứng (float, sheen, load → ok) */}
+            <div className="w-full pb-4 flex flex-col items-center">
+              <LiquidGlassButton
+                label="Vào không gian"
+                successLabel="Đang vào"
+                disabled={isEntering}
+                onClick={() => handleSelectAndEnter(activeCard)}
+              />
             </div>
           </motion.div>
         )}
