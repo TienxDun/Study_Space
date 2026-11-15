@@ -1,0 +1,20 @@
+# ZenStudy Space
+
+> ZenStudy Space (https://zenstudy.space) là không gian học tập ảo miễn phí cho người Việt: 30+ bối cảnh video và ảnh sống động, bộ trộn 20 âm thanh môi trường, nhạc Lo-fi/Jazz, đồng hồ Pomodoro, ghi chú nhanh và phòng học trực tuyến. Không quảng cáo, không bắt buộc đăng nhập.
+
+- Ngôn ngữ giao diện: tiếng Việt (vi-VN).
+- Miễn phí 100%. Đăng nhập Google là tuỳ chọn, chỉ dùng để đồng bộ dữ liệu đa thiết bị.
+- Dữ liệu công việc và ghi chú được lưu cục bộ trên trình duyệt (localStorage). Khi đăng nhập, bản sao lưu được đồng bộ qua Cloudflare D1.
+- Có ứng dụng Android trên Google Play (ứng dụng gói web + tính năng gốc).
+- Công nghệ: Next.js, React, Tailwind CSS; Cloudflare Pages, Workers và D1; Firebase Authentication; LiveKit cho phòng học thoại.
+
+## Trang chính
+
+- [Trang chủ](https://zenstudy.space/): không gian học tập tương tác — bối cảnh, âm thanh, nhạc, Pomodoro, công việc, ghi chú.
+- [Chính sách quyền riêng tư](https://zenstudy.space/privacy/): dữ liệu nào được lưu, ở đâu, trong bao lâu.
+- [Điều khoản sử dụng](https://zenstudy.space/terms/): quy định khi dùng dịch vụ.
+- [Xoá tài khoản](https://zenstudy.space/account-deletion/): quy trình và thời hạn xoá dữ liệu.
+
+## Optional
+
+- [Mã nguồn trên GitHub](https://github.com/TienxDun/Study_Space): kho mã công khai của dự án.

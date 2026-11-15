@@ -18,7 +18,7 @@ export function StudyJsonLd({
         "Lofi Virtual Study Space",
       ],
       url: `${siteUrl}/`,
-      applicationCategory: "EducationalApplication, ProductivityApplication",
+      applicationCategory: "EducationalApplication",
       operatingSystem: "All (Web Browser)",
       browserRequirements: "Requires JavaScript. Requires HTML5.",
       inLanguage: "vi-VN",

@@ -1,0 +1,10 @@
+# Cloudflare Pages đọc file này ở gốc thư mục xuất bản (public/ được copy vào out/).
+# Không đổi giao diện: chỉ bổ sung header bảo mật còn thiếu.
+
+/*
+  Strict-Transport-Security: max-age=15552000
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), geolocation=(), payment=(), usb=(), microphone=(self), display-capture=(self)
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://www.youtube.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://study-space-shield.leutiendung-hht.workers.dev https://i.ytimg.com https://lh3.googleusercontent.com https://www.gstatic.com; media-src 'self' data: blob: https://study-space-shield.leutiendung-hht.workers.dev; font-src 'self' data:; connect-src 'self' https://data-api.leutiendung-hht.workers.dev https://chat-proxy.leutiendung-hht.workers.dev https://livekit.leutiendung-hht.workers.dev wss://zenspace-0wtwxurv.livekit.cloud https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://firestore.googleapis.com https://*.googleapis.com https://*.firebaseapp.com https://*.goatcounter.com https://gc.zgo.at; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://open.spotify.com https://*.firebaseapp.com https://accounts.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
