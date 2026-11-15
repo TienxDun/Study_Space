@@ -26,6 +26,12 @@ type SplashPhase = "loading" | "reveal";
 const STORAGE_KEY = "zenstudy_mobile_splash_completed";
 const REVEAL_DURATION = 800;
 
+/** Thời gian đã trôi từ lúc tải trang: lớp splash tĩnh đã hiện từ khung hình đầu. */
+const pageElapsedMs = (): number => {
+  if (typeof performance === "undefined") return 0;
+  return performance.now();
+};
+
 const checkPrefersReducedMotion = (): boolean => {
   if (typeof window === "undefined" || !window.matchMedia) return false;
   try {
@@ -183,6 +189,9 @@ export const MobileSplashScreen = React.memo(function MobileSplashScreen({
   // Đếm đủ thời gian tối thiểu giữ màn hình tĩnh (chế độ xem thử dùng maxDuration để không tự chạy)
   useEffect(() => {
     if (!isVisible) return;
+    // Trừ phần thời gian đã trôi trước khi component kịp mount (mạng + hydrate):
+    // lớp splash tĩnh đã hiển thị từ khung hình đầu nên người dùng đã "xem" đủ.
+    const elapsed = pageElapsedMs();
     const timer = setTimeout(
       () => {
         minTimeDoneRef.current = true;
@@ -190,7 +199,7 @@ export const MobileSplashScreen = React.memo(function MobileSplashScreen({
           tryStartReveal();
         }
       },
-      isPreviewMode ? maxDuration : duration
+      isPreviewMode ? maxDuration : Math.max(0, duration - elapsed)
     );
     return () => clearTimeout(timer);
   }, [isVisible, duration, maxDuration, isPreviewMode, replayKey, tryStartReveal]);
@@ -245,7 +254,7 @@ export const MobileSplashScreen = React.memo(function MobileSplashScreen({
     if (!isVisible) return;
     const maxTimer = setTimeout(() => {
       performExit();
-    }, maxDuration);
+    }, Math.max(0, maxDuration - pageElapsedMs()));
     return () => clearTimeout(maxTimer);
   }, [isVisible, maxDuration, performExit]);
 
@@ -369,7 +378,10 @@ export const MobileSplashScreen = React.memo(function MobileSplashScreen({
             <motion.div
               animate={{ scale: [1, 1.08, 1], opacity: [0.22, 0.32, 0.22] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="w-[360px] h-[360px] rounded-full bg-[radial-gradient(circle,rgba(56,189,248,0.14)_0%,rgba(148,163,184,0.05)_45%,transparent_70%)] blur-3xl pointer-events-none"
+              // Không dùng blur-3xl: trình duyệt phải tính lại lớp blur 64px mỗi khung
+              // hình trong suốt lúc khởi động. Gradient tròn đã đủ mềm, chỉ animate
+              // transform + opacity (thuần GPU).
+              className="w-[360px] h-[360px] rounded-full bg-[radial-gradient(circle,rgba(56,189,248,0.14)_0%,rgba(148,163,184,0.05)_40%,transparent_68%)] pointer-events-none"
             />
           </div>
 
@@ -381,7 +393,7 @@ export const MobileSplashScreen = React.memo(function MobileSplashScreen({
             )}
           >
             <div className="relative flex items-center justify-center w-20 h-20">
-              {/* Vầng sáng mờ phía sau logo (thay cho drop-shadow nặng trên ảnh) */}
+              {/* Vầng sáng phía sau logo: gradient tròn thay cho blur-2xl (blur phải tính lại mỗi khung hình) */}
               <motion.div
                 initial={false}
                 animate={
@@ -390,7 +402,7 @@ export const MobileSplashScreen = React.memo(function MobileSplashScreen({
                     : { opacity: 0.4, scale: 1 }
                 }
                 transition={{ duration: 0.8, ease: "easeInOut" }}
-                className="absolute inset-0 rounded-full bg-sky-400/30 blur-2xl pointer-events-none"
+                className="absolute -inset-6 rounded-full bg-[radial-gradient(circle,rgba(56,189,248,0.32)_0%,rgba(56,189,248,0.12)_45%,transparent_72%)] pointer-events-none"
               />
               {/* Logo: tĩnh lúc đang tải, phóng nhẹ một lần ở giai đoạn reveal */}
               <motion.div

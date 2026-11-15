@@ -15,6 +15,10 @@ interface UseSceneStateOptions {
   isMobile: boolean;
 }
 
+function isNarrowViewport(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches;
+}
+
 export function useSceneState({ isMobile }: UseSceneStateOptions) {
   const {
     currentScene,
@@ -90,7 +94,9 @@ export function useSceneState({ isMobile }: UseSceneStateOptions) {
       if (savedSceneId) {
         const found = STUDY_SCENES.find((s) => s.id === savedSceneId);
         if (found) setCurrentSceneDirectly(found);
-      } else if (STUDY_SCENES.length > 0) {
+      } else if (STUDY_SCENES.length > 0 && !isNarrowViewport()) {
+        // Điện thoại lần đầu giữ cảnh mặc định: bốc ngẫu nhiên trong 40 cảnh có thể
+        // trúng ảnh gốc 1,2–1,5MB, tải ngay dưới Splash/Welcome mà không ai thấy.
         const random =
           STUDY_SCENES[Math.floor(Math.random() * STUDY_SCENES.length)];
         setCurrentSceneDirectly(random, { persist: false });

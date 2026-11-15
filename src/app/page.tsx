@@ -335,7 +335,10 @@ export default function StudySpacePage() {
           onFocus={() => state.bringPanelToFront("rooms")}
         />
       )}
-      {state.isMobile && (
+      {/* Phòng học kéo theo chunk livekit-client (~1MB nén còn ~256KB): chỉ mount sau
+          onboarding để splash/welcome không phải chờ nó. Khi đóng bảng widget không vẽ gì
+          nên hoãn mount không đổi giao diện. */}
+      {state.isMobile && hasEntered && (
         <MobileRoomsWidget
           isOpen={state.isRoomsOpen}
           onClose={handleCloseRooms}

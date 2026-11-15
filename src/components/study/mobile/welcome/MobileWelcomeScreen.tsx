@@ -6,10 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRightIcon,
   HouseIcon,
-  CloudRainIcon,
-  CoffeeIcon,
-  MountainsIcon,
-  SparkleIcon,
   CaretLeftIcon,
   CaretRightIcon,
 } from "@phosphor-icons/react";
@@ -34,10 +30,8 @@ const STORAGE_KEY = STORAGE_KEYS.mobileWelcomeCompleted;
 interface CuratedCard {
   scene: Scene;
   displayTitle: string;
-  tag: string;
   glowColor: string;
-  accentColor: string;
-  icon: React.ReactNode;
+
 }
 
 /**
@@ -80,34 +74,26 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
       {
         scene: findScene("fantasy", 0),
         displayTitle: "THẾ GIỚI HUYỀN ẢO",
-        tag: "Tập trung sâu",
         glowColor: "rgba(217, 119, 6, 0.28)",
-        accentColor: "#F59E0B",
-        icon: <MountainsIcon className="w-4 h-4 text-amber-300" weight="fill" />,
+
       },
       {
         scene: findScene("rainy", 1),
         displayTitle: "THUNG LŨNG MƯA",
-        tag: "Mưa êm dịu",
         glowColor: "rgba(16, 185, 129, 0.28)",
-        accentColor: "#10B981",
-        icon: <CloudRainIcon className="w-4 h-4 text-emerald-300" weight="fill" />,
+
       },
       {
         scene: findScene("living room", 2),
         displayTitle: "CĂN NHÀ GỖ ẤM ÁP",
-        tag: "Thư giãn & Chill",
         glowColor: "rgba(249, 115, 22, 0.28)",
-        accentColor: "#F97316",
-        icon: <CoffeeIcon className="w-4 h-4 text-orange-300" weight="fill" />,
+
       },
       {
         scene: findScene("tofu", 3),
         displayTitle: "TIỆM ĐẬU PHỤ FUJIWARA",
-        tag: "Lofi đêm khuya",
         glowColor: "rgba(99, 102, 241, 0.28)",
-        accentColor: "#818CF8",
-        icon: <SparkleIcon className="w-4 h-4 text-indigo-300" weight="fill" />,
+
       },
     ];
   }, []);
@@ -209,8 +195,10 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
         {/* NỀN AMBIENT DYNAMIC TỐI ƯU GPU: KHÔNG DÙNG BLUR NẶNG NỀ         */}
         {/* ============================================================== */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Gradient tròn đã mềm sẵn: bỏ blur-3xl vì lớp blur 64px kích thước nửa
+              màn hình bị raster lại mỗi lần đổi thẻ */}
           <div
-            className="absolute -top-[10%] left-1/2 -translate-x-1/2 w-[110%] h-[50%] rounded-full opacity-25 blur-3xl transform-gpu pointer-events-none transition-colors duration-500"
+            className="absolute -top-[10%] left-1/2 -translate-x-1/2 w-[110%] h-[50%] rounded-full opacity-25 transform-gpu pointer-events-none transition-colors duration-500"
             style={{
               background: `radial-gradient(circle, ${activeCard?.glowColor || "rgba(251, 191, 36, 0.25)"} 0%, transparent 70%)`,
             }}
@@ -353,22 +341,11 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
                           : "0 15px 30px -10px rgba(0,0,0,0.5)",
                       }}
                     >
-                      {/* Tiêu đề & Tag loại không gian */}
-                      <div className="flex items-center justify-between gap-2 px-1 pt-0.5 pb-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div
-                            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 border border-white/10"
-                            style={{ background: `${card.accentColor}25` }}
-                          >
-                            {card.icon}
-                          </div>
-                          <span className="text-[12px] font-bold tracking-wider uppercase text-white truncate">
-                            {card.displayTitle}
-                          </span>
-                        </div>
-                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/10 text-white/80 shrink-0">
-                          {card.tag}
-                        </span>
+                      {/* Tiêu đề: luôn hiện đủ chữ, không cắt */}
+                      <div className="px-1 pt-0.5 pb-2">
+                        <h3 className="text-[13px] leading-snug font-bold tracking-wide uppercase text-white">
+                          {card.displayTitle}
+                        </h3>
                       </div>
 
                       {/* Khung ảnh xem trước không gian học tập */}
@@ -386,17 +363,6 @@ export const MobileWelcomeScreen = React.memo(function MobileWelcomeScreen(
                             <ArrowRightIcon className="w-3 h-3" weight="bold" />
                           </div>
                         )}
-                      </div>
-
-                      {/* Vạch tiến độ nhỏ đáy thẻ */}
-                      <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-300"
-                          style={{
-                            width: `${((activeCardIndex + 1) / totalCards) * 100}%`,
-                            background: card.accentColor,
-                          }}
-                        />
                       </div>
                     </motion.div>
                   );
