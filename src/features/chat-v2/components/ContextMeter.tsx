@@ -80,10 +80,12 @@ export function ContextMeter({
         ? "var(--chat-amber)"
         : "var(--chat-accent)";
 
+  const contextSize = modelInfo ? formatContextSize(modelInfo.contextTokens) : "-";
+  const contextSizeLabel = contextSize === "-" ? "chưa rõ" : contextSize;
   const label = context
     ? `${formatTokens(estimatedInput)} / ${formatTokens(maxInput)}`
     : modelInfo
-      ? `${formatContextSize(modelInfo.contextTokens)} context`
+      ? `${contextSizeLabel} context`
       : "context";
 
   return (
@@ -109,7 +111,7 @@ export function ContextMeter({
           }}
         >
           <div className="absolute inset-[3px] grid place-items-center rounded-full bg-chat-elevated text-[9px] font-semibold text-chat-sub shadow-inner">
-            {context ? percentDisplay : modelInfo ? formatContextSize(modelInfo.contextTokens) : "—"}
+            {context ? percentDisplay : modelInfo ? contextSize : "—"}
           </div>
           {summarizing ? (
             <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 animate-pulse rounded-full border border-chat-bg bg-chat-amber motion-reduce:animate-none" />
@@ -141,7 +143,7 @@ export function ContextMeter({
               <span className="font-semibold text-chat-ink">
                 {percentDisplay}{" "}
                 <span className="text-[10px] font-normal text-chat-muted">
-                  ({context ? `${formatTokens(estimatedInput)} / ${formatTokens(maxInput)}` : `${formatContextSize(modelInfo?.contextTokens)} tối đa`})
+                  ({context ? `${formatTokens(estimatedInput)} / ${formatTokens(maxInput)}` : `${contextSizeLabel} tối đa`})
                 </span>
               </span>
             </div>

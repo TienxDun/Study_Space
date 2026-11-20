@@ -18,7 +18,7 @@ Track sản phẩm (S4–S7) làm chatbot đủ hay trước; track này làm n�
 | 3 | Phiên | localStorage, 30 phiên/200 tin; ảnh base64 không lưu; snapshot D1 2MB không chứa nổi | Đổi máy mất dữ liệu; không học tiếp trên thiết bị khác; xoá tài khoản không xoá phiên v2 | P1 |
 | 4 | An toàn | Chỉ có prompt; không moderation đầu ra; không nút báo cáo trong v2; `ageBand` lấy từ env | Rủi ro nội dung; không đáp ứng Play AI policy/AI Law; không có nhật ký xử lý | P2 |
 | 5 | Vận hành | Route dev bị strip khỏi export; không flag/rollout; model 503 và timeout 60s; không dashboard lỗi/chi phí | Không tắt khẩn cấp được; không biết đang lỗi gì; không rollback | P3 |
-| 6 | Sản phẩm | Key-tier picker là công cụ dev; 19 model gây rối; chưa có PDF/OCR | Người dùng thật khó dùng; thiếu tính năng học tập cốt lõi | Sản phẩm S4–S7 |
+| 6 | Sản phẩm | Key-tier picker là công cụ dev; danh mục 66 model với 50 model chưa kiểm/đang hỏng (bị khoá); chưa có PDF/OCR | Người dùng thật khó dùng; thiếu tính năng học tập cốt lõi | Sản phẩm S4–S7 |
 
 ## 3. Nguyên tắc production
 

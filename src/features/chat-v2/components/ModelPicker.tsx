@@ -8,12 +8,13 @@ import {
   CpuIcon,
   EyeIcon,
   LightningIcon,
+  LockSimpleIcon,
   MagnifyingGlassIcon,
   SparkleIcon,
   TextAlignLeftIcon,
 } from "@phosphor-icons/react";
 import type { ChatV2Model } from "../types";
-import { CHAT_V2_FREE_MODELS, NON_CHAT_MODEL_RE } from "../lib/config";
+import { NON_CHAT_MODEL_RE } from "../lib/config";
 import {
   PRICE_SORT_OPTIONS,
   formatPricePair,
@@ -40,10 +41,44 @@ interface FilterChip {
   icon?: typeof SparkleIcon;
 }
 
+function isLocked(model: ChatV2Model): boolean {
+  return model.available !== true;
+}
+
+function lockLabel(model: ChatV2Model): string | null {
+  if (model.available === false) return "Tạm không khả dụng";
+  if (model.available === null) return "Đang xác minh";
+  return null;
+}
+
+function visionLabel(vision: boolean | null): string {
+  if (vision === true) return "đọc ảnh";
+  if (vision === false) return "chỉ chữ";
+  return "chưa rõ ảnh";
+}
+
+function checkedLabel(model: ChatV2Model): string | null {
+  if (!model.checkedAt) return null;
+  const date = new Date(model.checkedAt);
+  if (Number.isNaN(date.getTime())) return null;
+  return `${date.getDate()}/${date.getMonth() + 1}`;
+}
+
+function verifyTitle(model: ChatV2Model): string {
+  if (model.available === false) return `Đang hỏng: ${model.id}`;
+  if (model.available !== true) return `Chưa xác minh: ${model.id}`;
+  const checked = model.checkedAt ? new Date(model.checkedAt) : null;
+  const when = checked && !Number.isNaN(checked.getTime()) ? checked.toLocaleString("vi-VN") : "chưa rõ";
+  const parts = [`Đã xác minh lúc ${when}`];
+  if (model.specSource) parts.push(`Ngữ cảnh: ${model.specSource}`);
+  if (model.visionSource) parts.push(`Đọc ảnh: ${model.visionSource}`);
+  return parts.join(" · ");
+}
+
 function matchesFilter(model: ChatV2Model, filter: string): boolean {
   if (filter === "all") return true;
-  if (filter === "free") return CHAT_V2_FREE_MODELS.has(model.id);
-  if (filter === "vision") return !!model.vision;
+  if (filter === "free") return model.free;
+  if (filter === "vision") return model.vision === true;
   return providerOf(model).key === filter;
 }
 
@@ -73,16 +108,19 @@ export function ModelPicker({
   }, [models]);
 
   // Đếm số lượng model theo từng bộ lọc
-  const { typeChips, providerChips } = useMemo<{
+  const { typeChips, providerChips, usableCount } = useMemo<{
     typeChips: FilterChip[];
     providerChips: FilterChip[];
+    usableCount: number;
   }>(() => {
     let free = 0;
     let vision = 0;
+    let usable = 0;
     const providerCounts = new Map<string, number>();
     for (const model of cleanModels) {
-      if (CHAT_V2_FREE_MODELS.has(model.id)) free++;
-      if (model.vision) vision++;
+      if (model.free) free++;
+      if (model.vision === true) vision++;
+      if (!isLocked(model)) usable++;
       const key = providerOf(model).key;
       providerCounts.set(key, (providerCounts.get(key) || 0) + 1);
     }
@@ -103,7 +141,7 @@ export function ModelPicker({
       providers.push({ key: OTHER_PROVIDER.key, label: OTHER_PROVIDER.label, count: otherCount });
     }
 
-    return { typeChips: types, providerChips: providers };
+    return { typeChips: types, providerChips: providers, usableCount: usable };
   }, [cleanModels]);
 
   const allFilterKeys = useMemo(
@@ -180,6 +218,8 @@ export function ModelPicker({
   }, [providerOpen]);
 
   const choose = (id: string) => {
+    const target = models.find((item) => item.id === id);
+    if (target && isLocked(target)) return;
     onChange(id);
     setOpen(false);
   };
@@ -187,7 +227,8 @@ export function ModelPicker({
   const contextLabel = valueInfo ? formatContextSize(valueInfo.contextTokens) : "";
   const priceLabel = valueInfo ? formatPricePair(valueInfo) : "";
   const triggerPrice = priceLabel && priceLabel !== "—" ? priceLabel : "";
-  const isSelectedFree = CHAT_V2_FREE_MODELS.has(value);
+  const isSelectedFree = valueInfo?.free === true;
+  const valueLock = valueInfo ? lockLabel(valueInfo) : null;
 
   return (
     <div ref={rootRef} className="relative">
@@ -208,15 +249,25 @@ export function ModelPicker({
             <span className="truncate text-[12px] font-semibold text-chat-ink">
               {value}
             </span>
-            {isSelectedFree ? (
+            {valueLock ? (
+              <span
+                className={`hidden shrink-0 rounded-md border px-1 py-0.2 text-[8px] font-bold sm:inline-block ${
+                  valueInfo?.available === false
+                    ? "border-chat-rose-border bg-chat-rose-soft text-chat-rose"
+                    : "border-chat-amber-border bg-chat-amber-soft text-chat-amber"
+                }`}
+              >
+                {valueInfo?.available === false ? "HỎNG" : "CHƯA KIỂM"}
+              </span>
+            ) : isSelectedFree ? (
               <span className="hidden shrink-0 rounded-md border border-chat-accent-border bg-chat-accent-soft px-1 py-0.2 text-[8px] font-bold text-chat-accent sm:inline-block">
                 FREE
               </span>
             ) : null}
           </span>
           <span className="flex items-center gap-1.5 text-[10px] text-chat-muted">
-            {contextLabel ? <span>{contextLabel} context</span> : null}
-            {valueInfo ? (
+            {contextLabel && contextLabel !== "-" ? <span>{contextLabel} context</span> : null}
+            {valueInfo && valueInfo.vision !== null ? (
               <span className="inline-flex items-center gap-0.5">
                 {valueInfo.vision ? <EyeIcon size={10} aria-hidden="true" /> : <TextAlignLeftIcon size={10} aria-hidden="true" />}
                 {valueInfo.vision ? "ảnh" : "chữ"}
@@ -379,33 +430,46 @@ export function ModelPicker({
           <div className="max-h-[330px] overflow-y-auto p-1.5 custom-study-scroll">
             {filtered.length === 0 ? (
               <p className="px-3 py-6 text-center text-xs text-chat-muted">
-                Không tìm thấy model nào phù hợp.
+                {cleanModels.length === 0
+                  ? "Chưa tải được danh mục model đã xác minh."
+                  : "Không tìm thấy model nào phù hợp."}
               </p>
             ) : (
               filtered.map((model, index) => {
                 const selected = model.id === value;
                 const active = index === activeIndex;
-                const isFree = CHAT_V2_FREE_MODELS.has(model.id);
+                const isFree = model.free;
+                const lock = lockLabel(model);
+                const checked = model.available === true ? checkedLabel(model) : null;
                 return (
                   <button
                     key={model.id}
                     type="button"
                     role="option"
                     aria-selected={selected}
+                    aria-disabled={lock ? true : undefined}
+                    disabled={!!lock}
+                    title={verifyTitle(model)}
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={() => choose(model.id)}
                     className={`group flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition ${
-                      active ? "bg-chat-hover" : "hover:bg-chat-hover"
+                      lock
+                        ? "cursor-not-allowed opacity-60"
+                        : active
+                          ? "bg-chat-hover"
+                          : "hover:bg-chat-hover"
                     }`}
                   >
                     <span
                       className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border ${
-                        selected
+                        selected && !lock
                           ? "border-chat-accent-border bg-chat-accent-soft text-chat-accent"
                           : "border-chat-border bg-chat-surface text-chat-muted group-hover:text-chat-ink"
                       }`}
                     >
-                      {model.vision ? (
+                      {lock ? (
+                        <LockSimpleIcon size={13} aria-hidden="true" />
+                      ) : model.vision === true ? (
                         <EyeIcon size={13} aria-hidden="true" />
                       ) : (
                         <TextAlignLeftIcon size={13} aria-hidden="true" />
@@ -416,7 +480,17 @@ export function ModelPicker({
                         <span className="truncate text-[12px] font-semibold text-chat-ink">
                           {model.id}
                         </span>
-                        {isFree ? (
+                        {lock ? (
+                          <span
+                            className={`shrink-0 rounded-md border px-1.5 py-0.2 text-[9px] font-semibold tracking-wide ${
+                              model.available === false
+                                ? "border-chat-rose-border bg-chat-rose-soft text-chat-rose"
+                                : "border-chat-amber-border bg-chat-amber-soft text-chat-amber"
+                            }`}
+                          >
+                            {lock}
+                          </span>
+                        ) : isFree ? (
                           <span className="shrink-0 rounded-md border border-chat-accent-border bg-chat-accent-soft px-1.5 py-0.2 text-[9px] font-semibold tracking-wide text-chat-accent">
                             Miễn phí
                           </span>
@@ -424,7 +498,8 @@ export function ModelPicker({
                       </span>
                       <span className="block truncate text-[10px] text-chat-muted">
                         {providerOf(model).label} · {formatContextSize(model.contextTokens)} ·{" "}
-                        {model.vision ? "đọc ảnh" : "chỉ chữ"}
+                        {visionLabel(model.vision)}
+                        {checked ? ` · ✓ ${checked}` : ""}
                       </span>
                     </span>
                     <span
@@ -437,7 +512,7 @@ export function ModelPicker({
                     >
                       {formatPricePair(model)}
                     </span>
-                    {selected ? (
+                    {selected && !lock ? (
                       <CheckIcon
                         size={14}
                         weight="bold"
@@ -454,7 +529,7 @@ export function ModelPicker({
           {/* Footer: số lượng + sắp xếp theo giá */}
           <div className="flex items-center justify-between gap-2 border-t border-chat-border px-3 py-1.5 text-[10px] text-chat-faint">
             <span>
-              {filtered.length}/{cleanModels.length} model khả dụng
+              {filtered.length}/{cleanModels.length} model · {usableCount} dùng được
             </span>
 
             <div ref={sortRef} className="relative shrink-0">

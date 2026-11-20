@@ -217,9 +217,10 @@ Font: **Be Vietnam Pro** (đã cấu hình `--font-be-vietnam`).
 - Desktop: popover 390px neo phải nút.
 - Mobile: popover full chiều rộng (`inset-x-3`), bắt đầu dưới topbar; không tràn ngang.
 - Search, danh sách cuộn, check model đang chọn.
-- Mỗi option: tên, provider, context, vision; giá vào/ra mỗi 1M token nằm cột phải, có tooltip giải thích.
-- Hàng lọc chỉ giữ 3 chip loại model (`Tất cả`, `Miễn phí`, `Đọc ảnh`); các hãng gom vào dropdown `Hãng` (nút hiển thị tên hãng đang lọc), không cuộn ngang, không cắt chữ.
-- Nút sắp xếp theo giá nằm ở footer cạnh số lượng model: `Mặc định` / `Giá thấp → cao` / `Giá cao → thấp`; menu mở lên trên và có chú thích `Giá vào/ra · USD / 1M token`. Xếp hạng dùng chi phí ước tính `vào × 3 + ra`; model chưa có giá luôn nằm cuối.
+- Mỗi option: tên, provider, context, vision; giá vào/ra mỗi 1M token nằm cột phải, có tooltip giải thích. Model đã kiểm có thêm `✓ ngày kiểm`; hover option hiện nguồn (`models.dev`, motapis, probe).
+- Model chưa xác minh (`available: null`) hiện nhãn **Đang xác minh**; model đã kiểm nhưng hỏng (`available: false`) hiện **Tạm không khả dụng**. Cả hai bị disable, không chọn được, icon ổ khoá.
+- Hàng lọc chỉ giữ 3 chip loại model (`Tất cả`, `Miễn phí`, `Đọc ảnh`); `Miễn phí` lấy từ `free` của danh mục, không phải danh sách gõ cứng. Các hãng gom vào dropdown `Hãng` (nút hiển thị tên hãng đang lọc), không cuộn ngang, không cắt chữ.
+- Nút sắp xếp theo giá nằm ở footer cạnh số lượng model: `Mặc định` / `Giá thấp → cao` / `Giá cao → thấp`; menu mở lên trên và có chú thích `Giá vào/ra · USD / 1M token`. Xếp hạng dùng chi phí ước tính `vào × 3 + ra`; model chưa có giá luôn nằm cuối. Footer đếm `đã lọc/tổng model · N dùng được`.
 - Giá lấy từ bảng niêm yết motapis (`models.js`, USD / 1M token), không phải số tự tính.
 - Không dùng native select trần; popover phải đóng khi click ngoài/Escape.
 - Tương lai: thêm nhóm provider/nhãn “mạnh”, nhưng không đổi vị trí.
@@ -290,7 +291,8 @@ Font: **Be Vietnam Pro** (đã cấu hình `--font-be-vietnam`).
 | Trạng thái | Hiển thị |
 |---|---|
 | Trống | EmptyState + gợi ý |
-| Đang tải model | Fallback list + callout nếu lỗi |
+| Đang tải model | Không seed danh sách dự phòng; picker trống + callout nếu Worker không tải được danh mục |
+| Model bị khoá | Option disable: **Đang xác minh** (amber) / **Tạm không khả dụng** (rose); chặn gửi, tự chuyển sang model khả dụng kèm callout |
 | Đang stream | Chấm/con trỏ + nút Dừng |
 | Đã dừng | Callout “Đã dừng câu trả lời” |
 | Bị cắt | Callout finish_reason |

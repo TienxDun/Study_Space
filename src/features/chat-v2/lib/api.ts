@@ -62,12 +62,18 @@ export async function fetchChatV2Models(keyTier: ChatV2KeyTier = "auto"): Promis
       if (!item || typeof item !== "object") return null;
       const row = item as Record<string, unknown>;
       if (typeof row.id !== "string" || !row.id) return null;
+      // Không tự điền giá trị mặc định: thiếu dữ liệu thì để null để UI khoá model.
       return {
         id: row.id,
         ownedBy: typeof row.ownedBy === "string" ? row.ownedBy : "",
-        contextTokens: typeof row.contextTokens === "number" ? row.contextTokens : 16384,
-        maxOutputTokens: typeof row.maxOutputTokens === "number" ? row.maxOutputTokens : 4096,
-        vision: row.vision === true,
+        contextTokens: typeof row.contextTokens === "number" ? row.contextTokens : null,
+        maxOutputTokens: typeof row.maxOutputTokens === "number" ? row.maxOutputTokens : null,
+        vision: row.vision === true ? true : row.vision === false ? false : null,
+        free: row.free === true,
+        available: row.available === true ? true : row.available === false ? false : null,
+        visionSource: typeof row.visionSource === "string" ? row.visionSource : null,
+        specSource: typeof row.specSource === "string" ? row.specSource : null,
+        checkedAt: typeof row.checkedAt === "string" ? row.checkedAt : null,
         priceIn: typeof row.priceIn === "number" ? row.priceIn : null,
         priceOut: typeof row.priceOut === "number" ? row.priceOut : null,
       };

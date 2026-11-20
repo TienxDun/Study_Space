@@ -7,7 +7,7 @@ Chỉ mục tài liệu đang dùng. File trong [`archive/`](./archive/README.md
 | Tài liệu | Vai trò |
 |---|---|
 | [`features/PHONG_HOC_NHOM.md`](./features/PHONG_HOC_NHOM.md) | Nguồn thông tin chính về phòng học nhóm LiveKit, quota, D1, cấu hình và checklist P2-6 |
-| [`features/CHATBOT_V2_PLAN.md`](./features/CHATBOT_V2_PLAN.md) | Track sản phẩm chatbot v2: S0–S3 đã xong, S4–S7 tiếp theo, prompt 16+, model, token budget |
+| [`features/CHATBOT_V2_PLAN.md`](./features/CHATBOT_V2_PLAN.md) | Track sản phẩm chatbot v2: S0–S3 + UI + danh mục model tự xác minh đã xong (dev), S4–S7 tiếp theo, prompt 16+, token budget |
 | [`features/CHATBOT_V2_PRODUCTION_PLAN.md`](./features/CHATBOT_V2_PRODUCTION_PLAN.md) | Track DevOps/production chatbot v2 (auth, quota, D1, moderation, rollout) — làm sau S7 |
 | [`guides/CHAT_V2_STYLE_GUIDE.md`](./guides/CHAT_V2_STYLE_GUIDE.md) | Style guide UI chatbot v2 — nền cho Sprint 3–5 |
 | [`guides/UI_REFERENCE_REPOS.md`](./guides/UI_REFERENCE_REPOS.md) | Nguồn tham khảo repo GitHub UI/design để viết skill |

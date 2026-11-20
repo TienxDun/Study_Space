@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import worker from "../../../../workers/chat-v2/worker.js";
+import { listCatalog } from "../../../../workers/chat-v2/catalog.js";
 
 const ENV = {
   MOTAPIS_API_KEY: "sk-test",
@@ -135,7 +136,7 @@ describe("chat v2 Worker — system prompt", () => {
 
     const res = await worker.fetch(
       chatRequest({
-        model: "qwen3.8-max",
+        model: "deepseek-v4-flash",
         messages: [{ role: "user", content: "Xem ảnh này" }],
         images: [{ name: "de.png", data: PIXEL }],
       }),
@@ -148,12 +149,14 @@ describe("chat v2 Worker — system prompt", () => {
     expect(content[1]).toMatchObject({ type: "image_url" });
   });
 
-  it("chặn ảnh với model không có vision", async () => {
+  it("chặn ảnh với model chưa xác minh đọc ảnh", async () => {
+    const blocked = listCatalog().find((model) => model.vision !== true && model.contextTokens)!;
+    expect(blocked).toBeTruthy();
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     const res = await worker.fetch(
       chatRequest({
-        model: "grok-4.5",
+        model: blocked.id,
         messages: [{ role: "user", content: "Xem ảnh" }],
         images: [{ name: "de.png", data: PIXEL }],
       }),
@@ -322,6 +325,10 @@ const DUAL_ENV = {
   MOTAPIS_API_KEY_FREE: "sk-free",
 };
 
+function paidUsableModel() {
+  return listCatalog().find((model) => !model.free && model.contextTokens && model.available !== false)!.id;
+}
+
 function okReply() {
   return new Response(
     JSON.stringify({
@@ -372,7 +379,7 @@ describe("chat v2 Worker — định tuyến hai API key", () => {
       DUAL_ENV
     );
     const paid = await worker.fetch(
-      chatRequest({ model: "deepseek-v4-pro", messages: [{ role: "user", content: "Xin chào" }] }),
+      chatRequest({ model: paidUsableModel(), messages: [{ role: "user", content: "Xin chào" }] }),
       DUAL_ENV
     );
 
@@ -403,7 +410,7 @@ describe("chat v2 Worker — định tuyến hai API key", () => {
     expect(auths).toEqual(["Bearer sk-free", "Bearer sk-paid"]);
   });
 
-  it("lỗi 5xx của key free không fallback", async () => {
+  it("lỗi 5xx của key free không đổi key, chỉ thử lại đúng 1 lần", async () => {
     const auths: string[] = [];
     vi.stubGlobal(
       "fetch",
@@ -419,31 +426,25 @@ describe("chat v2 Worker — định tuyến hai API key", () => {
     );
 
     expect(res.status).toBe(502);
-    expect(auths).toEqual(["Bearer sk-free"]);
+    expect(auths).toEqual(["Bearer sk-free", "Bearer sk-free"]);
   });
 
-  it("/models ưu tiên key trả phí và fallback key free khi bị chặn", async () => {
-    const auths: string[] = [];
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
-        auths.push(authOf(init));
-        if (auths.length === 1) {
-          return new Response(JSON.stringify({ error: "quota" }), { status: 429 });
-        }
-        return new Response(
-          JSON.stringify({ data: [{ id: "deepseek-v4-flash", owned_by: "deepseek" }] }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
-        );
-      })
-    );
+  it("/models trả danh mục đã xác minh, không gọi Motapis", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
 
     const res = await worker.fetch(modelsRequest(), DUAL_ENV);
 
     expect(res.status).toBe(200);
-    expect(auths).toEqual(["Bearer sk-paid", "Bearer sk-free"]);
-    const data = (await res.json()) as { count: number };
-    expect(data.count).toBe(1);
+    expect(fetchMock).not.toHaveBeenCalled();
+    const data = (await res.json()) as {
+      count: number;
+      generatedAt: string | null;
+      data: Array<{ id: string; free: boolean }>;
+    };
+    expect(data.count).toBe(listCatalog().length);
+    expect(data.generatedAt).toBeTruthy();
+    expect(data.data.some((model) => model.free)).toBe(true);
   });
 });
 
@@ -491,7 +492,7 @@ describe("chat v2 Worker — chọn key thủ công từ client", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const res = await worker.fetch(
-      tieredChatRequest({ model: "deepseek-v4-pro", messages: [{ role: "user", content: "Xin chào" }] }, "free"),
+      tieredChatRequest({ model: paidUsableModel(), messages: [{ role: "user", content: "Xin chào" }] }, "free"),
       DUAL_ENV
     );
 
@@ -499,7 +500,7 @@ describe("chat v2 Worker — chọn key thủ công từ client", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("chế độ free không fallback sang key trả phí khi bị 429", async () => {
+  it("chế độ free không fallback sang key trả phí khi bị 429, chỉ thử lại key free", async () => {
     const auths: string[] = [];
     vi.stubGlobal(
       "fetch",
@@ -515,41 +516,116 @@ describe("chat v2 Worker — chọn key thủ công từ client", () => {
     );
 
     expect(res.status).toBe(429);
-    expect(auths).toEqual(["Bearer sk-free"]);
+    expect(auths).toEqual(["Bearer sk-free", "Bearer sk-free"]);
   });
 
-  it("/models?key=free chỉ dùng key free, không fallback", async () => {
-    const auths: string[] = [];
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
-        auths.push(authOf(init));
-        return new Response(
-          JSON.stringify({ data: [{ id: "deepseek-v4-flash", owned_by: "deepseek" }] }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
-        );
-      })
-    );
+  it("/models?key=free chỉ trả model thuộc gói free", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
 
     const res = await worker.fetch(modelsRequest("free"), DUAL_ENV);
 
     expect(res.status).toBe(200);
-    expect(auths).toEqual(["Bearer sk-free"]);
+    expect(fetchMock).not.toHaveBeenCalled();
+    const data = (await res.json()) as { data: Array<{ free: boolean }> };
+    expect(data.data.length).toBeGreaterThan(0);
+    expect(data.data.every((model) => model.free === true)).toBe(true);
   });
 
-  it("/models?key=paid chỉ dùng key trả phí, không fallback", async () => {
-    const auths: string[] = [];
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
-        auths.push(authOf(init));
-        return new Response(JSON.stringify({ error: "quota" }), { status: 429 });
-      })
-    );
+  it("/models?key=paid trả toàn bộ danh mục", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
 
     const res = await worker.fetch(modelsRequest("paid"), DUAL_ENV);
 
+    expect(res.status).toBe(200);
+    expect(fetchMock).not.toHaveBeenCalled();
+    const data = (await res.json()) as { count: number };
+    expect(data.count).toBe(listCatalog().length);
+  });
+});
+
+describe("chat v2 Worker — map lỗi theo docs MộtAPI", () => {
+  it("402 báo hết số dư ví và giữ mã 402", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ error: "insufficient balance" }), { status: 402 }))
+    );
+
+    const res = await worker.fetch(
+      chatRequest({ model: "deepseek-v4-flash", messages: [{ role: "user", content: "Xin chào" }] }),
+      DUAL_ENV
+    );
+
+    expect(res.status).toBe(402);
+    const data = (await res.json()) as { error?: string };
+    expect(String(data.error)).toContain("số dư");
+  });
+
+  it("403 báo khoá không có quyền dùng model", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ error: "plan does not include model" }), { status: 403 }))
+    );
+
+    const res = await worker.fetch(
+      chatRequest({ model: "deepseek-v4-flash", messages: [{ role: "user", content: "Xin chào" }] }),
+      DUAL_ENV
+    );
+
+    expect(res.status).toBe(403);
+    const data = (await res.json()) as { error?: string };
+    expect(String(data.error)).toContain("quyền");
+  });
+
+  it("429 giữ mã 429 và nhắc chờ", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ error: "rate limited" }), { status: 429 }))
+    );
+
+    const res = await worker.fetch(
+      chatRequest({ model: "deepseek-v4-flash", messages: [{ role: "user", content: "Xin chào" }] }),
+      DUAL_ENV
+    );
+
     expect(res.status).toBe(429);
-    expect(auths).toEqual(["Bearer sk-paid"]);
+    const data = (await res.json()) as { error?: string };
+    expect(String(data.error)).toContain("429");
+  });
+
+  it("HTTP 200 kèm trường error vẫn phải trả lỗi", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(JSON.stringify({ error: { message: "upstream boom" }, choices: [] }), { status: 200 })
+      )
+    );
+
+    const res = await worker.fetch(
+      chatRequest({ model: "deepseek-v4-flash", messages: [{ role: "user", content: "Xin chào" }] }),
+      DUAL_ENV
+    );
+
+    expect(res.status).toBe(502);
+  });
+
+  it("gửi max_tokens theo capability của model", async () => {
+    let upstream: Record<string, unknown> | null = null;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        upstream = JSON.parse(String(init?.body));
+        return okReply();
+      })
+    );
+
+    const res = await worker.fetch(
+      chatRequest({ model: "deepseek-v4-flash", messages: [{ role: "user", content: "Xin chào" }] }),
+      DUAL_ENV
+    );
+
+    expect(res.status).toBe(200);
+    expect(upstream!.max_tokens).toBe(16384);
   });
 });

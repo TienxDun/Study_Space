@@ -10,17 +10,18 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 // motapis trả owned_by = "openai" cho hầu hết model, chỉ claude là "claude"
 const MOCK_MODELS: ChatV2Model[] = [
-  { id: "deepseek-v4-flash", ownedBy: "openai", contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 0.07, priceOut: 0.14 },
-  { id: "claude-sonnet-5-5", ownedBy: "claude", contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 1.2, priceOut: 6 },
-  { id: "deepseek-v4-pro", ownedBy: "openai", contextTokens: 1048576, maxOutputTokens: 16384, vision: false, priceIn: 0.22, priceOut: 0.44 },
-  { id: "gpt-6-luna", ownedBy: "openai", contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 0.1, priceOut: 0.5 },
-  { id: "gemini-3.8-flash", ownedBy: "openai", contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 0.4, priceOut: 2 },
-  { id: "qwen3.8-max", ownedBy: "openai", contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 1, priceOut: 3 },
-  { id: "glm-5.3-flash", ownedBy: "openai", contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 0.075, priceOut: 0.25 },
+  { id: "deepseek-v4-flash", ownedBy: "openai", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 0.07, priceOut: 0.14 },
+  { id: "claude-sonnet-5-5", ownedBy: "claude", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 1.2, priceOut: 6 },
+  { id: "deepseek-v4-pro", ownedBy: "openai", free: false, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: false, priceIn: 0.22, priceOut: 0.44 },
+  { id: "gpt-6-luna", ownedBy: "openai", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 0.1, priceOut: 0.5 },
+  { id: "gemini-3.8-flash", ownedBy: "openai", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 0.4, priceOut: 2 },
+  { id: "qwen3.8-max", ownedBy: "openai", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 1, priceOut: 3 },
+  { id: "glm-5.3-flash", ownedBy: "openai", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 0.075, priceOut: 0.25 },
+  { id: "grok-4.5", ownedBy: "xai", free: true, available: false, contextTokens: 500000, maxOutputTokens: 16384, vision: true, priceIn: 1.2, priceOut: 2.4 },
   // Các model hình ảnh/video cần bị loại bỏ:
-  { id: "gpt-image-2", ownedBy: "openai", contextTokens: 0, maxOutputTokens: 0, vision: false },
-  { id: "grok-imagine-image-2.0", ownedBy: "xai", contextTokens: 0, maxOutputTokens: 0, vision: false },
-  { id: "grok-imagine-video-1.5", ownedBy: "xai", contextTokens: 0, maxOutputTokens: 0, vision: false },
+  { id: "gpt-image-2", ownedBy: "openai", free: false, available: true, contextTokens: 0, maxOutputTokens: 0, vision: false },
+  { id: "grok-imagine-image-2.0", ownedBy: "xai", free: false, available: true, contextTokens: 0, maxOutputTokens: 0, vision: false },
+  { id: "grok-imagine-video-1.5", ownedBy: "xai", free: false, available: true, contextTokens: 0, maxOutputTokens: 0, vision: false },
 ];
 
 function findButton(text: string, scope: ParentNode = document): HTMLButtonElement | undefined {
@@ -286,5 +287,40 @@ describe("ModelPicker component", () => {
     });
 
     expect(onChange).toHaveBeenCalledWith("claude-sonnet-5-5");
+  });
+
+  it("khoá model chưa xác minh và model đang hỏng", async () => {
+    const lockedModels: ChatV2Model[] = [
+      { id: "deepseek-v4-flash", ownedBy: "DeepSeek", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 0.07, priceOut: 0.14, checkedAt: "2026-11-20T18:32:39.607Z" },
+      { id: "claude-opus-5-5", ownedBy: "Anthropic", free: false, available: null, contextTokens: 1000000, maxOutputTokens: 16384, vision: true, priceIn: 2.4, priceOut: 12 },
+      { id: "grok-4.5", ownedBy: "xAI", free: true, available: false, contextTokens: null, maxOutputTokens: null, vision: null, priceIn: 1.2, priceOut: 2.4, checkedAt: "2026-11-20T18:38:54.931Z" },
+    ];
+    const onChange = vi.fn();
+    await act(async () => {
+      root.render(
+        <ModelPicker models={lockedModels} value="deepseek-v4-flash" onChange={onChange} />
+      );
+    });
+
+    const trigger = findButton("deepseek-v4-flash", container);
+    await act(async () => {
+      trigger?.click();
+    });
+
+    const options = () =>
+      Array.from(container.querySelectorAll<HTMLButtonElement>('[role="option"]'));
+    const unverified = options().find((option) => option.textContent?.includes("claude-opus-5-5"));
+    const broken = options().find((option) => option.textContent?.includes("grok-4.5"));
+    expect(unverified?.disabled).toBe(true);
+    expect(unverified?.textContent).toContain("Đang xác minh");
+    expect(broken?.disabled).toBe(true);
+    expect(broken?.textContent).toContain("Tạm không khả dụng");
+
+    await act(async () => {
+      unverified?.click();
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    expect(container.textContent).toContain("3 model · 1 dùng được");
   });
 });

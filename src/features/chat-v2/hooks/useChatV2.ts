@@ -5,8 +5,6 @@ import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { fetchChatV2Models, streamChatV2, summarizeChatV2 } from "../lib/api";
 import {
   CHAT_V2_DEFAULT_MODEL,
-  CHAT_V2_FALLBACK_MODELS,
-  CHAT_V2_VERIFIED_MODELS,
   NON_CHAT_MODEL_RE,
 } from "../lib/config";
 import {
@@ -52,8 +50,25 @@ export interface ChatV2Extras {
 
 const EMPTY_EXTRAS: ChatV2Extras = { images: [], files: [] };
 
-function fallbackModels(): ChatV2Model[] {
-  return CHAT_V2_FALLBACK_MODELS.map((item) => ({ ...item }));
+function isUsable(model: ChatV2Model): boolean {
+  return model.available === true && Number(model.contextTokens) > 0;
+}
+
+// Model đã xác minh lên trước, model đang xác minh kế tiếp, model hỏng xuống cuối.
+function sortModels(rows: ChatV2Model[]): ChatV2Model[] {
+  const rank = (model: ChatV2Model) =>
+    model.available === true ? 0 : model.available === null ? 1 : 2;
+  return [...rows].sort((a, b) => {
+    const diff = rank(a) - rank(b);
+    if (diff !== 0) return diff;
+    if (a.free !== b.free) return a.free ? -1 : 1;
+    return a.id.localeCompare(b.id);
+  });
+}
+
+function preferredUsable(rows: ChatV2Model[]): ChatV2Model | undefined {
+  const usable = rows.filter(isUsable);
+  return usable.find((row) => row.id === CHAT_V2_DEFAULT_MODEL) || usable[0];
 }
 
 function loadKeyTier(): ChatV2KeyTier {
@@ -78,7 +93,7 @@ export function useChatV2() {
     createSessionStore(CHAT_V2_DEFAULT_MODEL)
   );
   const [hydrated, setHydrated] = useState(false);
-  const [models, setModels] = useState<ChatV2Model[]>(fallbackModels);
+  const [models, setModels] = useState<ChatV2Model[]>([]);
   const [model, setModelState] = useState(CHAT_V2_DEFAULT_MODEL);
   const [modelNotice, setModelNotice] = useState<string | null>(null);
   const [keyTier, setKeyTierState] = useState<ChatV2KeyTier>(loadKeyTier);
@@ -120,9 +135,10 @@ export function useChatV2() {
   }, [messages]);
 
   const modelInfo = models.find((item) => item.id === model);
+  const modelLocked = !!modelInfo && !isUsable(modelInfo);
   const hasImages = attachments.some((item) => item.kind === "image");
-  const visionBlocked = hasImages && !!modelInfo && !modelInfo.vision;
-  const canSend = !sending && (!!input.trim() || attachments.length > 0) && !visionBlocked;
+  const visionBlocked = hasImages && !!modelInfo && modelInfo.vision !== true;
+  const canSend = !sending && !modelLocked && (!!input.trim() || attachments.length > 0) && !visionBlocked;
   const canRegenerate = !sending && messages.some((message) => message.role === "user");
   // Phiên rỗng đã là "cuộc trò chuyện mới" — tạo thêm chỉ lặp lại vô nghĩa.
   const canStartNewChat = messages.length > 0;
@@ -179,30 +195,17 @@ export function useChatV2() {
         if (!alive) return;
         // Bỏ qua các model tạo ảnh, video, audio
         const chatRows = rows.filter((row) => !NON_CHAT_MODEL_RE.test(row.id));
-        if (chatRows.length === 0) {
-          setModelNotice("Motapis không trả model chat nào; dùng danh sách dự phòng.");
-          return;
-        }
-
-        // Ưu tiên thứ tự P/P đã cấu hình, các model mới khác sẽ xếp theo sau
-        const byId = new Map(chatRows.map((row) => [row.id, row]));
-        const verifiedList = CHAT_V2_VERIFIED_MODELS.map((id) => byId.get(id)).filter(
-          (row): row is ChatV2Model => row !== undefined
+        setModels(sortModels(chatRows));
+        const usable = chatRows.filter(isUsable);
+        setModelNotice(
+          usable.length > 0
+            ? null
+            : "Chưa có model nào được xác minh đủ để dùng; chờ lần kiểm tra kế tiếp."
         );
-        const verifiedSet = new Set(verifiedList.map((row) => row.id));
-        const extraList = chatRows
-          .filter((row) => !verifiedSet.has(row.id))
-          .sort((a, b) => a.id.localeCompare(b.id));
-
-        const usable = [...verifiedList, ...extraList];
-        setModels(usable);
-        setModelState((current) =>
-          usable.some((row) => row.id === current) ? current : usable[0]?.id || current
-        );
-        setModelNotice(null);
       })
       .catch((cause: unknown) => {
         if (!alive) return;
+        setModels([]);
         setModelNotice(cause instanceof Error ? cause.message : "Không tải được danh sách model.");
       });
     return () => {
@@ -212,15 +215,20 @@ export function useChatV2() {
 
   useEffect(() => {
     if (!hydrated || models.length === 0) return;
-    if (models.some((row) => row.id === model)) return;
-    const next = models[0].id;
-    setModelState(next);
+    const current = models.find((row) => row.id === model);
+    if (current && isUsable(current)) return;
+    const next = preferredUsable(models);
+    if (!next || next.id === model) return;
+    setModelState(next.id);
+    setModelNotice(
+      `Đã chuyển sang ${next.id} vì ${model} chưa xác minh hoặc không còn trong danh mục.`
+    );
     const sessionId = store.activeSessionId;
     if (sessionId) {
-      setStore((current) => ({
-        ...current,
-        sessions: current.sessions.map((session) =>
-          session.id === sessionId ? { ...session, modelId: next } : session
+      setStore((storeState) => ({
+        ...storeState,
+        sessions: storeState.sessions.map((session) =>
+          session.id === sessionId ? { ...session, modelId: next.id } : session
         ),
       }));
     }
@@ -257,6 +265,8 @@ export function useChatV2() {
   };
 
   const setModel = (id: string) => {
+    const target = models.find((item) => item.id === id);
+    if (target && !isUsable(target)) return;
     setModelState(id);
     const sessionId = store.activeSessionId;
     if (!sessionId) return;
@@ -275,7 +285,7 @@ export function useChatV2() {
       next === "free"
         ? "Đang dùng key free — danh sách chỉ còn model thuộc gói free."
         : next === "paid"
-          ? "Đang dùng key trả phí — mở đủ danh sách model."
+          ? "Đang dùng key trả phí — model chưa xác minh vẫn bị khoá."
           : "Tự động: model free đi key free, model khác đi key trả phí."
     );
   };
@@ -439,12 +449,13 @@ export function useChatV2() {
     if (result.items.length > 0) {
       setAttachments((current) => [...current, ...result.items].slice(0, MAX_ATTACHMENTS));
       const addingImage = result.items.some((item) => item.kind === "image");
-      if (addingImage && modelInfo && !modelInfo.vision) {
+      if (addingImage && modelInfo && modelInfo.vision !== true) {
         const preferred = ["qwen3.8-max", "gemini-3.8-flash", "gpt-5.6", "claude-sonnet-5-5", "glm-5.3-flash"];
+        const usableVision = models.filter((item) => isUsable(item) && item.vision === true);
         const visionModel =
           preferred
-            .map((id) => models.find((item) => item.id === id && item.vision))
-            .find(Boolean) || models.find((item) => item.vision);
+            .map((id) => usableVision.find((item) => item.id === id))
+            .find(Boolean) || usableVision[0];
         if (visionModel) {
           setModel(visionModel.id);
           setInfo(`Đã chuyển sang ${visionModel.id} vì model trước không đọc được ảnh.`);

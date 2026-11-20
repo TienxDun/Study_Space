@@ -23,7 +23,15 @@ import {
   PROMPT_VERSION,
   SUMMARY_PROMPT,
 } from "./prompts.js";
-import { getCapability, publicCapability } from "./capabilities.js";
+import {
+  CATALOG_GENERATED_AT,
+  catalogEntry,
+  catalogFreeCount,
+  getCapability,
+  isFreeModel,
+  isModelUnavailable,
+  listCatalog,
+} from "./catalog.js";
 import { appendFilesToLastUser, attachImagesToLastUser, parseAttachments } from "./attachments.js";
 import { buildBudget } from "./tokens.js";
 
@@ -37,31 +45,6 @@ const MAX_SUMMARY_CHARS = 6000;
 const MAX_SUMMARY_INPUT_CHARS = 40000;
 const MAX_SUMMARY_MESSAGES = 80;
 const SUMMARY_MODEL = "deepseek-v4-flash";
-const NON_CHAT_RE = /(image|video|tts|whisper|transcribe|embed|moderation)/i;
-
-// 19 model thuộc gói miễn phí, chốt 2026-11-02 từ motapis.com/#pricing.
-// Model ngoài danh sách này luôn đi bằng key trả phí.
-const FREE_MODELS = new Set([
-  "DeepSeek-V4-Flash-0731",
-  "claude-sonnet-4-6",
-  "claude-sonnet-5",
-  "claude-sonnet-5-5",
-  "deepseek-v4-flash",
-  "deepseek-v4.1-flash-1017",
-  "glm-5.3-flash",
-  "gpt-5.6-sol",
-  "gpt-6-astra",
-  "gpt-6-luna",
-  "gpt-6-sol",
-  "grok-4.5",
-  "grok-4.6",
-  "hy3",
-  "hy4-preview",
-  "kimi-k3.1-pro",
-  "minimax-m2.7",
-  "minimax-m3",
-  "qwen3.8-max",
-]);
 
 // Key free hết quota / bị chặn thì mới rơi sang key trả phí (chỉ ở chế độ auto).
 const PAID_FALLBACK_STATUS = new Set([401, 402, 403, 429]);
@@ -97,10 +80,13 @@ function keyFor(model, env, tier = "auto") {
   const paid = paidKey(env);
   if (tier === "free") return { key: free, tier: "free" };
   if (tier === "paid") return { key: paid, tier: "paid" };
-  if (free && FREE_MODELS.has(model)) return { key: free, tier: "free" };
+  if (free && isFreeModel(model)) return { key: free, tier: "free" };
   if (paid) return { key: paid, tier: "paid" };
   return { key: free, tier: "free" };
 }
+
+// Docs MộtAPI khuyến nghị retry backoff cho 429/5xx; ở đây thử lại đúng 1 lần.
+const RETRY_STATUS = new Set([429, 500, 502, 503, 504]);
 
 async function motapisFetch(path, init, model, env, tier = "auto") {
   const primary = keyFor(model, env, tier);
@@ -115,7 +101,8 @@ async function motapisFetch(path, init, model, env, tier = "auto") {
       text: async () => String(error),
     }));
 
-  let res = await send(primary.key);
+  let usedKey = primary.key;
+  let res = await send(usedKey);
   const canFallback = tier === "auto" && primary.tier === "free";
   if (!res.ok && canFallback && PAID_FALLBACK_STATUS.has(res.status)) {
     const paid = paidKey(env);
@@ -124,8 +111,16 @@ async function motapisFetch(path, init, model, env, tier = "auto") {
       console.log(
         JSON.stringify({ event: "chat_v2_key_fallback", model, status: res.status, from: "free", to: "paid" })
       );
-      res = await send(paid);
+      usedKey = paid;
+      res = await send(usedKey);
     }
+  }
+
+  if (!res.ok && RETRY_STATUS.has(res.status)) {
+    await res.body?.cancel?.().catch?.(() => {});
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    console.log(JSON.stringify({ event: "chat_v2_retry", model, status: res.status }));
+    res = await send(usedKey);
   }
   return res;
 }
@@ -192,12 +187,19 @@ function upstreamError(status, text, cors) {
     /* giữ text gốc */
   }
   const error =
-    status === 401 || status === 403
-      ? "Motapis từ chối API key. Kiểm tra MOTAPIS_API_KEY_FREE và MOTAPIS_API_KEY."
-      : status === 429
-        ? "Motapis báo hết hạn mức hoặc quá nhiều request trên cả key free lẫn trả phí."
-        : `Motapis lỗi ${status}: ${String(detail).slice(0, 300)}`;
-  return json({ error }, status === 429 ? 429 : 502, cors);
+    status === 401
+      ? "Motapis từ chối API key (401). Kiểm tra MOTAPIS_API_KEY_FREE và MOTAPIS_API_KEY."
+      : status === 402
+        ? "Ví MộtAPI đã hết số dư (402). Nạp thêm trong dashboard MộtAPI rồi thử lại."
+        : status === 403
+          ? `Khoá MộtAPI không có quyền dùng model này (403): ${String(detail).slice(0, 200)}`
+          : status === 429
+            ? "MộtAPI báo quá nhiều request hoặc hết ngân sách gói (429). Chờ vài phút rồi thử lại."
+            : status >= 500 || status === 0
+              ? "MộtAPI đang lỗi tạm thời, thử lại sau ít phút."
+              : `Motapis lỗi ${status}: ${String(detail).slice(0, 300)}`;
+  const passThrough = status === 401 || status === 402 || status === 403 || status === 429;
+  return json({ error }, passThrough ? status : 502, cors);
 }
 
 function extractText(payload) {
@@ -394,6 +396,9 @@ async function summarize(req, env, cors) {
   } catch {
     return json({ error: "Motapis trả tóm tắt không phải JSON." }, 502, cors);
   }
+  if (payload && payload.error) {
+    return upstreamError(Number(payload.http_status) || 502, text, cors);
+  }
 
   const summary = extractText(payload);
   if (!summary) return json({ error: "Model không trả bản tóm tắt." }, 502, cors);
@@ -425,58 +430,10 @@ async function listModels(env, cors, tier = "auto") {
   const tierError = keyTierError(tier, env, cors);
   if (tierError) return tierError;
 
-  const paid = paidKey(env);
-  const free = freeKey(env);
-  const send = (key) =>
-    fetch(`${MOTAPIS_BASE}/models`, {
-      headers: { Authorization: `Bearer ${key}`, Accept: "application/json" },
-      signal: AbortSignal.timeout(30000),
-    }).catch((error) => ({
-      ok: false,
-      status: 0,
-      body: null,
-      text: async () => String(error),
-    }));
-
-  // Key trả phí thấy đủ danh mục; key free chỉ thấy 19 model nên chỉ dùng dự phòng.
-  let res;
-  if (tier === "free") {
-    res = await send(free);
-  } else if (tier === "paid") {
-    res = await send(paid);
-  } else {
-    res = await send(paid || free);
-    if (!res.ok && paid && free && PAID_FALLBACK_STATUS.has(res.status)) {
-      await res.body?.cancel?.().catch?.(() => {});
-      res = await send(free);
-    }
-  }
-  const text = await res.text().catch(() => "");
-  if (!res.ok) return upstreamError(res.status, text, cors);
-
-  let payload = null;
-  try {
-    payload = JSON.parse(text);
-  } catch {
-    return json({ error: "Motapis trả /models không phải JSON." }, 502, cors);
-  }
-  const raw = Array.isArray(payload && payload.data)
-    ? payload.data
-    : Array.isArray(payload && payload.models)
-      ? payload.models
-      : [];
-  const data = raw
-    .map((item) => {
-      const id = typeof item === "string" ? item : item && item.id;
-      if (typeof id !== "string" || !id || NON_CHAT_RE.test(id)) return null;
-      const ownedBy =
-        (item && (item.owned_by || item.provider || item.ownedBy)) || "";
-      const capability = publicCapability(id);
-      return { id, ownedBy: String(ownedBy), ...capability };
-    })
-    .filter(Boolean);
-
-  return json({ object: "list", count: data.length, data }, 200, cors);
+  // Danh mục do script làm mới ghi ra, không gọi Motapis mỗi lần mở picker.
+  const all = listCatalog();
+  const data = tier === "free" ? all.filter((model) => model.free) : all;
+  return json({ object: "list", count: data.length, generatedAt: CATALOG_GENERATED_AT, data }, 200, cors);
 }
 
 async function chat(req, env, cors) {
@@ -503,18 +460,47 @@ async function chat(req, env, cors) {
 
   const model = cleanModel(body && body.model, env);
   if (!model) return json({ error: "Tên model không hợp lệ." }, 400, cors);
-  if (tier === "free" && !FREE_MODELS.has(model)) {
+  const entry = catalogEntry(model);
+  if (!entry) {
+    return json(
+      {
+        error: `Model ${model} chưa có trong danh mục xác minh. Chạy "npm run refresh:models" rồi thử lại.`,
+      },
+      400,
+      cors
+    );
+  }
+  if (tier === "free" && !entry.free) {
     return json({ error: `Model ${model} không có trong gói key free.` }, 400, cors);
+  }
+  if (isModelUnavailable(model)) {
+    return json(
+      {
+        error: `Model ${model} đang không khả dụng (kiểm tra ${entry.checkedAt || "gần nhất"}). Chọn model khác.`,
+      },
+      503,
+      cors
+    );
   }
 
   const parsed = parseAttachments(body);
   if (parsed.error) return json({ error: parsed.error }, 400, cors);
 
   const capability = getCapability(model);
-  if (parsed.images.length > 0 && !capability.vision) {
+  if (!capability || !Number.isFinite(capability.contextTokens) || capability.contextTokens <= 0) {
+    return json(
+      { error: `Chưa xác minh được ngữ cảnh của ${model}; tạm thời không dùng model này.` },
+      400,
+      cors
+    );
+  }
+  if (parsed.images.length > 0 && capability.vision !== true) {
     return json(
       {
-        error: `Model ${model} không đọc được ảnh. Chọn model có nhãn ảnh hoặc bỏ ảnh rồi gửi lại.`,
+        error:
+          capability.vision === false
+            ? `Model ${model} không đọc được ảnh. Chọn model có nhãn ảnh hoặc bỏ ảnh rồi gửi lại.`
+            : `Chưa xác minh khả năng đọc ảnh của ${model}. Chọn model khác hoặc bỏ ảnh.`,
       },
       400,
       cors
@@ -554,6 +540,7 @@ async function chat(req, env, cors) {
   const upstreamBody = {
     model,
     messages: [{ role: "system", content: systemPrompt }, ...budget.messages],
+    max_tokens: capability.maxOutputTokens,
     stream: wantsStream,
     ...(wantsStream ? { stream_options: { include_usage: true } } : {}),
   };
@@ -620,6 +607,10 @@ async function chat(req, env, cors) {
   } catch {
     return json({ error: "Motapis trả chat không phải JSON." }, 502, cors);
   }
+  // Docs MộtAPI: có lượt trả HTTP 200 kèm trường error, phải kiểm tra chứ không chỉ nhìn mã.
+  if (payload && payload.error) {
+    return upstreamError(Number(payload.http_status) || 502, text, cors);
+  }
 
   const latencyMs = Date.now() - started;
   const choice = payload && payload.choices && payload.choices[0];
@@ -673,7 +664,8 @@ const worker = {
           hasApiKey: !!(paidKey(env) || freeKey(env)),
           hasFreeKey: !!freeKey(env),
           hasPaidKey: !!paidKey(env),
-          freeModels: FREE_MODELS.size,
+          freeModels: catalogFreeCount(),
+          catalogGeneratedAt: CATALOG_GENERATED_AT,
           hasDevToken: !!env.CHAT_V2_DEV_TOKEN,
           summaryModel: env.CHAT_V2_SUMMARY_MODEL || SUMMARY_MODEL,
         },
@@ -714,7 +706,7 @@ export const __test = {
   extractText,
   normalizeUsage,
   corsHeaders,
-  FREE_MODELS,
+  catalogEntry,
   keyFor,
   keyTierOf,
 };

@@ -1,6 +1,6 @@
 # Chatbot v2 — kế hoạch triển khai
 
-> Trạng thái 2026-11-03: **S0–S3 + UI đã xong** (bản dev). Track này chỉ chứa **phát triển sản phẩm chatbot v2** (S4–S7); phần DevOps/production tách sang [CHATBOT_V2_PRODUCTION_PLAN.md](CHATBOT_V2_PRODUCTION_PLAN.md) và làm sau.
+> Trạng thái 2026-11-21: **S0–S3 + UI + danh mục model tự xác minh đã xong** (bản dev). Track này chỉ chứa **phát triển sản phẩm chatbot v2** (S4–S7); phần DevOps/production tách sang [CHATBOT_V2_PRODUCTION_PLAN.md](CHATBOT_V2_PRODUCTION_PLAN.md) và làm sau.
 > Quyết định nền 2026-11-01: tách hoàn toàn khỏi chatbot hiện tại, dùng motapis, **mục tiêu 16+**.
 
 ## 1. Quyết định đã chốt
@@ -30,6 +30,7 @@ src/app/dev/chat-v2/**          (route dev)
 workers/chat-v2/**
 wrangler.chat-v2.jsonc
 scripts/chat-v2-probe.mjs
+scripts/refresh-chat-v2-models.mjs
 docs/features/CHATBOT_V2_PLAN.md
 docs/features/CHATBOT_V2_PRODUCTION_PLAN.md
 ```
@@ -60,6 +61,8 @@ https://motapis.com/v1/chat/completions
 ```
 
 Worker giữ key, kiểm Origin, chuẩn hoá output, đếm token và log. Browser không bao giờ thấy key motapis.
+
+`GET /models` **không gọi motapis**: Worker đọc danh mục đã xác minh trong `workers/chat-v2/model-catalog.json` qua `workers/chat-v2/catalog.js`. Danh mục do `npm run refresh:models` sinh và ghi lại nguồn/ngày kiểm cho từng model (§8.1).
 
 Kiến trúc production (Firebase ID token, D1 server-owned history, R2, provider dự phòng, moderation) nằm ở [CHATBOT_V2_PRODUCTION_PLAN.md §4](CHATBOT_V2_PRODUCTION_PLAN.md).
 
@@ -184,6 +187,14 @@ npm run probe:chat-v2
 ```
 
 Probe kiểm tra từng model: text, streaming, ảnh, tools, JSON mode. Kết quả dùng để chốt model cho Sprint 2, không đoán capability từ docs.
+
+5. Sinh lại danh mục model đã xác minh (khi model/giá đổi):
+
+```bash
+npm run refresh:models
+```
+
+Mặc định chỉ probe model free, chạy tuần tự và ghi `workers/chat-v2/model-catalog.json`; xem §8.1 trước khi dùng `--probe-paid`.
 
 ### 5.1 Sprint 1 — plan nháp (2026-11-01)
 
@@ -333,7 +344,9 @@ Mục tiêu: nhiều phiên chat, lưu trên máy, hội thoại dài được n
 
 ### `GET /models`
 
-Trả danh sách model chat đã lọc bỏ image/video/embedding, kèm `contextTokens`, `maxOutputTokens`, `vision`. Cần dev token.
+Trả danh mục model chat đã xác minh từ `workers/chat-v2/model-catalog.json` (không gọi motapis), kèm `free`, `available`, `vision`, `contextTokens`, `maxOutputTokens`, giá vào/ra, nguồn (`specSource`, `visionSource`, `priceSource`) và `checkedAt`. Header `X-Chat-V2-Key: free` chỉ trả model thuộc gói free; các tier khác trả toàn bộ danh mục.
+
+`available` quyết định dùng được: `true` = đã probe và chạy, `null` = chưa xác minh (UI hiện nhưng khoá), `false` = đã kiểm và đang hỏng. Không có giá trị mặc định cho context/vision; model thiếu dữ liệu bị UI khoá và Worker từ chối (§8.1).
 
 ### `POST /chat`
 
@@ -359,7 +372,7 @@ Request kèm ảnh/file (Sprint 2):
 }
 ```
 
-Giới hạn: tối đa 3 ảnh, 3 file; mỗi file text ≤20.000 ký tự; ảnh png/jpeg/webp dataURL. Model không có `vision` sẽ bị chặn 400. File text được nối vào câu hỏi hiện tại với nhãn "tài liệu tham khảo".
+Giới hạn: tối đa 3 ảnh, 3 file; mỗi file text ≤20.000 ký tự; ảnh png/jpeg/webp dataURL. Model có `vision !== true` (kể cả chưa xác minh) bị chặn 400. File text được nối vào câu hỏi hiện tại với nhãn "tài liệu tham khảo".
 
 Sprint 3 thêm trường tuỳ chọn `summary` cho hội thoại đã nén:
 
@@ -396,7 +409,7 @@ Response non-stream:
 
 Worker tự trim lịch sử cũ khi vượt `maxInputTokens`; nếu riêng câu hỏi/file cuối đã quá dài thì trả 400 mô tả giới hạn.
 
-> Ví dụ JSON trên là mẫu của giai đoạn S2 (context 32k). Từ 2026-11-03 bảng capability dùng context thật của từng model (1M/200K/…) đã đối chiếu tài liệu hãng; 32k chỉ còn là mức mặc định an toàn cho model lạ.
+> Ví dụ JSON trên là mẫu của giai đoạn S2 (context 32k). Từ 2026-11-03 bảng capability dùng context thật của từng model (1M/200K/…) đã đối chiếu tài liệu hãng. Từ 2026-11-21 **không còn mức mặc định**: model ngoài danh mục hoặc thiếu context bị Worker trả 400 thay vì đoán 32k.
 
 Worker luôn tự chèn system prompt 16+ trước messages; nếu client gửi role `system`, Worker trả 400. Non-stream vẫn dùng được cho curl/probe.
 
@@ -458,7 +471,7 @@ Model tóm tắt lấy từ `CHAT_V2_SUMMARY_MODEL`, mặc định `deepseek-v4-
 
 ## 8. Kết quả probe model
 
-> Ảnh chụp 2026-11-01/02; khả dụng model thay đổi liên tục. Production track sẽ để catalog ở server (P0/P3), không hardcode trong client.
+> Ảnh chụp 2026-11-01/02; khả dụng model thay đổi liên tục. Production track sẽ để catalog ở server; từ 2026-11-21 Worker đã đọc danh mục từ `model-catalog.json` (§8.1), P3 chỉ còn chuyển sang KV + cron.
 
 `GET /v1/models` với key cũ trả 19 model chat, 13 model có channel:
 
@@ -474,11 +487,11 @@ Các model còn lại trả `503 No available channel for model ... under group 
 ### Key mới (2026-11-01)
 
 - `/v1/models` trả **61 model chat**; quét `ping` thấy **45 model trả 200**.
-- UI hiện lọc **19 model curated** trong `CHAT_V2_VERIFIED_MODELS` (bản 2026-11-02); các model live còn lại chưa đưa lên UI để tránh danh sách quá dài và tránh model có prompt overhead lớn.
+- UI hiện lọc **19 model curated** trong `CHAT_V2_VERIFIED_MODELS` (bản 2026-11-02); các model live còn lại chưa đưa lên UI để tránh danh sách quá dài và tránh model có prompt overhead lớn. Danh sách gõ cứng này **đã bị xoá 2026-11-21**, thay bằng danh mục tự xác minh (§8.1).
 - Đã thêm vào UI: `gemini-3.8-flash`, `gemini-4-argon`, `gpt-5.6`, `gpt-6-astra`, `claude-opus-4-8`, `deepseek-v4-pro`, `qwen3.7-max`.
 - Model mới đáng chú ý khác: `gpt-5.6-luna`, `gpt-5.6-sol`, `deepseek-v4.1-flash-1017`, `kimi-k3`, `mimo-v2.5-pro`.
 - Một số model có prompt ẩn rất lớn (cần baseline nếu thêm vào UI): `claude-haiku-5-5` ~11.2k token, `codex-auto-review` ~5.7k, nhóm `gpt-5.x` ~4.4k, `gpt-6-astra` ~4.4k.
-- Muốn mở rộng UI thêm: cập nhật `CHAT_V2_VERIFIED_MODELS` + capability/baseline tương ứng, rồi chạy lại test.
+- Từ 2026-11-21, muốn thêm/bớt model thì mở rộng nguồn (`models.js`, models.dev, `/v1/models`) rồi chạy `npm run refresh:models`; không sửa tay danh sách UI.
 
 ### Model mạnh thêm vào UI (kiểm 2026-11-01)
 
@@ -506,10 +519,58 @@ Capability của các model đã probe (text, stream, ảnh, tools, JSON mode):
 Lưu ý:
 
 - Phải **luôn gửi system prompt**. Không gửi system, `deepseek-v4-flash` tự nhận là trợ lý CNB và `prompt_tokens` tăng bất thường (~1053); có system prompt thì về 52 token và trả lời đúng vai.
-- Upstream trả `model: "self-dploy/DeepSeek-V4-Flash"`; Worker giữ `model` mình yêu cầu và thêm `upstreamModel`.
-- UI chỉ hiện 13 model đã xác nhận (`CHAT_V2_VERIFIED_MODELS`); danh sách này cần cập nhật khi tài khoản/gateway đổi.
-- Chỉ các model có vision đã kiểm với prompt 16+ mới được đánh dấu đọc ảnh: `qwen3.8-max`, `gemini-3.8-flash`, `gemini-4-argon`, `gpt-5.6`, `claude-opus-4-8`, `claude-sonnet-5-5`, `qwen3.7-max`, `glm-5.3-flash`. UI tự chuyển sang model vision khi thêm ảnh; `minimax-m3`/`hy4-preview` bị 503 với key mới nên đã bỏ khỏi UI.
+- Upstream trả `model: "self-dploy/DeepSeek-V4-Flash"`; Worker giữ `model` mình yêu cầu và thêm `upstreamModel` (tên thật sau khi gateway remap).
+- Từ 2026-11-21 UI hiện toàn bộ danh mục đã quét, nhưng chỉ model `available: true` mới chọn được; model chưa kiểm/đang hỏng hiển thị khoá (§8.1).
+- Chỉ các model có vision đã kiểm với prompt 16+ mới được đánh dấu đọc ảnh. Từ 2026-11-21, `vision` lấy từ probe (ưu tiên) hoặc models.dev và lưu kèm `visionSource`; Worker chặn ảnh khi `vision !== true`; UI tự chuyển sang model vision đã xác minh khi thêm ảnh.
 - Key từng bị dán vào chat: nên rotate key sau khi test xong.
+
+### 8.1 Danh mục model tự xác minh (2026-11-21)
+
+Thay cho `CHAT_V2_FREE_MODELS`, `CHAT_V2_VERIFIED_MODELS`, `CHAT_V2_FALLBACK_MODELS` và `workers/chat-v2/capabilities.js` — tất cả đã xoá.
+
+**Nguồn dữ liệu**
+
+- `/v1/models` với cả key free và key paid: id, `owned_by`.
+- `https://motapis.com/models.js`: giá vào/ra mỗi 1M token, tier.
+- `https://models.dev/api.json`: `limit.context`, `limit.output`, `modalities.input`, `cost`.
+- Probe trực tiếp: `ping` (lấy `upstreamModel` sau remap + `usage.prompt_tokens` làm baseline) và ảnh 64×64 magenta (đọc được ảnh hay không, có xét `reasoning_content` của model suy luận).
+
+**Nguyên tắc**
+
+- Không có mặc định an toàn: thiếu context/vision/giá thì để `null`, không đoán 32k / không ảnh / không giá.
+- Model chưa probe có `available: null` và bị UI khoá; probe lỗi có `available: false` + `lastError`.
+- Worker từ chối: model ngoài danh mục → 400; tier free nhưng model không thuộc gói free → 400; `available: false` → 503; context `null` → 400; ảnh khi `vision !== true` → 400.
+- Output vẫn bị chặn trần 16384 token dù model khai tới 128k.
+
+**Lệnh**
+
+```bash
+npm run refresh:models                                  # mặc định: chỉ probe model free
+node scripts/refresh-chat-v2-models.mjs --only=deepseek-v4-flash,glm-5.3-flash
+node scripts/refresh-chat-v2-models.mjs --no-vision
+node scripts/refresh-chat-v2-models.mjs --probe-paid    # chỉ khi ví paid còn tiền
+PROBE_DELAY_MS=3000 npm run refresh:models
+```
+
+- Probe tuần tự, nghỉ 2s mỗi request; gặp 429 `concurrency` thì chờ 20s, thử lại tối đa 3 lần. Không chạy song song.
+- `--only=` giữ nguyên các entry cũ, chỉ cập nhật model được chọn.
+- Ảnh chụp 2026-11-21: 66 model (20 free / 46 paid); 20 free đã probe (16 chạy được, 4 hỏng); 46 paid **chưa probe** nên `available: null` và bị khoá — sẽ kiểm dần khi nạp tiền ví paid.
+
+**File**
+
+- `scripts/refresh-chat-v2-models.mjs`: sinh catalog.
+- `workers/chat-v2/model-catalog.json`: dữ liệu + nguồn + `checkedAt` cho từng model.
+- `workers/chat-v2/catalog.js`: đọc catalog, `listCatalog()`, `getCapability()`, `publicCapability()`.
+
+**Test**
+
+- `chat-v2-catalog.test.ts`: bất biến danh mục (free boolean, model đã kiểm có `checkedAt`, giá dương, context khớp, output ≤ 16384, model lạ trả `null`).
+- `chat-v2-worker.test.ts`: `/models` không gọi motapis; gating model lạ / tier free / model hỏng / vision.
+- `chat-v2-model-picker.test.tsx`: ẩn model ảnh/video; khoá model `available` null/false và không cho chọn.
+
+**Còn lại**
+
+- Tự động hoá hằng ngày (cron + KV) chưa làm: hiện chạy tay `npm run refresh:models` rồi deploy Worker. Khi làm, Worker đọc catalog từ KV; file JSON chỉ còn là bản seed/commit.
 
 ## 9. Tích hợp sau này
 

@@ -20,11 +20,11 @@ export function estimateMessagesTokens(messages: ChatV2Message[]): number {
 }
 
 export function maxInputTokensFor(model?: Pick<ChatV2Model, "contextTokens" | "maxOutputTokens">): number {
-  if (!model) return 0;
+  if (!model || !model.contextTokens || !model.maxOutputTokens) return 0;
   return model.contextTokens - model.maxOutputTokens - CONTEXT_SAFETY_MARGIN;
 }
 
-export function formatContextSize(tokens?: number): string {
+export function formatContextSize(tokens?: number | null): string {
   if (!tokens || tokens <= 0) return "-";
   if (tokens >= 900_000) {
     const m = tokens / (1024 * 1024);
