@@ -37,7 +37,7 @@
   var flagsSaving = false;
 
   var SERVICE_META = {
-    "chat-proxy": {
+    "chat-v2": {
       label: "Trợ lý học tập AI",
       desc: "Xử lý câu hỏi học tập và hướng dẫn phương pháp học",
       path: "/health",
