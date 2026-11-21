@@ -56,16 +56,18 @@ export function EmptyState({ onSuggestion }: EmptyStateProps) {
               key={title}
               type="button"
               onClick={() => onSuggestion(prompt)}
-              className="group rounded-2xl border border-chat-border bg-chat-surface p-2.5 text-left transition hover:-translate-y-0.5 hover:border-chat-accent-border hover:bg-chat-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 motion-reduce:hover:translate-y-0 sm:p-4"
+              className="group flex items-center gap-3 rounded-2xl border border-chat-border bg-chat-surface px-3 py-2.5 text-left transition hover:border-chat-accent-border hover:bg-chat-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 active:scale-[0.99] sm:block sm:p-4 sm:hover:-translate-y-0.5 motion-reduce:active:scale-100 motion-reduce:sm:hover:translate-y-0"
             >
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-chat-accent-soft text-chat-accent sm:h-9 sm:w-9">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-chat-accent-soft text-chat-accent">
                 <Icon size={16} weight="duotone" aria-hidden="true" />
               </span>
-              <span className="mt-2 block text-[12px] font-semibold text-chat-ink sm:mt-3 sm:text-[13px]">
-                {title}
-              </span>
-              <span className="mt-1 line-clamp-2 block text-[10px] leading-4 text-chat-muted sm:text-[11px] sm:leading-5">
-                {prompt}
+              <span className="min-w-0 flex-1 sm:block">
+                <span className="block text-[12px] font-semibold text-chat-ink sm:mt-3 sm:text-[13px]">
+                  {title}
+                </span>
+                <span className="mt-0.5 line-clamp-1 text-[10px] leading-4 text-chat-muted sm:mt-1 sm:line-clamp-2 sm:text-[11px] sm:leading-5">
+                  {prompt}
+                </span>
               </span>
             </button>
           ))}

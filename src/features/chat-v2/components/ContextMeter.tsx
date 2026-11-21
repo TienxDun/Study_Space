@@ -108,7 +108,7 @@ export function ContextMeter({
       >
         <span
           aria-hidden="true"
-          className="relative block h-1.5 w-6 shrink-0 overflow-hidden rounded-full bg-chat-ring-track"
+          className="relative block h-1.5 w-6 shrink-0 overflow-hidden rounded-full bg-chat-border-strong"
         >
           <span
             className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"

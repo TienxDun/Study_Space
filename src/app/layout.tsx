@@ -18,6 +18,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // Bàn phím ảo co layout viewport, để composer chat v2 nằm trên bàn phím thay vì bị che.
+  interactiveWidget: "resizes-content",
 };
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";

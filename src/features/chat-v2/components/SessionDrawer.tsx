@@ -37,7 +37,7 @@ export function SessionDrawer({ open, onClose, ...sidebar }: SessionDrawerProps)
         onClick={onClose}
         className="chat-v2-anim-fade absolute inset-0 bg-black/55 backdrop-blur-sm"
       />
-      <aside className="chat-v2-anim-drawer relative flex h-full w-[288px] max-w-[86vw] flex-col border-r border-chat-border bg-chat-elevated shadow-[var(--chat-shadow-popover)]">
+      <aside className="chat-v2-anim-drawer relative flex h-full w-[288px] max-w-[86vw] flex-col border-r border-chat-border bg-chat-elevated pt-safe shadow-[var(--chat-shadow-popover)]">
         <SidebarBody {...sidebar} onClose={onClose} />
       </aside>
     </div>

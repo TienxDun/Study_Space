@@ -363,8 +363,8 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
         </ErrorBoundary>
       )}
 
-      {/* Thanh điều hướng đáy 5 nút */}
-      {!isZenMode && (
+      {/* Thanh điều hướng đáy 5 nút — ẩn khi chat v2 phủ toàn màn hình (nav portal nằm trên overlay). */}
+      {!isZenMode && !(systemFlags.chatV2 && isChatOpen) && (
         <MobilePerfProbe name="nav">
           <StudyMobileNav
             active={activeNavTab}

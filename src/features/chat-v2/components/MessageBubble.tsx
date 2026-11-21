@@ -182,7 +182,7 @@ export function MessageBubble({
               onClick={copy}
               aria-label={copied ? "Đã sao chép" : "Sao chép câu hỏi"}
               title={copied ? "Đã sao chép" : "Sao chép"}
-              className="grid h-6 w-6 place-items-center rounded-md text-chat-muted transition hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/40"
+              className="grid h-8 w-8 place-items-center rounded-md text-chat-muted transition hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/40 sm:h-6 sm:w-6"
             >
               {copied ? (
                 <CheckIcon size={12} weight="bold" className="text-chat-accent" />
@@ -196,7 +196,7 @@ export function MessageBubble({
                 onClick={() => onEdit(message.text)}
                 aria-label="Chỉnh sửa câu hỏi"
                 title="Sửa lại câu hỏi này"
-                className="grid h-6 w-6 place-items-center rounded-md text-chat-muted transition hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/40"
+                className="grid h-8 w-8 place-items-center rounded-md text-chat-muted transition hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/40 sm:h-6 sm:w-6"
               >
                 <PencilSimpleIcon size={12} />
               </button>
@@ -265,7 +265,7 @@ export function MessageBubble({
               onClick={copy}
               aria-label={copied ? "Đã sao chép" : "Sao chép câu trả lời"}
               title={copied ? "Đã sao chép" : "Sao chép"}
-              className="grid h-7 w-7 place-items-center rounded-lg text-chat-muted transition hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/40"
+              className="grid h-8 w-8 place-items-center rounded-lg text-chat-muted transition hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/40 sm:h-7 sm:w-7"
             >
               {copied ? <CheckIcon size={13} weight="bold" className="text-chat-accent" /> : <CopyIcon size={13} />}
             </button>
@@ -275,7 +275,7 @@ export function MessageBubble({
                 onClick={onRegenerate}
                 aria-label="Làm lại câu trả lời"
                 title="Làm lại"
-                className="grid h-7 w-7 place-items-center rounded-lg text-chat-muted transition hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/40"
+                className="grid h-8 w-8 place-items-center rounded-lg text-chat-muted transition hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/40 sm:h-7 sm:w-7"
               >
                 <ArrowsClockwiseIcon size={13} />
               </button>

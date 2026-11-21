@@ -149,7 +149,7 @@ export function SessionList({ sessions, activeId, onSelect, onRename, onDelete }
                       aria-label={`Tuỳ chọn cho ${session.title}`}
                       aria-haspopup="menu"
                       aria-expanded={menuId === session.id}
-                      className="grid h-7 w-7 place-items-center rounded-lg text-chat-faint transition hover:bg-chat-surface hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50"
+                      className="grid h-8 w-8 place-items-center rounded-lg text-chat-faint transition hover:bg-chat-surface hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 sm:h-7 sm:w-7"
                     >
                       <DotsThreeIcon size={16} weight="bold" aria-hidden="true" />
                     </button>

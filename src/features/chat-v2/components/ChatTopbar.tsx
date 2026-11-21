@@ -28,8 +28,8 @@ export function ChatTopbar({
   onClose,
 }: ChatTopbarProps) {
   return (
-    <header className="sticky top-0 z-30 border-b border-chat-border/60 bg-chat-bg/80 backdrop-blur-md sm:backdrop-blur-2xl">
-      <div className="flex w-full items-center gap-2 px-3 py-3 sm:gap-4 sm:px-4 lg:px-5">
+    <header className="sticky top-0 z-30 border-b border-chat-border/60 bg-chat-bg/80 pt-[var(--app-safe-top)] backdrop-blur-md sm:backdrop-blur-2xl">
+      <div className="flex w-full items-center gap-2 px-3 pb-2.5 pt-2 sm:gap-4 sm:px-4 sm:py-3 lg:px-5">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {onClose ? (
             <button
@@ -37,7 +37,7 @@ export function ChatTopbar({
               onClick={onClose}
               aria-label="Đóng trợ lý, quay lại không gian học"
               title="Đóng trợ lý (Esc)"
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-chat-border bg-chat-surface text-chat-sub transition hover:border-chat-border-strong hover:bg-chat-hover hover:text-chat-ink active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-chat-border bg-chat-surface text-chat-sub transition hover:border-chat-border-strong hover:bg-chat-hover hover:text-chat-ink active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 sm:h-9 sm:w-9 sm:rounded-xl"
             >
               <XIcon size={16} weight="bold" aria-hidden="true" />
             </button>
@@ -47,7 +47,7 @@ export function ChatTopbar({
             onClick={onOpenSessions}
             aria-label="Mở danh sách phiên chat"
             aria-haspopup="dialog"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-chat-border bg-chat-surface text-chat-sub transition hover:border-chat-border-strong hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 lg:hidden"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-chat-border bg-chat-surface text-chat-sub transition hover:border-chat-border-strong hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 sm:h-9 sm:w-9 sm:rounded-xl lg:hidden"
           >
             <ListIcon size={16} weight="bold" aria-hidden="true" />
           </button>

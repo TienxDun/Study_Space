@@ -275,6 +275,29 @@ html[data-chat-rail="0"] .chat-v2-rail {
   animation: chat-v2-slide-in-left 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
+/* Bảng chọn model/API key trên mobile trượt lên từ đáy. */
+@keyframes chat-v2-sheet-up {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.chat-v2-anim-sheet {
+  animation: chat-v2-sheet-up 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Từ sm trở lên bảng chọn là popover neo cạnh nút bấm nên giữ hiệu ứng pop cũ. */
+@media (min-width: 640px) {
+  .chat-v2-anim-sheet {
+    animation: chat-v2-pop-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .chat-v2-dot,
   .chat-v2-shimmer,
@@ -282,7 +305,8 @@ html[data-chat-rail="0"] .chat-v2-rail {
   .chat-v2-anim-fade,
   .chat-v2-anim-pop,
   .chat-v2-anim-rise,
-  .chat-v2-anim-drawer {
+  .chat-v2-anim-drawer,
+  .chat-v2-anim-sheet {
     animation: none;
   }
 }

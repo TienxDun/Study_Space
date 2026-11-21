@@ -226,7 +226,7 @@ export function Composer({
                     onClick={() => onRemoveAttachment(attachment.id)}
                     disabled={sending}
                     aria-label={`Xóa ${attachment.name}`}
-                    className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-chat-muted transition hover:bg-chat-hover hover:text-chat-ink disabled:opacity-40"
+                    className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-chat-muted transition hover:bg-chat-hover hover:text-chat-ink disabled:opacity-40 sm:h-6 sm:w-6"
                   >
                     <XIcon size={11} weight="bold" aria-hidden="true" />
                   </button>

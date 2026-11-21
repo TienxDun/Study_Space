@@ -12,6 +12,7 @@ import {
   MagnifyingGlassIcon,
   SparkleIcon,
   TextAlignLeftIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import type { ChatV2Model } from "../types";
 import { NON_CHAT_MODEL_RE } from "../lib/config";
@@ -174,7 +175,10 @@ export function ModelPicker({
     setSortOpen(false);
     setProviderOpen(false);
     setActiveIndex(0);
-    const timer = window.setTimeout(() => searchRef.current?.focus(), 40);
+    const timer = window.setTimeout(() => {
+      // Mobile: không tự focus để bàn phím ảo không bật lên che ngay bảng chọn.
+      if (window.matchMedia("(min-width: 640px)").matches) searchRef.current?.focus();
+    }, 40);
     const onPointerDown = (event: PointerEvent) => {
       if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
     };
@@ -289,46 +293,63 @@ export function ModelPicker({
       </button>
 
       {open ? (
-        <div
-          role="listbox"
-          aria-label="Danh sách model"
-          data-escape-guard=""
-          className="chat-v2-anim-pop fixed inset-x-3 top-[4.75rem] z-[60] max-h-[calc(100dvh-9rem)] overflow-hidden rounded-2xl border border-chat-border-strong bg-chat-elevated/97 shadow-[var(--chat-shadow-popover)] backdrop-blur-2xl sm:absolute sm:inset-x-auto sm:bottom-full sm:left-0 sm:top-auto sm:z-50 sm:mb-2 sm:max-h-none sm:w-[410px]"
-        >
-          {/* Header tìm kiếm */}
-          <div className="border-b border-chat-border p-2.5 pb-2">
-            <label className="flex items-center gap-2 rounded-xl border border-chat-border bg-chat-surface px-2.5 py-2 focus-within:border-chat-accent-border">
-              <MagnifyingGlassIcon size={14} className="shrink-0 text-chat-muted" aria-hidden="true" />
-              <span className="sr-only">Tìm model</span>
-              <input
-                ref={searchRef}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "ArrowDown") {
-                    event.preventDefault();
-                    setActiveIndex((index) => Math.min(index + 1, filtered.length - 1));
-                  } else if (event.key === "ArrowUp") {
-                    event.preventDefault();
-                    setActiveIndex((index) => Math.max(index - 1, 0));
-                  } else if (event.key === "Enter" && filtered[activeIndex]) {
-                    event.preventDefault();
-                    choose(filtered[activeIndex].id);
-                  }
-                }}
-                placeholder="Tìm model theo tên, nhà phát hành…"
-                className="min-w-0 flex-1 bg-transparent text-xs text-chat-ink outline-none placeholder:text-chat-faint"
-              />
-              {query ? (
-                <button
-                  type="button"
-                  onClick={() => setQuery("")}
-                  className="text-[10px] text-chat-muted hover:text-chat-ink"
-                >
-                  Xoá
-                </button>
-              ) : null}
-            </label>
+        <>
+          <div
+            aria-hidden="true"
+            onClick={() => setOpen(false)}
+            className="chat-v2-anim-fade fixed inset-0 z-[59] bg-black/50 sm:hidden"
+          />
+          <div
+            role="listbox"
+            aria-label="Danh sách model"
+            data-escape-guard=""
+            className="chat-v2-anim-sheet fixed inset-x-3 bottom-[calc(var(--app-safe-bottom)+0.75rem)] z-[60] flex max-h-[min(78dvh,680px)] flex-col overflow-hidden rounded-[24px] border border-chat-border-strong bg-chat-elevated shadow-[var(--chat-shadow-popover)] sm:absolute sm:inset-x-auto sm:bottom-full sm:left-0 sm:z-50 sm:mb-2 sm:max-h-none sm:w-[410px] sm:rounded-2xl sm:bg-chat-elevated/97 sm:backdrop-blur-2xl"
+          >
+            <div className="mx-auto mt-2 h-1.5 w-12 shrink-0 rounded-full bg-chat-border-strong sm:hidden" />
+            {/* Header tìm kiếm */}
+            <div className="shrink-0 border-b border-chat-border p-2.5 pb-2">
+              <div className="flex items-center gap-1.5">
+                <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-chat-border bg-chat-surface px-2.5 py-2 focus-within:border-chat-accent-border">
+                  <MagnifyingGlassIcon size={14} className="shrink-0 text-chat-muted" aria-hidden="true" />
+                  <span className="sr-only">Tìm model</span>
+                  <input
+                    ref={searchRef}
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "ArrowDown") {
+                        event.preventDefault();
+                        setActiveIndex((index) => Math.min(index + 1, filtered.length - 1));
+                      } else if (event.key === "ArrowUp") {
+                        event.preventDefault();
+                        setActiveIndex((index) => Math.max(index - 1, 0));
+                      } else if (event.key === "Enter" && filtered[activeIndex]) {
+                        event.preventDefault();
+                        choose(filtered[activeIndex].id);
+                      }
+                    }}
+                    placeholder="Tìm model theo tên, nhà phát hành…"
+                    className="min-w-0 flex-1 bg-transparent text-xs text-chat-ink outline-none placeholder:text-chat-faint"
+                  />
+                  {query ? (
+                    <button
+                      type="button"
+                      onClick={() => setQuery("")}
+                      className="text-[10px] text-chat-muted hover:text-chat-ink"
+                    >
+                      Xoá
+                    </button>
+                  ) : null}
+                </label>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Đóng bảng chọn model"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-chat-muted transition hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 sm:hidden"
+              >
+                <XIcon size={15} weight="bold" aria-hidden="true" />
+              </button>
+              </div>
 
             {/* Hàng lọc: loại model + hãng */}
             <div ref={providerRef} className="relative mt-2 flex flex-wrap items-center gap-1.5">
@@ -426,7 +447,7 @@ export function ModelPicker({
           </div>
 
           {/* Danh sách model */}
-          <div className="max-h-[330px] overflow-y-auto p-1.5 custom-study-scroll">
+          <div className="min-h-0 flex-1 overflow-y-auto p-1.5 custom-study-scroll sm:max-h-[330px] sm:flex-none">
             {filtered.length === 0 ? (
               <p className="px-3 py-6 text-center text-xs text-chat-muted">
                 {cleanModels.length === 0
@@ -451,7 +472,7 @@ export function ModelPicker({
                     title={verifyTitle(model)}
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={() => choose(model.id)}
-                    className={`group flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition ${
+                    className={`group flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left transition sm:py-2 ${
                       lock
                         ? "cursor-not-allowed opacity-60"
                         : active
@@ -526,7 +547,7 @@ export function ModelPicker({
           </div>
 
           {/* Footer: số lượng + sắp xếp theo giá */}
-          <div className="flex items-center justify-between gap-2 border-t border-chat-border px-3 py-1.5 text-[10px] text-chat-faint">
+          <div className="flex shrink-0 items-center justify-between gap-2 border-t border-chat-border px-3 py-1.5 text-[10px] text-chat-faint">
             <span>
               {filtered.length}/{cleanModels.length} model · {usableCount} dùng được
             </span>
@@ -595,6 +616,7 @@ export function ModelPicker({
             </div>
           </div>
         </div>
+        </>
       ) : null}
     </div>
   );

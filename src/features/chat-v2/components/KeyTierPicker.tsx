@@ -83,43 +83,51 @@ export function KeyTierPicker({ value, onChange, disabled = false }: KeyTierPick
       </button>
 
       {open ? (
-        <div
-          role="listbox"
-          aria-label="Chọn API key"
-          data-escape-guard=""
-          className="chat-v2-anim-pop fixed inset-x-3 top-[4.75rem] z-[60] overflow-hidden rounded-2xl border border-chat-border-strong bg-chat-elevated/97 p-1.5 shadow-[var(--chat-shadow-popover)] backdrop-blur-2xl sm:absolute sm:inset-x-auto sm:bottom-full sm:right-0 sm:top-auto sm:z-50 sm:mb-2 sm:w-[300px]"
-        >
-          {OPTIONS.map((option) => {
-            const selected = option.value === value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                onClick={() => choose(option.value)}
-                className="flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-left transition hover:bg-chat-hover"
-              >
-                <span
-                  className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border ${
-                    selected
-                      ? "border-chat-accent-border bg-chat-accent-soft text-chat-accent"
-                      : "border-chat-border bg-chat-surface text-chat-muted"
-                  }`}
+        <>
+          <div
+            aria-hidden="true"
+            onClick={() => setOpen(false)}
+            className="chat-v2-anim-fade fixed inset-0 z-[59] bg-black/50 sm:hidden"
+          />
+          <div
+            role="listbox"
+            aria-label="Chọn API key"
+            data-escape-guard=""
+            className="chat-v2-anim-sheet fixed inset-x-3 bottom-[calc(var(--app-safe-bottom)+0.75rem)] z-[60] overflow-hidden rounded-[24px] border border-chat-border-strong bg-chat-elevated p-1.5 shadow-[var(--chat-shadow-popover)] sm:absolute sm:inset-x-auto sm:bottom-full sm:right-0 sm:z-50 sm:mb-2 sm:w-[300px] sm:rounded-2xl sm:bg-chat-elevated/97 sm:backdrop-blur-2xl"
+          >
+            <div className="mx-auto my-1 h-1.5 w-12 rounded-full bg-chat-border-strong sm:hidden" />
+            {OPTIONS.map((option) => {
+              const selected = option.value === value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onClick={() => choose(option.value)}
+                  className="flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2.5 text-left transition hover:bg-chat-hover sm:py-2"
                 >
-                  <KeyIcon size={13} aria-hidden="true" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[12px] font-semibold text-chat-ink">{option.label}</span>
-                  <span className="block text-[10px] leading-4 text-chat-muted">{option.hint}</span>
-                </span>
-                {selected ? (
-                  <CheckIcon size={14} weight="bold" className="mt-1 shrink-0 text-chat-accent" aria-hidden="true" />
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
+                  <span
+                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border ${
+                      selected
+                        ? "border-chat-accent-border bg-chat-accent-soft text-chat-accent"
+                        : "border-chat-border bg-chat-surface text-chat-muted"
+                    }`}
+                  >
+                    <KeyIcon size={13} aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[12px] font-semibold text-chat-ink">{option.label}</span>
+                    <span className="block text-[10px] leading-4 text-chat-muted">{option.hint}</span>
+                  </span>
+                  {selected ? (
+                    <CheckIcon size={14} weight="bold" className="mt-1 shrink-0 text-chat-accent" aria-hidden="true" />
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        </>
       ) : null}
     </div>
   );
