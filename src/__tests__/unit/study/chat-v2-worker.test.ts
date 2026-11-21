@@ -4,6 +4,7 @@ import { listCatalog } from "../../../../workers/chat-v2/catalog.js";
 
 const ENV = {
   MOTAPIS_API_KEY: "sk-test",
+  ENVIRONMENT: "development",
   CHAT_V2_DEV_TOKEN: "dev-token",
   ALLOWED_ORIGINS: "http://localhost:3001",
   DEFAULT_MODEL: "deepseek-v4-flash",

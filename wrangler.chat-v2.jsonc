@@ -7,5 +7,22 @@
   "preview_urls": true,
   "observability": {
     "enabled": true
+  },
+  // Bộ đếm chat dùng chung với chat-proxy v1 (bảng chat_usage) và cờ hạn mức.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "zenspace",
+      "database_id": "66bb2a87-05a8-4ea3-bdcb-d8e0d39eb465"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CHAT_QUOTA",
+      "id": "a16e430f9bbe46afa51ffc9d4f9bce9d"
+    }
+  ],
+  "vars": {
+    "FIREBASE_PROJECT_ID": "zenspace-d10m13y26"
   }
 }

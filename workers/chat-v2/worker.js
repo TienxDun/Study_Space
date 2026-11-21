@@ -11,9 +11,13 @@
  * Biến môi trường (.dev.vars khi chạy local):
  *   MOTAPIS_API_KEY_FREE = key gói miễn phí, dùng trước cho 19 model free
  *   MOTAPIS_API_KEY      = key trả phí, dùng cho model trả phí và khi key free hết quota
- *   CHAT_V2_DEV_TOKEN    = chat-v2-dev-local
+ *   FIREBASE_PROJECT_ID  = project Firebase để kiểm vé đăng nhập (bắt buộc trên production)
+ *   CHAT_V2_DEV_TOKEN    = chat-v2-dev-local (chỉ dùng khi ENVIRONMENT=development)
+ *   ENVIRONMENT          = development đặt trong .dev.vars; KHÔNG đặt trên production
  *   ALLOWED_ORIGINS      = http://localhost:3001
  *   DEFAULT_MODEL        = deepseek-v4-flash
+ *
+ * Hạn mức chat dùng chung với chat-proxy v1: D1 `chat_usage` + KV `cfg:flags`.
  */
 
 import {
@@ -34,6 +38,8 @@ import {
 } from "./catalog.js";
 import { appendFilesToLastUser, attachImagesToLastUser, parseAttachments } from "./attachments.js";
 import { buildBudget } from "./tokens.js";
+import { authenticate, devMode } from "./auth.js";
+import { checkQuota, d1, incrCount, pacificDay } from "./quota.js";
 
 const MOTAPIS_BASE = "https://motapis.com/v1";
 const DEFAULT_MODEL = "deepseek-v4-flash";
@@ -144,23 +150,11 @@ function corsHeaders(req, env) {
   return {
     "Access-Control-Allow-Origin": ok ? origin || "*" : "null",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, X-Chat-V2-Token, X-Chat-V2-Key",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Chat-V2-Token, X-Chat-V2-Key",
     "Access-Control-Expose-Headers":
       "X-Chat-V2-Estimated-Input, X-Chat-V2-Max-Input, X-Chat-V2-Trimmed, X-Chat-V2-Context, X-Chat-V2-Max-Output",
     "Access-Control-Max-Age": "86400",
   };
-}
-
-function devTokenError(req, env, cors) {
-  const expected = String(env.CHAT_V2_DEV_TOKEN || "");
-  if (!expected) {
-    return json({ error: "Worker chưa cấu hình CHAT_V2_DEV_TOKEN." }, 503, cors);
-  }
-  const got = req.headers.get("X-Chat-V2-Token") || "";
-  if (got !== expected) {
-    return json({ error: "Sai dev token." }, 401, cors);
-  }
-  return null;
 }
 
 function apiKeyError(env, cors) {
@@ -320,8 +314,16 @@ function cleanTranscript(input) {
 }
 
 async function summarize(req, env, cors) {
-  const tokenError = devTokenError(req, env, cors);
-  if (tokenError) return tokenError;
+  const gate = await authenticate(req, env);
+  if (gate.error) return json({ error: gate.error }, gate.status, cors);
+  const quota = await checkQuota(env, gate);
+  if (quota.error) {
+    return json(
+      quota.code ? { error: quota.error, code: quota.code } : { error: quota.error },
+      quota.status,
+      cors
+    );
+  }
   const keyError = apiKeyError(env, cors);
   if (keyError) return keyError;
   const tier = keyTierOf(req);
@@ -402,6 +404,7 @@ async function summarize(req, env, cors) {
 
   const summary = extractText(payload);
   if (!summary) return json({ error: "Model không trả bản tóm tắt." }, 502, cors);
+  if (!gate.dev) await incrCount(env, gate.uid, pacificDay());
 
   const latencyMs = Date.now() - started;
   const result = {
@@ -437,8 +440,16 @@ async function listModels(env, cors, tier = "auto") {
 }
 
 async function chat(req, env, cors) {
-  const tokenError = devTokenError(req, env, cors);
-  if (tokenError) return tokenError;
+  const gate = await authenticate(req, env);
+  if (gate.error) return json({ error: gate.error }, gate.status, cors);
+  const quota = await checkQuota(env, gate);
+  if (quota.error) {
+    return json(
+      quota.code ? { error: quota.error, code: quota.code } : { error: quota.error },
+      quota.status,
+      cors
+    );
+  }
   const keyError = apiKeyError(env, cors);
   if (keyError) return keyError;
   const tier = keyTierOf(req);
@@ -588,6 +599,7 @@ async function chat(req, env, cors) {
         ms: Date.now() - started,
       })
     );
+    if (!gate.dev) await incrCount(env, gate.uid, pacificDay());
     return new Response(upstream.body, {
       status: 200,
       headers: {
@@ -611,6 +623,7 @@ async function chat(req, env, cors) {
   if (payload && payload.error) {
     return upstreamError(Number(payload.http_status) || 502, text, cors);
   }
+  if (!gate.dev) await incrCount(env, gate.uid, pacificDay());
 
   const latencyMs = Date.now() - started;
   const choice = payload && payload.choices && payload.choices[0];
@@ -666,7 +679,9 @@ const worker = {
           hasPaidKey: !!paidKey(env),
           freeModels: catalogFreeCount(),
           catalogGeneratedAt: CATALOG_GENERATED_AT,
-          hasDevToken: !!env.CHAT_V2_DEV_TOKEN,
+          authMode: devMode(env) ? "dev-token" : "firebase",
+          hasProjectId: !!env.FIREBASE_PROJECT_ID,
+          hasDb: !!d1(env),
           summaryModel: env.CHAT_V2_SUMMARY_MODEL || SUMMARY_MODEL,
         },
         200,
@@ -674,9 +689,8 @@ const worker = {
       );
     }
 
+    // Danh mục model là thông tin công khai: không cần vé, không tốn chi phí.
     if (url.pathname === "/models" && req.method === "GET") {
-      const tokenError = devTokenError(req, env, cors);
-      if (tokenError) return tokenError;
       return listModels(env, cors, keyTierOf(req));
     }
 
