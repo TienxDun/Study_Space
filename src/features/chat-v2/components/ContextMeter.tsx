@@ -42,7 +42,10 @@ export function ContextMeter({
       }
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key !== "Escape") return;
+      // Đánh dấu đã xử lý để phím tắt toàn cục không đóng luôn cả khung chat.
+      event.preventDefault();
+      setOpen(false);
     };
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
@@ -101,29 +104,37 @@ export function ContextMeter({
         aria-expanded={open}
         aria-label={`Dung lượng ngữ cảnh: ${percentDisplay}. Nhấn hoặc hover để xem chi tiết và nén ngữ cảnh.`}
         title={open ? undefined : `Ngữ cảnh: ${label}`}
-        className="group relative grid h-10 w-10 shrink-0 place-items-center rounded-full transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50"
+        className="group flex h-9 shrink-0 items-center gap-1.5 rounded-full px-1.5 text-chat-muted transition hover:bg-chat-hover hover:text-chat-ink active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 sm:h-8 sm:px-2"
       >
-        <div
+        <span
           aria-hidden="true"
-          className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full transition-opacity group-hover:opacity-90"
-          style={{
-            background: `conic-gradient(${tone} ${percent * 3.6}deg, var(--chat-ring-track) 0)`,
-          }}
+          className="relative block h-1.5 w-6 shrink-0 overflow-hidden rounded-full bg-chat-ring-track"
         >
-          <div className="absolute inset-[3px] grid place-items-center rounded-full bg-chat-elevated text-[9px] font-semibold text-chat-sub shadow-inner">
-            {context ? percentDisplay : modelInfo ? contextSize : "—"}
-          </div>
-          {summarizing ? (
-            <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 animate-pulse rounded-full border border-chat-bg bg-chat-amber motion-reduce:animate-none" />
-          ) : null}
-        </div>
+          <span
+            className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"
+            style={{
+              width: `${context ? Math.max(percent, 5) : percent}%`,
+              backgroundColor: tone,
+            }}
+          />
+        </span>
+        <span className="text-[10px] font-semibold tabular-nums">
+          {context ? percentDisplay : modelInfo ? contextSize : "—"}
+        </span>
+        {summarizing ? (
+          <span
+            aria-hidden="true"
+            className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-chat-amber motion-reduce:animate-none"
+          />
+        ) : null}
       </button>
 
       {open ? (
         <div
           role="dialog"
           aria-label="Thông tin ngữ cảnh và nén hội thoại"
-          className="chat-v2-anim-pop absolute right-0 top-full z-50 mt-2 w-72 sm:w-80 rounded-2xl border border-chat-border-strong bg-chat-elevated p-3.5 shadow-[var(--chat-shadow-popover)]"
+          data-escape-guard=""
+          className="chat-v2-anim-pop absolute bottom-full right-0 z-50 mb-2 w-72 sm:w-80 rounded-2xl border border-chat-border-strong bg-chat-elevated p-3.5 shadow-[var(--chat-shadow-popover)]"
         >
           <div className="flex items-center justify-between gap-2 border-b border-chat-border/60 pb-2.5">
             <div className="flex items-center gap-1.5 text-chat-accent">

@@ -179,7 +179,10 @@ export function ModelPicker({
       if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key !== "Escape") return;
+      // Đánh dấu đã xử lý để phím tắt toàn cục không đóng luôn cả khung chat.
+      event.preventDefault();
+      setOpen(false);
     };
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
@@ -229,9 +232,20 @@ export function ModelPicker({
   const triggerPrice = priceLabel && priceLabel !== "—" ? priceLabel : "";
   const isSelectedFree = valueInfo?.free === true;
   const valueLock = valueInfo ? lockLabel(valueInfo) : null;
+  const triggerTitle = valueInfo
+    ? [
+        value,
+        contextLabel && contextLabel !== "-" ? `${contextLabel} context` : null,
+        visionLabel(valueInfo.vision),
+        triggerPrice || null,
+        compact ? null : "motapis",
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : value;
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className="relative min-w-0">
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
@@ -239,54 +253,38 @@ export function ModelPicker({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`Chọn model, đang dùng ${value}`}
-        className="group flex min-h-10 items-center gap-2 rounded-full border border-chat-border bg-chat-surface py-1 pl-1 pr-2.5 text-left transition hover:border-chat-border-strong hover:bg-chat-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 disabled:cursor-not-allowed disabled:opacity-50"
+        title={triggerTitle}
+        className="group flex h-9 min-w-0 max-w-full items-center gap-1.5 rounded-full pl-2 pr-1.5 text-chat-muted transition hover:bg-chat-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 disabled:cursor-not-allowed disabled:opacity-50 sm:h-8 sm:pl-1.5"
       >
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-chat-accent-border bg-chat-accent-soft text-chat-accent">
-          <CpuIcon size={15} weight="duotone" aria-hidden="true" />
+        <CpuIcon
+          size={14}
+          weight="duotone"
+          className="shrink-0 text-chat-accent/80 transition group-hover:text-chat-accent"
+          aria-hidden="true"
+        />
+        <span className="min-w-0 truncate text-[12px] font-semibold text-chat-ink max-w-[108px] sm:max-w-[220px]">
+          {value}
         </span>
-        <span className="min-w-0">
-          <span className="flex max-w-[140px] items-center gap-1.5 sm:max-w-[200px]">
-            <span className="truncate text-[12px] font-semibold text-chat-ink">
-              {value}
-            </span>
-            {valueLock ? (
-              <span
-                className={`hidden shrink-0 rounded-md border px-1 py-0.2 text-[8px] font-bold sm:inline-block ${
-                  valueInfo?.available === false
-                    ? "border-chat-rose-border bg-chat-rose-soft text-chat-rose"
-                    : "border-chat-amber-border bg-chat-amber-soft text-chat-amber"
-                }`}
-              >
-                {valueInfo?.available === false ? "HỎNG" : "CHƯA KIỂM"}
-              </span>
-            ) : isSelectedFree ? (
-              <span className="hidden shrink-0 rounded-md border border-chat-accent-border bg-chat-accent-soft px-1 py-0.2 text-[8px] font-bold text-chat-accent sm:inline-block">
-                FREE
-              </span>
-            ) : null}
+        {valueLock ? (
+          <span
+            className={`shrink-0 rounded px-1 py-0.5 text-[8px] font-bold ${
+              valueInfo?.available === false
+                ? "bg-chat-rose-soft text-chat-rose"
+                : "bg-chat-amber-soft text-chat-amber"
+            }`}
+          >
+            {valueInfo?.available === false ? "HỎNG" : "CHƯA KIỂM"}
           </span>
-          <span className="flex items-center gap-1.5 text-[10px] text-chat-muted">
-            {contextLabel && contextLabel !== "-" ? <span>{contextLabel} context</span> : null}
-            {valueInfo && valueInfo.vision !== null ? (
-              <span className="inline-flex items-center gap-0.5">
-                {valueInfo.vision ? <EyeIcon size={10} aria-hidden="true" /> : <TextAlignLeftIcon size={10} aria-hidden="true" />}
-                {valueInfo.vision ? "ảnh" : "chữ"}
-              </span>
-            ) : null}
-            {triggerPrice ? (
-              <span className="hidden sm:inline" title="Giá vào/ra mỗi 1M token (USD)">
-                · {triggerPrice}
-              </span>
-            ) : compact ? null : (
-              <span className="hidden sm:inline">· motapis</span>
-            )}
+        ) : isSelectedFree ? (
+          <span className="hidden shrink-0 rounded bg-chat-accent-soft px-1 py-0.5 text-[8px] font-bold tracking-wide text-chat-accent sm:inline-block">
+            FREE
           </span>
-        </span>
+        ) : null}
         <CaretDownIcon
-          size={13}
+          size={11}
           weight="bold"
           aria-hidden="true"
-          className={`shrink-0 text-chat-muted transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
+          className={`shrink-0 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
         />
       </button>
 
@@ -294,7 +292,8 @@ export function ModelPicker({
         <div
           role="listbox"
           aria-label="Danh sách model"
-          className="chat-v2-anim-pop fixed inset-x-3 top-[7.25rem] z-50 w-auto overflow-hidden rounded-2xl border border-chat-border-strong bg-chat-elevated/97 shadow-[var(--chat-shadow-popover)] backdrop-blur-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[410px]"
+          data-escape-guard=""
+          className="chat-v2-anim-pop fixed inset-x-3 top-[4.75rem] z-[60] max-h-[calc(100dvh-9rem)] overflow-hidden rounded-2xl border border-chat-border-strong bg-chat-elevated/97 shadow-[var(--chat-shadow-popover)] backdrop-blur-2xl sm:absolute sm:inset-x-auto sm:bottom-full sm:left-0 sm:top-auto sm:z-50 sm:mb-2 sm:max-h-none sm:w-[410px]"
         >
           {/* Header tìm kiếm */}
           <div className="border-b border-chat-border p-2.5 pb-2">

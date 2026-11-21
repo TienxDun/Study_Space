@@ -1,25 +1,9 @@
 "use client";
 
 import { ListIcon, PlusIcon, SidebarSimpleIcon, XIcon } from "@phosphor-icons/react";
-import type { ChatV2ContextMeta, ChatV2KeyTier, ChatV2Model } from "../types";
-import { ContextMeter } from "./ContextMeter";
-import { KeyTierPicker } from "./KeyTierPicker";
-import { ModelPicker } from "./ModelPicker";
 
 interface ChatTopbarProps {
   title: string;
-  models: ChatV2Model[];
-  model: string;
-  modelInfo?: ChatV2Model;
-  onModelChange: (id: string) => void;
-  keyTier: ChatV2KeyTier;
-  onKeyTierChange: (value: ChatV2KeyTier) => void;
-  context?: ChatV2ContextMeta;
-  summaryCount: number;
-  summarizing: boolean;
-  onCompact?: () => void;
-  canCompact?: boolean;
-  sending: boolean;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
   onOpenSessions: () => void;
@@ -33,18 +17,6 @@ interface ChatTopbarProps {
 
 export function ChatTopbar({
   title,
-  models,
-  model,
-  modelInfo,
-  onModelChange,
-  keyTier,
-  onKeyTierChange,
-  context,
-  summaryCount,
-  summarizing,
-  onCompact,
-  canCompact,
-  sending,
   sidebarOpen,
   onToggleSidebar,
   onOpenSessions,
@@ -56,9 +28,9 @@ export function ChatTopbar({
   onClose,
 }: ChatTopbarProps) {
   return (
-    <header className="sticky top-0 z-30 bg-chat-bg/80 backdrop-blur-md sm:backdrop-blur-2xl">
-      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-2.5 px-3 py-3 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:px-4 lg:px-5">
-        <div className="flex min-w-0 items-center gap-2">
+    <header className="sticky top-0 z-30 border-b border-chat-border/60 bg-chat-bg/80 backdrop-blur-md sm:backdrop-blur-2xl">
+      <div className="flex w-full items-center gap-2 px-3 py-3 sm:gap-4 sm:px-4 lg:px-5">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           {onClose ? (
             <button
               type="button"
@@ -93,22 +65,14 @@ export function ChatTopbar({
             <h1 className="truncate text-[13px] font-semibold tracking-tight text-chat-ink sm:text-sm">
               {title}
             </h1>
-            <p className="flex items-center gap-1.5 text-[10px] text-chat-muted">
-              <span className="h-1.5 w-1.5 rounded-full bg-chat-accent" />
-              Trợ lý học tập · AI có thể sai
+            <p className="flex items-center gap-1.5 truncate text-[10px] text-chat-muted">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-chat-accent" />
+              Trợ lý học tập
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:order-3 sm:gap-2">
-          <ContextMeter
-            context={context}
-            modelInfo={modelInfo}
-            summaryCount={summaryCount}
-            summarizing={summarizing}
-            onCompact={onCompact}
-            canCompact={canCompact}
-          />
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {railAvailable ? (
             <button
               type="button"
@@ -127,22 +91,10 @@ export function ChatTopbar({
             disabled={newChatDisabled}
             aria-label={newChatDisabled ? "Đang ở cuộc trò chuyện mới" : "Cuộc trò chuyện mới"}
             title={newChatDisabled ? "Đang ở cuộc trò chuyện mới" : "Cuộc trò chuyện mới"}
-            className="group grid h-10 w-10 shrink-0 place-items-center rounded-full border border-chat-accent-border bg-chat-accent-soft text-chat-accent transition-all hover:border-chat-accent hover:bg-chat-accent-button hover:text-chat-accent-button-text active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 disabled:cursor-not-allowed disabled:border-chat-border disabled:bg-chat-surface disabled:text-chat-faint disabled:hover:border-chat-border disabled:hover:bg-chat-surface disabled:hover:text-chat-faint disabled:active:scale-100"
+            className={`group grid h-10 w-10 shrink-0 place-items-center rounded-full border border-chat-accent-border bg-chat-accent-soft text-chat-accent transition-all hover:border-chat-accent hover:bg-chat-accent-button hover:text-chat-accent-button-text active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 disabled:cursor-not-allowed disabled:border-chat-border disabled:bg-chat-surface disabled:text-chat-faint disabled:hover:border-chat-border disabled:hover:bg-chat-surface disabled:hover:text-chat-faint disabled:active:scale-100 ${sidebarOpen ? "lg:hidden" : ""}`}
           >
             <PlusIcon size={17} weight="bold" className="transition-transform duration-300 group-hover:rotate-90 motion-reduce:transform-none" aria-hidden="true" />
           </button>
-        </div>
-
-        <div className="col-span-2 flex items-center gap-2 sm:order-2 sm:col-span-1 sm:ml-auto">
-          <ModelPicker
-            models={models}
-            value={model}
-            valueInfo={modelInfo}
-            onChange={onModelChange}
-            disabled={sending}
-            compact
-          />
-          <KeyTierPicker value={keyTier} onChange={onKeyTierChange} disabled={sending} />
         </div>
       </div>
     </header>

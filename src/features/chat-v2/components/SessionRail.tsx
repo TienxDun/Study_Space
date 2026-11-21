@@ -9,7 +9,6 @@ import {
   FilesIcon,
   ImageIcon,
   MagnifyingGlassPlusIcon,
-  XIcon,
 } from "@phosphor-icons/react";
 import { relativeTime } from "../lib/sessions";
 import type { ChatV2SessionFileMeta, ChatV2SessionSummary } from "../types";
@@ -20,10 +19,9 @@ interface SessionRailProps {
   summary: ChatV2SessionSummary | null;
   summarizing: boolean;
   files: ChatV2SessionFileMeta[];
-  onClose: () => void;
 }
 
-export function SessionRail({ summary, summarizing, files, onClose }: SessionRailProps) {
+export function SessionRail({ summary, summarizing, files }: SessionRailProps) {
   const [expanded, setExpanded] = useState(false);
   const [preview, setPreview] = useState<{ src: string; name: string; id: string } | null>(null);
   const [filePreview, setFilePreview] = useState<{ name: string; text: string } | null>(null);
@@ -41,15 +39,6 @@ export function SessionRail({ summary, summarizing, files, onClose }: SessionRai
           </p>
           <p className="mt-0.5 truncate text-[13px] font-semibold text-chat-ink">Bộ nhớ &amp; tệp</p>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Ẩn chi tiết phiên"
-          title="Ẩn chi tiết phiên"
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-chat-border bg-chat-surface text-chat-sub transition hover:border-chat-border-strong hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50"
-        >
-          <XIcon size={13} weight="bold" aria-hidden="true" />
-        </button>
       </div>
 
       <div className="custom-study-scroll flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-3">
@@ -94,7 +83,7 @@ export function SessionRail({ summary, summarizing, files, onClose }: SessionRai
               </button>
             ) : null}
 
-            <p className="mt-2 text-[9px] leading-4 text-chat-faint">
+            <p className="mt-2 text-[10px] leading-4 text-chat-muted">
               Đã tóm tắt {summary.messageCount} tin cũ · {relativeTime(summary.updatedAt)}
             </p>
           </section>
@@ -123,7 +112,7 @@ export function SessionRail({ summary, summarizing, files, onClose }: SessionRai
                     >
                       {file.name}
                     </span>
-                    <span className="block text-[9px] text-chat-faint">
+                    <span className="block text-[10px] text-chat-muted">
                       {file.kind === "image" ? "Ảnh" : "Tệp chữ"}
                     </span>
                   </span>
@@ -196,15 +185,11 @@ export function SessionRail({ summary, summarizing, files, onClose }: SessionRai
                 );
               })}
             </ul>
-
-            <p className="mt-2 text-[9px] leading-4 text-chat-faint">
-              Ảnh gửi đi được lưu trên máy này.
-            </p>
           </section>
         ) : null}
       </div>
 
-      <p className="px-4 py-2.5 text-[9px] leading-4 text-chat-faint">
+      <p className="px-4 py-2.5 text-[10px] leading-4 text-chat-muted">
         Chi tiết phiên chỉ lưu trên máy này.
       </p>
 

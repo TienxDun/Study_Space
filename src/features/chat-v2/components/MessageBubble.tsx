@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowsClockwiseIcon,
   CheckIcon,
+  ClockIcon,
   CopyIcon,
   FileTextIcon,
   MagnifyingGlassPlusIcon,
@@ -258,7 +259,7 @@ export function MessageBubble({
           </div>
         ) : null}
         {!streaming && message.text ? (
-          <div className="mt-1 flex items-center gap-1">
+          <div className="mt-1.5 flex items-center gap-1">
             <button
               type="button"
               onClick={copy}
@@ -282,8 +283,9 @@ export function MessageBubble({
             {typeof message.durationMs === "number" && message.durationMs > 0 ? (
               <span
                 title={`Thời gian phản hồi: ${fullDuration(message.durationMs)}`}
-                className="ml-auto inline-flex select-none items-center font-mono text-[10px] tabular-nums text-chat-faint"
+                className="ml-2 inline-flex select-none items-center gap-1 font-mono text-[10px] tabular-nums text-chat-muted"
               >
+                <ClockIcon size={11} weight="duotone" aria-hidden="true" />
                 {compactDuration(message.durationMs)}
               </span>
             ) : null}

@@ -148,7 +148,6 @@ export function ChatV2({ onClose }: ChatV2Props) {
         onNewChat={handleNewChat}
         newChatDisabled={!chat.canStartNewChat}
         onToggleTheme={toggleTheme}
-        onClose={onClose}
       />
 
       <SessionDrawer
@@ -167,18 +166,6 @@ export function ChatV2({ onClose }: ChatV2Props) {
       <main className="relative flex min-w-0 flex-1 flex-col">
         <ChatTopbar
           title={chat.title}
-          models={chat.models}
-          model={chat.model}
-          modelInfo={chat.modelInfo}
-          onModelChange={chat.setModel}
-          keyTier={chat.keyTier}
-          onKeyTierChange={chat.setKeyTier}
-          context={chat.context}
-          summaryCount={chat.summaryMessageCount}
-          summarizing={chat.summarizing}
-          onCompact={chat.compactContext}
-          canCompact={chat.canCompact}
-          sending={chat.sending}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={toggleSidebar}
           onOpenSessions={() => setDrawerOpen(true)}
@@ -246,6 +233,17 @@ export function ChatV2({ onClose }: ChatV2Props) {
               onRemoveAttachment={chat.removeAttachment}
               onSend={handleSend}
               onStop={chat.stop}
+              models={chat.models}
+              model={chat.model}
+              modelInfo={chat.modelInfo}
+              onModelChange={chat.setModel}
+              keyTier={chat.keyTier}
+              onKeyTierChange={chat.setKeyTier}
+              context={chat.context}
+              summaryCount={chat.summaryMessageCount}
+              summarizing={chat.summarizing}
+              onCompact={chat.compactContext}
+              canCompact={chat.canCompact}
             />
           </div>
 
@@ -254,7 +252,6 @@ export function ChatV2({ onClose }: ChatV2Props) {
               summary={chat.summary}
               summarizing={chat.summarizing}
               files={chat.sessionFiles}
-              onClose={toggleRail}
             />
           ) : null}
         </div>

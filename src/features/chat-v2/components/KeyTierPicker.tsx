@@ -42,7 +42,10 @@ export function KeyTierPicker({ value, onChange, disabled = false }: KeyTierPick
       if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key !== "Escape") return;
+      // Đánh dấu đã xử lý để phím tắt toàn cục không đóng luôn cả khung chat.
+      event.preventDefault();
+      setOpen(false);
     };
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
@@ -67,12 +70,12 @@ export function KeyTierPicker({ value, onChange, disabled = false }: KeyTierPick
         aria-expanded={open}
         aria-label={`Chọn API key, đang dùng ${current.label}`}
         title={`API key: ${current.label} — ${current.hint}`}
-        className="flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-full border border-chat-border bg-chat-surface px-2 text-chat-sub transition hover:border-chat-border-strong hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 disabled:cursor-not-allowed disabled:opacity-50 sm:justify-start sm:px-3"
+        className="flex h-9 min-w-9 items-center justify-center gap-1 rounded-full px-2 text-chat-muted transition hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 disabled:cursor-not-allowed disabled:opacity-50 sm:h-8 sm:justify-start sm:pl-1.5 sm:pr-1.5"
       >
-        <KeyIcon size={15} weight="duotone" aria-hidden="true" />
-        <span className="hidden text-[11px] font-semibold sm:inline">{current.short}</span>
+        <KeyIcon size={13} weight="duotone" aria-hidden="true" />
+        <span className="hidden text-[11px] font-medium sm:inline">{current.short}</span>
         <CaretDownIcon
-          size={11}
+          size={10}
           weight="bold"
           aria-hidden="true"
           className={`hidden shrink-0 transition-transform motion-reduce:transition-none sm:block ${open ? "rotate-180" : ""}`}
@@ -83,7 +86,8 @@ export function KeyTierPicker({ value, onChange, disabled = false }: KeyTierPick
         <div
           role="listbox"
           aria-label="Chọn API key"
-          className="chat-v2-anim-pop fixed inset-x-3 top-[7.25rem] z-50 overflow-hidden rounded-2xl border border-chat-border-strong bg-chat-elevated/97 p-1.5 shadow-[var(--chat-shadow-popover)] backdrop-blur-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[300px]"
+          data-escape-guard=""
+          className="chat-v2-anim-pop fixed inset-x-3 top-[4.75rem] z-[60] overflow-hidden rounded-2xl border border-chat-border-strong bg-chat-elevated/97 p-1.5 shadow-[var(--chat-shadow-popover)] backdrop-blur-2xl sm:absolute sm:inset-x-auto sm:bottom-full sm:right-0 sm:top-auto sm:z-50 sm:mb-2 sm:w-[300px]"
         >
           {OPTIONS.map((option) => {
             const selected = option.value === value;

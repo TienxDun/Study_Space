@@ -18,7 +18,11 @@ import {
 } from "@phosphor-icons/react";
 import type { ChatV2Attachment } from "../lib/attachments";
 import { MAX_ATTACHMENTS } from "../lib/attachments";
+import type { ChatV2ContextMeta, ChatV2KeyTier, ChatV2Model } from "../types";
+import { ContextMeter } from "./ContextMeter";
 import { ImagePreview } from "./ImagePreview";
+import { KeyTierPicker } from "./KeyTierPicker";
+import { ModelPicker } from "./ModelPicker";
 
 interface ComposerProps {
   input: string;
@@ -32,6 +36,18 @@ interface ComposerProps {
   onRemoveAttachment: (id: string) => void;
   onSend: () => void;
   onStop: () => void;
+  // Công cụ chọn model/ngữ cảnh nằm cạnh nút gửi; bỏ trống khi nhúng nơi khác.
+  models?: ChatV2Model[];
+  model?: string;
+  modelInfo?: ChatV2Model;
+  onModelChange?: (id: string) => void;
+  keyTier?: ChatV2KeyTier;
+  onKeyTierChange?: (value: ChatV2KeyTier) => void;
+  context?: ChatV2ContextMeta;
+  summaryCount?: number;
+  summarizing?: boolean;
+  onCompact?: () => void;
+  canCompact?: boolean;
 }
 
 export function Composer({
@@ -46,11 +62,36 @@ export function Composer({
   onRemoveAttachment,
   onSend,
   onStop,
+  models = [],
+  model = "",
+  modelInfo,
+  onModelChange,
+  keyTier,
+  onKeyTierChange,
+  context,
+  summaryCount,
+  summarizing,
+  onCompact,
+  canCompact,
 }: ComposerProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<{ src: string; name: string } | null>(null);
   const [dragging, setDragging] = useState(false);
   const dragDepth = useRef(0);
+  const pickers =
+    models.length > 0 && onModelChange && keyTier && onKeyTierChange ? (
+      <>
+        <ModelPicker
+          models={models}
+          value={model}
+          valueInfo={modelInfo}
+          onChange={onModelChange}
+          disabled={sending}
+          compact
+        />
+        <KeyTierPicker value={keyTier} onChange={onKeyTierChange} disabled={sending} />
+      </>
+    ) : null;
 
   const hasFiles = (event: ReactDragEvent) =>
     Array.from(event.dataTransfer?.types || []).includes("Files");
@@ -241,10 +282,10 @@ export function Composer({
             placeholder="Hỏi bài, dán ảnh hoặc kéo tệp vào đây…"
             disabled={sending}
             style={{ height: "44px" }}
-            className="w-full resize-none bg-transparent px-2 pt-1.5 text-[13px] leading-6 text-chat-ink outline-none placeholder:text-chat-faint disabled:opacity-60 sm:text-sm"
+            className="w-full resize-none bg-transparent px-2 pt-1.5 text-[13px] leading-6 text-chat-ink outline-none placeholder:text-chat-muted disabled:opacity-60 sm:text-sm"
           />
-          <div className="flex items-center justify-between gap-2 px-1 pb-0.5">
-            <div className="flex min-w-0 items-center gap-1.5">
+          <div className="flex items-center justify-between gap-1 px-0.5 pb-0.5 pt-0.5">
+            <div className="flex min-w-0 items-center gap-0.5">
               <input
                 ref={fileRef}
                 type="file"
@@ -263,43 +304,57 @@ export function Composer({
                 onClick={() => fileRef.current?.click()}
                 disabled={sending || attachments.length >= MAX_ATTACHMENTS}
                 aria-label="Đính kèm ảnh hoặc tệp chữ"
-                title="Đính kèm ảnh hoặc tệp chữ"
-                className="grid h-9 w-9 place-items-center rounded-xl text-chat-muted transition hover:bg-chat-hover hover:text-chat-ink disabled:opacity-35"
+                title={
+                  attachments.length > 0
+                    ? `Đính kèm (${attachments.length}/${MAX_ATTACHMENTS} tệp)`
+                    : `Đính kèm (tối đa ${MAX_ATTACHMENTS} tệp)`
+                }
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-chat-muted transition hover:bg-chat-hover hover:text-chat-ink disabled:opacity-35 sm:h-8 sm:w-8"
               >
-                <PaperclipIcon size={17} weight="bold" aria-hidden="true" />
+                <PaperclipIcon size={16} weight="bold" aria-hidden="true" />
               </button>
-              <span className="truncate text-[10px] text-chat-faint">
-                {attachments.length > 0 ? `${attachments.length}/${MAX_ATTACHMENTS} tệp` : "Enter để gửi"}
-                <span className="hidden sm:inline"> · Shift + Enter xuống dòng</span>
-              </span>
+              {pickers}
             </div>
 
-            {sending ? (
-              <button
-                type="button"
-                onClick={onStop}
-                aria-label="Dừng trả lời"
-                title="Dừng"
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-chat-rose-button text-chat-rose-button-text transition hover:bg-chat-rose-button-hover active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-rose/60"
-              >
-                <StopIcon size={16} weight="fill" aria-hidden="true" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={onSend}
-                disabled={!canSend}
-                aria-label="Gửi câu hỏi"
-                title="Gửi"
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-chat-accent-button text-chat-accent-button-text shadow-[0_8px_24px_var(--chat-accent-shadow)] transition hover:bg-chat-accent-button-hover active:scale-95 disabled:cursor-not-allowed disabled:bg-chat-surface-2 disabled:text-chat-faint disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/60"
-              >
-                <ArrowUpIcon size={17} weight="bold" aria-hidden="true" />
-              </button>
-            )}
+            <div className="flex shrink-0 items-center gap-1">
+              {pickers ? (
+                <ContextMeter
+                  context={context}
+                  modelInfo={modelInfo}
+                  summaryCount={summaryCount}
+                  summarizing={summarizing}
+                  onCompact={onCompact}
+                  canCompact={canCompact}
+                />
+              ) : null}
+              {sending ? (
+                <button
+                  type="button"
+                  onClick={onStop}
+                  aria-label="Dừng trả lời"
+                  title="Dừng"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-chat-rose-button text-chat-rose-button-text transition hover:bg-chat-rose-button-hover active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-rose/60"
+                >
+                  <StopIcon size={15} weight="fill" aria-hidden="true" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onSend}
+                  disabled={!canSend}
+                  aria-label="Gửi câu hỏi"
+                  title="Gửi"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-chat-accent-button text-chat-accent-button-text shadow-[0_6px_18px_var(--chat-accent-shadow)] transition hover:bg-chat-accent-button-hover active:scale-95 disabled:cursor-not-allowed disabled:border disabled:border-chat-border disabled:bg-transparent disabled:text-chat-faint disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/60"
+                >
+                  <ArrowUpIcon size={16} weight="bold" aria-hidden="true" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        <p className="mt-2 text-center text-[9px] leading-4 text-chat-faint sm:text-[10px]">
+        <p className="mt-2 text-center text-[9px] leading-4 text-chat-muted sm:text-[10px]">
+          <span className="hidden sm:inline">Enter để gửi · Shift + Enter xuống dòng · </span>
           AI có thể sai. Kiểm tra lại thông tin quan trọng. Không gửi ảnh mặt hay giấy tờ cá nhân.
         </p>
       </div>

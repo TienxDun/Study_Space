@@ -98,7 +98,6 @@ describe("xem lại ảnh đã gửi", () => {
         summary={null}
         summarizing={false}
         files={[{ id: "a1", name: "de-thi.png", kind: "image", thumb: THUMB }]}
-        onClose={() => {}}
       />
     );
 
