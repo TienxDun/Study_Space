@@ -4,6 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbo -p 3001",
+    "dev:chat-v2": "wrangler dev --config wrangler.chat-v2.jsonc --env-file workers/chat-v2/.dev.vars --port 8788",
+    "probe:chat-v2": "node scripts/chat-v2-probe.mjs",
+    "refresh:models": "node scripts/refresh-chat-v2-models.mjs",
+    "deploy:chat-v2": "wrangler deploy --config wrangler.chat-v2.jsonc",
     "build": "next build",
     "build:web": "next build && node scripts/strip-admin-export.mjs",
     "build:admin": "node scripts/prepare-admin-bundle.mjs",

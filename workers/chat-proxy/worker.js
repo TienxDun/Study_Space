@@ -285,6 +285,7 @@ async function getFlags(env) {
   }
   mem.flags = {
     chatEnabled: !(parsed && parsed.chatEnabled === false),
+    chatV2: !!(parsed && parsed.chatV2 === true),
     roomsEnabled: !(parsed && parsed.roomsEnabled === false),
     maintenance: !!(parsed && parsed.maintenance === true),
     banner: cleanFlagText(parsed && parsed.banner),
@@ -964,6 +965,7 @@ const worker = {
       return new Response(
         JSON.stringify({
           chatEnabled: flags.chatEnabled,
+          chatV2: flags.chatV2,
           roomsEnabled: flags.roomsEnabled,
           maintenance: flags.maintenance,
           banner: flags.banner,

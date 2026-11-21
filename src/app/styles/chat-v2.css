@@ -1,0 +1,288 @@
+/* Chat v2 theme tokens — scoped bằng data-chat-theme trên <html>. */
+
+[data-chat-theme="dark"] {
+  color-scheme: dark;
+  --chat-bg: #070a11;
+  --chat-elevated: #0a0f18;
+  --chat-surface: rgba(255, 255, 255, 0.035);
+  --chat-surface-2: rgba(255, 255, 255, 0.06);
+  --chat-input: rgba(0, 0, 0, 0.35);
+  --chat-hover: rgba(255, 255, 255, 0.06);
+  --chat-border: rgba(255, 255, 255, 0.08);
+  --chat-border-strong: rgba(255, 255, 255, 0.14);
+  --chat-ink: #f4f4f5;
+  --chat-sub: #a1a1aa;
+  --chat-muted: #71717a;
+  --chat-faint: #52525b;
+  --chat-accent: #34d399;
+  --chat-accent-soft: rgba(16, 185, 129, 0.1);
+  --chat-accent-border: rgba(16, 185, 129, 0.22);
+  --chat-accent-button: #34d399;
+  --chat-accent-button-hover: #6ee7b7;
+  --chat-accent-button-text: #052e2b;
+  --chat-accent-shadow: rgba(16, 185, 129, 0.2);
+  --chat-user: rgba(16, 185, 129, 0.11);
+  --chat-user-border: rgba(16, 185, 129, 0.2);
+  --chat-user-text: #ecfdf5;
+  --chat-amber: #fcd34d;
+  --chat-amber-soft: rgba(251, 191, 36, 0.07);
+  --chat-amber-border: rgba(251, 191, 36, 0.2);
+  --chat-rose: #fda4af;
+  --chat-rose-soft: rgba(251, 113, 133, 0.07);
+  --chat-rose-border: rgba(251, 113, 133, 0.2);
+  --chat-rose-button: #fb7185;
+  --chat-rose-button-hover: #fda4af;
+  --chat-rose-button-text: #4c0519;
+  --chat-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  --chat-shadow-popover: 0 24px 70px rgba(0, 0, 0, 0.65);
+  --chat-grid: rgba(255, 255, 255, 0.035);
+  --chat-ring-track: rgba(255, 255, 255, 0.08);
+  --chat-glow-1: rgba(16, 185, 129, 0.07);
+  --chat-glow-2: rgba(56, 189, 248, 0.045);
+  --chat-code-bg: rgba(255, 255, 255, 0.1);
+  --chat-table-head: rgba(255, 255, 255, 0.05);
+}
+
+[data-chat-theme="light"] {
+  color-scheme: light;
+  --chat-bg: #f4f6f5;
+  --chat-elevated: #ffffff;
+  --chat-surface: #ffffff;
+  --chat-surface-2: #f8faf9;
+  --chat-input: #ffffff;
+  --chat-hover: rgba(15, 23, 42, 0.05);
+  --chat-border: rgba(15, 23, 42, 0.1);
+  --chat-border-strong: rgba(15, 23, 42, 0.16);
+  --chat-ink: #111827;
+  --chat-sub: #4b5563;
+  --chat-muted: #6b7280;
+  --chat-faint: #9ca3af;
+  --chat-accent: #059669;
+  --chat-accent-soft: rgba(5, 150, 105, 0.08);
+  --chat-accent-border: rgba(5, 150, 105, 0.2);
+  --chat-accent-button: #059669;
+  --chat-accent-button-hover: #047857;
+  --chat-accent-button-text: #ffffff;
+  --chat-accent-shadow: rgba(5, 150, 105, 0.18);
+  --chat-user: #d1fae5;
+  --chat-user-border: rgba(5, 150, 105, 0.22);
+  --chat-user-text: #064e3b;
+  --chat-amber: #92400e;
+  --chat-amber-soft: #fffbeb;
+  --chat-amber-border: rgba(245, 158, 11, 0.3);
+  --chat-rose: #9f1239;
+  --chat-rose-soft: #fff1f2;
+  --chat-rose-border: rgba(244, 63, 94, 0.25);
+  --chat-rose-button: #e11d48;
+  --chat-rose-button-hover: #be123c;
+  --chat-rose-button-text: #ffffff;
+  --chat-shadow: 0 18px 50px rgba(15, 23, 42, 0.1);
+  --chat-shadow-popover: 0 24px 70px rgba(15, 23, 42, 0.18);
+  --chat-grid: rgba(15, 23, 42, 0.045);
+  --chat-ring-track: rgba(15, 23, 42, 0.1);
+  --chat-glow-1: rgba(16, 185, 129, 0.1);
+  --chat-glow-2: rgba(56, 189, 248, 0.08);
+  --chat-code-bg: rgba(15, 23, 42, 0.06);
+  --chat-table-head: rgba(15, 23, 42, 0.04);
+}
+
+/* Nền canvas khớp theme ngay từ paint đầu để F5 ở theme sáng không lóe nền tối. */
+html[data-chat-theme] {
+  background-color: var(--chat-bg);
+}
+
+/* Ẩn/hiện sidebar và rail theo trạng thái đã lưu với animation mượt mà */
+.chat-v2-sidebar {
+  width: 276px;
+  opacity: 1;
+  transition: width 300ms cubic-bezier(0.2, 0, 0, 1), opacity 200ms ease;
+  overflow: hidden;
+}
+
+html[data-chat-sidebar="0"] .chat-v2-sidebar {
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+html[data-chat-rail="0"] .chat-v2-rail {
+  display: none;
+}
+
+/* Icon đổi theme chọn bằng CSS để đúng ngay từ paint đầu, không chờ hydrate. */
+.chat-v2-theme-icon-light {
+  display: none;
+}
+[data-chat-theme="light"] .chat-v2-theme-icon-dark {
+  display: none;
+}
+[data-chat-theme="light"] .chat-v2-theme-icon-light {
+  display: block;
+}
+
+/* Hiệu ứng loang tròn mượt mà (Circular View Transition) khi đổi theme sáng/tối */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+@theme inline {
+  --color-chat-bg: var(--chat-bg);  --color-chat-elevated: var(--chat-elevated);
+  --color-chat-surface: var(--chat-surface);
+  --color-chat-surface-2: var(--chat-surface-2);
+  --color-chat-input: var(--chat-input);
+  --color-chat-hover: var(--chat-hover);
+  --color-chat-border: var(--chat-border);
+  --color-chat-border-strong: var(--chat-border-strong);
+  --color-chat-ink: var(--chat-ink);
+  --color-chat-sub: var(--chat-sub);
+  --color-chat-muted: var(--chat-muted);
+  --color-chat-faint: var(--chat-faint);
+  --color-chat-accent: var(--chat-accent);
+  --color-chat-accent-soft: var(--chat-accent-soft);
+  --color-chat-accent-border: var(--chat-accent-border);
+  --color-chat-accent-button: var(--chat-accent-button);
+  --color-chat-accent-button-hover: var(--chat-accent-button-hover);
+  --color-chat-accent-button-text: var(--chat-accent-button-text);
+  --color-chat-user: var(--chat-user);
+  --color-chat-user-border: var(--chat-user-border);
+  --color-chat-user-text: var(--chat-user-text);
+  --color-chat-amber: var(--chat-amber);
+  --color-chat-amber-soft: var(--chat-amber-soft);
+  --color-chat-amber-border: var(--chat-amber-border);
+  --color-chat-rose: var(--chat-rose);
+  --color-chat-rose-soft: var(--chat-rose-soft);
+  --color-chat-rose-border: var(--chat-rose-border);
+  --color-chat-rose-button: var(--chat-rose-button);
+  --color-chat-rose-button-hover: var(--chat-rose-button-hover);
+  --color-chat-rose-button-text: var(--chat-rose-button-text);
+  --color-chat-code-bg: var(--chat-code-bg);
+  --color-chat-table-head: var(--chat-table-head);
+}
+
+/* Chuyển động ngắn cho chat v2; tắt hoàn toàn khi người dùng giảm chuyển động. */
+@keyframes chat-v2-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes chat-v2-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes chat-v2-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes chat-v2-slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes chat-v2-dot-pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.chat-v2-dot {
+  animation: chat-v2-dot-pulse 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.chat-v2-dot:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.chat-v2-dot:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+@keyframes chat-v2-shimmer-sweep {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.chat-v2-shimmer {
+  animation: chat-v2-shimmer-sweep 3.5s ease-in-out infinite;
+}
+
+@keyframes chat-v2-skeleton-wave {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: -100% 50%;
+  }
+}
+
+.chat-v2-skeleton {
+  animation: chat-v2-skeleton-wave 2s ease-in-out infinite;
+}
+
+.chat-v2-anim-fade {
+  animation: chat-v2-fade-in 160ms ease-out both;
+}
+
+.chat-v2-anim-pop {
+  animation: chat-v2-pop-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.chat-v2-anim-rise {
+  animation: chat-v2-rise-in 180ms ease-out both;
+}
+
+.chat-v2-anim-drawer {
+  animation: chat-v2-slide-in-left 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-v2-dot,
+  .chat-v2-shimmer,
+  .chat-v2-skeleton,
+  .chat-v2-anim-fade,
+  .chat-v2-anim-pop,
+  .chat-v2-anim-rise,
+  .chat-v2-anim-drawer {
+    animation: none;
+  }
+}

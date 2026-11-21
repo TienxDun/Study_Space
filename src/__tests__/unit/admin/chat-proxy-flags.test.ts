@@ -74,6 +74,7 @@ describe("chat-proxy /config", () => {
     expect(res.headers.get("Cache-Control")).toBe("public, max-age=30");
     expect(body).toEqual({
       chatEnabled: false,
+      chatV2: false,
       roomsEnabled: true,
       maintenance: true,
       banner: "Bảo trì 30 phút",
@@ -86,6 +87,7 @@ describe("chat-proxy /config", () => {
 
     expect(body).toEqual({
       chatEnabled: true,
+      chatV2: false,
       roomsEnabled: true,
       maintenance: false,
       banner: "",
