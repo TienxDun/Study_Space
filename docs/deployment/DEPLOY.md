@@ -10,7 +10,9 @@ Các key từng dán ở khung chat coi như đã lộ:
 1. **Groq:** vào `console.groq.com/keys` → tạo key mới → cập nhật Secret `GROQ_API_KEY` của Worker → **xóa key cũ**.
 2. Kiểm tra repo không dính secret: `git grep -l "gsk_\|AIza" -- .` phải ra trắng (`.env.local` đã gitignore, không commit).
 
-## Bước 1 — Deploy Worker `chat-proxy`
+## Bước 1 — Deploy Worker `chat-proxy` (đã bỏ 2026-11-22, chỉ còn giá trị lịch sử)
+
+> **Đã bỏ 2026-11-22:** Worker `chat-proxy` đã xoá. Chat và cờ hệ thống (`/config`) giờ ở Worker `zenstudy-chat-v2` — source `workers/chat-v2/`, deploy bằng `npx wrangler deploy --config wrangler.chat-v2.jsonc`. Các bước dưới giữ lại để tham khảo lịch sử.
 
 1. Dashboard → Workers & Pages → `chat-proxy` → Edit code → dán `workers/chat-proxy/worker.js` → Save and deploy.
 2. Settings → Variables → Add. **Chọn đúng loại** (Secret = mã hóa, không ai xem lại được; Text = hiện chữ):| Tên                    | Loại            | Giá trị                                                                                                  |
