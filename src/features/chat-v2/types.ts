@@ -10,6 +10,11 @@ export interface ChatV2AttachmentMeta {
   thumb?: string;
 }
 
+/** Tệp chữ kèm nội dung để mở lại ở thanh chi tiết phiên. */
+export interface ChatV2SessionFileMeta extends ChatV2AttachmentMeta {
+  text?: string;
+}
+
 export interface ChatV2ImagePayload {
   name: string;
   data: string;

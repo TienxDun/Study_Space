@@ -40,6 +40,9 @@ export const useStudyKeyboard = (api: StudyKeyboardApi) => {
       );
 
       if (e.key === "Escape") {
+        // Lớp con (xem ảnh/tệp, danh sách phiên chat) tự đóng bằng Esc của nó;
+        // đừng đóng luôn cả khung chat bên dưới.
+        if (document.querySelector("[data-escape-guard]")) return;
         a.closeSettings();
         a.setTasksOpen(false);
         a.setNotesOpen(false);

@@ -20,6 +20,22 @@ export class ChatV2ApiError extends Error {
   }
 }
 
+// Vé Firebase chỉ có khi người dùng đã đăng nhập; chưa đăng nhập thì để trống
+// và Worker tự trả 401. Chìa khoá thử nghiệm chỉ có tác dụng khi chạy local.
+async function authHeaders(): Promise<Record<string, string>> {
+  try {
+    const { firebaseConfigured } = await import("@/lib/firebase-config");
+    if (!firebaseConfigured) return {};
+    const { getFirebaseAuth } = await import("@/lib/firebase");
+    const user = getFirebaseAuth().currentUser;
+    if (!user) return {};
+    const token = await user.getIdToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
+}
+
 async function request(
   path: string,
   init: RequestInit = {},
@@ -33,6 +49,7 @@ async function request(
         "Content-Type": "application/json",
         "X-Chat-V2-Token": CHAT_V2_DEV_TOKEN,
         "X-Chat-V2-Key": keyTier,
+        ...(await authHeaders()),
         ...(init.headers || {}),
       },
     });
@@ -118,6 +135,7 @@ export async function streamChatV2({
         "Content-Type": "application/json",
         "X-Chat-V2-Token": CHAT_V2_DEV_TOKEN,
         "X-Chat-V2-Key": keyTier,
+        ...(await authHeaders()),
       },
       body: JSON.stringify({
         model,

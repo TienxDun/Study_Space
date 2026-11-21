@@ -428,8 +428,7 @@ async function summarize(req, env, cors) {
 }
 
 async function listModels(env, cors, tier = "auto") {
-  const keyError = apiKeyError(env, cors);
-  if (keyError) return keyError;
+  // Danh mục chỉ đọc file JSON đóng gói sẵn, không dùng API key.
   const tierError = keyTierError(tier, env, cors);
   if (tierError) return tierError;
 

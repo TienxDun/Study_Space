@@ -37,7 +37,10 @@ export function ImagePreview({ src, name, imageId, onClose }: ImagePreviewProps)
   useEffect(() => {
     closeRef.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key !== "Escape") return;
+      // Đánh dấu đã xử lý để phím tắt toàn cục không đóng luôn cả khung chat.
+      event.preventDefault();
+      onClose();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
@@ -48,6 +51,7 @@ export function ImagePreview({ src, name, imageId, onClose }: ImagePreviewProps)
       role="dialog"
       aria-modal="true"
       aria-label={`Xem ảnh ${name}`}
+      data-escape-guard=""
       onClick={onClose}
       className="chat-v2-anim-fade fixed inset-0 z-[90] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
     >

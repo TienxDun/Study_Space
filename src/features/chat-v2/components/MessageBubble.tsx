@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import type { ChatV2Message } from "../types";
 import { ChatV2Markdown } from "./ChatV2Markdown";
+import { FilePreview } from "./FilePreview";
 import { ImagePreview } from "./ImagePreview";
 
 interface MessageBubbleProps {
@@ -57,6 +58,7 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false);
   const [preview, setPreview] = useState<{ src: string; name: string; id: string } | null>(null);
+  const [filePreview, setFilePreview] = useState<{ name: string; text: string } | null>(null);
   const isUser = message.role === "user";
 
   const copy = async () => {
@@ -71,58 +73,107 @@ export function MessageBubble({
 
   if (isUser) {
     return (
-      <article className="group flex flex-col items-end">
-        <div className="max-w-[86%] rounded-2xl rounded-br-md border border-chat-user-border bg-chat-user px-4 py-3 shadow-[inset_0_1px_0_var(--chat-hover)]">
-          {message.text ? (
+      <article className="group flex flex-col items-end gap-1.5">
+        {message.attachments && message.attachments.length > 0 ? (
+          <div className="flex max-w-[86%] flex-wrap items-end justify-end gap-2">
+            {message.attachments.map((attachment) => {
+              const thumb = attachment.kind === "image" ? attachment.thumb : undefined;
+              if (thumb) {
+                return (
+                  <button
+                    key={attachment.id}
+                    type="button"
+                    onClick={() =>
+                      setPreview({ src: thumb, name: attachment.name, id: attachment.id })
+                    }
+                    aria-label={`Xem ảnh ${attachment.name}`}
+                    title={`Xem ảnh ${attachment.name}`}
+                    className="group/att relative block max-w-[220px] shrink-0 cursor-zoom-in overflow-hidden rounded-2xl border border-chat-user-border bg-chat-surface shadow-[var(--chat-shadow)] transition hover:border-chat-accent-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={thumb}
+                      alt=""
+                      className="block h-auto max-h-[180px] w-auto max-w-[220px] object-cover"
+                    />
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/70 via-black/35 to-transparent px-2 pb-1 pt-5 text-left text-[10px] text-white opacity-0 transition-opacity duration-200 group-hover/att:opacity-100 group-focus-visible/att:opacity-100 motion-reduce:transition-none"
+                    >
+                      {attachment.name}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className="absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full bg-black/45 text-white opacity-0 transition-opacity duration-200 group-hover/att:opacity-100 group-focus-visible/att:opacity-100 motion-reduce:transition-none"
+                    >
+                      <MagnifyingGlassPlusIcon size={11} weight="bold" />
+                    </span>
+                  </button>
+                );
+              }
+              const fileIndex =
+                attachment.kind === "text"
+                  ? (message.attachments || [])
+                      .filter((item) => item.kind === "text")
+                      .findIndex((item) => item.id === attachment.id)
+                  : -1;
+              const fileText =
+                fileIndex >= 0 ? message.payload?.files?.[fileIndex]?.text : undefined;
+              const cardInner = (
+                <>
+                  <span
+                    aria-hidden="true"
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-chat-accent-soft text-chat-accent"
+                  >
+                    <FileTextIcon size={16} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-[12px] font-medium text-chat-ink">
+                      {attachment.name}
+                    </span>
+                    <span className="block text-[10px] text-chat-muted">Tệp văn bản</span>
+                  </span>
+                  {fileText ? (
+                    <MagnifyingGlassPlusIcon
+                      size={12}
+                      weight="bold"
+                      aria-hidden="true"
+                      className="ml-auto shrink-0 text-chat-muted"
+                    />
+                  ) : null}
+                </>
+              );
+              const cardClass =
+                "inline-flex max-w-[260px] items-center gap-2.5 rounded-2xl border border-chat-border bg-chat-elevated px-3 py-2 text-left shadow-[var(--chat-shadow)]";
+              if (fileText) {
+                return (
+                  <button
+                    key={attachment.id}
+                    type="button"
+                    onClick={() => setFilePreview({ name: attachment.name, text: fileText })}
+                    aria-label={`Xem tệp ${attachment.name}`}
+                    title={`Xem tệp ${attachment.name}`}
+                    className={`${cardClass} cursor-pointer transition hover:border-chat-accent-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50`}
+                  >
+                    {cardInner}
+                  </button>
+                );
+              }
+              return (
+                <span key={attachment.id} title={attachment.name} className={cardClass}>
+                  {cardInner}
+                </span>
+              );
+            })}
+          </div>
+        ) : null}
+        {message.text ? (
+          <div className="max-w-[86%] rounded-2xl rounded-br-md border border-chat-user-border bg-chat-user px-4 py-3 shadow-[inset_0_1px_0_var(--chat-hover)]">
             <p className="whitespace-pre-wrap break-words text-[13px] leading-6 text-chat-user-text sm:text-sm">
               {message.text}
             </p>
-          ) : null}
-          {message.attachments && message.attachments.length > 0 ? (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {message.attachments.map((attachment) => {
-                const thumb = attachment.kind === "image" ? attachment.thumb : undefined;
-                if (thumb) {
-                  return (
-                    <button
-                      key={attachment.id}
-                      type="button"
-                      onClick={() =>
-                        setPreview({ src: thumb, name: attachment.name, id: attachment.id })
-                      }
-                      aria-label={`Xem ảnh ${attachment.name}`}
-                      title={`Xem ảnh ${attachment.name}`}
-                      className="inline-flex max-w-[190px] cursor-zoom-in items-center gap-1.5 rounded-lg border border-chat-user-border bg-chat-surface px-2 py-1 text-[10px] text-chat-user-text transition hover:border-chat-accent-border hover:bg-chat-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50"
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="h-6 w-6 shrink-0 rounded bg-cover bg-center"
-                        style={{ backgroundImage: `url(${thumb})` }}
-                      />
-                      <span className="truncate">{attachment.name}</span>
-                      <MagnifyingGlassPlusIcon
-                        size={10}
-                        weight="bold"
-                        className="shrink-0 text-chat-muted"
-                        aria-hidden="true"
-                      />
-                    </button>
-                  );
-                }
-                return (
-                  <span
-                    key={attachment.id}
-                    title={attachment.name}
-                    className="inline-flex max-w-[190px] items-center gap-1.5 rounded-lg border border-chat-user-border bg-chat-surface px-2 py-1 text-[10px] text-chat-user-text"
-                  >
-                    <FileTextIcon size={12} aria-hidden="true" />
-                    <span className="truncate">{attachment.name}</span>
-                  </span>
-                );
-              })}
-            </div>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
         {message.text ? (
           <div className="mt-0.5 flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100 max-sm:opacity-100">
             <button
@@ -157,6 +208,13 @@ export function MessageBubble({
             name={preview.name}
             imageId={preview.id}
             onClose={() => setPreview(null)}
+          />
+        ) : null}
+        {filePreview ? (
+          <FilePreview
+            name={filePreview.name}
+            text={filePreview.text}
+            onClose={() => setFilePreview(null)}
           />
         ) : null}
       </article>

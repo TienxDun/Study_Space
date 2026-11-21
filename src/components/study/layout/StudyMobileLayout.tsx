@@ -57,6 +57,10 @@ const MobileRadioSheet = dynamic(
   () => loadRadioSheet().then((mod) => mod.MobileRadioSheet),
   { ssr: false, loading: () => <SheetGlassSkeleton title="Đài phát thanh" sheetId="radio" /> }
 );
+const ChatV2Overlay = dynamic(
+  () => import("@/features/chat-v2/ChatV2Overlay").then((mod) => mod.ChatV2Overlay),
+  { ssr: false }
+);
 const FeedbackSheet = dynamic(
   () => import("@/components/study/feedback/FeedbackDialog").then((mod) => mod.FeedbackSheet),
   { ssr: false }
@@ -318,18 +322,28 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
         </ErrorBoundary>
       )}
 
-      {/* Chat Sheet */}
-      {mountedSheets.chat && (
-        <ErrorBoundary>
-          <MobilePerfProbe name="sheet:chat">
-            <MobileChatSheet
-              isOpen={isChatOpen}
-              onClose={handleMobileCloseAllSheets}
-              onBack={mobileCanGoBack ? handleMobileBack : undefined}
-              backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
-            />
-          </MobilePerfProbe>
-        </ErrorBoundary>
+      {/* Chat: v2 toàn màn hình khi bật cờ, ngược lại sheet v1 */}
+      {systemFlags.chatV2 ? (
+        isChatOpen ? (
+          <ErrorBoundary>
+            <MobilePerfProbe name="chat-v2">
+              <ChatV2Overlay onClose={handleMobileCloseAllSheets} />
+            </MobilePerfProbe>
+          </ErrorBoundary>
+        ) : null
+      ) : (
+        mountedSheets.chat && (
+          <ErrorBoundary>
+            <MobilePerfProbe name="sheet:chat">
+              <MobileChatSheet
+                isOpen={isChatOpen}
+                onClose={handleMobileCloseAllSheets}
+                onBack={mobileCanGoBack ? handleMobileBack : undefined}
+                backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
+              />
+            </MobilePerfProbe>
+          </ErrorBoundary>
+        )
       )}
 
       {/* Radio Sheet */}

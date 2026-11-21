@@ -12,25 +12,27 @@ import {
   XIcon,
 } from "@phosphor-icons/react";
 import { relativeTime } from "../lib/sessions";
-import type { ChatV2AttachmentMeta, ChatV2SessionSummary } from "../types";
+import type { ChatV2SessionFileMeta, ChatV2SessionSummary } from "../types";
+import { FilePreview } from "./FilePreview";
 import { ImagePreview } from "./ImagePreview";
 
 interface SessionRailProps {
   summary: ChatV2SessionSummary | null;
   summarizing: boolean;
-  files: ChatV2AttachmentMeta[];
+  files: ChatV2SessionFileMeta[];
   onClose: () => void;
 }
 
 export function SessionRail({ summary, summarizing, files, onClose }: SessionRailProps) {
   const [expanded, setExpanded] = useState(false);
   const [preview, setPreview] = useState<{ src: string; name: string; id: string } | null>(null);
+  const [filePreview, setFilePreview] = useState<{ name: string; text: string } | null>(null);
   const canExpand = (summary?.text.length || 0) > 320;
 
   return (
     <aside
       aria-label="Chi tiết phiên học"
-      className="chat-v2-rail chat-v2-anim-fade hidden w-[280px] shrink-0 flex-col min-[1600px]:flex"
+      className="chat-v2-rail chat-v2-anim-fade hidden w-[260px] shrink-0 flex-col sm:flex xl:w-[280px]"
     >
       <div className="flex items-center justify-between gap-2 px-4 py-3">
         <div className="min-w-0">
@@ -152,6 +154,31 @@ export function SessionRail({ summary, summarizing, files, onClose }: SessionRai
                     </li>
                   );
                 }
+                if (file.kind === "text" && file.text) {
+                  const text = file.text;
+                  return (
+                    <li key={file.id} className="rounded-xl border border-chat-border bg-chat-bg/50 p-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setFilePreview({ name: file.name, text })}
+                        aria-label={`Xem tệp ${file.name}`}
+                        title={`Xem tệp ${file.name}`}
+                        className="flex w-full items-center gap-2 rounded-lg text-left transition hover:bg-chat-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50"
+                      >
+                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-chat-accent-soft text-chat-accent">
+                          <FileTextIcon size={13} weight="duotone" aria-hidden="true" />
+                        </span>
+                        {info}
+                        <MagnifyingGlassPlusIcon
+                          size={11}
+                          weight="bold"
+                          className="shrink-0 text-chat-muted"
+                          aria-hidden="true"
+                        />
+                      </button>
+                    </li>
+                  );
+                }
                 return (
                   <li
                     key={file.id}
@@ -187,6 +214,14 @@ export function SessionRail({ summary, summarizing, files, onClose }: SessionRai
           name={preview.name}
           imageId={preview.id}
           onClose={() => setPreview(null)}
+        />
+      ) : null}
+
+      {filePreview ? (
+        <FilePreview
+          name={filePreview.name}
+          text={filePreview.text}
+          onClose={() => setFilePreview(null)}
         />
       ) : null}
     </aside>

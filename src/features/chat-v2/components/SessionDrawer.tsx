@@ -12,7 +12,10 @@ export function SessionDrawer({ open, onClose, ...sidebar }: SessionDrawerProps)
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key !== "Escape") return;
+      // Đánh dấu đã xử lý để phím tắt toàn cục không đóng luôn cả khung chat.
+      event.preventDefault();
+      onClose();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
@@ -26,6 +29,7 @@ export function SessionDrawer({ open, onClose, ...sidebar }: SessionDrawerProps)
       role="dialog"
       aria-modal="true"
       aria-label="Danh sách phiên chat"
+      data-escape-guard=""
     >
       <button
         type="button"

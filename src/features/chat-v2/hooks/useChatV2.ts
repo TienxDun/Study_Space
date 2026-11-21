@@ -31,7 +31,6 @@ import {
 } from "../lib/sessions";
 import { shouldSummarize, summaryChunk, SUMMARY_KEEP_RECENT } from "../lib/tokens";
 import type {
-  ChatV2AttachmentMeta,
   ChatV2FilePayload,
   ChatV2ImagePayload,
   ChatV2KeyTier,
@@ -40,6 +39,7 @@ import type {
   ChatV2Reply,
   ChatV2RequestMessage,
   ChatV2Session,
+  ChatV2SessionFileMeta,
   ChatV2SessionStore,
 } from "../types";
 
@@ -122,13 +122,18 @@ export function useChatV2() {
   const summary = activeSession?.summary || null;
   const summaryMessageCount = summary?.messageCount || 0;
   const sessionFiles = useMemo(() => {
-    const files: ChatV2AttachmentMeta[] = [];
+    const files: ChatV2SessionFileMeta[] = [];
     const seen = new Set<string>();
     for (const message of messages) {
+      const textPayloads = message.payload?.files || [];
+      let textIndex = 0;
       for (const file of message.attachments || []) {
+        const text =
+          file.kind === "text" ? textPayloads[textIndex]?.text : undefined;
+        if (file.kind === "text") textIndex += 1;
         if (seen.has(file.id)) continue;
         seen.add(file.id);
-        files.push(file);
+        files.push(text ? { ...file, text } : file);
       }
     }
     return files;

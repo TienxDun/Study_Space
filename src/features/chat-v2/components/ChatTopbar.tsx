@@ -1,6 +1,6 @@
 "use client";
 
-import { ListIcon, PlusIcon, SidebarSimpleIcon } from "@phosphor-icons/react";
+import { ListIcon, PlusIcon, SidebarSimpleIcon, XIcon } from "@phosphor-icons/react";
 import type { ChatV2ContextMeta, ChatV2KeyTier, ChatV2Model } from "../types";
 import { ContextMeter } from "./ContextMeter";
 import { KeyTierPicker } from "./KeyTierPicker";
@@ -28,6 +28,7 @@ interface ChatTopbarProps {
   railAvailable: boolean;
   railOpen: boolean;
   onToggleRail: () => void;
+  onClose?: () => void;
 }
 
 export function ChatTopbar({
@@ -52,11 +53,23 @@ export function ChatTopbar({
   railAvailable,
   railOpen,
   onToggleRail,
+  onClose,
 }: ChatTopbarProps) {
   return (
     <header className="sticky top-0 z-30 bg-chat-bg/80 backdrop-blur-md sm:backdrop-blur-2xl">
       <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-2.5 px-3 py-3 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:px-4 lg:px-5">
         <div className="flex min-w-0 items-center gap-2">
+          {onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Đóng trợ lý, quay lại không gian học"
+              title="Đóng trợ lý (Esc)"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-chat-border bg-chat-surface text-chat-sub transition hover:border-chat-border-strong hover:bg-chat-hover hover:text-chat-ink active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50"
+            >
+              <XIcon size={16} weight="bold" aria-hidden="true" />
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={onOpenSessions}
@@ -103,7 +116,7 @@ export function ChatTopbar({
               aria-label={railOpen ? "Ẩn chi tiết phiên" : "Hiện chi tiết phiên"}
               aria-pressed={railOpen}
               title={railOpen ? "Ẩn chi tiết phiên" : "Hiện chi tiết phiên"}
-              className="hidden h-10 w-10 shrink-0 place-items-center rounded-full border border-chat-border bg-chat-surface text-chat-sub transition hover:border-chat-border-strong hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 aria-pressed:border-chat-accent-border aria-pressed:bg-chat-accent-soft aria-pressed:text-chat-accent min-[1600px]:grid"
+              className="hidden h-10 w-10 shrink-0 place-items-center rounded-full border border-chat-border bg-chat-surface text-chat-sub transition hover:border-chat-border-strong hover:bg-chat-hover hover:text-chat-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/50 aria-pressed:border-chat-accent-border aria-pressed:bg-chat-accent-soft aria-pressed:text-chat-accent sm:grid"
             >
               <SidebarSimpleIcon size={16} weight="duotone" className="-scale-x-100" aria-hidden="true" />
             </button>

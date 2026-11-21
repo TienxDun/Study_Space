@@ -12,7 +12,11 @@ import { MessageList } from "./components/MessageList";
 import { Composer } from "./components/Composer";
 import { SessionRail } from "./components/SessionRail";
 
-export function ChatV2() {
+interface ChatV2Props {
+  onClose?: () => void;
+}
+
+export function ChatV2({ onClose }: ChatV2Props) {
   const chat = useChatV2();
   const { toggleTheme } = useChatV2Theme();
   const listRef = useRef<HTMLDivElement>(null);
@@ -144,6 +148,7 @@ export function ChatV2() {
         onNewChat={handleNewChat}
         newChatDisabled={!chat.canStartNewChat}
         onToggleTheme={toggleTheme}
+        onClose={onClose}
       />
 
       <SessionDrawer
@@ -182,6 +187,7 @@ export function ChatV2() {
           railAvailable={hasRailContent}
           railOpen={railOpen}
           onToggleRail={toggleRail}
+          onClose={onClose}
         />
 
         <div className="flex min-h-0 flex-1">
