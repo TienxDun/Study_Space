@@ -504,19 +504,6 @@ async function chat(req, env, cors) {
       cors
     );
   }
-  if (parsed.images.length > 0 && capability.vision !== true) {
-    return json(
-      {
-        error:
-          capability.vision === false
-            ? `Model ${model} không đọc được ảnh. Chọn model có nhãn ảnh hoặc bỏ ảnh rồi gửi lại.`
-            : `Chưa xác minh khả năng đọc ảnh của ${model}. Chọn model khác hoặc bỏ ảnh.`,
-      },
-      400,
-      cors
-    );
-  }
-
   let messages = cleaned.messages;
   if (parsed.files.length > 0) messages = appendFilesToLastUser(messages, parsed.files);
   if (parsed.images.length > 0) messages = attachImagesToLastUser(messages, parsed.images);

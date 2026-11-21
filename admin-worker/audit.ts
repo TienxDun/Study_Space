@@ -1,6 +1,6 @@
 /**
  * Audit D1 (bảng admin_audit) và các bộ đếm giới hạn tần suất ghi trong RAM
- * cho từng nhóm hành động: cờ hệ thống, cấu hình chat, nội dung.
+ * cho từng nhóm hành động: cờ hệ thống, nội dung.
  * Map chỉ chặn trong một isolate, đủ cho mục đích chống bấm tay nhanh.
  */
 
@@ -8,8 +8,6 @@ import type { AdminEnv } from "./shared";
 
 const FLAG_WRITE_LIMIT = 10;
 const FLAG_WRITE_WINDOW_MS = 60 * 1000;
-const CHAT_CFG_WRITE_LIMIT = 10;
-const CHAT_CFG_WRITE_WINDOW_MS = 60 * 1000;
 // P2c: mỗi lần lưu nội dung ghi một version mới đủ 3 dòng nên cho phép nhiều hơn.
 const CONTENT_WRITE_LIMIT = 20;
 const CONTENT_WRITE_WINDOW_MS = 60 * 1000;
@@ -53,25 +51,6 @@ export function allowFlagWrite(email: string): boolean {
   }
   hits.push(now);
   flagWriteLog.set(email, hits);
-  return true;
-}
-
-const chatWriteLog = new Map<string, number[]>();
-
-/** Test dùng để xóa bộ đếm giới hạn ghi cấu hình chat giữa các ca. */
-export function __resetChatWriteLog(): void {
-  chatWriteLog.clear();
-}
-
-export function allowChatWrite(email: string): boolean {
-  const now = Date.now();
-  const hits = (chatWriteLog.get(email) || []).filter((at) => now - at < CHAT_CFG_WRITE_WINDOW_MS);
-  if (hits.length >= CHAT_CFG_WRITE_LIMIT) {
-    chatWriteLog.set(email, hits);
-    return false;
-  }
-  hits.push(now);
-  chatWriteLog.set(email, hits);
   return true;
 }
 

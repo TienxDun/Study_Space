@@ -69,10 +69,10 @@ export function SessionList({ sessions, activeId, onSelect, onRename, onDelete }
   return (
     <div className="mt-5 flex min-h-0 flex-1 flex-col">
       <div className="flex items-center justify-between px-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-chat-faint">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-chat-muted">
           Hội thoại
         </p>
-        <span className="text-[9px] text-chat-faint">{sessions.length}</span>
+        <span className="text-[9px] text-chat-muted">{sessions.length}</span>
       </div>
 
       <ul className="custom-study-scroll -mr-1 mt-2 min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">

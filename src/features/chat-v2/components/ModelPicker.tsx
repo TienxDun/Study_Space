@@ -6,12 +6,10 @@ import {
   CaretDownIcon,
   CheckIcon,
   CpuIcon,
-  EyeIcon,
   LightningIcon,
   LockSimpleIcon,
   MagnifyingGlassIcon,
   SparkleIcon,
-  TextAlignLeftIcon,
   XIcon,
 } from "@phosphor-icons/react";
 import type { ChatV2Model } from "../types";
@@ -52,12 +50,6 @@ function lockLabel(model: ChatV2Model): string | null {
   return null;
 }
 
-function visionLabel(vision: boolean | null): string {
-  if (vision === true) return "đọc ảnh";
-  if (vision === false) return "chỉ chữ";
-  return "chưa rõ ảnh";
-}
-
 function checkedLabel(model: ChatV2Model): string | null {
   if (!model.checkedAt) return null;
   const date = new Date(model.checkedAt);
@@ -72,14 +64,12 @@ function verifyTitle(model: ChatV2Model): string {
   const when = checked && !Number.isNaN(checked.getTime()) ? checked.toLocaleString("vi-VN") : "chưa rõ";
   const parts = [`Đã xác minh lúc ${when}`];
   if (model.specSource) parts.push(`Ngữ cảnh: ${model.specSource}`);
-  if (model.visionSource) parts.push(`Đọc ảnh: ${model.visionSource}`);
   return parts.join(" · ");
 }
 
 function matchesFilter(model: ChatV2Model, filter: string): boolean {
   if (filter === "all") return true;
   if (filter === "free") return model.free;
-  if (filter === "vision") return model.vision === true;
   return providerOf(model).key === filter;
 }
 
@@ -115,12 +105,10 @@ export function ModelPicker({
     usableCount: number;
   }>(() => {
     let free = 0;
-    let vision = 0;
     let usable = 0;
     const providerCounts = new Map<string, number>();
     for (const model of cleanModels) {
       if (model.free) free++;
-      if (model.vision === true) vision++;
       if (!isLocked(model)) usable++;
       const key = providerOf(model).key;
       providerCounts.set(key, (providerCounts.get(key) || 0) + 1);
@@ -130,7 +118,6 @@ export function ModelPicker({
       { key: "all", label: "Tất cả", count: cleanModels.length },
     ];
     if (free > 0) types.push({ key: "free", label: "Miễn phí", icon: LightningIcon, count: free });
-    if (vision > 0) types.push({ key: "vision", label: "Đọc ảnh", icon: EyeIcon, count: vision });
 
     const providers: FilterChip[] = [];
     for (const family of PROVIDER_FAMILIES) {
@@ -240,7 +227,6 @@ export function ModelPicker({
     ? [
         value,
         contextLabel && contextLabel !== "-" ? `${contextLabel} context` : null,
-        visionLabel(valueInfo.vision),
         triggerPrice || null,
         compact ? null : "motapis",
       ]
@@ -489,10 +475,8 @@ export function ModelPicker({
                     >
                       {lock ? (
                         <LockSimpleIcon size={13} aria-hidden="true" />
-                      ) : model.vision === true ? (
-                        <EyeIcon size={13} aria-hidden="true" />
                       ) : (
-                        <TextAlignLeftIcon size={13} aria-hidden="true" />
+                        <CpuIcon size={13} aria-hidden="true" />
                       )}
                     </span>
                     <span className="min-w-0 flex-1">
@@ -517,8 +501,7 @@ export function ModelPicker({
                         ) : null}
                       </span>
                       <span className="block truncate text-[10px] text-chat-muted">
-                        {providerOf(model).label} · {formatContextSize(model.contextTokens)} ·{" "}
-                        {visionLabel(model.vision)}
+                        {providerOf(model).label} · {formatContextSize(model.contextTokens)}
                         {checked ? ` · ✓ ${checked}` : ""}
                       </span>
                     </span>

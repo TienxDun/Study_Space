@@ -3,7 +3,7 @@
  *
  * Thay vì để người dùng bấm vào tab rồi mới bắt đầu nạp JS chunk qua mạng,
  * module này sử dụng `requestIdleCallback` (hoặc timeout) để nạp ngầm
- * các chunk của Tasks, Notes, Scenes, More, Settings, Stats, Chat vào bộ nhớ đệm
+ * các chunk của Tasks, Notes, Scenes, More, Settings, Stats vào bộ nhớ đệm
  * khi CPU đang rảnh rỗi sau khi tải xong màn hình chính.
  *
  * Kết quả: Khi người dùng chạm ngón tay vào bất kỳ tab nào, chunk đã có sẵn 100% trong cache,
@@ -16,7 +16,6 @@ export const loadSceneSheet = () => import("../MobileSceneSheet");
 export const loadMoreSheet = () => import("../MobileMoreSheet");
 export const loadSettingsSheet = () => import("../MobileSettingsSheet");
 export const loadStatsSheet = () => import("../MobileFocusStatsSheet");
-export const loadChatSheet = () => import("../MobileChatSheet");
 export const loadRadioSheet = () => import("../MobileRadioSheet");
 export const loadMixerSheet = () => import("../MobileMixerSheet");
 
@@ -36,7 +35,7 @@ export function preloadCriticalSheets(): void {
 }
 
 /**
- * Tải trước toàn bộ các bảng phụ còn lại (Scenes, Settings, Stats, Chat)
+ * Tải trước toàn bộ các bảng phụ còn lại (Scenes, Settings, Stats)
  */
 export function preloadSecondarySheets(): void {
   if (hasPreloadedAll || typeof window === "undefined") return;
@@ -45,7 +44,6 @@ export function preloadSecondarySheets(): void {
   loadSceneSheet();
   loadSettingsSheet();
   loadStatsSheet();
-  loadChatSheet();
   loadRadioSheet();
   loadMixerSheet();
 }

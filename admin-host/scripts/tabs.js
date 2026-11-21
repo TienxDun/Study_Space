@@ -24,7 +24,7 @@
     ],
     chat: [
       "Trợ lý chat",
-      "Sắp thứ tự chuỗi mô hình dự phòng và quản lý nhà cung cấp kèm khoá kết nối."
+      "Xem danh mục mô hình đang phục vụ, số lượt hỏi đáp theo ngày và hạn mức câu hỏi mỗi người."
     ],
     content: [
       "Kho nội dung",

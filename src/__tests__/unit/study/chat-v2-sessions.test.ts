@@ -209,8 +209,8 @@ describe("chat v2 sessions", () => {
 });
 
 describe("chat v2 summary policy", () => {
-  const model = { contextTokens: 1048576, maxOutputTokens: 16384, vision: false, free: false, available: true, id: "deepseek-v4-flash", ownedBy: "" };
-  const smallModel = { contextTokens: 16384, maxOutputTokens: 4096, vision: false, free: false, available: true, id: "small-test", ownedBy: "" };
+  const model = { contextTokens: 1048576, maxOutputTokens: 16384, free: false, available: true, id: "deepseek-v4-flash", ownedBy: "" };
+  const smallModel = { contextTokens: 16384, maxOutputTokens: 4096, free: false, available: true, id: "small-test", ownedBy: "" };
 
   it("chỉ tóm tắt khi lịch sử chưa nén vượt ngưỡng (số tin hoặc token)", () => {
     const shortMessages = Array.from({ length: 12 }, (_, index) =>

@@ -97,7 +97,7 @@ type LookupResult =
   | { ok: true; user: AuthUser | null }
   | { ok: false; error: string };
 
-async function lookupIdentity(
+export async function lookupIdentity(
   env: AdminEnv,
   params: { uid?: string; email?: string },
 ): Promise<LookupResult> {

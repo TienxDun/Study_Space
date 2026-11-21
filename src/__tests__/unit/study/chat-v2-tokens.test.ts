@@ -7,7 +7,7 @@ import {
 } from "../../../../workers/chat-v2/tokens.js";
 import { formatContextSize } from "@/features/chat-v2/lib/tokens";
 
-const CAP = { contextTokens: 2000, maxOutputTokens: 200, baselinePromptTokens: 0, vision: false };
+const CAP = { contextTokens: 2000, maxOutputTokens: 200, baselinePromptTokens: 0 };
 
 describe("chat v2 token budget", () => {
   it("định dạng nhãn context đẹp mắt (k / M)", () => {

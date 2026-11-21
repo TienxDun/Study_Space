@@ -8,7 +8,6 @@ import type { SystemFlags } from "@/lib/system-flags";
 
 const DEFAULT_FLAGS: SystemFlags = {
   chatEnabled: true,
-  chatV2: false,
   roomsEnabled: true,
   maintenance: false,
   banner: "",
@@ -50,7 +49,6 @@ describe("fetchSystemFlags", () => {
       new Response(
         JSON.stringify({
           chatEnabled: false,
-          chatV2: true,
           roomsEnabled: false,
           maintenance: true,
           banner: "Thử bảo trì",
@@ -64,7 +62,6 @@ describe("fetchSystemFlags", () => {
     const first = await mod.fetchSystemFlags();
     expect(first).toEqual({
       chatEnabled: false,
-      chatV2: true,
       roomsEnabled: false,
       maintenance: true,
       banner: "Thử bảo trì",

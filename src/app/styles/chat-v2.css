@@ -41,6 +41,8 @@
   --chat-glow-2: rgba(56, 189, 248, 0.045);
   --chat-code-bg: rgba(255, 255, 255, 0.1);
   --chat-table-head: rgba(255, 255, 255, 0.05);
+  --chat-sidebar-surface: linear-gradient(180deg, #0c1320 0%, #080d16 100%);
+  --chat-sidebar-shadow: 18px 0 44px -28px rgba(0, 0, 0, 0.55);
 }
 
 [data-chat-theme="light"] {
@@ -84,6 +86,8 @@
   --chat-glow-2: rgba(56, 189, 248, 0.08);
   --chat-code-bg: rgba(15, 23, 42, 0.06);
   --chat-table-head: rgba(15, 23, 42, 0.04);
+  --chat-sidebar-surface: linear-gradient(180deg, #ffffff 0%, #fbfcfb 100%);
+  --chat-sidebar-shadow: 18px 0 44px -30px rgba(15, 23, 42, 0.18);
 }
 
 /* Nền canvas khớp theme ngay từ paint đầu để F5 ở theme sáng không lóe nền tối. */
@@ -103,6 +107,17 @@ html[data-chat-sidebar="0"] .chat-v2-sidebar {
   width: 0;
   opacity: 0;
   pointer-events: none;
+}
+
+/* Sidebar desktop là panel riêng: nền đặc hơn canvas + hairline mép phải,
+   để tách khỏi vùng chat mà không cần đường kẻ dày. */
+.chat-v2-sidebar-panel {
+  background: var(--chat-sidebar-surface);
+  border-right: 1px solid var(--chat-border);
+}
+
+.chat-v2-sidebar {
+  box-shadow: var(--chat-sidebar-shadow);
 }
 
 html[data-chat-rail="0"] .chat-v2-rail {

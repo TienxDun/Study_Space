@@ -107,13 +107,10 @@ export interface ChatV2Model {
   contextTokens: number | null;
   /** Số token đầu ra tối đa; null khi chưa xác minh. */
   maxOutputTokens: number | null;
-  /** Đọc ảnh; null khi chưa xác minh. */
-  vision: boolean | null;
   /** Thuộc gói key free. */
   free: boolean;
   /** true = đã kiểm và dùng được, false = đang hỏng, null = chưa xác minh. */
   available: boolean | null;
-  visionSource?: string | null;
   specSource?: string | null;
   checkedAt?: string | null;
   /** Giá USD / 1M token đầu vào (null nếu chưa có dữ liệu). */

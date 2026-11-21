@@ -150,23 +150,6 @@ describe("chat v2 Worker — system prompt", () => {
     expect(content[1]).toMatchObject({ type: "image_url" });
   });
 
-  it("chặn ảnh với model chưa xác minh đọc ảnh", async () => {
-    const blocked = listCatalog().find((model) => model.vision !== true && model.contextTokens)!;
-    expect(blocked).toBeTruthy();
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-    const res = await worker.fetch(
-      chatRequest({
-        model: blocked.id,
-        messages: [{ role: "user", content: "Xem ảnh" }],
-        images: [{ name: "de.png", data: PIXEL }],
-      }),
-      ENV
-    );
-    expect(res.status).toBe(400);
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
   it("nối file text vào câu hỏi", async () => {
     let upstream: Record<string, unknown> | null = null;
     vi.stubGlobal(

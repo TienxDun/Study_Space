@@ -16,7 +16,6 @@ export {
   loadMoreSheet,
   loadSettingsSheet,
   loadStatsSheet,
-  loadChatSheet,
   loadRadioSheet,
   loadMixerSheet,
   preloadCriticalSheets,

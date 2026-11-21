@@ -27,11 +27,6 @@ const SceneSelectorWidget = dynamic(
 );
 
 
-const StudyChatWidget = dynamic(
-  () => import("@/components/study/chat/StudyChatWidget").then((mod) => mod.StudyChatWidget),
-  { ssr: false }
-);
-
 const ChatV2Overlay = dynamic(
   () => import("@/features/chat-v2/ChatV2Overlay").then((mod) => mod.ChatV2Overlay),
   { ssr: false }
@@ -252,26 +247,14 @@ export const StudyDesktopLayout = React.memo(function StudyDesktopLayout({
         onClose={() => setIsStatsOpen(false)}
       />
 
-      {/* Chat AI: v2 toàn màn hình khi bật cờ, ngược lại khung nổi v1 */}
-      {systemFlags.chatV2 ? (
-        !isZenMode ? (
-          <>
-            {!isChatOpen ? (
-              <ChatFab hasNew={false} onOpen={() => setIsChatOpen(true)} disabled={!systemFlags.chatEnabled} />
-            ) : (
-              <ChatV2Overlay onClose={() => setIsChatOpen(false)} />
-            )}
-          </>
-        ) : null
-      ) : (
-        <StudyChatWidget
-          isOpen={isChatOpen}
-          onOpenChange={setIsChatOpen}
-          onClose={() => setIsChatOpen(false)}
-          isZenMode={isZenMode}
-          chatEnabled={systemFlags.chatEnabled}
-        />
-      )}
+      {/* Chat AI: nút mầm cây khi đóng, overlay toàn màn hình khi mở */}
+      {!isZenMode ? (
+        !isChatOpen ? (
+          <ChatFab hasNew={false} onOpen={() => setIsChatOpen(true)} disabled={!systemFlags.chatEnabled} />
+        ) : (
+          <ChatV2Overlay onClose={() => setIsChatOpen(false)} />
+        )
+      ) : null}
 
       {/* Command Palette mở nhanh (Cmd/Ctrl+K) */}
       <StudyCommandPalette

@@ -571,6 +571,10 @@
     $("users-detail-close").addEventListener("click", closeDetail);
     $("users-restrict-save").addEventListener("click", saveRestrictions);
     $("users-chat-reset").addEventListener("click", resetQuota);
+    document.addEventListener("admin:open-user", function (event) {
+      var uid = event && event.detail ? String(event.detail.uid || "") : "";
+      if (uid) openDetail(uid);
+    });
   }
 
   wire();

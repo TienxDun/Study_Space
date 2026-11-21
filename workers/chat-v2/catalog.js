@@ -1,8 +1,8 @@
 /**
  * Danh mục model chat v2, sinh bởi scripts/refresh-chat-v2-models.mjs.
  * Không sửa tay — chạy `npm run refresh:models` để cập nhật.
- * Mỗi model ghi kèm nguồn (giá, ngữ cảnh, đọc ảnh) và ngày kiểm; model chưa
- * kiểm có available/vision = null, giao diện phải khoá chọn.
+ * Mỗi model ghi kèm nguồn (giá, ngữ cảnh) và ngày kiểm; model chưa kiểm có
+ * available = null, giao diện phải khoá chọn.
  */
 import catalog from "./model-catalog.json";
 
@@ -40,8 +40,6 @@ function listedModel(entry) {
     ownedBy: entry.provider || "",
     free: entry.free === true,
     available: entry.available,
-    vision: entry.vision,
-    visionSource: entry.visionSource || null,
     contextTokens: entry.contextTokens,
     maxOutputTokens: entry.maxOutputTokens,
     priceIn: entry.priceIn,
@@ -66,7 +64,6 @@ export function getCapability(modelId) {
   return {
     contextTokens,
     maxOutputTokens: Math.min(output, RESERVED_OUTPUT_CAP),
-    vision: entry.vision === true ? true : entry.vision === false ? false : null,
     baselinePromptTokens: Number.isFinite(entry.baselinePromptTokens) ? entry.baselinePromptTokens : 0,
     priceIn: entry.priceIn ?? null,
     priceOut: entry.priceOut ?? null,
@@ -79,7 +76,6 @@ export function publicCapability(modelId) {
   return {
     contextTokens: cap.contextTokens,
     maxOutputTokens: cap.maxOutputTokens,
-    vision: cap.vision,
     priceIn: cap.priceIn,
     priceOut: cap.priceOut,
   };

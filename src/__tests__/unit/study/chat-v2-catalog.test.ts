@@ -15,7 +15,6 @@ describe("danh mục model chat v2", () => {
       const entry = catalogEntry(id)!;
       expect(typeof entry.free, id).toBe("boolean");
       if (entry.available === true) expect(entry.checkedAt, id).toBeTruthy();
-      if (entry.visionSource === "probe") expect(entry.vision, id).not.toBeNull();
       if (entry.priceSource === "motapis-models.js") {
         expect(entry.priceIn, id).toBeGreaterThan(0);
         expect(entry.priceOut, id).toBeGreaterThan(0);

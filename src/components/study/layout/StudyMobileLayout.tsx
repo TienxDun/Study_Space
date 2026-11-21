@@ -17,7 +17,6 @@ import {
   loadSettingsSheet,
   loadStatsSheet,
   loadMoreSheet,
-  loadChatSheet,
   loadRadioSheet,
   scheduleIdlePreloadMobileSheets,
 } from "@/components/study/mobile/sheets/core/sheet-preloader";
@@ -48,10 +47,6 @@ const MobileFocusStatsSheet = dynamic(
 const MobileMoreSheet = dynamic(
   () => loadMoreSheet().then((mod) => mod.MobileMoreSheet),
   { ssr: false, loading: () => <SheetGlassSkeleton title="Thêm" sheetId="more" /> }
-);
-const MobileChatSheet = dynamic(
-  () => loadChatSheet().then((mod) => mod.MobileChatSheet),
-  { ssr: false, loading: () => <SheetGlassSkeleton title="Trợ lý AI" sheetId="chat" /> }
 );
 const MobileRadioSheet = dynamic(
   () => loadRadioSheet().then((mod) => mod.MobileRadioSheet),
@@ -148,7 +143,6 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
   if (isScenesOpen) mountedSheetsRef.current.scenes = true;
   if (isSettingsOpen) mountedSheetsRef.current.settings = true;
   if (isStatsOpen) mountedSheetsRef.current.stats = true;
-  if (isChatOpen) mountedSheetsRef.current.chat = true;
   if (isMoreOpen) mountedSheetsRef.current.more = true;
   if (isFeedbackOpen) mountedSheetsRef.current.feedback = true;
   if (isEmbedPlayerOpen || Boolean(externalActiveItem)) mountedSheetsRef.current.radio = true;
@@ -322,28 +316,13 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
         </ErrorBoundary>
       )}
 
-      {/* Chat: v2 toàn màn hình khi bật cờ, ngược lại sheet v1 */}
-      {systemFlags.chatV2 ? (
-        isChatOpen ? (
-          <ErrorBoundary>
-            <MobilePerfProbe name="chat-v2">
-              <ChatV2Overlay onClose={handleMobileCloseAllSheets} />
-            </MobilePerfProbe>
-          </ErrorBoundary>
-        ) : null
-      ) : (
-        mountedSheets.chat && (
-          <ErrorBoundary>
-            <MobilePerfProbe name="sheet:chat">
-              <MobileChatSheet
-                isOpen={isChatOpen}
-                onClose={handleMobileCloseAllSheets}
-                onBack={mobileCanGoBack ? handleMobileBack : undefined}
-                backLabel={mobileCanGoBack ? mobilePrevScreen?.title : undefined}
-              />
-            </MobilePerfProbe>
-          </ErrorBoundary>
-        )
+      {/* Chat v2: overlay toàn màn hình */}
+      {isChatOpen && (
+        <ErrorBoundary>
+          <MobilePerfProbe name="chat-v2">
+            <ChatV2Overlay onClose={handleMobileCloseAllSheets} />
+          </MobilePerfProbe>
+        </ErrorBoundary>
       )}
 
       {/* Radio Sheet */}
@@ -364,7 +343,7 @@ export const StudyMobileLayout = React.memo(function StudyMobileLayout({
       )}
 
       {/* Thanh điều hướng đáy 5 nút — ẩn khi chat v2 phủ toàn màn hình (nav portal nằm trên overlay). */}
-      {!isZenMode && !(systemFlags.chatV2 && isChatOpen) && (
+      {!isZenMode && !isChatOpen && (
         <MobilePerfProbe name="nav">
           <StudyMobileNav
             active={activeNavTab}

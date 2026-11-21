@@ -10,18 +10,18 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 // motapis trả owned_by = "openai" cho hầu hết model, chỉ claude là "claude"
 const MOCK_MODELS: ChatV2Model[] = [
-  { id: "deepseek-v4-flash", ownedBy: "openai", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 0.07, priceOut: 0.14 },
-  { id: "claude-sonnet-5-5", ownedBy: "claude", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 1.2, priceOut: 6 },
-  { id: "deepseek-v4-pro", ownedBy: "openai", free: false, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: false, priceIn: 0.22, priceOut: 0.44 },
-  { id: "gpt-6-luna", ownedBy: "openai", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 0.1, priceOut: 0.5 },
-  { id: "gemini-3.8-flash", ownedBy: "openai", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 0.4, priceOut: 2 },
-  { id: "qwen3.8-max", ownedBy: "openai", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 1, priceOut: 3 },
-  { id: "glm-5.3-flash", ownedBy: "openai", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 0.075, priceOut: 0.25 },
-  { id: "grok-4.5", ownedBy: "xai", free: true, available: false, contextTokens: 500000, maxOutputTokens: 16384, vision: true, priceIn: 1.2, priceOut: 2.4 },
+  { id: "deepseek-v4-flash", ownedBy: "openai", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, priceIn: 0.07, priceOut: 0.14 },
+  { id: "claude-sonnet-5-5", ownedBy: "claude", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, priceIn: 1.2, priceOut: 6 },
+  { id: "deepseek-v4-pro", ownedBy: "openai", free: false, available: true, contextTokens: 1048576, maxOutputTokens: 16384, priceIn: 0.22, priceOut: 0.44 },
+  { id: "gpt-6-luna", ownedBy: "openai", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, priceIn: 0.1, priceOut: 0.5 },
+  { id: "gemini-3.8-flash", ownedBy: "openai", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, priceIn: 0.4, priceOut: 2 },
+  { id: "qwen3.8-max", ownedBy: "openai", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, priceIn: 1, priceOut: 3 },
+  { id: "glm-5.3-flash", ownedBy: "openai", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, priceIn: 0.075, priceOut: 0.25 },
+  { id: "grok-4.5", ownedBy: "xai", free: true, available: false, contextTokens: 500000, maxOutputTokens: 16384, priceIn: 1.2, priceOut: 2.4 },
   // Các model hình ảnh/video cần bị loại bỏ:
-  { id: "gpt-image-2", ownedBy: "openai", free: false, available: true, contextTokens: 0, maxOutputTokens: 0, vision: false },
-  { id: "grok-imagine-image-2.0", ownedBy: "xai", free: false, available: true, contextTokens: 0, maxOutputTokens: 0, vision: false },
-  { id: "grok-imagine-video-1.5", ownedBy: "xai", free: false, available: true, contextTokens: 0, maxOutputTokens: 0, vision: false },
+  { id: "gpt-image-2", ownedBy: "openai", free: false, available: true, contextTokens: 0, maxOutputTokens: 0 },
+  { id: "grok-imagine-image-2.0", ownedBy: "xai", free: false, available: true, contextTokens: 0, maxOutputTokens: 0 },
+  { id: "grok-imagine-video-1.5", ownedBy: "xai", free: false, available: true, contextTokens: 0, maxOutputTokens: 0 },
 ];
 
 function findButton(text: string, scope: ParentNode = document): HTMLButtonElement | undefined {
@@ -97,7 +97,7 @@ describe("ModelPicker component", () => {
     expect(text.includes("deepseek-v4-flash")).toBe(true);
   });
 
-  it("cho phép lọc theo Miễn phí, Đọc ảnh và Hãng", async () => {
+  it("cho phép lọc theo Miễn phí và Hãng", async () => {
     const onChange = vi.fn();
     await act(async () => {
       root.render(
@@ -114,15 +114,17 @@ describe("ModelPicker component", () => {
       trigger?.click();
     });
 
-    // Bấm chip filter "Đọc ảnh"
-    const visionBtn = findButton("Đọc ảnh", container);
-    expect(visionBtn).toBeDefined();
+    // Bấm chip filter "Miễn phí" (chip lọc, không phải nhãn trong danh sách)
+    const freeChip = Array.from(
+      container.querySelectorAll<HTMLButtonElement>("button[aria-pressed]")
+    ).find((button) => button.textContent?.includes("Miễn phí"));
+    expect(freeChip).toBeDefined();
 
     await act(async () => {
-      visionBtn?.click();
+      freeChip?.click();
     });
 
-    // deepseek-v4-pro là text-only (vision: false), không được xuất hiện trong listbox
+    // deepseek-v4-pro là model trả phí, không được xuất hiện trong listbox
     const listbox = container.querySelector('[role="listbox"]');
     expect(listbox?.textContent?.includes("deepseek-v4-pro")).toBe(false);
     expect(listbox?.textContent?.includes("claude-sonnet-5-5")).toBe(true);
@@ -291,9 +293,9 @@ describe("ModelPicker component", () => {
 
   it("khoá model chưa xác minh và model đang hỏng", async () => {
     const lockedModels: ChatV2Model[] = [
-      { id: "deepseek-v4-flash", ownedBy: "DeepSeek", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, vision: true, priceIn: 0.07, priceOut: 0.14, checkedAt: "2026-11-20T18:32:39.607Z" },
-      { id: "claude-opus-5-5", ownedBy: "Anthropic", free: false, available: null, contextTokens: 1000000, maxOutputTokens: 16384, vision: true, priceIn: 2.4, priceOut: 12 },
-      { id: "grok-4.5", ownedBy: "xAI", free: true, available: false, contextTokens: null, maxOutputTokens: null, vision: null, priceIn: 1.2, priceOut: 2.4, checkedAt: "2026-11-20T18:38:54.931Z" },
+      { id: "deepseek-v4-flash", ownedBy: "DeepSeek", free: true, available: true, contextTokens: 1048576, maxOutputTokens: 16384, priceIn: 0.07, priceOut: 0.14, checkedAt: "2026-11-20T18:32:39.607Z" },
+      { id: "claude-opus-5-5", ownedBy: "Anthropic", free: false, available: null, contextTokens: 1000000, maxOutputTokens: 16384, priceIn: 2.4, priceOut: 12 },
+      { id: "grok-4.5", ownedBy: "xAI", free: true, available: false, contextTokens: null, maxOutputTokens: null, priceIn: 1.2, priceOut: 2.4, checkedAt: "2026-11-20T18:38:54.931Z" },
     ];
     const onChange = vi.fn();
     await act(async () => {

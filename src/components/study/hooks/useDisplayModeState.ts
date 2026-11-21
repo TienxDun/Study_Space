@@ -36,7 +36,6 @@ export function useDisplayModeState({
       if (cancelled) return;
       setSystemFlags((prev) =>
         prev.chatEnabled === next.chatEnabled &&
-        prev.chatV2 === next.chatV2 &&
         prev.roomsEnabled === next.roomsEnabled &&
         prev.maintenance === next.maintenance &&
         prev.banner === next.banner

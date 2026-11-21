@@ -141,9 +141,7 @@ export function useChatV2() {
 
   const modelInfo = models.find((item) => item.id === model);
   const modelLocked = !!modelInfo && !isUsable(modelInfo);
-  const hasImages = attachments.some((item) => item.kind === "image");
-  const visionBlocked = hasImages && !!modelInfo && modelInfo.vision !== true;
-  const canSend = !sending && !modelLocked && (!!input.trim() || attachments.length > 0) && !visionBlocked;
+  const canSend = !sending && !modelLocked && (!!input.trim() || attachments.length > 0);
   const canRegenerate = !sending && messages.some((message) => message.role === "user");
   // Phiên rỗng đã là "cuộc trò chuyện mới" — tạo thêm chỉ lặp lại vô nghĩa.
   const canStartNewChat = messages.length > 0;
@@ -453,19 +451,6 @@ export function useChatV2() {
     if (result.errors.length > 0) setError(result.errors.join(" "));
     if (result.items.length > 0) {
       setAttachments((current) => [...current, ...result.items].slice(0, MAX_ATTACHMENTS));
-      const addingImage = result.items.some((item) => item.kind === "image");
-      if (addingImage && modelInfo && modelInfo.vision !== true) {
-        const preferred = ["qwen3.8-max", "gemini-3.8-flash", "gpt-5.6", "claude-sonnet-5-5", "glm-5.3-flash"];
-        const usableVision = models.filter((item) => isUsable(item) && item.vision === true);
-        const visionModel =
-          preferred
-            .map((id) => usableVision.find((item) => item.id === id))
-            .find(Boolean) || usableVision[0];
-        if (visionModel) {
-          setModel(visionModel.id);
-          setInfo(`Đã chuyển sang ${visionModel.id} vì model trước không đọc được ảnh.`);
-        }
-      }
     }
   };
 
@@ -652,7 +637,6 @@ export function useChatV2() {
     info,
     context,
     lastReply,
-    visionBlocked,
     canSend,
     canRegenerate,
     canStartNewChat,

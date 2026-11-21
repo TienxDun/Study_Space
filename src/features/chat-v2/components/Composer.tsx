@@ -13,7 +13,6 @@ import {
   PaperclipIcon,
   StopIcon,
   UploadSimpleIcon,
-  WarningIcon,
   XIcon,
 } from "@phosphor-icons/react";
 import type { ChatV2Attachment } from "../lib/attachments";
@@ -30,7 +29,6 @@ interface ComposerProps {
   inputRef: RefObject<HTMLTextAreaElement | null>;
   sending: boolean;
   canSend: boolean;
-  visionBlocked: boolean;
   attachments: ChatV2Attachment[];
   onAddFiles: (files: FileList | File[]) => void;
   onRemoveAttachment: (id: string) => void;
@@ -56,7 +54,6 @@ export function Composer({
   inputRef,
   sending,
   canSend,
-  visionBlocked,
   attachments,
   onAddFiles,
   onRemoveAttachment,
@@ -182,13 +179,6 @@ export function Composer({
         </div>
       ) : null}
       <div className="mx-auto w-full max-w-[820px]">
-        {visionBlocked ? (
-          <div className="mb-2.5 flex items-start gap-2 rounded-2xl border border-chat-amber-border bg-chat-amber-soft px-3 py-2 text-[11px] leading-5 text-chat-amber">
-            <WarningIcon size={14} weight="duotone" className="mt-0.5 shrink-0" aria-hidden="true" />
-            <span>Model này chỉ đọc chữ. Chọn qwen3.8-max, gemini-3.8-flash, gpt-5.6 hoặc glm-5.3-flash, hoặc bỏ ảnh.</span>
-          </div>
-        ) : null}
-
         {attachments.length > 0 ? (
           <div className="mb-2.5 flex flex-wrap gap-2">
             {attachments.map((attachment) => {

@@ -7,6 +7,10 @@
   "preview_urls": false,
   "keep_vars": true,
   // keep_vars chỉ giữ biến Text; binding phải khai báo ở đây, nếu không mỗi deploy sẽ xoá DB/R2.
+  // Danh mục model của tab Trợ lý chat đọc từ Worker chat-v2 (chỉ GET /models, không cần khoá).
+  "vars": {
+    "CHAT_V2_URL": "https://zenstudy-chat-v2.leutiendung-hht.workers.dev"
+  },
   "d1_databases": [
     {
       "binding": "DB",

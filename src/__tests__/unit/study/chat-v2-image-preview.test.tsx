@@ -117,9 +117,7 @@ describe("xem lại ảnh đã gửi", () => {
         onInput={() => {}}
         inputRef={React.createRef<HTMLTextAreaElement>()}
         sending={false}
-        canSend
-        visionBlocked={false}
-        attachments={[
+        canSend        attachments={[
           { id: "att-1", name: "de-thi.png", size: 1024, kind: "image", thumb: THUMB },
         ]}
         onAddFiles={vi.fn()}

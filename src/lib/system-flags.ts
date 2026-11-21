@@ -1,16 +1,13 @@
 export interface SystemFlags {
   chatEnabled: boolean;
-  chatV2: boolean;
   roomsEnabled: boolean;
   maintenance: boolean;
   banner: string;
 }
 
 // Mặc định bật để web không tự khóa tính năng khi chat-proxy chưa kịp trả lời.
-// chatV2 là công tắc chuyển giao: mặc định tắt cho tới khi bản v2 đủ điều kiện chạy thật.
 export const SYSTEM_FLAGS_DEFAULT: SystemFlags = {
   chatEnabled: true,
-  chatV2: false,
   roomsEnabled: true,
   maintenance: false,
   banner: "",
@@ -37,7 +34,6 @@ export function parseSystemFlags(input: unknown): SystemFlags {
 
   return {
     chatEnabled: readBool(data.chatEnabled, true),
-    chatV2: readBool(data.chatV2, false),
     roomsEnabled: readBool(data.roomsEnabled, true),
     maintenance: readBool(data.maintenance, false),
     banner,

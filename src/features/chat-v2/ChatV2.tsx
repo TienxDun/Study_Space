@@ -227,7 +227,6 @@ export function ChatV2({ onClose }: ChatV2Props) {
               inputRef={inputRef}
               sending={chat.sending}
               canSend={chat.canSend}
-              visionBlocked={chat.visionBlocked}
               attachments={chat.attachments}
               onAddFiles={chat.addFiles}
               onRemoveAttachment={chat.removeAttachment}

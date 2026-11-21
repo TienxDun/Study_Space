@@ -15,7 +15,7 @@ import {
   type AdminEnv,
 } from "./shared";
 
-const DEFAULT_CHAT_DAILY = 30;
+export const DEFAULT_CHAT_DAILY = 30;
 const SNAPSHOT_MAX_BYTES = 2_000_000;
 // Cloudflare tính hạn mức R2 theo GB thập phân (10 GB), không phải GiB.
 const R2_LIMIT_BYTES = 10 * 1000 ** 3;

@@ -82,7 +82,8 @@ spacing:
 - Topbar trải hết vùng main, không còn giới hạn 980px.
 - Empty state rộng tối đa 1120px; lưới gợi ý tối đa 900px.
 - Rail phải 280px chỉ ở `min-width: 1600px`, và chỉ render khi phiên có tóm tắt hoặc tệp.
-- **Liền mạch**: sidebar, topbar, rail và composer không có đường kẻ chia cắt; chúng dùng chung nền canvas (`chat-bg`), tách nhau bằng khoảng trắng và blur nhẹ.
+- **Sidebar là panel riêng** (desktop): nền đặc hơn canvas + hairline mép phải + bóng mềm, để mắt tách rõ lịch sử phiên khỏi vùng chat.
+- **Liền mạch trong vùng chat**: topbar, rail và composer không có đường kẻ chia cắt; chúng dùng chung nền canvas (`chat-bg`), tách nhau bằng khoảng trắng và blur nhẹ.
 
 ### Tablet 640–1023px
 
@@ -124,7 +125,7 @@ Quy tắc:
 - Không dùng `!important`; giữ lint CSS xanh.
 - Blur chỉ ở topbar, composer, popover; mobile dùng blur nhẹ hơn.
 - **Không hardcode màu trong component**: dùng class `chat-*` hoặc biến `--chat-*`.
-- Không dùng `border-r`/`border-l`/`border-t`/`border-b` để chia vùng khung; chỉ card, popover và input mới có viền.
+- Không dùng `border-r`/`border-l`/`border-t`/`border-b` để chia vùng khung; chỉ card, popover, input và **panel sidebar desktop** mới có viền.
 
 ### 3.1 Theme sáng/tối
 
@@ -151,6 +152,7 @@ Quy tắc:
 | Accent | `#34D399` | `#059669` |
 | User bubble | `rgba(16,185,129,0.11)` | `#D1FAE5` |
 | User text | `#ECFDF5` | `#064E3B` |
+| Nền sidebar (panel) | `#0C1320 → #080D16` | `#FFFFFF → #FBFCFB` |
 
 Quy tắc theme sáng:
 
@@ -183,7 +185,7 @@ Font: **Be Vietnam Pro** (đã cấu hình `--font-be-vietnam`).
 ### 5.1 Sidebar (`ChatSidebar`)
 
 - Rộng 276px, chỉ desktop; ẩn/hiện bằng nút ở topbar, lưu `chat-v2-sidebar-open`.
-- Nền trong suốt, không viền phải: sidebar nằm cùng mặt phẳng với vùng chat, chỉ tách bằng khoảng trắng.
+- Là panel riêng: nền gradient đặc hơn canvas (`--chat-sidebar-surface`), hairline `border-r` 1px `chat-border`, bóng mềm đổ sang vùng chat (`--chat-sidebar-shadow`). Class `chat-v2-sidebar-panel`; drawer mobile không dùng panel này.
 - Brand: mascot mầm cây **StudySproutMascot** 38px đứng tự do (không viền, không nền) + “ZenStudy” + “STUDY ASSISTANT”.
 - Nút “Cuộc trò chuyện mới”: cao 44px, emerald đặc, bo 16px.
   - Phiên đang mở mà chưa có tin nhắn nào thì **disable** (nền `chat-surface`, chữ `chat-faint`, không đổ bóng, không scale); nhãn đổi thành “Đang ở cuộc trò chuyện mới”.
@@ -213,13 +215,13 @@ Font: **Be Vietnam Pro** (đã cấu hình `--font-be-vietnam`).
 
 ### 5.3 ModelPicker
 
-- Nút pill glass, icon CPU, tên model, context thật của model (`1M context`, `391k context`…), `ảnh/chữ`.
+- Nút pill glass, icon CPU, tên model, context thật của model (`1M context`, `391k context`…).
 - Desktop: popover 390px neo phải nút.
 - Mobile: popover full chiều rộng (`inset-x-3`), bắt đầu dưới topbar; không tràn ngang.
 - Search, danh sách cuộn, check model đang chọn.
-- Mỗi option: tên, provider, context, vision; giá vào/ra mỗi 1M token nằm cột phải, có tooltip giải thích. Model đã kiểm có thêm `✓ ngày kiểm`; hover option hiện nguồn (`models.dev`, motapis, probe).
+- Mỗi option: tên, provider, context; giá vào/ra mỗi 1M token nằm cột phải, có tooltip giải thích. Model đã kiểm có thêm `✓ ngày kiểm`; hover option hiện nguồn (`models.dev`, motapis).
 - Model chưa xác minh (`available: null`) hiện nhãn **Đang xác minh**; model đã kiểm nhưng hỏng (`available: false`) hiện **Tạm không khả dụng**. Cả hai bị disable, không chọn được, icon ổ khoá.
-- Hàng lọc chỉ giữ 3 chip loại model (`Tất cả`, `Miễn phí`, `Đọc ảnh`); `Miễn phí` lấy từ `free` của danh mục, không phải danh sách gõ cứng. Các hãng gom vào dropdown `Hãng` (nút hiển thị tên hãng đang lọc), không cuộn ngang, không cắt chữ.
+- Hàng lọc chỉ giữ 2 chip loại model (`Tất cả`, `Miễn phí`); `Miễn phí` lấy từ `free` của danh mục, không phải danh sách gõ cứng. Các hãng gom vào dropdown `Hãng` (nút hiển thị tên hãng đang lọc), không cuộn ngang, không cắt chữ.
 - Nút sắp xếp theo giá nằm ở footer cạnh số lượng model: `Mặc định` / `Giá thấp → cao` / `Giá cao → thấp`; menu mở lên trên và có chú thích `Giá vào/ra · USD / 1M token`. Xếp hạng dùng chi phí ước tính `vào × 3 + ra`; model chưa có giá luôn nằm cuối. Footer đếm `đã lọc/tổng model · N dùng được`.
 - Giá lấy từ bảng niêm yết motapis (`models.js`, USD / 1M token), không phải số tự tính.
 - Không dùng native select trần; popover phải đóng khi click ngoài/Escape.

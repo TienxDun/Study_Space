@@ -27,7 +27,7 @@ export function ChatSidebar(props: ChatSidebarProps) {
       className="chat-v2-sidebar hidden h-dvh shrink-0 overflow-hidden lg:flex"
       aria-hidden={!props.open}
     >
-      <div className="flex h-full w-[276px] shrink-0 flex-col overflow-hidden">
+      <div className="chat-v2-sidebar-panel flex h-full w-[276px] shrink-0 flex-col overflow-hidden">
         <SidebarBody {...props} />
       </div>
     </aside>

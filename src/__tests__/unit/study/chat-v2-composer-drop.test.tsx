@@ -37,9 +37,7 @@ describe("Composer kéo thả tệp", () => {
           onInput={() => {}}
           inputRef={inputRef}
           sending={sending}
-          canSend={false}
-          visionBlocked={false}
-          attachments={[]}
+          canSend={false}          attachments={[]}
           onAddFiles={onAddFiles}
           onRemoveAttachment={() => {}}
           onSend={() => {}}

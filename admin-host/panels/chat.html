@@ -1,271 +1,121 @@
-      <!-- Trợ lý học tập AI -->
+      <!-- Bước 3: quản lý trợ lý chat v2 (chỉ metadata + hạn mức) -->
       <section class="panel-card chat-panel" id="chat-panel" aria-labelledby="chat-title">
         <div class="panel-header">
           <div class="panel-title-group">
             <h2 class="panel-title" id="chat-title">Trợ lý học tập AI</h2>
-            <span class="panel-desc">Chuỗi mô hình dự phòng, nhà cung cấp và hướng dẫn phản hồi.</span>
+            <span class="panel-desc">Danh mục mô hình đang phục vụ, mức sử dụng và hạn mức câu hỏi mỗi ngày.</span>
           </div>
           <span class="usage-tag" id="chat-state">Đang đọc…</span>
         </div>
 
-        <!-- Subtabs điều hướng (Segmented Capsule Linear style) -->
-        <div class="chat-subtabs-bar">
-          <div class="chat-subtabs" role="tablist" aria-label="Nhóm chức năng trợ lý AI">
-            <button
-              class="chat-subtab is-active"
-              id="chat-subtab-routing"
-              type="button"
-              role="tab"
-              aria-selected="true"
-              aria-controls="chat-pane-routing"
-              data-chat-tab="routing"
-            >
-              <svg class="chat-subtab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="6" cy="6" r="3"></circle>
-                <circle cx="6" cy="18" r="3"></circle>
-                <circle cx="18" cy="12" r="3"></circle>
-                <path d="M6 9v6"></path>
-                <path d="M9 6h4a5 5 0 0 1 5 5"></path>
-              </svg>
-              <span>Mô hình &amp; Nhà cung cấp</span>
-            </button>
-            <button
-              class="chat-subtab"
-              id="chat-subtab-prompt"
-              type="button"
-              role="tab"
-              aria-selected="false"
-              aria-controls="chat-pane-prompt"
-              data-chat-tab="prompt"
-            >
-              <svg class="chat-subtab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              </svg>
-              <span>Hướng dẫn AI &amp; Thử nghiệm</span>
-            </button>
-          </div>
-        </div>
-
         <div class="chat-body">
-          <!-- Pane 1: Mô hình & Nhà cung cấp -->
-          <div class="chat-pane" id="chat-pane-routing" role="tabpanel" aria-labelledby="chat-subtab-routing" data-chat-pane="routing">
-            <div class="chat-pane-stack">
-              <!-- Thứ tự trả lời (Chuỗi dự phòng) -->
-              <section class="chat-section" aria-labelledby="chat-chain-title">
-                <header class="chat-section-head">
-                  <span class="chat-step" aria-hidden="true">1</span>
-                  <div class="chat-section-titles">
-                    <h3 class="chat-section-title" id="chat-chain-title">Thứ tự trả lời (Chuỗi chuyển đổi dự phòng)</h3>
-                    <p class="chat-section-desc">Hệ thống ưu tiên bước 1; nếu dịch vụ gặp sự cố hoặc hết hạn mức, sẽ tự động chuyển tiếp xuống bước sau để cuộc trò chuyện không bị gián đoạn.</p>
-                  </div>
-                  <span class="chat-chip" id="chat-chain-chip">Đã lưu</span>
-                </header>
+          <section class="chat-section" aria-labelledby="chat-catalog-title">
+            <header class="chat-section-head">
+              <div class="chat-section-titles">
+                <h3 class="chat-section-title" id="chat-catalog-title">Danh mục mô hình</h3>
+                <p class="chat-section-desc">
+                  Danh mục tự sinh hằng ngày từ Motapis; mỗi mục ghi nguồn và ngày kiểm. Chỉ đọc — muốn
+                  cập nhật, chạy <code class="chat-code">npm run refresh:models</code> rồi deploy Worker chat-v2.
+                </p>
+              </div>
+              <span class="chat-chip" id="chat-catalog-chip">Đang đọc…</span>
+            </header>
 
-                <div class="chat-chain" id="chat-chain"></div>
-                <p class="chat-hint" id="chat-chain-hint">Tối đa 5 cấp độ dự phòng. Hệ thống tự động kích hoạt theo thứ tự từ trên xuống dưới.</p>
+            <dl class="chat-stats" id="chat-catalog-stats">
+              <div class="chat-stat"><dt>Tổng mô hình</dt><dd id="chat-stat-total">--</dd></div>
+              <div class="chat-stat"><dt>Miễn phí</dt><dd id="chat-stat-free">--</dd></div>
+              <div class="chat-stat"><dt>Chưa xác minh</dt><dd id="chat-stat-unverified">--</dd></div>
+              <div class="chat-stat"><dt>Tạm không khả dụng</dt><dd id="chat-stat-unavailable">--</dd></div>
+              <div class="chat-stat"><dt>Danh mục sinh lúc</dt><dd id="chat-stat-generated">--</dd></div>
+            </dl>
 
-                <footer class="chat-section-foot">
-                  <p class="chat-hint" id="chat-chain-note">Chưa đọc được thứ tự dự phòng.</p>
-                  <div class="chat-actions">
-                    <button class="btn-ghost" id="chat-chain-add" type="button" disabled>Thêm bước dự phòng</button>
-                    <button class="btn-primary" id="chat-chain-save" type="button" data-label="Lưu thứ tự" disabled>
-                      <span>Lưu thứ tự</span>
-                    </button>
-                  </div>
-                </footer>
-              </section>
-
-              <!-- Nhà cung cấp AI -->
-              <section class="chat-section" aria-labelledby="chat-provider-title">
-                <header class="chat-section-head">
-                  <span class="chat-step" aria-hidden="true">2</span>
-                  <div class="chat-section-titles">
-                    <h3 class="chat-section-title" id="chat-provider-title">Nhà cung cấp dịch vụ AI</h3>
-                    <p class="chat-section-desc">Khai báo tài khoản và khóa kết nối (API Key) của các nhà cung cấp sử dụng trong chuỗi dự phòng ở trên.</p>
-                  </div>
-                  <span class="chat-chip" id="chat-provider-chip">Đã lưu</span>
-                </header>
-
-                <div class="chat-providers" id="chat-providers"></div>
-
-                <button class="btn-ghost chat-provider-toggle" id="chat-provider-toggle" type="button" disabled>
-                  + Thêm nhà cung cấp mới
-                </button>
-
-                <div class="chat-provider-form" id="chat-provider-form" hidden>
-                  <div class="chat-fields">
-                    <label class="chat-field" for="chat-provider-id">
-                      <span class="chat-label">Mã định danh (ID)</span>
-                      <input
-                        class="flag-input"
-                        id="chat-provider-id"
-                        type="text"
-                        maxlength="40"
-                        placeholder="Ví dụ: groq-1"
-                        autocomplete="off"
-                        spellcheck="false"
-                        disabled
-                      />
-                      <span class="chat-help">Chữ cái, số và dấu gạch ngang (không thể thay đổi sau khi tạo).</span>
-                    </label>
-                    <label class="chat-field" for="chat-provider-type">
-                      <span class="chat-label">Hãng dịch vụ</span>
-                      <select class="flag-input" id="chat-provider-type" disabled></select>
-                      <span class="chat-help">Chọn hãng để hệ thống tự động điền địa chỉ API chuẩn.</span>
-                    </label>
-                    <label class="chat-field" for="chat-provider-label">
-                      <span class="chat-label">Tên hiển thị</span>
-                      <input
-                        class="flag-input"
-                        id="chat-provider-label"
-                        type="text"
-                        maxlength="60"
-                        placeholder="Ví dụ: Groq chính (Tốc độ cao)"
-                        autocomplete="off"
-                        disabled
-                      />
-                    </label>
-                    <label class="chat-field" for="chat-provider-url">
-                      <span class="chat-label">Địa chỉ kết nối (API Base URL)</span>
-                      <input
-                        class="flag-input"
-                        id="chat-provider-url"
-                        type="url"
-                        maxlength="200"
-                        placeholder="https://api.example.com/v1"
-                        autocomplete="off"
-                        spellcheck="false"
-                        disabled
-                      />
-                    </label>
-                    <label class="chat-field chat-field-wide" for="chat-provider-key">
-                      <span class="chat-label">Khóa bảo mật (API Key)</span>
-                      <input
-                        class="flag-input"
-                        id="chat-provider-key"
-                        type="password"
-                        maxlength="500"
-                        placeholder="Dán khóa API Key của nhà cung cấp vào đây"
-                        autocomplete="new-password"
-                        spellcheck="false"
-                        disabled
-                      />
-                      <span class="chat-help" id="chat-provider-key-hint">Khóa chỉ gửi và mã hóa trên máy chủ bảo mật, không lưu trong trình duyệt.</span>
-                    </label>
-                  </div>
-
-                  <p class="chat-feedback" id="chat-provider-check-result" hidden></p>
-                  <p class="chat-hint" id="chat-provider-note">Điền đầy đủ thông tin rồi bấm thêm vào danh sách tạm.</p>
-
-                  <div class="chat-actions">
-                    <button class="btn-ghost" id="chat-provider-check" type="button" disabled>Kiểm tra kết nối khóa</button>
-                    <button class="btn-ghost" id="chat-provider-reset" type="button" disabled>Hủy</button>
-                    <button class="btn-ghost" id="chat-provider-apply" type="button" disabled>Thêm vào danh sách</button>
-                  </div>
-                </div>
-
-                <footer class="chat-section-foot">
-                  <p class="chat-hint" id="chat-provider-save-note">Chỉnh sửa danh sách xong, bấm “Lưu nhà cung cấp” để chính thức áp dụng.</p>
-                  <div class="chat-actions">
-                    <button class="btn-primary" id="chat-provider-save" type="button" data-label="Lưu nhà cung cấp" disabled>
-                      <span>Lưu nhà cung cấp</span>
-                    </button>
-                  </div>
-                </footer>
-              </section>
+            <div class="chat-toolbar">
+              <label class="chat-search">
+                <span class="chat-label">Tìm mô hình</span>
+                <input
+                  class="flag-input"
+                  id="chat-model-search"
+                  type="search"
+                  autocomplete="off"
+                  spellcheck="false"
+                  maxlength="80"
+                  placeholder="Tên mô hình, mã hoặc nhà cung cấp"
+                />
+              </label>
+              <label class="chat-filter">
+                <span class="chat-label">Lọc</span>
+                <select class="flag-input" id="chat-model-filter">
+                  <option value="all">Tất cả mô hình</option>
+                  <option value="free">Chỉ mô hình miễn phí</option>
+                  <option value="paid">Chỉ mô hình trả phí</option>
+                  <option value="unverified">Chưa xác minh</option>
+                  <option value="unavailable">Tạm không khả dụng</option>
+                </select>
+              </label>
+              <button class="btn-ghost" id="chat-refresh" type="button">Làm mới</button>
             </div>
-          </div>
 
-          <!-- Pane 2: Hướng dẫn AI & Thử nghiệm -->
-          <div class="chat-pane" id="chat-pane-prompt" role="tabpanel" aria-labelledby="chat-subtab-prompt" data-chat-pane="prompt" hidden>
-            <div class="chat-prompt-grid">
-              <!-- Cột trái: Lời nhắc định hình AI -->
-              <section class="chat-section chat-prompt-card" aria-labelledby="chat-prompt-title">
-                <header class="chat-section-head">
-                  <div class="chat-section-titles">
-                    <h3 class="chat-section-title" id="chat-prompt-title">Hướng dẫn định hình AI (System Prompt)</h3>
-                    <p class="chat-section-desc">Thiết lập phong cách trả lời, vai trò gia sư và nguyên tắc sư phạm áp dụng cho mọi cuộc trò chuyện.</p>
-                  </div>
-                  <span class="chat-chip" id="chat-prompt-chip">Đã lưu</span>
-                </header>
+            <p class="chat-feedback" id="chat-catalog-note" hidden></p>
 
-                <details class="chat-safety-accordion">
-                  <summary class="chat-safety-summary">
-                    <span class="chat-label">Quy tắc an toàn học đường (cố định ở máy chủ)</span>
-                    <span class="chat-safety-badge">Bấm để xem</span>
-                  </summary>
-                  <div class="chat-safety-body">
-                    <pre class="chat-safety" id="chat-safety-prompt">Đang đọc…</pre>
-                    <span class="chat-help"
-                      >Quy tắc này luôn được tự động chèn trước lời nhắc ở máy chủ bảo mật để đảm bảo môi trường học tập an toàn 16+.</span
-                    >
-                  </div>
-                </details>
-
-                <label class="chat-field" for="chat-prompt">
-                  <span class="chat-label">Nội dung hướng dẫn chi tiết</span>
-                  <textarea
-                    class="flag-input chat-prompt"
-                    id="chat-prompt"
-                    rows="8"
-                    maxlength="4000"
-                    spellcheck="false"
-                    disabled
-                  ></textarea>
-                  <span class="chat-help"><span id="chat-prompt-count">0</span>/4000 ký tự. Không được để trống.</span>
-                </label>
-
-                <footer class="chat-section-foot">
-                  <p class="chat-hint" id="chat-prompt-note">Chưa đọc được câu lệnh hệ thống.</p>
-                  <div class="chat-actions">
-                    <button class="btn-primary" id="chat-prompt-save" type="button" data-label="Lưu hướng dẫn" disabled>
-                      <span>Lưu hướng dẫn</span>
-                    </button>
-                  </div>
-                </footer>
-              </section>
-
-              <!-- Cột phải: Khung Thử nghiệm Model (Playground) -->
-              <section class="chat-section chat-playground-card" aria-labelledby="chat-model-title">
-                <header class="chat-section-head">
-                  <div class="chat-section-titles">
-                    <h3 class="chat-section-title" id="chat-model-title">Khung thử nghiệm (Playground)</h3>
-                    <p class="chat-section-desc">Trò chuyện thử nghiệm để đánh giá chất lượng câu trả lời và tốc độ phản hồi thực tế của từng mô hình AI.</p>
-                  </div>
-                </header>
-
-                <div class="chat-try" id="chat-try" hidden>
-                  <div class="chat-try-fields">
-                    <div class="chat-try-field">
-                      <span class="chat-step-label">Nhà cung cấp</span>
-                      <select
-                        class="flag-input chat-try-provider"
-                        id="chat-try-provider"
-                        aria-label="Chọn nhà cung cấp để thử"
-                        disabled
-                      ></select>
-                    </div>
-                    <div class="chat-try-field chat-try-model-field">
-                      <span class="chat-step-label">Mô hình AI</span>
-                      <div class="chat-try-model-control" id="chat-try-model"></div>
-                    </div>
-                  </div>
-
-                  <div class="chat-playground-action">
-                    <button class="btn-ghost chat-mini-btn chat-playground-run" id="chat-try-run" type="button" disabled>Gửi thử nghiệm</button>
-                  </div>
-
-                  <div class="chat-playground-output">
-                    <span class="chat-label">Câu trả lời phản hồi từ AI</span>
-                    <p class="chat-feedback" id="chat-try-result" hidden></p>
-                  </div>
-                </div>
-
-                <footer class="chat-section-foot">
-                  <p class="chat-hint" id="chat-model-note">Chưa đọc được cấu hình chat.</p>
-                </footer>
-              </section>
+            <div class="content-table-wrap">
+              <table class="services-table content-table chat-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Mô hình</th>
+                    <th scope="col">Hãng</th>
+                    <th scope="col">Giá vào / ra (1M token)</th>
+                    <th scope="col">Ngữ cảnh</th>
+                    <th scope="col">Gói</th>
+                    <th scope="col">Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody id="chat-model-rows">
+                  <tr><td colspan="6">Đang đọc danh mục…</td></tr>
+                </tbody>
+              </table>
             </div>
-          </div>
+            <p class="chat-hint" id="chat-model-count">—</p>
+          </section>
+
+          <section class="chat-section" aria-labelledby="chat-usage-title">
+            <header class="chat-section-head">
+              <div class="chat-section-titles">
+                <h3 class="chat-section-title" id="chat-usage-title">Mức sử dụng</h3>
+                <p class="chat-section-desc">
+                  Số lượt hỏi đáp đọc từ bảng <code class="chat-code">chat_usage</code> (dùng chung với chat
+                  cũ), tính theo ngày Thái Bình Dương. Nội dung hội thoại không lưu trên máy chủ nên trang này
+                  chỉ hiển thị số liệu.
+                </p>
+              </div>
+              <span class="chat-chip" id="chat-usage-chip">Đang đọc…</span>
+            </header>
+
+            <dl class="chat-stats">
+              <div class="chat-stat"><dt>Câu hỏi hôm nay</dt><dd id="chat-usage-today">--</dd></div>
+              <div class="chat-stat"><dt>Người đã chat hôm nay</dt><dd id="chat-usage-users">--</dd></div>
+              <div class="chat-stat">
+                <dt>Hạn mức mỗi người / ngày</dt>
+                <dd><span id="chat-usage-limit">--</span> <a class="chat-link-btn" href="#flags" id="chat-limit-link">Đổi</a></dd>
+              </div>
+            </dl>
+
+            <p class="chat-feedback" id="chat-usage-note" hidden></p>
+
+            <div class="chat-chart" aria-hidden="true">
+              <div class="chat-bars" id="chat-usage-bars"></div>
+              <div class="chat-chart-axis">
+                <span id="chat-chart-from">—</span>
+                <span id="chat-chart-to">—</span>
+              </div>
+            </div>
+
+            <h4 class="chat-subhead">Chat nhiều nhất hôm nay</h4>
+            <ol class="chat-top-list" id="chat-top-users">
+              <li class="chat-top-empty">Chưa có ai chat hôm nay.</li>
+            </ol>
+            <p class="chat-hint">
+              Bấm vào tên để mở hồ sơ ở tab Người dùng (tra theo UID). Chặn AI từng tài khoản cũng nằm trong hồ sơ đó.
+            </p>
+          </section>
         </div>
       </section>

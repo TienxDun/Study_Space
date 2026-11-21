@@ -31,9 +31,7 @@ describe("Composer dán ảnh từ clipboard", () => {
           onInput={() => {}}
           inputRef={inputRef}
           sending={false}
-          canSend={false}
-          visionBlocked={false}
-          attachments={[]}
+          canSend={false}          attachments={[]}
           onAddFiles={onAddFiles}
           onRemoveAttachment={() => {}}
           onSend={() => {}}
