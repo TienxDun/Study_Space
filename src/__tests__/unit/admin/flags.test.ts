@@ -51,7 +51,6 @@ function stubBackend(): void {
     vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url === CERT_URL) return certsResponse([jwk]);
-      if (url.endsWith("/status")) return jsonResponse({ auth: { userDailyLimit: 25 } });
       if (url.endsWith("/health")) return jsonResponse({ ok: true });
       if (url.endsWith("/usage")) {
         return jsonResponse({
@@ -151,7 +150,7 @@ describe("admin flags — đọc", () => {
       roomsEnabled: true,
       maintenance: false,
       banner: "",
-      chatDailyLimit: 25,
+      chatDailyLimit: 30,
       updatedAt: 0,
       updatedBy: "",
     });

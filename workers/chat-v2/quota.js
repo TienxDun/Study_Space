@@ -1,8 +1,8 @@
-// Hạn mức chat dùng chung với chat-proxy v1:
-//   - D1 `chat_usage` khoá (uid, day): hai Worker cùng đọc/ghi một bộ đếm.
-//   - Giới hạn lấy từ KV `cfg:flags.chatDailyLimit` (admin sửa), dự phòng
+// Hạn mức chat + cờ hệ thống:
+//   - D1 `chat_usage` khoá (uid, day) là bộ đếm dùng chung cho cả app.
+//   - Cờ công khai và giới hạn lấy từ KV `cfg:flags` (admin sửa), dự phòng
 //     env USER_DAILY_LIMIT, cuối cùng 30.
-//   - Ngày chốt theo giờ Thái Bình Dương, giống v1, để mốc "mai" khớp nhau.
+//   - Ngày chốt theo giờ Thái Bình Dương để mốc "mai" ổn định.
 
 const FLAGS_KEY = "cfg:flags";
 const FLAGS_TTL_MS = 30 * 1000;
@@ -10,6 +10,7 @@ const DAILY_LIMIT_DEFAULT = 30;
 const DAILY_LIMIT_MIN = 1;
 const DAILY_LIMIT_MAX = 1000;
 const DAY_TTL_SECONDS = 86400 + 3600;
+const BANNER_MAX = 140;
 
 let flagsCache = { at: 0, value: null };
 
@@ -34,6 +35,30 @@ function validLimit(value) {
   return Number.isInteger(value) && value >= DAILY_LIMIT_MIN && value <= DAILY_LIMIT_MAX ? value : null;
 }
 
+function readBool(value, fallback) {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+function cleanBanner(value) {
+  return String(value ?? "")
+    .replace(/[\u0000-\u001F\u007F]/g, " ")
+    .trim()
+    .slice(0, BANNER_MAX);
+}
+
+function sanitizeFlags(parsed) {
+  const data = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  const updatedAt = Number(data.updatedAt);
+  return {
+    chatEnabled: readBool(data.chatEnabled, true),
+    roomsEnabled: readBool(data.roomsEnabled, true),
+    maintenance: readBool(data.maintenance, false),
+    banner: cleanBanner(data.banner),
+    updatedAt: Number.isFinite(updatedAt) ? updatedAt : 0,
+    chatDailyLimit: validLimit(data.chatDailyLimit),
+  };
+}
+
 async function readFlags(env) {
   if (flagsCache.value && Date.now() - flagsCache.at < FLAGS_TTL_MS) return flagsCache.value;
   let parsed = null;
@@ -42,15 +67,26 @@ async function readFlags(env) {
     const raw = await store.get(FLAGS_KEY).catch(() => null);
     if (raw) {
       try {
-        const obj = JSON.parse(raw);
-        if (obj && typeof obj === "object") parsed = obj;
+        parsed = JSON.parse(raw);
       } catch {
         // JSON hỏng: coi như chưa cấu hình.
       }
     }
   }
-  flagsCache = { at: Date.now(), value: { chatDailyLimit: validLimit(parsed && parsed.chatDailyLimit) } };
+  flagsCache = { at: Date.now(), value: sanitizeFlags(parsed) };
   return flagsCache.value;
+}
+
+// Cấu hình công khai cho web: không trả hạn mức và người sửa.
+export async function getPublicConfig(env) {
+  const flags = await readFlags(env);
+  return {
+    chatEnabled: flags.chatEnabled,
+    roomsEnabled: flags.roomsEnabled,
+    maintenance: flags.maintenance,
+    banner: flags.banner,
+    updatedAt: flags.updatedAt,
+  };
 }
 
 export async function getDailyLimit(env) {

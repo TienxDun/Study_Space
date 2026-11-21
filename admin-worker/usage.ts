@@ -53,13 +53,13 @@ export async function probeCheck(probe: Probe): Promise<CheckResult> {
 }
 
 export function pingProbes(env: AdminEnv): Probe[] {
-  const chat = trimUrl(env.CHAT_PROXY_URL);
+  const chat = trimUrl(env.CHAT_V2_URL);
   const data = trimUrl(env.DATA_API_URL);
   const livekit = trimUrl(env.LIVEKIT_URL);
   const token = String(env.ADMIN_TOKEN || "").trim();
 
   return [
-    { name: "chat-proxy", url: chat ? `${chat}/health` : "" },
+    { name: "chat-v2", url: chat ? `${chat}/health` : "" },
     { name: "data-api", url: data ? `${data}/health` : "" },
     {
       name: "livekit",
@@ -70,11 +70,6 @@ export function pingProbes(env: AdminEnv): Probe[] {
 }
 
 type SourceResult<T> = { ok: true; data: T } | { ok: false; error: string };
-
-interface ChatStatusBody {
-  dayPacific?: string;
-  auth?: { userDailyLimit?: number };
-}
 
 interface LivekitUsageBody {
   month?: string;
@@ -206,16 +201,12 @@ export async function buildOverview(env: AdminEnv, email: string) {
   const day = pacificDay();
   const token = String(env.ADMIN_TOKEN || "").trim();
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : undefined;
-  const chatUrl = trimUrl(env.CHAT_PROXY_URL);
   const livekitUrl = trimUrl(env.LIVEKIT_URL);
   const probes = pingProbes(env);
 
-  const [probeResults, chatStatus, livekitUsage, chatUsage, syncUsage, errorsRead, r2, flagsRead] =
+  const [probeResults, livekitUsage, chatUsage, syncUsage, errorsRead, r2, flagsRead] =
     await Promise.all([
       Promise.allSettled(probes.map((probe) => probeCheck(probe))),
-      chatUrl
-        ? fetchJson<ChatStatusBody>(`${chatUrl}/status`, authHeaders)
-        : Promise.resolve<SourceResult<ChatStatusBody>>({ ok: false, error: "missing_url" }),
       livekitUrl && token
         ? fetchJson<LivekitUsageBody>(`${livekitUrl}/usage`, authHeaders)
         : Promise.resolve<SourceResult<LivekitUsageBody>>({
@@ -236,18 +227,18 @@ export async function buildOverview(env: AdminEnv, email: string) {
   );
   const healthOk = checks.length > 0 && checks.every((check) => check.ok);
 
-  const dailyLimit =
-    Number(chatStatus.ok ? chatStatus.data.auth?.userDailyLimit : NaN) || DEFAULT_CHAT_DAILY;
+  // Hạn mức hiệu lực: KV cfg:flags > mặc định 30, đúng công thức Worker chat v2 đang chặn.
+  const dailyLimit = flagsRead.ok
+    ? flagsRead.flags.chatDailyLimit ?? DEFAULT_CHAT_DAILY
+    : DEFAULT_CHAT_DAILY;
 
   let chat: Record<string, unknown>;
   if (!chatUsage.ok) {
     chat = { ok: false, error: chatUsage.error };
-  } else if (!chatStatus.ok) {
-    chat = { ok: false, error: chatStatus.error };
   } else {
     chat = {
       ok: true,
-      day: chatStatus.data.dayPacific || day,
+      day,
       total: chatUsage.total,
       users: chatUsage.users,
       dailyLimit,
@@ -278,7 +269,7 @@ export async function buildOverview(env: AdminEnv, email: string) {
     ? { ok: true, items: errorsRead.items }
     : { ok: false, error: errorsRead.error };
 
-  // Chưa ai đặt hạn mức trong KV thì hiện hạn mức hiệu lực mà chat-proxy đang dùng.
+  // Chưa ai đặt hạn mức trong KV thì hiện mốc mặc định 30 (cùng mốc Worker chat v2 đang chặn).
   const flags = flagsRead.ok
     ? {
         ok: true,

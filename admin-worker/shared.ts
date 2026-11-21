@@ -67,7 +67,6 @@ export interface AdminEnv {
   ACCESS_TEAM_DOMAIN?: string;
   ACCESS_AUD?: string;
   ADMIN_TOKEN?: string;
-  CHAT_PROXY_URL?: string;
   CHAT_V2_URL?: string;
   DATA_API_URL?: string;
   LIVEKIT_URL?: string;

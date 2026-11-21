@@ -378,7 +378,7 @@ async function userDetail(env: AdminEnv, uid: string): Promise<Response> {
 }
 
 /**
- * Đặt lại hạn mức chat của một uid trong ngày (giờ Thái Bình Dương, giống chat-proxy).
+ * Đặt lại hạn mức chat của một uid trong ngày (giờ Thái Bình Dương, giống Worker chat v2).
  * Ghi thật: 1 audit + 1 DELETE chat_usage; xóa thêm key KV dự phòng và cache chi tiết.
  */
 async function resetChatQuota(env: AdminEnv, uid: string, actor: string): Promise<Response> {
@@ -402,7 +402,7 @@ async function resetChatQuota(env: AdminEnv, uid: string, actor: string): Promis
     return json({ error: "d1_error" }, 500);
   }
 
-  // chat-proxy chỉ đọc KV khi D1 lỗi, nhưng xóa luôn để số cũ không hồi sinh.
+  // Worker chat chỉ đọc KV khi D1 lỗi, nhưng xóa luôn để số cũ không hồi sinh.
   if (env.FLAGS?.delete) {
     try {
       await env.FLAGS.delete(`user:${uid}:${day}`);

@@ -13,7 +13,6 @@
  *   ACCESS_TEAM_DOMAIN  Text   https://<team>.cloudflareaccess.com
  *   ACCESS_AUD          Text   Application Audience Tag
  *   ADMIN_TOKEN         Secret trùng token của worker livekit
- *   CHAT_PROXY_URL      Text   https://chat-proxy...workers.dev
  *   CHAT_V2_URL         Text   https://zenstudy-chat-v2...workers.dev
  *   DATA_API_URL        Text   https://data-api...workers.dev
  *   LIVEKIT_URL         Text   https://livekit...workers.dev

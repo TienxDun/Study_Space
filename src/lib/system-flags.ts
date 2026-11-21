@@ -5,7 +5,7 @@ export interface SystemFlags {
   banner: string;
 }
 
-// Mặc định bật để web không tự khóa tính năng khi chat-proxy chưa kịp trả lời.
+// Mặc định bật để web không tự khóa tính năng khi Worker chat chưa kịp trả lời.
 export const SYSTEM_FLAGS_DEFAULT: SystemFlags = {
   chatEnabled: true,
   roomsEnabled: true,
@@ -16,7 +16,7 @@ export const SYSTEM_FLAGS_DEFAULT: SystemFlags = {
 const CACHE_TTL_MS = 60 * 1000;
 const FETCH_TIMEOUT_MS = 3 * 1000;
 const BANNER_MAX = 140;
-const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_API_URL || "";
+const FLAGS_URL = (process.env.NEXT_PUBLIC_CHAT_V2_URL || "").replace(/\/+$/, "");
 
 let cache: { at: number; value: SystemFlags } | null = null;
 let inflight: Promise<SystemFlags> | null = null;
@@ -50,14 +50,14 @@ export function resolveBannerText(flags: SystemFlags): string | null {
 export async function fetchSystemFlags(): Promise<SystemFlags> {
   const now = Date.now();
   if (cache && now - cache.at < CACHE_TTL_MS) return cache.value;
-  if (!CHAT_URL) return SYSTEM_FLAGS_DEFAULT;
+  if (!FLAGS_URL) return SYSTEM_FLAGS_DEFAULT;
   if (inflight) return inflight;
 
   inflight = (async () => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     try {
-      const res = await fetch(`${CHAT_URL.replace(/\/+$/, "")}/config`, {
+      const res = await fetch(`${FLAGS_URL}/config`, {
         signal: controller.signal,
         cache: "no-store",
         headers: { Accept: "application/json" },

@@ -8,7 +8,7 @@
   "observability": {
     "enabled": true
   },
-  // Bộ đếm chat dùng chung với chat-proxy v1 (bảng chat_usage) và cờ hạn mức.
+  // Bộ đếm chat_usage dùng chung với app (và shell admin đọc lại); CHAT_QUOTA giữ cờ `cfg:flags`.
   "d1_databases": [
     {
       "binding": "DB",

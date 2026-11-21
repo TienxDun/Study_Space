@@ -16,7 +16,7 @@ const DEFAULT_FLAGS: SystemFlags = {
 const noop = () => {};
 
 async function loadModule(url = "https://chat.example.com") {
-  vi.stubEnv("NEXT_PUBLIC_CHAT_API_URL", url);
+  vi.stubEnv("NEXT_PUBLIC_CHAT_V2_URL", url);
   vi.resetModules();
   return await import("@/lib/system-flags");
 }

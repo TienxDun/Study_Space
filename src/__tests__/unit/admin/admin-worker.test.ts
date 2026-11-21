@@ -13,6 +13,7 @@ import {
   certsResponse,
   createKeyPair,
   exportJwk,
+  fakeKv,
   makeToken,
   validClaims,
 } from "./access-fixtures";
@@ -44,7 +45,7 @@ function jsonResponse(data: unknown, status = 200): Response {
 
 type FetchCall = { url: string; headers: Headers };
 
-function stubBackend(options: { statusCode?: number } = {}): FetchCall[] {
+function stubBackend(): FetchCall[] {
   const calls: FetchCall[] = [];
   vi.stubGlobal(
     "fetch",
@@ -52,14 +53,6 @@ function stubBackend(options: { statusCode?: number } = {}): FetchCall[] {
       const url = String(input);
       calls.push({ url, headers: new Headers(init?.headers) });
       if (url === CERT_URL) return certsResponse([jwk]);
-      if (url.endsWith("/status")) {
-        if (options.statusCode) {
-          return jsonResponse({ error: "hỏng" }, options.statusCode);
-        }
-        return jsonResponse({
-          auth: { userDailyLimit: 25 },
-        });
-      }
       if (url.endsWith("/health")) return jsonResponse({ ok: true });
       if (url.endsWith("/usage")) {
         return jsonResponse({
@@ -117,6 +110,7 @@ function fakeR2(
 function fakeDb(
   options: {
     fail?: boolean;
+    failChat?: boolean;
     failErrors?: boolean;
     chat?: { total: number; users: number };
     sync?: { users: number; lastAt: number | null; maxBytes: number };
@@ -147,6 +141,9 @@ function fakeDb(
         },
         async first() {
           if (options.fail) throw new Error("D1 không phản hồi");
+          if (options.failChat && query.includes("FROM chat_usage")) {
+            throw new Error("D1 không phản hồi");
+          }
           if (query.includes("FROM chat_usage")) {
             chatBinds.push(bound);
             return options.chat ?? { total: 0, users: 0 };
@@ -206,7 +203,7 @@ describe("admin worker", () => {
     expect(body.ok).toBe(true);
     expect(body.email).toBe(ADMIN_EMAIL);
     expect(body.checks.map((check) => check.name)).toEqual([
-      "chat-proxy",
+      "chat-v2",
       "data-api",
       "livekit",
     ]);
@@ -231,7 +228,7 @@ describe("admin worker", () => {
 
     const res = await worker.fetch(
       accessRequest(token),
-      baseEnv({ LIVEKIT_URL: "", CHAT_PROXY_URL: "" }),
+      baseEnv({ LIVEKIT_URL: "", CHAT_V2_URL: "" }),
     );
     const body = (await res.json()) as {
       ok: boolean;
@@ -239,7 +236,7 @@ describe("admin worker", () => {
     };
 
     expect(body.ok).toBe(false);
-    expect(body.checks.find((c) => c.name === "chat-proxy")?.ok).toBe(false);
+    expect(body.checks.find((c) => c.name === "chat-v2")?.ok).toBe(false);
     expect(body.checks.find((c) => c.name === "livekit")?.ok).toBe(false);
     expect(calls.some((call) => call.url === "https://livekit.example.com/usage")).toBe(
       false,
@@ -312,7 +309,7 @@ describe("admin overview", () => {
   }
 
   it("trả số liệu chat, sync, livekit và không lộ token", async () => {
-    const calls = stubBackend();
+    stubBackend();
     const fake = fakeDb({
       chat: { total: 42, users: 5 },
       sync: { users: 7, lastAt: 1_730_000_000_000, maxBytes: 1234 },
@@ -332,7 +329,7 @@ describe("admin overview", () => {
       ok: true,
       total: 42,
       users: 5,
-      dailyLimit: 25,
+      dailyLimit: 30,
     });
     expect(body.chat.day).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(body.sync).toEqual({
@@ -350,7 +347,7 @@ describe("admin overview", () => {
       participants: 3,
     });
     expect(body.limits).toEqual({
-      chatDaily: 25,
+      chatDaily: 30,
       snapshotMaxBytes: 2_000_000,
       r2: "10 GB",
       r2Bytes: 10_000_000_000,
@@ -358,13 +355,28 @@ describe("admin overview", () => {
     expect(body.errors).toEqual({ ok: true, items: [] });
     expect(body.r2).toEqual({ ok: true, bytes: 0, objects: 0, partial: false });
 
-    const statusCall = calls.find((call) => call.url.endsWith("/status"));
-    expect(statusCall?.headers.get("Authorization")).toBe(
-      "Bearer super-secret-token",
-    );
     expect(fake.queries.some((q) => q.includes("FROM chat_usage"))).toBe(true);
     expect(fake.chatBinds[0]?.[0]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(JSON.stringify(body)).not.toContain("super-secret-token");
+  });
+
+  it("hạn mức chat lấy từ KV cfg:flags, cùng nguồn Worker chat v2 đang chặn", async () => {
+    stubBackend();
+    const fake = fakeDb({ chat: { total: 3, users: 1 } });
+    const kv = fakeKv({
+      "cfg:flags": JSON.stringify({ chatDailyLimit: 45 }),
+    });
+
+    const res = await worker.fetch(
+      await overviewRequest(),
+      baseEnv({ DB: fake.db, FLAGS: kv.kv }),
+    );
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(200);
+    expect(body.chat.dailyLimit).toBe(45);
+    expect(body.limits.chatDaily).toBe(45);
+    expect(body.flags.chatDailyLimit).toBe(45);
   });
 
   it("thiếu binding DB thì chat/sync báo lỗi nhưng vẫn trả 200", async () => {
@@ -396,18 +408,19 @@ describe("admin overview", () => {
     expect(body.degraded).toBe(true);
   });
 
-  it("chat-proxy lỗi thì dùng hạn mức mặc định và báo degraded", async () => {
-    stubBackend({ statusCode: 500 });
+  it("KV lỗi thì dùng hạn mức mặc định và báo degraded", async () => {
+    stubBackend();
     const fake = fakeDb({ chat: { total: 1, users: 1 } });
 
     const res = await worker.fetch(
       await overviewRequest(),
-      baseEnv({ DB: fake.db }),
+      baseEnv({ DB: fake.db, FLAGS: fakeKv({}, { failGet: true }).kv }),
     );
     const body = (await res.json()) as any;
 
     expect(res.status).toBe(200);
-    expect(body.chat).toEqual({ ok: false, error: "http_500" });
+    expect(body.chat).toMatchObject({ ok: true, dailyLimit: 30 });
+    expect(body.flags).toEqual({ ok: false, error: "kv_error" });
     expect(body.limits.chatDaily).toBe(30);
     expect(body.degraded).toBe(true);
   });
@@ -512,16 +525,16 @@ describe("admin overview", () => {
   });
 
   it("cùng một lỗi chỉ ghi 1 dòng trong vòng 1 giờ và không chép body thô", async () => {
-    stubBackend({ statusCode: 500 });
-    const fake = fakeDb();
+    stubBackend();
+    const fake = fakeDb({ failChat: true });
 
     await worker.fetch(await overviewRequest(), baseEnv({ DB: fake.db }));
     await worker.fetch(await overviewRequest(), baseEnv({ DB: fake.db }));
 
     const chatRows = fake.inserts.filter((row) => row[0] === "chat");
     expect(chatRows).toHaveLength(1);
-    expect(chatRows[0]?.[1]).toBe("http_500");
-    expect(String(chatRows[0]?.[2])).toContain("http_500");
+    expect(chatRows[0]?.[1]).toBe("d1_error");
+    expect(String(chatRows[0]?.[2])).toContain("d1_error");
     expect(String(chatRows[0]?.[2])).not.toContain("hỏng");
   });
 

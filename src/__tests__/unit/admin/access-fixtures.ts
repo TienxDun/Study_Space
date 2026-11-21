@@ -94,7 +94,7 @@ export function baseEnv(overrides: Partial<AdminEnv> = {}): AdminEnv {
     ACCESS_TEAM_DOMAIN: TEAM,
     ACCESS_AUD: AUD,
     ADMIN_TOKEN: "super-secret-token",
-    CHAT_PROXY_URL: "https://chat.example.com",
+    CHAT_V2_URL: "https://chat.example.com",
     DATA_API_URL: "https://data.example.com",
     LIVEKIT_URL: "https://livekit.example.com",
     R2: { list: async () => ({ objects: [], truncated: false }) },

@@ -1,6 +1,6 @@
 /**
- * P2a — Cờ hệ thống. Đọc/ghi JSON ở KV CHAT_QUOTA, key `cfg:flags`
- * (dùng chung với chat-proxy, nơi thực thi hạn mức chat hằng ngày).
+ * P2a — Cờ hệ thống. Đọc/ghi JSON ở KV CHAT_QUOTA, key `cfg:flags`;
+ * Worker chat v2 đọc cùng key này để trả `/config` và chặn hạn mức hằng ngày.
  */
 
 import type { AdminEnv } from "./shared";

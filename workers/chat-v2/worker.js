@@ -17,7 +17,8 @@
  *   ALLOWED_ORIGINS      = http://localhost:3001
  *   DEFAULT_MODEL        = deepseek-v4-flash
  *
- * Hạn mức chat dùng chung với chat-proxy v1: D1 `chat_usage` + KV `cfg:flags`.
+ * Hạn mức chat dùng D1 `chat_usage`; cờ hệ thống (`/config`) và hạn mức đọc
+ * từ KV `cfg:flags` — cùng nguồn admin đang ghi.
  */
 
 import {
@@ -39,7 +40,7 @@ import {
 import { appendFilesToLastUser, attachImagesToLastUser, parseAttachments } from "./attachments.js";
 import { buildBudget } from "./tokens.js";
 import { authenticate, devMode } from "./auth.js";
-import { checkQuota, d1, incrCount, pacificDay } from "./quota.js";
+import { checkQuota, d1, getPublicConfig, incrCount, pacificDay } from "./quota.js";
 
 const MOTAPIS_BASE = "https://motapis.com/v1";
 const DEFAULT_MODEL = "deepseek-v4-flash";
@@ -675,6 +676,19 @@ const worker = {
       );
     }
 
+    // Cấu hình công khai cho web tĩnh: đọc lúc chạy, không nhúng vào bản build.
+    if (url.pathname === "/config" && req.method === "GET") {
+      const flags = await getPublicConfig(env);
+      return new Response(JSON.stringify(flags), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          ...cors,
+          "Cache-Control": "public, max-age=30",
+        },
+      });
+    }
+
     // Danh mục model là thông tin công khai: không cần vé, không tốn chi phí.
     if (url.pathname === "/models" && req.method === "GET") {
       return listModels(env, cors, keyTierOf(req));
@@ -689,7 +703,7 @@ const worker = {
     }
 
     return json(
-      { error: "Dùng GET /health, GET /models, POST /chat, POST /summarize." },
+      { error: "Dùng GET /health, GET /config, GET /models, POST /chat, POST /summarize." },
       404,
       cors
     );

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import worker from "../../../../workers/chat-v2/worker.js";
 import { listCatalog } from "../../../../workers/chat-v2/catalog.js";
+import { resetQuotaCache } from "../../../../workers/chat-v2/quota.js";
 
 const ENV = {
   MOTAPIS_API_KEY: "sk-test",
@@ -38,6 +39,7 @@ function summarizeRequest(body: unknown) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  resetQuotaCache();
 });
 
 describe("chat v2 Worker — system prompt", () => {
@@ -526,6 +528,98 @@ describe("chat v2 Worker — chọn key thủ công từ client", () => {
     expect(fetchMock).not.toHaveBeenCalled();
     const data = (await res.json()) as { count: number };
     expect(data.count).toBe(listCatalog().length);
+  });
+});
+
+describe("chat v2 Worker — cờ hệ thống công khai", () => {
+  function flagsKv(raw: string | null) {
+    return { get: async () => raw };
+  }
+
+  it("chưa cấu hình KV thì trả mặc định bật và không lộ hạn mức", async () => {
+    const res = await worker.fetch(
+      new Request("https://chat-v2.test/config", { method: "GET" }),
+      ENV
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Cache-Control")).toBe("public, max-age=30");
+    const data = (await res.json()) as Record<string, unknown>;
+    expect(data).toEqual({
+      chatEnabled: true,
+      roomsEnabled: true,
+      maintenance: false,
+      banner: "",
+      updatedAt: 0,
+    });
+    expect(data).not.toHaveProperty("chatDailyLimit");
+    expect(data).not.toHaveProperty("updatedBy");
+  });
+
+  it("đọc cfg:flags từ KV, làm sạch banner và bỏ trường nội bộ", async () => {
+    const env = {
+      ...ENV,
+      CHAT_QUOTA: flagsKv(
+        JSON.stringify({
+          chatEnabled: false,
+          roomsEnabled: "sai kiểu",
+          maintenance: true,
+          banner: `  Bảo trì\u0007 tối nay  ${"x".repeat(200)}`,
+          chatDailyLimit: 45,
+          updatedAt: 1_730_000_000_000,
+          updatedBy: "admin@example.com",
+        })
+      ),
+    };
+
+    const res = await worker.fetch(
+      new Request("https://chat-v2.test/config", { method: "GET" }),
+      env
+    );
+    const data = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(200);
+    expect(data.chatEnabled).toBe(false);
+    expect(data.roomsEnabled).toBe(true);
+    expect(data.maintenance).toBe(true);
+    expect(String(data.banner)).toHaveLength(140);
+    expect(String(data.banner)).not.toContain("\u0007");
+    expect(data.updatedAt).toBe(1_730_000_000_000);
+    expect(data).not.toHaveProperty("chatDailyLimit");
+    expect(data).not.toHaveProperty("updatedBy");
+  });
+
+  it("JSON hỏng hoặc KV lỗi thì trả mặc định, không 500", async () => {
+    const broken = await worker.fetch(
+      new Request("https://chat-v2.test/config", { method: "GET" }),
+      { ...ENV, CHAT_QUOTA: flagsKv("{hỏng") }
+    );
+    expect(broken.status).toBe(200);
+    expect(((await broken.json()) as Record<string, unknown>).chatEnabled).toBe(true);
+
+    resetQuotaCache();
+    const failing = await worker.fetch(
+      new Request("https://chat-v2.test/config", { method: "GET" }),
+      {
+        ...ENV,
+        CHAT_QUOTA: {
+          get: async () => {
+            throw new Error("KV lỗi");
+          },
+        },
+      }
+    );
+    expect(failing.status).toBe(200);
+    expect(((await failing.json()) as Record<string, unknown>).maintenance).toBe(false);
+  });
+
+  it("/config chỉ nhận GET", async () => {
+    const res = await worker.fetch(
+      new Request("https://chat-v2.test/config", { method: "POST" }),
+      ENV
+    );
+
+    expect(res.status).toBe(404);
   });
 });
 

@@ -96,7 +96,7 @@ Các key từng dán ở khung chat coi như đã lộ:
    - `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`,
      `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`
    - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
-   - `NEXT_PUBLIC_CHAT_API_URL` = `https://chat-proxy.<bạn>.workers.dev`
+   - `NEXT_PUBLIC_CHAT_V2_URL` = `https://zenstudy-chat-v2.<bạn>.workers.dev` (chat v2 + `GET /config` cờ hệ thống)
    - `NEXT_PUBLIC_DATA_API_URL` = `https://data-api.<bạn>.workers.dev` (kho dữ liệu học tập D1, xem Bước 1c)
    - `NEXT_PUBLIC_LIVEKIT_TOKEN_URL` = `https://livekit.<bạn>.workers.dev` (phòng học nhóm, xem Bước 1b)
    - **Tuyệt đối không thêm `GROQ_API_KEY` hay `ADMIN_TOKEN` vào đây.**
