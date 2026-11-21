@@ -24,6 +24,6 @@
   ],
   "vars": {
     "FIREBASE_PROJECT_ID": "zenspace-d10m13y26",
-    "ALLOWED_ORIGINS": "http://localhost:3001,https://space.zenstudy.app"
+    "ALLOWED_ORIGINS": "http://localhost:3001,https://zenstudy.space,https://www.zenstudy.space,https://localhost"
   }
 }
