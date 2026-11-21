@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, memo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   XIcon,
 } from "@phosphor-icons/react";
@@ -300,10 +301,15 @@ const TIMER_TABS: TimerTab[] = ["clock", "pomodoro", "stopwatch"];
   // Mobile tab Stopwatch: bảng vòng luôn giữ chỗ để đồng hồ không nhảy
   const isMobileScreen = useIsMobile();
 
-  if (!isVisible) return null;
-
   return (
-    <div
+    <AnimatePresence>
+      {isVisible && (
+    <motion.div
+      key="pomodoro-widget"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 12, transition: { duration: 0.15, ease: "easeIn" } }}
+      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
       id="tour-pomodoro-widget"
       className="group relative flex flex-col items-center justify-start text-white select-none pointer-events-auto w-full max-w-xl min-h-[300px] sm:min-h-[320px] touch-pan-y"
       onPointerDown={pokeTabs}
@@ -431,6 +437,8 @@ const TIMER_TABS: TimerTab[] = ["clock", "pomodoro", "stopwatch"];
           persistent={isMobileScreen}
         />
       )}
-    </div>
+    </motion.div>
+      )}
+    </AnimatePresence>
   );
 });
