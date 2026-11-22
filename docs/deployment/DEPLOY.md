@@ -90,7 +90,7 @@ Các key từng dán ở khung chat coi như đã lộ:
 2. Authentication → Settings → Authorized domains: chỉ giữ `zenspace-d10m13y26.firebaseapp.com`, `localhost`, `zenstudy.space` (+ `*.pages.dev` nếu còn dùng). Xóa domain lạ.
 3. OAuth consent screen: thêm Gmail tester vào **Test users**; lên online thật thì **Publish app**.
 4. Cloud Console → Credentials → OAuth client → Authorized JavaScript origins: `http://localhost:3001`, `https://zenstudy.space`.
-5. Firestore → Rules: dán `firestore.rules` → Publish. Đợi 1 phút.
+5. Firestore → Rules: dán `firebase/firestore.rules` → Publish. Đợi 1 phút.
 
 ## Bước 3 — Web (Cloudflare Pages)
 

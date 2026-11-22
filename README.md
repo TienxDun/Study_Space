@@ -85,6 +85,7 @@ src/lib/               storage keys, cloud sync, auth, asset resolver
 src/data/              JSON bối cảnh, âm thanh, nhạc
 workers/               Cloudflare Workers (data-api, chat-v2, livekit-rooms, ...)
 admin-worker/          shell admin chạy trên Worker riêng
+firebase/              Firestore security rules
 android/               vỏ Capacitor
 scripts/               build, deploy, sync R2, load test
 docs/                  tài liệu vận hành và thiết kế

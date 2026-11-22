@@ -8,7 +8,7 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   test: {
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
-    setupFiles: ["./vitest.setup.ts"],
+    setupFiles: ["./src/__tests__/setup.ts"],
   },
   resolve: {
     alias: {
