@@ -10,6 +10,8 @@ Không gian học tập nhập vai trên web: bối cảnh 4K, âm thanh thư gi
 [![Vitest](https://img.shields.io/badge/Tested_with-Vitest-6ee7b7?style=flat-square&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber?style=flat-square)](LICENSE)
 
+![Giao diện ZenStudy Space](docs/screenshots/home-desktop.jpg)
+
 ## Tính năng
 
 - **Bối cảnh 4K** — 30+ scene video/ảnh (cà phê mưa, thư viện, anime, vũ trụ...), lọc theo chủ đề, yêu thích, phục vụ qua CDN.
