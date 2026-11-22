@@ -33,7 +33,7 @@ Kiểm local: `npm test` 94 file / 775 test xanh (10 ca mới đỏ trước khi
 
 ### Đối chiếu shell production 2026-11-09 (lịch sử)
 
-Đăng nhập `admin.zenstudy.space` bằng `jimwork218@gmail.com`: 6 tab tải đủ, không có lỗi console, chỉ gọi `/api/admin/*`.
+Đăng nhập `admin.zenstudy.space` bằng `admin@example.com`: 6 tab tải đủ, không có lỗi console, chỉ gọi `/api/admin/*`.
 
 - **Tổng quan**: health 3/3 (127–345 ms); chat hôm nay 0 câu / 0 người, hạn mức 30; sync 5 người, bản lớn nhất 22,0 KB; LiveKit 526/4.500 phút tháng 11; R2 **127 tệp / 497,65 MB** (P1 đo 121 tệp / 487,85 MB — tăng 6 tệp, chưa rõ nguồn; sau đó xác định là 6 bản video 720p cho mobile, đã xóa 2026-11-09, R2 về **121 tệp**).
 - **Cờ hệ thống**: bật đủ, banner trống, hạn mức 30, lần lưu cuối 01:25 27-10 bởi chính tài khoản admin.
@@ -229,7 +229,7 @@ Kiểm tra chấp nhận:
 - [x] Bật bảo trì + banner "Thử bảo trì" → web hiện banner trong ≤ 60 giây; chat/rooms vẫn chạy.
   - Kiểm 2026-10-27: audit id 1–4 (bảo trì + banner "Demo Bảo trì", "Demo Bảo trì 2"); bundle production với `maintenance:true` + banner hiện đúng chữ "Thử bảo trì" ở đầu trang, chat/rooms vẫn bật.
 - [x] Mỗi lần lưu có **đúng 1** dòng `admin_audit` với `actor_email` của bạn và `detail_json` có trước/sau.
-  - Kiểm 2026-10-27: 9 lần lưu = 9 dòng (id 1–9), actor `jimwork218@gmail.com`, dòng nào cũng có `before`/`after`; audit chèn trước `FLAGS.put`, audit lỗi thì không ghi KV (unit test).
+  - Kiểm 2026-10-27: 9 lần lưu = 9 dòng (id 1–9), actor `admin@example.com`, dòng nào cũng có `before`/`after`; audit chèn trước `FLAGS.put`, audit lỗi thì không ghi KV (unit test).
 - [x] Network của trang admin: chỉ gọi `/api/admin/*`, không có token, không có `?token=`.
   - Kiểm 2026-10-27: tải `https://admin.zenstudy.space/admin/` chỉ thấy `GET /api/admin/overview`; `localStorage` rỗng; không có chuỗi `token=` trong request.
 
@@ -458,7 +458,7 @@ CREATE INDEX IF NOT EXISTS idx_content_manifest_created ON content_manifest (cre
 
 ### C7. Deploy và kiểm tra (thứ tự bắt buộc, mỗi bước không khóa ai)
 
-1. [x] Chạy SQL C1 trên D1 `zenspace` (bảng mới, không đụng 4 bảng cũ). — xác minh 2026-11-09: bảng `content_manifest` có đúng 3 dòng của version 1, tạo 2026-10-28 06:43 UTC bởi `jimwork218@gmail.com`.
+1. [x] Chạy SQL C1 trên D1 `zenspace` (bảng mới, không đụng 4 bảng cũ). — xác minh 2026-11-09: bảng `content_manifest` có đúng 3 dòng của version 1, tạo 2026-10-28 06:43 UTC bởi `admin@example.com`.
 2. [x] Dán `data-api` mới → `GET /content` trả `{ ok: true, version: 0 }`. — xong; hiện trả `version: 1`.
 3. [x] `npm run build:admin` + deploy admin worker → panel hiện "chưa có bản nào", đọc được 40 cảnh từ bundle. — xong; admin worker tự deploy theo push `main`.
 4. [x] Push web → trang chủ vẫn chạy bằng bundle (chưa có bản nào). — xong.
