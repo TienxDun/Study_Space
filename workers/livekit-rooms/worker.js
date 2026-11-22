@@ -20,7 +20,7 @@
  * D1 Database Binding:
  *   DB                      = Database D1 zenspace (chạy workers/livekit-schema.sql)
  *
- * KV Namespace Binding (để đọc cờ hệ thống admin ghi, cùng kho với chat-proxy):
+ * KV Namespace Binding (để đọc cờ hệ thống admin ghi, cùng kho với chat-v2):
  *   CHAT_QUOTA              = namespace CHAT_QUOTA (key `cfg:flags`)
  *
  * Web gọi kèm vé Firebase: header `Authorization: Bearer <idToken>`.

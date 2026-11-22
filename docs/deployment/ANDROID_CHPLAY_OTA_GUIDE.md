@@ -284,9 +284,9 @@ Nếu bạn muốn hoàn toàn làm chủ hạ tầng mà không dùng dịch v�
 
 1. **Upload bản zip lên Cloudflare R2:**
    - Mỗi lần build: nén thư mục `out/` thành `bundle-v1.0.1.zip` và đẩy lên bucket R2 (dự án đã có sẵn lệnh `npm run sync:r2`).
-2. **Tạo Endpoint kiểm tra phiên bản trên Cloudflare Worker:**
+2. **Tạo Endpoint kiểm tra phiên bản trên Cloudflare Worker tự dựng** (hệ thống hiện tại chưa có endpoint này; mẫu dưới đây chỉ để tham khảo):
    ```json
-   // GET https://chat-proxy.<worker>.workers.dev/app-version
+   // GET https://<ota-worker>.<subdomain>.workers.dev/app-version
    {
      "version": "1.0.1",
      "minNativeVersion": "1.0.0",

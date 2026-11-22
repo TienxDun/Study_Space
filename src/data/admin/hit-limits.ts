@@ -60,7 +60,7 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
   {
     id: "zenstudy-chat-daily",
     category: "ai",
-    service: "ZenStudy Chat Proxy (bộ đếm D1)",
+    service: "ZenStudy Chat v2 (bộ đếm D1)",
     component: "Hạn mức hỏi AI của mỗi người (USER_DAILY_LIMIT)",
     currentTier: "Cấu hình Worker (mặc định 30)",
     quotaDescription:
@@ -78,10 +78,10 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     fallbackMechanism:
       "Chặn ngay trước khi gọi model nên không đốt quota AI; buffered tin nhắn cũ vẫn đọc được từ cache.",
     remedyAction:
-      "Đổi USER_DAILY_LIMIT trong phần biến môi trường của worker chat-proxy nếu cần nới; kiểm tra bảng chat_usage để biết ai đang dùng nhiều.",
+      "Đổi USER_DAILY_LIMIT trong phần biến môi trường của worker chat-v2 nếu cần nới; kiểm tra bảng chat_usage để biết ai đang dùng nhiều.",
     severity: "warning",
     resetCycle: "00:00 giờ Thái Bình Dương hàng ngày (14:00–15:00 giờ VN tuỳ mùa)",
-    docUrl: "workers/chat-proxy/worker.js",
+    docUrl: "workers/chat-v2/worker.js",
     troubleshootingSteps: [
       "Chạy SELECT * FROM chat_usage ORDER BY day DESC LIMIT 10; trong D1 console.",
       "Xác nhận biến USER_DAILY_LIMIT đang đặt trên worker, không phải trên web.",
@@ -151,7 +151,7 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     id: "cf-workers-platform",
     category: "backend",
     service: "Cloudflare Workers (Workers Free)",
-    component: "2 Worker: data-api (đồng bộ) + chat-proxy (chat AI)",
+    component: "2 Worker: data-api (đồng bộ) + chat-v2 (chat AI)",
     currentTier: "Workers Free",
     quotaDescription:
       "100,000 request/ngày dùng chung cho cả hai worker; 10 ms CPU mỗi lượt; 50 subrequest; script tối đa 64 MiB. Reset 00:00 UTC.",
@@ -215,10 +215,10 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     id: "cf-kv-fallback",
     category: "backend",
     service: "Cloudflare Workers KV",
-    component: "Đường lùi của bộ đếm câu chat khi chat-proxy thiếu binding D1",
+    component: "Đường lùi của bộ đếm câu chat khi chat-v2 thiếu binding D1",
     currentTier: "Workers Free (KV free tier)",
     quotaDescription:
-      "100.000 lượt đọc/ngày, 1.000 lượt ghi/ngày, 1 GB. Chỉ dùng khi worker chat-proxy không có binding DB; bình thường bộ đếm câu chat đã nằm trong D1.",
+      "100.000 lượt đọc/ngày, 1.000 lượt ghi/ngày, 1 GB. Chỉ dùng khi worker chat-v2 không có binding DB; bình thường bộ đếm câu chat đã nằm trong D1.",
     rateLimits: [
       { label: "Lượt đọc / ngày", value: "100,000" },
       { label: "Lượt ghi / ngày (key khác nhau)", value: "1,000" },
@@ -233,13 +233,13 @@ export const SYSTEM_HIT_LIMITS: HitLimitItem[] = [
     fallbackMechanism:
       "Code tự dùng D1 nếu có binding DB; KV chỉ còn cho trường hợp chưa gắn D1 nên không ảnh hưởng cấu hình hiện tại.",
     remedyAction:
-      "Luôn giữ binding DB cho chat-proxy. Không xóa binding để 'thử' vì sẽ tụt ngay về trần 1.000 ghi/ngày.",
+      "Luôn giữ binding DB cho chat-v2. Không xóa binding để 'thử' vì sẽ tụt ngay về trần 1.000 ghi/ngày.",
     severity: "warning",
     resetCycle: "00:00 UTC hàng ngày",
     docUrl: "https://developers.cloudflare.com/kv/platform/limits/",
     troubleshootingSteps: [
-      "Kiểm tra Settings → Bindings của worker chat-proxy có biến DB trỏ tới D1 zenspace.",
-      "Xem nhánh fallback KV trong workers/chat-proxy/worker.js khi log báo lỗi D1.",
+      "Kiểm tra Settings → Bindings của worker chat-v2 có biến DB trỏ tới D1 zenspace.",
+      "Xem nhánh fallback KV trong workers/chat-v2/quota.js khi log báo lỗi D1.",
     ],
   },
   {

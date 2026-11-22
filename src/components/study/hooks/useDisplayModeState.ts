@@ -25,7 +25,7 @@ export function useDisplayModeState({
   const [isGlobalMuted, setIsGlobalMuted] = useState(false);
   const [isZenMode, setIsZenMode] = useState(false);
 
-  // Cờ hệ thống lấy từ chat-proxy /config
+  // Cờ hệ thống lấy từ chat-v2 /config
   const [systemFlags, setSystemFlags] = useState<SystemFlags>(SYSTEM_FLAGS_DEFAULT);
 
   useEffect(() => {

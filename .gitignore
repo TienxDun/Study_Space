@@ -65,6 +65,7 @@ token.json
 # Cloudflare Workers Secrets / Local State
 .dev.vars
 .dev.vars.*
+.wrangler/
 
 # Firebase & GCP Service Accounts / Local State
 *serviceAccountKey*.json
@@ -201,6 +202,8 @@ $RECYCLE.BIN/
 *.local
 *.tmp
 *.temp
+# Lockfile của CLI cài skills (chỉ dùng local, không thuộc app)
+skills-lock.json
 
 # ------------------------------------------------------------------------------
 # Hosting & Deployment
@@ -216,6 +219,8 @@ src/data/assets/backups/
 bg-asset-studio-plan.md
 tools/
 *_frames/
+# Bản gốc icon chỉ dùng local; logo/icon public sinh từ script trong scripts/
+/assets/icon.png
 
 # Taste-skill render output
 .taste-skill/inspect/

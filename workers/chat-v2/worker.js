@@ -1,7 +1,7 @@
 /**
  * chat-v2 — Worker độc lập cho chatbot mới.
  *
- * Không dùng chung code với workers/chat-proxy.
+ * Không dùng chung code với worker chat v1 (đã xoá).
  * Nhiệm vụ sprint 0:
  *   - giữ MOTAPIS_API_KEY ở server
  *   - proxy /v1/models + /v1/chat/completions sang motapis.com

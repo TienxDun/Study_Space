@@ -1,4 +1,4 @@
-// Xác thực vé Firebase cho chat-v2 (chép từ workers/chat-proxy, không chia sẻ module).
+// Xác thực vé Firebase cho chat-v2 (chép từ worker chat v1 đã xoá, không chia sẻ module).
 // Vé là JWT RS256 do Google ký: Worker tải chứng thư công khai, kiểm chữ ký,
 // đúng project và còn hạn rồi trả uid.
 //

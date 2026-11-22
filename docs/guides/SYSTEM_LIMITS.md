@@ -1,19 +1,19 @@
 # Hạn mức hệ thống ZenStudy
 
 > Sinh tự động từ `src/data/admin/hit-limits.ts` — đừng sửa tay. Chạy `npm run gen:limits` sau khi đổi hạn mức.
-> Cập nhật: 2026-11-10 · 16 mục.
+> Cập nhật: 2026-11-23 · 16 mục.
 
 ## Tổng quan
 
 | Dịch vụ | Thành phần | Gói | Ngưỡng chính | Mức độ |
 |---|---|---|---|---|
 | Cloudflare Workers AI | Chatbot AI Trợ lý Học tập (Llama-3.1-8b-instruct, v.v.) | Free Tier (Workers AI Free Allocation) | Rate Limit (Phút): 300 requests / phút; Hạn mức (Ngày): 10,000 Neurons / ngày; Timeout phản hồi: 60 giây | Cảnh báo |
-| ZenStudy Chat Proxy (bộ đếm D1) | Hạn mức hỏi AI của mỗi người (USER_DAILY_LIMIT) | Cấu hình Worker (mặc định 30) | Số câu / người / ngày: 30 câu (USER_DAILY_LIMIT); Dòng D1 ghi mỗi câu: 1 dòng (chat_usage); Thời điểm reset: 00:00 giờ Thái Bình Dương | Cảnh báo |
+| ZenStudy Chat v2 (bộ đếm D1) | Hạn mức hỏi AI của mỗi người (USER_DAILY_LIMIT) | Cấu hình Worker (mặc định 30) | Số câu / người / ngày: 30 câu (USER_DAILY_LIMIT); Dòng D1 ghi mỗi câu: 1 dòng (chat_usage); Thời điểm reset: 00:00 giờ Thái Bình Dương | Cảnh báo |
 | Groq Cloud | Model Suy luận Nâng cao (Llama-3.3-70b-versatile) | Free Developer Tier | Requests/phút (RPM): 30 RPM; Requests/ngày (RPD): 1,000 RPD; Tokens/phút (TPM): 12,000 TPM; Tokens/ngày (TPD): 100,000 TPD | Cảnh báo |
 | Groq Cloud | Model Phản hồi Siêu tốc (Llama-3.1-8b-instant) | Free Developer Tier | Requests/phút (RPM): 30 RPM; Requests/ngày (RPD): 14,400 RPD; Tokens/phút (TPM): 6,000 TPM; Tokens/ngày (TPD): 500,000 TPD | Tham khảo |
-| Cloudflare Workers (Workers Free) | 2 Worker: data-api (đồng bộ) + chat-proxy (chat AI) | Workers Free | Request / ngày (toàn tài khoản): 100,000; CPU time / request: 10 ms (Free); Subrequest / request: 50; Kích thước script: 64 MiB | Nghiêm trọng |
+| Cloudflare Workers (Workers Free) | 2 Worker: data-api (đồng bộ) + chat-v2 (chat AI) | Workers Free | Request / ngày (toàn tài khoản): 100,000; CPU time / request: 10 ms (Free); Subrequest / request: 50; Kích thước script: 64 MiB | Nghiêm trọng |
 | Cloudflare D1 (database zenspace) | Đồng bộ ghi chú/kanban/cài đặt + bộ đếm chat + lịch sử tập trung | Workers Free (D1 free tier) | Dòng đọc / ngày: 5,000,000; Dòng ghi / ngày: 100,000; Dung lượng tổng: 5 GB (mỗi DB tối đa 500 MB); Query / lượt gọi worker: 50 (Free) | Nghiêm trọng |
-| Cloudflare Workers KV | Đường lùi của bộ đếm câu chat khi chat-proxy thiếu binding D1 | Workers Free (KV free tier) | Lượt đọc / ngày: 100,000; Lượt ghi / ngày (key khác nhau): 1,000; Ghi cùng một key: 1 lần/giây; Dung lượng: 1 GB | Cảnh báo |
+| Cloudflare Workers KV | Đường lùi của bộ đếm câu chat khi chat-v2 thiếu binding D1 | Workers Free (KV free tier) | Lượt đọc / ngày: 100,000; Lượt ghi / ngày (key khác nhau): 1,000; Ghi cùng một key: 1 lần/giây; Dung lượng: 1 GB | Cảnh báo |
 | Cloudflare R2 | Kho Lưu trữ Bối cảnh (Video MP4 & Ảnh nền 4K) | Free Tier (Hàng tháng) | Dung lượng lưu trữ: 10 GB miễn phí / tháng; Băng thông tải về (Egress): 0$ Không giới hạn; Kích thước 1 file tối đa: 5 GB / lần PUT (multipart tới 5 TB) | Cảnh báo |
 | Cloudflare R2 | Thao tác Quản trị & Đồng bộ Kho mạng (Upload/Sync Script) | Free Tier | Class A (Ghi / List): 1,000,000 requests / tháng; Class B (Đọc / Head): 10,000,000 requests / tháng | Tham khảo |
 | LiveKit Cloud | Phòng Học Nhóm Âm thanh & Màn hình Trực tuyến | Build (Miễn phí) | Phút WebRTC (ngưỡng chặn): 4,500 phút / tháng (Plan 5,000); Sức chứa tối đa / phòng: 6 người / phòng (MAX_ROOM_PARTICIPANTS); Dữ liệu tải xuống (Downstream): 50 GB / tháng; Người kết nối đồng thời: Tối đa 100 người; Thời lượng phiên học tối đa: 120 phút / phiên (SESSION_MAX_MINUTES) | Nghiêm trọng |
@@ -43,7 +43,7 @@
   2. Xác nhận provider dự phòng (Groq) có API key hợp lệ và đang ở trạng thái Enabled.
   3. Nếu hết 10,000 Neurons trong ngày, đẩy Groq lên đầu chuỗi Chain Entry cho đến 07:00 sáng hôm sau.
 
-### ZenStudy Chat Proxy (bộ đếm D1) — Hạn mức hỏi AI của mỗi người (USER_DAILY_LIMIT)
+### ZenStudy Chat v2 (bộ đếm D1) — Hạn mức hỏi AI của mỗi người (USER_DAILY_LIMIT)
 
 - **Mức độ:** Cảnh báo
 - **Gói hiện tại:** Cấu hình Worker (mặc định 30)
@@ -52,9 +52,9 @@
 - **Dấu hiệu chạm trần:** Chat báo đã hết lượt hỏi trong ngày và nút gửi bị khóa.; Worker trả HTTP 429 kèm thông báo hạn mức ngày.
 - **Mã lỗi:** `HTTP 429 (daily limit)`
 - **Cơ chế dự phòng:** Chặn ngay trước khi gọi model nên không đốt quota AI; buffered tin nhắn cũ vẫn đọc được từ cache.
-- **Cách xử lý:** Đổi USER_DAILY_LIMIT trong phần biến môi trường của worker chat-proxy nếu cần nới; kiểm tra bảng chat_usage để biết ai đang dùng nhiều.
+- **Cách xử lý:** Đổi USER_DAILY_LIMIT trong phần biến môi trường của worker chat-v2 nếu cần nới; kiểm tra bảng chat_usage để biết ai đang dùng nhiều.
 - **Chu kỳ reset:** 00:00 giờ Thái Bình Dương hàng ngày (14:00–15:00 giờ VN tuỳ mùa)
-- **Tài liệu:** workers/chat-proxy/worker.js
+- **Tài liệu:** workers/chat-v2/worker.js
 - **Các bước kiểm tra:**
   1. Chạy SELECT * FROM chat_usage ORDER BY day DESC LIMIT 10; trong D1 console.
   2. Xác nhận biến USER_DAILY_LIMIT đang đặt trên worker, không phải trên web.
@@ -94,7 +94,7 @@
 
 ## Backend
 
-### Cloudflare Workers (Workers Free) — 2 Worker: data-api (đồng bộ) + chat-proxy (chat AI)
+### Cloudflare Workers (Workers Free) — 2 Worker: data-api (đồng bộ) + chat-v2 (chat AI)
 
 - **Mức độ:** Nghiêm trọng
 - **Gói hiện tại:** Workers Free
@@ -128,21 +128,21 @@
   2. Kiểm tra dung lượng thật: SELECT COUNT(*), MAX(LENGTH(data_json)) FROM user_data; và SELECT COUNT(*) FROM chat_usage;
   3. Dọn bớt dữ liệu cũ bằng DELETE có điều kiện nếu chạm 500 MB.
 
-### Cloudflare Workers KV — Đường lùi của bộ đếm câu chat khi chat-proxy thiếu binding D1
+### Cloudflare Workers KV — Đường lùi của bộ đếm câu chat khi chat-v2 thiếu binding D1
 
 - **Mức độ:** Cảnh báo
 - **Gói hiện tại:** Workers Free (KV free tier)
-- **Hạn mức:** 100.000 lượt đọc/ngày, 1.000 lượt ghi/ngày, 1 GB. Chỉ dùng khi worker chat-proxy không có binding DB; bình thường bộ đếm câu chat đã nằm trong D1.
+- **Hạn mức:** 100.000 lượt đọc/ngày, 1.000 lượt ghi/ngày, 1 GB. Chỉ dùng khi worker chat-v2 không có binding DB; bình thường bộ đếm câu chat đã nằm trong D1.
 - **Ngưỡng:** Lượt đọc / ngày — 100,000; Lượt ghi / ngày (key khác nhau) — 1,000; Ghi cùng một key — 1 lần/giây; Dung lượng — 1 GB
 - **Dấu hiệu chạm trần:** Bộ đếm chat dừng tăng sau vài trăm câu/ngày (trần 1.000 lượt ghi).; Log worker xuất hiện nhánh fallback KV thay vì D1.
 - **Mã lỗi:** `KV PUT 429 / limit exceeded`
 - **Cơ chế dự phòng:** Code tự dùng D1 nếu có binding DB; KV chỉ còn cho trường hợp chưa gắn D1 nên không ảnh hưởng cấu hình hiện tại.
-- **Cách xử lý:** Luôn giữ binding DB cho chat-proxy. Không xóa binding để 'thử' vì sẽ tụt ngay về trần 1.000 ghi/ngày.
+- **Cách xử lý:** Luôn giữ binding DB cho chat-v2. Không xóa binding để 'thử' vì sẽ tụt ngay về trần 1.000 ghi/ngày.
 - **Chu kỳ reset:** 00:00 UTC hàng ngày
 - **Tài liệu:** https://developers.cloudflare.com/kv/platform/limits/
 - **Các bước kiểm tra:**
-  1. Kiểm tra Settings → Bindings của worker chat-proxy có biến DB trỏ tới D1 zenspace.
-  2. Xem nhánh fallback KV trong workers/chat-proxy/worker.js khi log báo lỗi D1.
+  1. Kiểm tra Settings → Bindings của worker chat-v2 có biến DB trỏ tới D1 zenspace.
+  2. Xem nhánh fallback KV trong workers/chat-v2/quota.js khi log báo lỗi D1.
 
 ## Lưu trữ
 
